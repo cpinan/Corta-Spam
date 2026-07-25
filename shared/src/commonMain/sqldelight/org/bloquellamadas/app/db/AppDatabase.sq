@@ -1,0 +1,13 @@
+-- Placeholder schema for M0. Real tables (blocked numbers, patterns,
+-- countries, action rules, call log) land in M2 per docs/MILESTONES.md.
+-- This table exists only to prove the SQLDelight driver is wired end to end.
+CREATE TABLE SchemaVersion (
+    id INTEGER NOT NULL PRIMARY KEY,
+    version INTEGER NOT NULL
+);
+
+selectVersion:
+SELECT * FROM SchemaVersion;
+
+insertVersion:
+INSERT INTO SchemaVersion(id, version) VALUES (?, ?);

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jvm-android:
+    name: Shared (JVM) + Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble Android debug APK
+        run: ./gradlew :androidApp:assembleDebug
+
+      - name: Run shared module unit tests (JVM)
+        run: ./gradlew :shared:testDebugUnitTest
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-jvm-test-report
+          path: shared/build/reports/tests/testDebugUnitTest
+
+  ios:
+    name: Shared (Kotlin/Native) + iOS
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Run shared module unit tests (Kotlin/Native, iOS simulator)
+        run: ./gradlew :shared:iosSimulatorArm64Test
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Generate iosApp.xcodeproj
+        working-directory: iosApp
+        run: xcodegen generate
+
+      - name: Build iosApp for the simulator
+        run: >
+          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -configuration Debug build

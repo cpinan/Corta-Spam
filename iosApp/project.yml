@@ -1,0 +1,38 @@
+name: iosApp
+options:
+  bundleIdPrefix: org.bloquellamadas
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+    OTHER_LDFLAGS: "$(inherited) -lsqlite3"
+    TARGETED_DEVICE_FAMILY: "1"
+
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: BloqueaLlamadas
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.bloquellamadas.app
+        PRODUCT_NAME: BloqueaLlamadas
+    preBuildScripts:
+      - name: Compile Kotlin Framework (shared)
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+        basedOnDependencyAnalysis: false

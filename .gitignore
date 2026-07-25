@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+*/build/
+*/*/build/
+local.properties
+.kotlin/
+
+# Android
+*.apk
+*.aab
+captures/
+
+# Xcode / xcodegen
+# .xcodeproj is generated from iosApp/project.yml via `xcodegen generate` — not committed.
+iosApp/iosApp.xcodeproj/
+iosApp/Generated/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Kotlin/Native
+.konan/
+
+# macOS
+.DS_Store
