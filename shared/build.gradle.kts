@@ -54,7 +54,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.bloquellamadas.app.shared"
+    namespace = "org.carlospinan.bloqueador.app.shared"
     compileSdk = 36
 
     defaultConfig {
@@ -70,7 +70,7 @@ android {
 sqldelight {
     databases {
         create("AppDatabase") {
-            packageName.set("org.bloquellamadas.app.db")
+            packageName.set("org.carlospinan.bloqueador.app.db")
         }
     }
 }

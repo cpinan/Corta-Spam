@@ -1,4 +1,4 @@
-package org.bloquellamadas.app
+package org.carlospinan.bloqueador.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "org.bloquellamadas.app"
+    namespace = "org.carlospinan.bloqueador.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.bloquellamadas.app"
+        applicationId = "org.carlospinan.bloqueador.app"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

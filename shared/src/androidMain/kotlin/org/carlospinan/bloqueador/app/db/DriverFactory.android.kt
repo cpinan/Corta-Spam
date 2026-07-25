@@ -1,4 +1,4 @@
-package org.bloquellamadas.app.db
+package org.carlospinan.bloqueador.app.db
 
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver

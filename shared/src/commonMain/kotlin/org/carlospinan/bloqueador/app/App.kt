@@ -1,4 +1,4 @@
-package org.bloquellamadas.app
+package org.carlospinan.bloqueador.app
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

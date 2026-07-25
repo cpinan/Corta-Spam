@@ -30,7 +30,7 @@ docs/         Spec, milestones, navigation
 ./gradlew :androidApp:assembleDebug
 # or, with an emulator/device already running:
 ./gradlew :androidApp:installDebug
-adb shell am start -n org.bloquellamadas.app/org.bloquellamadas.app.MainActivity
+adb shell am start -n org.carlospinan.bloqueador.app/org.carlospinan.bloqueador.app.MainActivity
 ```
 
 ## Build & run — iOS

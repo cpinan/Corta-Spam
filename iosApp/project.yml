@@ -1,6 +1,6 @@
 name: iosApp
 options:
-  bundleIdPrefix: org.bloquellamadas
+  bundleIdPrefix: org.carlospinan.bloqueador
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
@@ -28,7 +28,7 @@ targets:
           - UIInterfaceOrientationPortrait
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: org.bloquellamadas.app
+        PRODUCT_BUNDLE_IDENTIFIER: org.carlospinan.bloqueador.app
         PRODUCT_NAME: BloqueaLlamadas
     preBuildScripts:
       - name: Compile Kotlin Framework (shared)

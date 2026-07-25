@@ -1,4 +1,4 @@
-package org.bloquellamadas.app
+package org.carlospinan.bloqueador.app
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
