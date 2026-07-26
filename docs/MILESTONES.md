@@ -32,8 +32,8 @@ Tasks within a milestone are independent enough to hand to different agents/mode
 
 | Task | Agent | Model |
 |---|---|---|
-| Research spike: self-managed `ConnectionService` + `RoleManager.ROLE_DIALER` request flow, current API constraints on target min SDK | Explore | opus |
-| Implement self-managed `ConnectionService` pass-through (depends on spike) | general-purpose | opus |
+| Research spike: `InCallService` + `RoleManager.ROLE_DIALER` request flow, current API constraints on target min SDK (done 2026-07-26 — see SPEC §1 correction: self-managed `ConnectionService` is ineligible for `ROLE_DIALER`) | Explore | opus |
+| Implement minimal `InCallService` pass-through (call UI stub, no blocking logic) + `ACTION_DIAL` activity (depends on spike) | general-purpose | opus |
 | Default-dialer permission onboarding screen (explainer + request + fallback states) | general-purpose | sonnet |
 | Unit tests for onboarding view-model state transitions | general-purpose | sonnet |
 | Manual QA script for real-call regression (documented steps, run by a human, not automatable) | cavecrew-builder | haiku |
@@ -109,7 +109,7 @@ Tasks within a milestone are independent enough to hand to different agents/mode
 
 | Task | Agent | Model |
 |---|---|---|
-| Wire TTS/audio playback into the self-managed `ConnectionService`'s call audio (depends on M1) | general-purpose | opus |
+| Wire TTS/audio playback into the `InCallService`-owned call audio (self-answer + `AudioManager` routing, depends on M1) | general-purpose | opus |
 | Script editor UI + mandatory consent-line validation when recording is on | general-purpose | sonnet |
 | Caller message recording + local storage | general-purpose | sonnet |
 | Unit tests: script validation rules | general-purpose | sonnet |

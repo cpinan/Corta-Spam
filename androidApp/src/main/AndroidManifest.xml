@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Required to be eligible for RoleManager.ROLE_DIALER and to act as the
+         default phone app (docs/SPEC.md §1/§4). -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <application
         android:label="@string/app_name"
         android:icon="@android:mipmap/sym_def_app_icon"
@@ -14,7 +19,48 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- ACTION_DIAL is a hard requirement for RoleManager.ROLE_DIALER
+                 eligibility (docs/SPEC.md §4). -->
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="tel" />
+            </intent-filter>
         </activity>
+
+        <!-- Minimal answer/decline/hang-up UI, launched by
+             PassthroughInCallService. Telecom expects the default dialer to
+             supply this itself once IN_CALL_SERVICE_UI is declared below. -->
+        <activity
+            android:name=".telecom.InCallActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+
+        <!-- Mandatory in-call UI for the default dialer role. M1 scope: pure
+             pass-through, no blocking logic. See docs/SPEC.md §1 correction:
+             this is InCallService, not a self-managed ConnectionService;
+             real SIM calls are still furnished by Android's built-in
+             telephony ConnectionService. -->
+        <service
+            android:name=".telecom.PassthroughInCallService"
+            android:permission="android.permission.BIND_INCALL_SERVICE"
+            android:exported="true">
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_UI"
+                android:value="true" />
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_RINGING"
+                android:value="true" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

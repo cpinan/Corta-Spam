@@ -31,6 +31,10 @@ kotlin {
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
+            // api, not implementation: consumers (androidApp) instantiate and hold
+            // DialerOnboardingViewModel, so its ViewModel supertype must be resolvable
+            // on their compile classpath too.
+            api(libs.androidx.lifecycle.viewmodel)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

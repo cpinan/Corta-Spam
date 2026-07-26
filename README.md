@@ -6,16 +6,59 @@ Open-source call-blocking app for Android + iOS. TrueCaller-style blocking capab
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown, each independently testable, with tasks tagged for agent/model assignment.
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — screen map, navigation graph, and a ready-to-use design prompt for Claude.
 
-Status: M0 (repo & KMM scaffold) done and verified on-device. Next up is M1 in `docs/MILESTONES.md`.
+Status: M0 (repo & KMM scaffold) and M1 (Android default-dialer foundation) done and verified on-device. Next up is M2 in `docs/MILESTONES.md`.
 
 ## Project layout
 
 ```
 shared/       Kotlin Multiplatform module — commonMain domain logic, Compose UI, SQLDelight
-androidApp/   Android application shell (Activity hosting the shared Compose UI)
+androidApp/   Android application shell (MainActivity, PassthroughInCallService, InCallActivity)
 iosApp/       iOS application shell — project.yml (xcodegen) + Swift entry point
-docs/         Spec, milestones, navigation
+docs/         Spec, milestones, navigation, manual QA scripts
 ```
+
+## Progress log
+
+### M1 — Android default-dialer foundation (2026-07-26)
+
+Goal: app can become the default phone app and behaves identically to the
+stock dialer (pure pass-through, no blocking logic yet).
+
+- **Architecture correction:** `docs/SPEC.md`/`docs/MILESTONES.md` originally
+  called for a "self-managed `ConnectionService`" default-dialer tier.
+  Verified against Android's docs that self-managed `PhoneAccount`s are
+  explicitly *ineligible* for `RoleManager.ROLE_DIALER` — corrected both
+  docs to the real stack: `ROLE_DIALER` + `InCallService`, with real SIM
+  calls still handled by Android's own built-in telephony
+  `ConnectionService`.
+- **Default-dialer onboarding flow** (`shared` commonMain
+  `DialerOnboardingViewModel` + Compose screens matching the permission
+  explainer mockup, wired into `androidApp`'s `MainActivity`): explainer →
+  real OS role-request dialog (`RoleManager` on API 29+, legacy
+  `ACTION_CHANGE_DEFAULT_DIALER` below that) → granted/denied/already-default
+  states, each covered by unit tests (`DialerOnboardingViewModelTest`, 8
+  cases).
+- **`PassthroughInCallService` + `InCallActivity`**: the mandatory in-call
+  UI/audio contract for the default-dialer role — minimal answer/decline/
+  hang-up screen, no blocking logic.
+- **Verified for real on-device** (`Pixel_8_Pro_API_33`), not just built:
+  drove the explainer screen, accepted the real system "set as default
+  phone app" dialog, confirmed via `dumpsys telecom` that the app became
+  the registered default dialer, confirmed a cold relaunch skips onboarding
+  correctly, then placed simulated real incoming calls
+  (`adb emu gsm call`) and confirmed ring → answer → active → hang-up all
+  work through the app's own UI.
+- **Two real bugs found and fixed by that on-device verification:**
+  1. `CallLog.Calls.addCall()` looks like the sanctioned way to write a
+     call-log entry but is a hidden `@SystemApi`, not present in the public
+     SDK (confirmed via `javap` against the compileSdk 36 `android.jar`).
+  2. Writing call-log entries manually turned out unnecessary and harmful:
+     Android's Telecom stack logs every call itself regardless of which app
+     is the default dialer. The app-side write produced a confirmed
+     duplicate row per call — deleted that code entirely and dropped the
+     now-unused `WRITE_CALL_LOG`/`READ_CALL_LOG` permissions.
+- Manual QA script for the parts that need a human with real telephony:
+  `docs/QA_M1_MANUAL.md`.
 
 ## Prerequisites
 

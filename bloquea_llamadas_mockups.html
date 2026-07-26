@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BloqueaLlamadas — UI mockups</title>
+<style>
+  :root{
+    --bg:#F4F5F2;
+    --surface:#FFFFFF;
+    --surface-alt:#EEF0EA;
+    --border:#E2E4DD;
+    --border-strong:#CBCFC5;
+    --text-primary:#1A1C1A;
+    --text-secondary:#5C6058;
+    --text-muted:#8B8F85;
+    --accent:#146B57;
+    --accent-bg:#DCEEE7;
+    --accent-strong:#0E5747;
+    --danger:#A3392B;
+    --danger-bg:#F8E4DF;
+    --warning:#8A5A0A;
+    --warning-bg:#FBEBD2;
+    --shadow:0 1px 2px rgba(20,20,18,.06), 0 2px 10px rgba(20,20,18,.05);
+  }
+  html[data-theme="dark"]{
+    --bg:#121312;
+    --surface:#1C1F1D;
+    --surface-alt:#242725;
+    --border:#33362F;
+    --border-strong:#464A41;
+    --text-primary:#EDEEE9;
+    --text-secondary:#A6AA9F;
+    --text-muted:#6E7268;
+    --accent:#4FC79E;
+    --accent-bg:#153630;
+    --accent-strong:#7FE0BB;
+    --danger:#E48575;
+    --danger-bg:#3B241D;
+    --warning:#E3B457;
+    --warning-bg:#3A2C12;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 2px 10px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .15s ease, color .15s ease;
+  }
+  a{color:inherit;}
+  svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+  }
+  .topbar-inner{
+    max-width:1180px;margin:0 auto;
+    display:flex;align-items:center;gap:20px;
+    padding:12px 24px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;white-space:nowrap;}
+  .brand svg{width:20px;height:20px;color:var(--accent);}
+  .brand-sub{font-weight:400;color:var(--text-muted);font-size:12px;}
+  .screen-nav{display:flex;gap:2px;flex-wrap:wrap;flex:1;}
+  .screen-nav a{
+    font-size:12.5px;color:var(--text-secondary);text-decoration:none;
+    padding:6px 10px;border-radius:6px;white-space:nowrap;
+  }
+  .screen-nav a:hover{background:var(--surface-alt);color:var(--text-primary);}
+  .theme-toggle{
+    display:flex;align-items:center;gap:6px;
+    background:var(--surface-alt);border:1px solid var(--border);
+    color:var(--text-primary);border-radius:20px;
+    padding:6px 12px;font-size:12.5px;cursor:pointer;
+  }
+  .theme-toggle svg{width:14px;height:14px;}
+  .theme-toggle:hover{border-color:var(--border-strong);}
+
+  /* ---------- page ---------- */
+  main{max-width:1180px;margin:0 auto;padding:8px 24px 80px;}
+  .intro{padding:28px 0 8px;max-width:680px;}
+  .intro h1{font-size:22px;font-weight:600;margin:0 0 8px;}
+  .intro p{font-size:14px;line-height:1.6;color:var(--text-secondary);margin:0;}
+  .legend{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-secondary);}
+  .dot{width:9px;height:9px;border-radius:50%;}
+  .dot.allow{background:var(--accent);}
+  .dot.block{background:var(--danger);}
+  .dot.warn{background:var(--warning);}
+
+  .screen-section{padding:56px 0 8px;border-top:1px solid var(--border);}
+  .screen-section:first-of-type{border-top:none;}
+  .section-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:26px;max-width:760px;}
+  .step{
+    flex:none;width:28px;height:28px;border-radius:50%;
+    background:var(--text-primary);color:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:600;
+  }
+  .section-head h2{font-size:18px;font-weight:600;margin:0 0 4px;}
+  .section-head p{font-size:13.5px;line-height:1.6;color:var(--text-secondary);margin:0;}
+
+  .phones-row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;}
+  .phone-block{display:flex;flex-direction:column;gap:10px;}
+  .phone-label{font-size:12px;font-weight:600;color:var(--text-secondary);padding-left:2px;}
+  .phone-label .tag{
+    display:inline-block;margin-left:6px;font-size:10.5px;font-weight:600;
+    color:var(--text-muted);background:var(--surface-alt);
+    border:1px solid var(--border);padding:1px 6px;border-radius:10px;
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+
+  /* ---------- device frame ---------- */
+  .phone{
+    width:300px;background:var(--surface);border:1px solid var(--border);
+    border-radius:34px;box-shadow:var(--shadow);overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .phone-screen{
+    background:var(--bg);display:flex;flex-direction:column;
+    height:648px;position:relative;overflow:hidden;
+  }
+  .status-bar{
+    flex:none;height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;font-size:11px;font-weight:600;color:var(--text-primary);background:var(--surface);
+  }
+  .status-bar .icons{display:flex;gap:4px;align-items:center;color:var(--text-secondary);}
+  .status-bar .icons svg{width:13px;height:13px;}
+
+  .app-bar{
+    flex:none;background:var(--surface);border-bottom:1px solid var(--border);
+    padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .app-bar h1{font-size:16px;font-weight:600;margin:0;}
+  .app-bar .icon-btn{color:var(--text-secondary);}
+  .app-bar-left{display:flex;align-items:center;gap:10px;}
+
+  .content{flex:1;overflow-y:auto;padding:14px 14px 16px;scrollbar-width:none;}
+  .content::-webkit-scrollbar{display:none;}
+
+  .bottom-nav{
+    flex:none;display:flex;border-top:1px solid var(--border);
+    background:var(--surface);padding:8px 0 10px;
+  }
+  .bottom-nav .nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-size:10px;color:var(--text-muted);
+  }
+  .bottom-nav .nav-item svg{width:18px;height:18px;}
+  .bottom-nav .nav-item.active{color:var(--accent);font-weight:600;}
+
+  /* ---------- reusable UI ---------- */
+  .card{
+    background:var(--surface-alt);border-radius:14px;padding:14px;margin-bottom:12px;
+  }
+  .card.raised{background:var(--surface);border:1px solid var(--border);}
+  .card-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+
+  .master-toggle-card{
+    background:var(--accent-bg);border-radius:16px;padding:16px;margin-bottom:14px;
+  }
+  .master-toggle-card.off{background:var(--surface-alt);}
+  .master-toggle-title{font-size:14px;font-weight:600;color:var(--text-primary);margin:0 0 2px;}
+  .master-toggle-sub{font-size:12px;color:var(--text-secondary);margin:0;}
+
+  .switch{
+    position:relative;width:42px;height:24px;border-radius:14px;background:var(--border-strong);
+    flex:none;
+  }
+  .switch.on{background:var(--accent);}
+  .switch.danger-on{background:var(--danger);}
+  .switch .knob{
+    position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s;
+  }
+  .switch.on .knob, .switch.danger-on .knob{left:20px;}
+
+  .stat-big{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;padding:2px 2px 0;}
+  .stat-big .num{font-size:32px;font-weight:700;line-height:1;}
+  .stat-big .label{font-size:12.5px;color:var(--text-secondary);}
+
+  .section-title{
+    font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--text-muted);margin:18px 2px 8px;
+  }
+  .section-title:first-child{margin-top:2px;}
+
+  .list-row{
+    display:flex;align-items:center;gap:10px;padding:10px 2px;
+    border-bottom:1px solid var(--border);
+  }
+  .list-row:last-child{border-bottom:none;}
+  .avatar{
+    flex:none;width:34px;height:34px;border-radius:50%;background:var(--surface-alt);
+    display:flex;align-items:center;justify-content:center;color:var(--text-muted);
+  }
+  .avatar svg{width:16px;height:16px;}
+  .row-main{flex:1;min-width:0;}
+  .row-title{font-size:13.5px;font-weight:600;margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row-sub{font-size:11.5px;color:var(--text-muted);margin:0;}
+  .row-time{font-size:11px;color:var(--text-muted);flex:none;}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+    padding:3px 8px;border-radius:20px;white-space:nowrap;flex:none;
+  }
+  .badge-allowed{background:var(--accent-bg);color:var(--accent-strong);}
+  .badge-blocked{background:var(--danger-bg);color:var(--danger);}
+  .badge-neutral{background:var(--surface-alt);color:var(--text-secondary);border:1px solid var(--border);}
+
+  .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .quick-item{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:14px 12px;display:flex;flex-direction:column;gap:8px;
+  }
+  .quick-item svg{width:18px;height:18px;color:var(--accent);}
+  .quick-item .qi-title{font-size:12.5px;font-weight:600;}
+  .quick-item .qi-sub{font-size:11px;color:var(--text-muted);}
+
+  .footnote{
+    display:flex;align-items:center;gap:6px;justify-content:center;
+    font-size:10.5px;color:var(--text-muted);margin-top:16px;padding:8px;
+  }
+  .footnote svg{width:12px;height:12px;}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    border-radius:10px;padding:11px 16px;font-size:13.5px;font-weight:600;
+    border:1px solid transparent;cursor:pointer;width:100%;
+  }
+  .btn svg{width:16px;height:16px;}
+  .btn-primary{background:var(--text-primary);color:var(--bg);}
+  .btn-secondary{background:transparent;color:var(--text-primary);border-color:var(--border-strong);}
+  .btn-ghost{background:transparent;color:var(--text-secondary);border:none;font-weight:500;}
+  .btn-danger-outline{background:transparent;color:var(--danger);border-color:var(--danger-bg);}
+
+  .empty-state{
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    padding:44px 18px 20px;gap:12px;
+  }
+  .empty-state .icon-circle{
+    width:52px;height:52px;border-radius:50%;background:var(--surface-alt);
+    display:flex;align-items:center;justify-content:center;color:var(--text-muted);
+  }
+  .empty-state h3{font-size:14.5px;font-weight:600;margin:2px 0 0;}
+  .empty-state p{font-size:12.5px;color:var(--text-secondary);line-height:1.5;margin:0;max-width:220px;}
+  .empty-state .btn{width:auto;margin-top:6px;padding:9px 18px;}
+
+  /* permission screen */
+  .perm-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 4px 6px;}
+  .perm-hero .icon-circle{
+    width:56px;height:56px;border-radius:16px;background:var(--accent-bg);
+    display:flex;align-items:center;justify-content:center;color:var(--accent-strong);margin-bottom:14px;
+  }
+  .perm-hero h2{font-size:16.5px;font-weight:700;margin:0 0 8px;line-height:1.3;}
+  .perm-hero p{font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin:0;}
+  .perm-reasons{margin:16px 0;}
+  .perm-reason{display:flex;gap:10px;padding:9px 0;}
+  .perm-reason svg{flex:none;width:16px;height:16px;color:var(--accent);margin-top:1px;}
+  .perm-reason p{font-size:12px;color:var(--text-primary);margin:0;line-height:1.5;}
+  .never-box{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:13px 14px;margin:6px 0 16px;
+  }
+  .never-box .never-title{
+    display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
+    color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;
+  }
+  .never-box .never-title svg{width:14px;height:14px;color:var(--accent);}
+  .never-item{display:flex;gap:8px;padding:4px 0;font-size:11.5px;color:var(--text-secondary);line-height:1.5;}
+  .never-item svg{flex:none;width:13px;height:13px;color:var(--accent);margin-top:2px;}
+  .source-link{
+    display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--accent-strong);
+    padding-top:6px;text-decoration:underline;
+  }
+
+  .aside-card{
+    width:300px;background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:16px;box-shadow:var(--shadow);
+  }
+  .aside-card .aside-kicker{
+    display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin-bottom:10px;
+  }
+  .aside-card .aside-kicker svg{width:13px;height:13px;}
+  .aside-card h4{font-size:13.5px;font-weight:600;margin:0 0 8px;}
+  .aside-card p{font-size:12px;color:var(--text-secondary);line-height:1.55;margin:0 0 8px;}
+  .aside-card p:last-child{margin-bottom:0;}
+  .os-dialog-mock{
+    background:var(--surface-alt);border-radius:14px;padding:16px;margin-top:2px;
+  }
+  .os-dialog-mock .od-title{font-size:12.5px;font-weight:700;margin:0 0 6px;}
+  .os-dialog-mock .od-body{font-size:11px;color:var(--text-secondary);line-height:1.5;margin:0 0 12px;}
+  .os-dialog-mock .od-actions{display:flex;justify-content:flex-end;gap:16px;}
+  .os-dialog-mock .od-actions span{font-size:11.5px;font-weight:700;color:var(--accent-strong);}
+
+  /* call log */
+  .log-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border);}
+  .log-row:last-child{border-bottom:none;}
+  .log-meta{flex:1;min-width:0;}
+  .log-meta .row-title{font-size:13px;}
+  .log-rule{font-size:10.5px;color:var(--danger);margin:1px 0 0;}
+  .log-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+
+  .sheet{
+    position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+    border-top:1px solid var(--border);border-radius:20px 20px 0 0;
+    padding:14px 18px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.12);
+  }
+  .sheet .sheet-handle{width:34px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 14px;}
+  .sheet .sheet-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .sheet h3{font-size:14.5px;font-weight:700;margin:0;}
+  .sheet .rule-num{font-size:12.5px;color:var(--text-secondary);margin:0 0 14px;}
+  .rule-detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+  .rule-detail-row:last-of-type{border-bottom:none;}
+  .rule-detail-row span:first-child{color:var(--text-muted);}
+  .rule-detail-row span:last-child{font-weight:600;text-align:right;}
+
+  /* block lists hub */
+  .hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .hub-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;
+  }
+  .hub-card svg{width:18px;height:18px;color:var(--accent);}
+  .hub-card .hub-title{font-size:13px;font-weight:600;}
+  .hub-card .hub-count{font-size:11px;color:var(--text-muted);}
+  .hub-card .count-pill{
+    position:absolute;top:12px;right:12px;background:var(--accent-bg);color:var(--accent-strong);
+    font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;
+  }
+  .hub-card .count-pill.zero{background:var(--surface-alt);color:var(--text-muted);border:1px solid var(--border);}
+
+  /* manual list */
+  .swipe-wrap{position:relative;overflow:hidden;border-bottom:1px solid var(--border);}
+  .swipe-wrap:last-child{border-bottom:none;}
+  .swipe-delete{
+    position:absolute;top:0;right:0;bottom:0;width:70px;background:var(--danger);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+  }
+  .swipe-content{
+    display:flex;align-items:center;gap:10px;padding:11px 2px;background:var(--bg);position:relative;
+  }
+  .swipe-content.shifted{transform:translateX(-70px);}
+  .fab{
+    position:absolute;right:16px;bottom:70px;width:46px;height:46px;border-radius:50%;
+    background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,.25);
+  }
+  .fab svg{width:20px;height:20px;}
+  .field{
+    width:100%;background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;font-size:13px;color:var(--text-primary);
+  }
+
+  /* auto responder */
+  .field-label{font-size:11.5px;font-weight:700;color:var(--text-secondary);margin:0 0 6px;text-transform:uppercase;letter-spacing:.03em;}
+  textarea.field{width:100%;min-height:90px;resize:none;font-family:inherit;line-height:1.5;}
+  .char-count{font-size:10.5px;color:var(--text-muted);text-align:right;margin-top:4px;}
+  .preview-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
+    padding:10px;font-size:13px;font-weight:600;margin:12px 0 18px;color:var(--text-primary);
+  }
+  .preview-btn svg{width:16px;height:16px;color:var(--accent);}
+  .danger-toggle-card{
+    background:var(--danger-bg);border:1px solid var(--danger);border-radius:14px;padding:13px 14px;margin-bottom:12px;
+  }
+  .danger-toggle-card .dt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .danger-toggle-card .dt-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--danger);margin:0 0 4px;}
+  .danger-toggle-card .dt-title svg{width:15px;height:15px;}
+  .danger-toggle-card p{font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:0;}
+  .consent-box{
+    display:flex;gap:8px;background:var(--surface);border:1px dashed var(--border-strong);
+    border-radius:10px;padding:10px 12px;margin-bottom:16px;
+  }
+  .consent-box svg{flex:none;width:14px;height:14px;color:var(--text-muted);margin-top:1px;}
+  .consent-box p{font-size:11.5px;color:var(--text-secondary);line-height:1.5;margin:0;}
+  .consent-box b{color:var(--text-primary);font-weight:600;}
+  .preview-box{
+    background:var(--surface-alt);border-radius:12px;padding:12px 13px;font-size:12px;
+    line-height:1.6;color:var(--text-primary);
+  }
+  .preview-box .locked-line{color:var(--text-muted);font-style:italic;}
+
+  /* settings */
+  .privacy-badge{
+    display:flex;align-items:center;gap:8px;background:var(--accent-bg);color:var(--accent-strong);
+    border-radius:12px;padding:10px 12px;font-size:11.5px;font-weight:600;margin-bottom:16px;
+  }
+  .privacy-badge svg{width:15px;height:15px;flex:none;}
+  .settings-group{margin-bottom:18px;}
+  .settings-group .group-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px 2px;}
+  .settings-list{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .settings-row{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);
+  }
+  .settings-row:last-child{border-bottom:none;}
+  .settings-row .si{color:var(--text-secondary);flex:none;}
+  .settings-row .sr-main{flex:1;min-width:0;}
+  .settings-row .sr-title{font-size:13px;font-weight:500;margin:0;}
+  .settings-row .sr-sub{font-size:11px;color:var(--text-muted);margin:2px 0 0;line-height:1.4;}
+  .settings-row .sr-chevron{color:var(--text-muted);flex:none;}
+  .off-pill{font-size:10px;font-weight:700;color:var(--text-muted);background:var(--surface-alt);border:1px solid var(--border);padding:2px 7px;border-radius:8px;}
+
+  @media (max-width:720px){
+    .screen-nav{order:3;width:100%;}
+  }
+
+  /* ---------- adaptive / tablet & landscape ---------- */
+  .bp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:940px;margin-bottom:8px;}
+  .bp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;}
+  .bp-kicker{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--accent-strong);margin:0 0 4px;}
+  .bp-title{font-size:13.5px;font-weight:600;margin:0 0 6px;}
+  .bp-body{font-size:11.5px;color:var(--text-secondary);line-height:1.55;margin:0;}
+
+  .adaptive-frame{
+    background:var(--surface);border:1px solid var(--border);border-radius:22px;
+    box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+  }
+  .adaptive-frame .status-bar{padding:0 22px;}
+  .adaptive-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+  .nav-rail{
+    flex:none;width:76px;background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 0;
+  }
+  .nav-rail.wide{width:216px;align-items:stretch;padding:20px 12px;}
+  .rail-item{
+    display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text-muted);
+    font-size:10px;width:58px;padding:9px 4px;border-radius:12px;
+  }
+  .nav-rail.wide .rail-item{flex-direction:row;align-items:center;gap:12px;width:auto;font-size:13px;padding:11px 14px;border-radius:10px;}
+  .rail-item svg{width:20px;height:20px;}
+  .rail-item.active{color:var(--accent);background:var(--accent-bg);font-weight:600;}
+  .adaptive-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+  .list-pane{flex:none;width:340px;border-right:1px solid var(--border);overflow-y:auto;padding:6px 10px;}
+  .detail-pane{flex:1;overflow-y:auto;padding:24px 28px;min-width:0;}
+  .list-pane .log-row.active, .list-pane .settings-row.active{background:var(--accent-bg);border-radius:12px;padding-left:8px;padding-right:8px;}
+  .detail-kicker{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted);margin:0 0 6px;}
+  .detail-title{font-size:19px;font-weight:700;margin:0 0 18px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg>
+      BloqueaLlamadas <span class="brand-sub">UI mockups</span>
+    </div>
+    <nav class="screen-nav">
+      <a href="#home">1 Home</a>
+      <a href="#permission">2 Permission</a>
+      <a href="#calllog">3 Call log</a>
+      <a href="#blocklists">4 Block lists</a>
+      <a href="#manual">5 Manual list</a>
+      <a href="#autoresponder">6 Auto-responder</a>
+      <a href="#settings">7 Settings</a>
+      <a href="#adaptive">8 Tablet & landscape</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle">
+      <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+      <span id="themeLabel">Dark mode</span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <div class="intro">
+    <h1>Screens 1–7</h1>
+    <p>High-fidelity mockups for the core BloqueaLlamadas flows. Utilitarian by design — no upsell, no urgency language, calm palette. Toggle dark mode with the button above; it applies to every screen at once.</p>
+    <div class="legend">
+      <div class="legend-item"><span class="dot allow"></span>Allowed</div>
+      <div class="legend-item"><span class="dot block"></span>Blocked</div>
+      <div class="legend-item"><span class="dot warn"></span>Needs caution</div>
+    </div>
+  </div>
+
+  <!-- ============ 1. HOME ============ -->
+  <section id="home" class="screen-section">
+    <div class="section-head">
+      <span class="step">1</span>
+      <div>
+        <h2>Home / dashboard</h2>
+        <p>Today's blocked-call count, master on/off toggle, recent blocked calls with reasons, and quick access to the four hubs.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">With activity</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons">
+            <svg viewBox="0 0 24 24"><path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg>
+          </div></div>
+          <div class="app-bar">
+            <h1>BloqueaLlamadas</h1>
+            <div class="icon-btn"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
+          </div>
+          <div class="content">
+            <div class="master-toggle-card">
+              <div class="card-row">
+                <div><p class="master-toggle-title">Call blocking is on</p><p class="master-toggle-sub">Screening incoming calls</p></div>
+                <div class="switch on"><div class="knob"></div></div>
+              </div>
+            </div>
+            <div class="stat-big"><span class="num">12</span><span class="label">calls blocked today</span></div>
+
+            <div class="section-title">Recent blocked calls</div>
+            <div class="card raised" style="padding:0 12px;">
+              <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="row-main"><p class="row-title">+34 611 22 33 44</p><p class="row-sub">Spam list · Reported</p></div>
+                <div class="row-time">10:42</div></div>
+              <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="row-main"><p class="row-title">Unknown number</p><p class="row-sub">Pattern rule · No caller ID</p></div>
+                <div class="row-time">09:15</div></div>
+              <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="row-main"><p class="row-title">+212 5 22 30 xx xx</p><p class="row-sub">Country block · Morocco</p></div>
+                <div class="row-time">08:03</div></div>
+              <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="row-main"><p class="row-title">+34 900 11 22 33</p><p class="row-sub">Manual list · Added by you</p></div>
+                <div class="row-time">07:51</div></div>
+            </div>
+
+            <div class="section-title">Quick access</div>
+            <div class="quick-grid">
+              <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><div class="qi-title">Call log</div><div class="qi-sub">All calls</div></div>
+              <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><div class="qi-title">Stats</div><div class="qi-sub">This week</div></div>
+              <div class="quick-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg><div class="qi-title">Block lists</div><div class="qi-sub">4 sources</div></div>
+              <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><div class="qi-title">Settings</div><div class="qi-sub">Rules & privacy</div></div>
+            </div>
+            <div class="footnote"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Open source · No ads · No trackers · Works offline</div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Log</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Empty state <span class="tag">0 blocked today</span></div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons">
+            <svg viewBox="0 0 24 24"><path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg>
+          </div></div>
+          <div class="app-bar">
+            <h1>BloqueaLlamadas</h1>
+            <div class="icon-btn"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
+          </div>
+          <div class="content">
+            <div class="master-toggle-card">
+              <div class="card-row">
+                <div><p class="master-toggle-title">Call blocking is on</p><p class="master-toggle-sub">Screening incoming calls</p></div>
+                <div class="switch on"><div class="knob"></div></div>
+              </div>
+            </div>
+            <div class="stat-big"><span class="num">0</span><span class="label">calls blocked today</span></div>
+            <div class="section-title">Recent blocked calls</div>
+            <div class="empty-state" style="padding-top:14px;">
+              <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg></div>
+              <h3>Nothing to show yet</h3>
+              <p>No calls have been blocked today. When one is, it'll show up here with the reason.</p>
+            </div>
+            <div class="section-title">Quick access</div>
+            <div class="quick-grid">
+              <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><div class="qi-title">Call log</div><div class="qi-sub">All calls</div></div>
+              <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><div class="qi-title">Stats</div><div class="qi-sub">This week</div></div>
+              <div class="quick-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg><div class="qi-title">Block lists</div><div class="qi-sub">4 sources</div></div>
+              <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><div class="qi-title">Settings</div><div class="qi-sub">Rules & privacy</div></div>
+            </div>
+            <div class="footnote"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Open source · No ads · No trackers · Works offline</div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Log</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 2. PERMISSION EXPLAINER ============ -->
+  <section id="permission" class="screen-section">
+    <div class="section-head">
+      <span class="step">2</span>
+      <div>
+        <h2>Permission explainer <span class="tag" style="margin-left:6px;">Android</span></h2>
+        <p>Shown before the OS default-dialer dialog. Plain language on why the app needs this, plus an explicit "what we'll never do" reassurance.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">Explainer screen</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons">
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg>
+          </div></div>
+          <div class="app-bar"><div class="app-bar-left"><svg viewBox="0 0 24 24" style="color:var(--text-secondary)"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg><h1 style="font-size:14.5px;">Set as default phone app</h1></div></div>
+          <div class="content">
+            <div class="perm-hero">
+              <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div>
+              <h2>We need to become your default phone app</h2>
+              <p>This is the only way Android lets an app see who's calling before you answer, and speak a greeting to callers you haven't approved yet.</p>
+            </div>
+
+            <div class="perm-reasons">
+              <div class="perm-reason"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><p><b>Screen calls silently.</b> We check the number against your rules before your phone ever rings.</p></div>
+              <div class="perm-reason"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg><p><b>Power the optional auto-responder.</b> Only used if you turn it on yourself in Settings.</p></div>
+              <div class="perm-reason"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg><p>You can switch back to your phone's original dialer at any time in Android Settings.</p></div>
+            </div>
+
+            <div class="never-box">
+              <div class="never-title"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>What we will never do</div>
+              <div class="never-item"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Record any call unless you separately turn that on, per call type.</div>
+              <div class="never-item"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Send your call data, contacts, or numbers off this device.</div>
+              <div class="never-item"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Show ads or share information with third parties.</div>
+              <a class="source-link" href="#"><svg viewBox="0 0 24 24" style="width:13px;height:13px;"><polyline points="9 18 15 12 9 6"/></svg>This app is open source — view the code</a>
+            </div>
+
+            <button class="btn btn-primary">Continue</button>
+            <div style="height:8px;"></div>
+            <button class="btn btn-ghost">Not now</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="phone-block" style="justify-content:flex-start;padding-top:34px;">
+        <div class="phone-label">Then Android shows its own dialog</div>
+        <div class="aside-card">
+          <div class="aside-kicker"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="18" x2="20" y2="18"/></svg>System UI, not ours</div>
+          <div class="os-dialog-mock">
+            <p class="od-title">Allow BloqueaLlamadas to be your default phone app?</p>
+            <p class="od-body">This app will handle your calls and caller ID.</p>
+            <div class="od-actions"><span style="color:var(--text-secondary);font-weight:600;">DENY</span><span>ALLOW</span></div>
+          </div>
+          <p style="margin-top:12px;">This native dialog is controlled by Android, not by us — our explainer only prepares you for it.</p>
+        </div>
+
+        <div class="phone-label" style="margin-top:8px;">On iOS</div>
+        <div class="aside-card">
+          <div class="aside-kicker"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Not available on iOS</div>
+          <h4>iOS doesn't allow a default-dialer role</h4>
+          <p>Apple doesn't let third-party apps intercept or answer calls before the system does, so this screen doesn't exist on iOS.</p>
+          <p>Instead, BloqueaLlamadas registers as a Call Directory extension: it labels and silently blocks known spam numbers using Apple's own "Silence unknown callers" system.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 3. CALL LOG ============ -->
+  <section id="calllog" class="screen-section">
+    <div class="section-head">
+      <span class="step">3</span>
+      <div>
+        <h2>Call log</h2>
+        <p>Every call with number or contact, timestamp, and a colored outcome tag. Tapping a blocked entry shows the specific rule that fired.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">List view</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><h1>Call log</h1><div class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div></div>
+          <div class="content">
+            <div class="card raised" style="padding:0 12px;">
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div>
+                <div class="log-meta"><p class="row-title">Mamá</p><p class="row-sub">Today · 11:02</p></div>
+                <div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="log-meta"><p class="row-title">+34 611 22 33 44</p><p class="log-rule">Spam list · Reported</p></div>
+                <div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">10:42</span></div></div>
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div>
+                <div class="log-meta"><p class="row-title">Farmacia Rosales</p><p class="row-sub">Today · 09:30</p></div>
+                <div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="log-meta"><p class="row-title">Unknown number</p><p class="log-rule">Pattern rule · No caller ID</p></div>
+                <div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">09:15</span></div></div>
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="log-meta"><p class="row-title">+212 5 22 30 xx xx</p><p class="log-rule">Country block · Morocco</p></div>
+                <div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">08:03</span></div></div>
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div>
+                <div class="log-meta"><p class="row-title">Ana (móvil)</p><p class="row-sub">Yesterday · 19:20</p></div>
+                <div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Tapped a blocked entry</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><h1>Call log</h1><div class="icon-btn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div></div>
+          <div class="content" style="filter:opacity(.5);">
+            <div class="card raised" style="padding:0 12px;">
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="log-meta"><p class="row-title">+34 611 22 33 44</p><p class="log-rule">Spam list · Reported</p></div>
+                <div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">10:42</span></div></div>
+              <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+                <div class="log-meta"><p class="row-title">Unknown number</p><p class="log-rule">Pattern rule · No caller ID</p></div>
+                <div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">09:15</span></div></div>
+            </div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title"><h3>+34 611 22 33 44</h3><svg viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--text-muted);"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+            <p class="rule-num">Blocked by: Spam list</p>
+            <div class="rule-detail-row"><span>Rule</span><span>Community-reported spam</span></div>
+            <div class="rule-detail-row"><span>Source</span><span>Open spam provider (opt-in)</span></div>
+            <div class="rule-detail-row"><span>Matched</span><span>Exact number</span></div>
+            <div class="rule-detail-row"><span>First blocked</span><span>3 days ago</span></div>
+            <div style="height:14px;"></div>
+            <button class="btn btn-secondary" style="margin-bottom:8px;">Allow this number</button>
+            <button class="btn btn-ghost">Report as not spam</button>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 4. BLOCK LISTS HUB ============ -->
+  <section id="blocklists" class="screen-section">
+    <div class="section-head">
+      <span class="step">4</span>
+      <div>
+        <h2>Block lists hub</h2>
+        <p>Four entry points — Manual, Allowlist, Patterns, Countries — each with a live count badge.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">With rules configured</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><h1>Block lists</h1></div>
+          <div class="content">
+            <div class="hub-grid">
+              <div class="hub-card"><div class="count-pill">24</div><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg><div class="hub-title">Manual</div><div class="hub-count">24 numbers blocked</div></div>
+              <div class="hub-card"><div class="count-pill">7</div><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><div class="hub-title">Allowlist</div><div class="hub-count">7 always allowed</div></div>
+              <div class="hub-card"><div class="count-pill">5</div><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><div class="hub-title">Patterns</div><div class="hub-count">5 rules active</div></div>
+              <div class="hub-card"><div class="count-pill">2</div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg><div class="hub-title">Countries</div><div class="hub-count">2 blocked</div></div>
+            </div>
+            <div class="section-title">About these lists</div>
+            <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.6;padding:0 2px;">Rules are checked in this order: Allowlist first, then Manual, Patterns, and Countries. The first match decides the outcome.</p>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Empty state <span class="tag">no rules yet</span></div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><h1>Block lists</h1></div>
+          <div class="content">
+            <div class="hub-grid">
+              <div class="hub-card"><div class="count-pill zero">0</div><svg viewBox="0 0 24 24" style="color:var(--text-muted)"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg><div class="hub-title">Manual</div><div class="hub-count">No numbers yet</div></div>
+              <div class="hub-card"><div class="count-pill zero">0</div><svg viewBox="0 0 24 24" style="color:var(--text-muted)"><polyline points="20 6 9 17 4 12"/></svg><div class="hub-title">Allowlist</div><div class="hub-count">No numbers yet</div></div>
+              <div class="hub-card"><div class="count-pill zero">0</div><svg viewBox="0 0 24 24" style="color:var(--text-muted)"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><div class="hub-title">Patterns</div><div class="hub-count">No rules yet</div></div>
+              <div class="hub-card"><div class="count-pill zero">0</div><svg viewBox="0 0 24 24" style="color:var(--text-muted)"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg><div class="hub-title">Countries</div><div class="hub-count">None blocked</div></div>
+            </div>
+            <div class="empty-state" style="padding-top:22px;">
+              <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg></div>
+              <h3>No rules set up</h3>
+              <p>Blocking is on, but nothing's been added yet. Start with a source above — most people begin with the Spam provider in Settings.</p>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 5. MANUAL BLOCK LIST ============ -->
+  <section id="manual" class="screen-section">
+    <div class="section-head">
+      <span class="step">5</span>
+      <div>
+        <h2>Manual number block list</h2>
+        <p>Add or remove numbers, swipe-to-delete, and an empty state that explains the feature rather than showing a blank list.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">With numbers · swipe revealed</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><div class="app-bar-left"><svg viewBox="0 0 24 24" style="color:var(--text-secondary)"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg><h1>Manual list</h1></div></div>
+          <div class="content" style="padding-bottom:60px;">
+            <div class="card raised" style="padding:0 12px;">
+              <div class="swipe-wrap"><div class="swipe-content"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title">+34 900 11 22 33</p><p class="row-sub">Added 2 days ago</p></div></div></div>
+              <div class="swipe-wrap"><div class="swipe-content shifted"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title">+34 611 22 33 44</p><p class="row-sub">Added 5 days ago</p></div></div><div class="swipe-delete"><svg viewBox="0 0 24 24" style="color:#fff;width:18px;height:18px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div></div>
+              <div class="swipe-wrap"><div class="swipe-content"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title">+212 5 22 30 00 00</p><p class="row-sub">Added 1 week ago</p></div></div></div>
+            </div>
+            <p style="font-size:10.5px;color:var(--text-muted);text-align:center;margin-top:10px;">Swipe left on a number to delete it</p>
+          </div>
+          <div class="fab"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Log</div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Empty state</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><div class="app-bar-left"><svg viewBox="0 0 24 24" style="color:var(--text-secondary)"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg><h1>Manual list</h1></div></div>
+          <div class="content">
+            <div class="empty-state" style="padding-top:70px;">
+              <div class="icon-circle" style="width:60px;height:60px;"><svg viewBox="0 0 24 24" style="width:26px;height:26px;"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div>
+              <h3>No numbers blocked yet</h3>
+              <p>Add a specific number here to block it outright — no matter what the spam provider or patterns say. Good for that one persistent caller.</p>
+              <button class="btn btn-primary"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Block a number</button>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Log</div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>Settings</div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 6. AUTO-RESPONDER ============ -->
+  <section id="autoresponder" class="screen-section">
+    <div class="section-head">
+      <span class="step">6</span>
+      <div>
+        <h2>Auto-responder script editor <span class="tag" style="margin-left:6px;">Android</span></h2>
+        <p>Greeting script with live TTS preview, and a deliberately alarming toggle for recording that injects a non-removable consent line. Try the toggle below — it's live.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">Editor <span class="tag">interactive</span></div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><div class="app-bar-left"><svg viewBox="0 0 24 24" style="color:var(--text-secondary)"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg><h1>Auto-responder</h1></div></div>
+          <div class="content">
+            <p class="field-label">Greeting script</p>
+            <textarea class="field" id="scriptField" maxlength="220">Hi, you've reached a call screened by BloqueaLlamadas. Please say your name and reason for calling after the tone.</textarea>
+            <div class="char-count"><span id="charCount">124</span>/220</div>
+
+            <button class="preview-btn"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play TTS preview</button>
+
+            <div class="danger-toggle-card">
+              <div class="dt-head">
+                <div>
+                  <p class="dt-title"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Record caller's message</p>
+                  <p>Off by default. Turning this on records audio after the greeting and adds a consent notice the caller hears — it can't be removed from the script.</p>
+                </div>
+                <div class="switch danger-on" id="recordToggle"><div class="knob"></div></div>
+              </div>
+            </div>
+
+            <div class="consent-box" id="consentBox">
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <p><b>Locked into the script:</b> "This call may be recorded. By continuing, you consent to being recorded." Callers always hear this before recording starts.</p>
+            </div>
+
+            <p class="field-label">Full preview</p>
+            <div class="preview-box" id="previewBox">
+              Hi, you've reached a call screened by BloqueaLlamadas. Please say your name and reason for calling after the tone. <span class="locked-line" id="lockedLine">This call may be recorded. By continuing, you consent to being recorded.</span>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="phone-block" style="justify-content:flex-start;padding-top:34px;">
+        <div class="phone-label">On iOS</div>
+        <div class="aside-card">
+          <div class="aside-kicker"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Not available on iOS</div>
+          <h4>iOS doesn't let apps answer calls</h4>
+          <p>Apple's CallKit doesn't allow any third-party app to pick up a call, play audio, or record on your behalf — so there's no auto-responder screen on iOS.</p>
+          <p>The closest built-in equivalent is Apple's own "Silence unknown callers," which BloqueaLlamadas can label numbers for but not replace.</p>
+          <div style="height:2px;"></div>
+          <p style="color:var(--text-muted);font-size:11px;">This is a platform limit, not a choice we made.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 7. SETTINGS ============ -->
+  <section id="settings" class="screen-section">
+    <div class="section-head">
+      <span class="step">7</span>
+      <div>
+        <h2>Settings root</h2>
+        <p>Grouped list of every configuration area, plus the "0 ads, 0 trackers, works offline" trust badge.</p>
+      </div>
+    </div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">Settings</div>
+        <div class="phone"><div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="app-bar"><h1>Settings</h1></div>
+          <div class="content">
+            <div class="privacy-badge"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg>0 ads · 0 trackers · works offline</div>
+
+            <div class="settings-group">
+              <p class="group-label">Blocking</p>
+              <div class="settings-list">
+                <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg></div><div class="sr-main"><p class="sr-title">Blocking rules</p><p class="sr-sub">Manual, allowlist, patterns, countries</p></div><div class="sr-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+                <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div><div class="sr-main"><p class="sr-title">Auto-responder</p><p class="sr-sub">Greeting script, TTS voice</p></div><div class="sr-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+                <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg></div><div class="sr-main"><p class="sr-title">Spam provider</p><p class="sr-sub">Checks numbers over network when on</p></div><span class="off-pill">OFF</span></div>
+                <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sr-main"><p class="sr-title">Quiet hours</p><p class="sr-sub">Silence all calls on a schedule</p></div><div class="sr-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <p class="group-label">Data</p>
+              <div class="settings-list">
+                <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="sr-main"><p class="sr-title">Backup & restore</p><p class="sr-sub">Export rules to a local file</p></div><div class="sr-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <p class="group-label">About</p>
+              <div class="settings-list">
+                <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="sr-main"><p class="sr-title">Privacy & about</p><p class="sr-sub">Source code, license, no data collection</p></div><div class="sr-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg>Log</div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+            <div class="nav-item active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 8. TABLET & LANDSCAPE ============ -->
+  <section id="adaptive" class="screen-section">
+    <div class="section-head">
+      <span class="step">8</span>
+      <div>
+        <h2>Tablet & landscape layouts</h2>
+        <p>Same Compose Multiplatform screens, reflowed at wider window sizes. Bottom navigation becomes a navigation rail once there's room for it, and list screens gain a persistent detail pane instead of a bottom sheet once there's room for two panes side by side.</p>
+      </div>
+    </div>
+
+    <div class="bp-grid">
+      <div class="bp-card">
+        <p class="bp-kicker">Compact · &lt;600dp wide</p>
+        <p class="bp-title">Phone, portrait</p>
+        <p class="bp-body">Bottom navigation bar, single pane, bottom sheets for detail. Covered in screens 1–7 above.</p>
+      </div>
+      <div class="bp-card">
+        <p class="bp-kicker">Medium · 600–839dp wide</p>
+        <p class="bp-title">Small tablet, or phone rotated</p>
+        <p class="bp-body">Navigation rail replaces the bottom bar. Still one pane — content just gets wider margins and denser grids.</p>
+      </div>
+      <div class="bp-card">
+        <p class="bp-kicker">Expanded · ≥840dp wide</p>
+        <p class="bp-title">Large tablet landscape</p>
+        <p class="bp-body">Navigation rail widens into a labeled drawer. List screens split into list + persistent detail pane.</p>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:28px;">Medium — phone, landscape</div>
+    <div class="phones-row">
+      <div class="phone-block">
+        <div class="phone-label">Home <span class="tag">~780×360</span></div>
+        <div class="adaptive-frame" style="width:780px;">
+          <div class="status-bar"><span>9:41</span><div class="icons">
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg>
+          </div></div>
+          <div class="adaptive-body" style="height:314px;">
+            <div class="nav-rail">
+              <div class="rail-item active"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Log</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+            </div>
+            <div class="adaptive-main">
+              <div class="content" style="display:flex;gap:18px;padding:14px 18px;">
+                <div style="flex:1;min-width:0;">
+                  <div class="master-toggle-card" style="padding:12px 14px;margin-bottom:10px;">
+                    <div class="card-row"><div><p class="master-toggle-title" style="font-size:13px;">Call blocking is on</p></div><div class="switch on"><div class="knob"></div></div></div>
+                  </div>
+                  <div class="stat-big" style="margin-bottom:8px;"><span class="num" style="font-size:26px;">12</span><span class="label">blocked today</span></div>
+                  <div class="card raised" style="padding:0 10px;margin:0;">
+                    <div class="list-row" style="padding:7px 2px;"><div class="avatar" style="width:26px;height:26px;"><svg viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title" style="font-size:12px;">+34 611 22 33 44</p><p class="row-sub">Spam list</p></div></div>
+                    <div class="list-row" style="padding:7px 2px;"><div class="avatar" style="width:26px;height:26px;"><svg viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title" style="font-size:12px;">Unknown number</p><p class="row-sub">Pattern rule</p></div></div>
+                  </div>
+                </div>
+                <div style="width:220px;flex:none;">
+                  <div class="quick-grid" style="gap:8px;">
+                    <div class="quick-item" style="padding:10px;gap:5px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg><div class="qi-title" style="font-size:11px;">Call log</div></div>
+                    <div class="quick-item" style="padding:10px;gap:5px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><div class="qi-title" style="font-size:11px;">Stats</div></div>
+                    <div class="quick-item" style="padding:10px;gap:5px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg><div class="qi-title" style="font-size:11px;">Block lists</div></div>
+                    <div class="quick-item" style="padding:10px;gap:5px;"><svg viewBox="0 0 24 24" style="width:15px;height:15px;"><circle cx="12" cy="12" r="3"/></svg><div class="qi-title" style="font-size:11px;">Settings</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text-secondary);max-width:780px;line-height:1.5;">Rotating the phone crosses into the medium width class, so the bottom bar becomes a rail and the dashboard splits into two columns to use the freed-up height.</p>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:12px;">Medium — small tablet, portrait</div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">Home <span class="tag">~700dp</span></div>
+        <div class="adaptive-frame" style="width:620px;">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="adaptive-body" style="height:780px;">
+            <div class="nav-rail">
+              <div class="rail-item active"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Log</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+            </div>
+            <div class="adaptive-main">
+              <div class="content">
+                <div class="master-toggle-card">
+                  <div class="card-row"><div><p class="master-toggle-title">Call blocking is on</p><p class="master-toggle-sub">Screening incoming calls</p></div><div class="switch on"><div class="knob"></div></div></div>
+                </div>
+                <div class="stat-big"><span class="num">12</span><span class="label">calls blocked today</span></div>
+                <div class="section-title">Recent blocked calls</div>
+                <div class="card raised" style="padding:0 12px;">
+                  <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title">+34 611 22 33 44</p><p class="row-sub">Spam list · Reported</p></div><div class="row-time">10:42</div></div>
+                  <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title">Unknown number</p><p class="row-sub">Pattern rule · No caller ID</p></div><div class="row-time">09:15</div></div>
+                  <div class="list-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="row-main"><p class="row-title">+212 5 22 30 xx xx</p><p class="row-sub">Country block · Morocco</p></div><div class="row-time">08:03</div></div>
+                </div>
+                <div class="section-title">Quick access</div>
+                <div class="quick-grid" style="grid-template-columns:repeat(4,1fr);">
+                  <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg><div class="qi-title">Call log</div></div>
+                  <div class="quick-item"><svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><div class="qi-title">Stats</div></div>
+                  <div class="quick-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg><div class="qi-title">Block lists</div></div>
+                  <div class="quick-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg><div class="qi-title">Settings</div></div>
+                </div>
+                <div class="footnote"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Open source · No ads · No trackers · Works offline</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Call log <span class="tag">~700dp</span></div>
+        <div class="adaptive-frame" style="width:620px;">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="adaptive-body" style="height:780px;">
+            <div class="nav-rail">
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div class="rail-item active"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Log</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Lists</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+            </div>
+            <div class="adaptive-main">
+              <div class="content">
+                <div class="card raised" style="padding:0 12px;">
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div><div class="log-meta"><p class="row-title">Mamá</p><p class="row-sub">Today · 11:02</p></div><div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="log-meta"><p class="row-title">+34 611 22 33 44</p><p class="log-rule">Spam list · Reported</p></div><div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">10:42</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div><div class="log-meta"><p class="row-title">Farmacia Rosales</p><p class="row-sub">Today · 09:30</p></div><div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="log-meta"><p class="row-title">Unknown number</p><p class="log-rule">Pattern rule · No caller ID</p></div><div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">09:15</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="log-meta"><p class="row-title">+212 5 22 30 xx xx</p><p class="log-rule">Country block · Morocco</p></div><div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">08:03</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div><div class="log-meta"><p class="row-title">Ana (móvil)</p><p class="row-sub">Yesterday · 19:20</p></div><div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text-secondary);max-width:620px;line-height:1.5;">Still one pane at this width — there isn't quite room for a docked detail pane without cramping the list, so tapping a blocked row still opens a sheet.</p>
+      </div>
+
+    </div>
+
+    <div class="section-title" style="margin-top:12px;">Expanded — large tablet, landscape</div>
+    <div class="phones-row">
+
+      <div class="phone-block">
+        <div class="phone-label">Call log — list + detail pane <span class="tag">~1040×640</span></div>
+        <div class="adaptive-frame" style="width:1040px;">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="adaptive-body" style="height:600px;">
+            <div class="nav-rail wide">
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div class="rail-item active"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Call log</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Block lists</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+            </div>
+            <div class="adaptive-main">
+              <div class="app-bar"><h1>Call log</h1></div>
+              <div style="display:flex;flex:1;overflow:hidden;">
+                <div class="list-pane">
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div><div class="log-meta"><p class="row-title">Mamá</p><p class="row-sub">Today · 11:02</p></div><div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+                  <div class="log-row active"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="log-meta"><p class="row-title">+34 611 22 33 44</p><p class="log-rule">Spam list · Reported</p></div><div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">10:42</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2.2Z"/></svg></div><div class="log-meta"><p class="row-title">Farmacia Rosales</p><p class="row-sub">Today · 09:30</p></div><div class="log-right"><span class="badge badge-allowed">Allowed</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="log-meta"><p class="row-title">Unknown number</p><p class="log-rule">Pattern rule · No caller ID</p></div><div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">09:15</span></div></div>
+                  <div class="log-row"><div class="avatar"><svg viewBox="0 0 24 24"><path d="m10.7 3.4 1 2.7a2 2 0 0 1-.4 2l-1.4 1.4a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2-.4l2.7 1a2 2 0 0 1 1.3 2.1l-.4 2.4a2 2 0 0 1-2 1.7C11.6 20.5 3.5 12.4 3.1 3a2 2 0 0 1 1.7-2l2.4-.4a2 2 0 0 1 2.1 1.3Z"/><line x1="22" y1="2" x2="2" y2="22"/></svg></div><div class="log-meta"><p class="row-title">+212 5 22 30 xx xx</p><p class="log-rule">Country block · Morocco</p></div><div class="log-right"><span class="badge badge-blocked">Blocked</span><span class="row-time">08:03</span></div></div>
+                </div>
+                <div class="detail-pane">
+                  <p class="detail-kicker">Blocked call</p>
+                  <p class="detail-title">+34 611 22 33 44</p>
+                  <div class="rule-detail-row"><span>Blocked by</span><span>Spam list</span></div>
+                  <div class="rule-detail-row"><span>Rule</span><span>Community-reported spam</span></div>
+                  <div class="rule-detail-row"><span>Source</span><span>Open spam provider (opt-in)</span></div>
+                  <div class="rule-detail-row"><span>Matched</span><span>Exact number</span></div>
+                  <div class="rule-detail-row"><span>First blocked</span><span>3 days ago</span></div>
+                  <div style="height:18px;"></div>
+                  <div style="display:flex;gap:10px;max-width:340px;">
+                    <button class="btn btn-secondary">Allow this number</button>
+                    <button class="btn btn-ghost">Report as not spam</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text-secondary);max-width:1040px;line-height:1.5;">Two panes fit comfortably, so the rule detail stays docked on the right instead of covering the list with a sheet — selecting another row just swaps this pane's content.</p>
+      </div>
+
+      <div class="phone-block">
+        <div class="phone-label">Settings — list + detail pane <span class="tag">~1040×640</span></div>
+        <div class="adaptive-frame" style="width:1040px;">
+          <div class="status-bar"><span>9:41</span><div class="icons"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><rect x="21" y="10" width="1.5" height="4"/></svg></div></div>
+          <div class="adaptive-body" style="height:600px;">
+            <div class="nav-rail wide">
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Call log</div>
+              <div class="rail-item"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg>Block lists</div>
+              <div class="rail-item active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></svg>Settings</div>
+            </div>
+            <div class="adaptive-main">
+              <div class="app-bar"><h1>Settings</h1></div>
+              <div style="display:flex;flex:1;overflow:hidden;">
+                <div class="list-pane">
+                  <div class="settings-group" style="margin-bottom:10px;">
+                    <p class="group-label">Blocking</p>
+                    <div class="settings-list">
+                      <div class="settings-row active"><div class="si"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5z"/></svg></div><div class="sr-main"><p class="sr-title">Blocking rules</p></div></div>
+                      <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div><div class="sr-main"><p class="sr-title">Auto-responder</p></div></div>
+                      <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="sr-main"><p class="sr-title">Quiet hours</p></div></div>
+                    </div>
+                  </div>
+                  <div class="settings-group">
+                    <p class="group-label">About</p>
+                    <div class="settings-list">
+                      <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="sr-main"><p class="sr-title">Backup & restore</p></div></div>
+                      <div class="settings-row"><div class="si"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="sr-main"><p class="sr-title">Privacy & about</p></div></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-pane">
+                  <p class="detail-kicker">Settings</p>
+                  <p class="detail-title">Blocking rules</p>
+                  <div class="settings-list" style="margin-bottom:14px;">
+                    <div class="settings-row"><div class="sr-main"><p class="sr-title">Spam provider</p><p class="sr-sub">Checks numbers over network when on</p></div><span class="off-pill">OFF</span></div>
+                    <div class="settings-row"><div class="sr-main"><p class="sr-title">Pattern matching</p><p class="sr-sub">5 rules active</p></div><div class="switch on"><div class="knob"></div></div></div>
+                    <div class="settings-row"><div class="sr-main"><p class="sr-title">Country blocking</p><p class="sr-sub">2 countries blocked</p></div><div class="switch on"><div class="knob"></div></div></div>
+                  </div>
+                  <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.6;max-width:420px;">Rules are checked in this order: Allowlist first, then Manual, Patterns, and Countries. The first match decides the outcome.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<script>
+  var themeToggle = document.getElementById('themeToggle');
+  var themeIcon = document.getElementById('themeIcon');
+  var themeLabel = document.getElementById('themeLabel');
+  var sunPath = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.2" y1="4.2" x2="5.6" y2="5.6"/><line x1="18.4" y1="18.4" x2="19.8" y2="19.8"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.2" y1="19.8" x2="5.6" y2="18.4"/><line x1="18.4" y1="5.6" x2="19.8" y2="4.2"/>';
+  var moonPath = '<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>';
+  themeToggle.addEventListener('click', function(){
+    var root = document.documentElement;
+    var isDark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    themeIcon.innerHTML = isDark ? moonPath : sunPath;
+    themeLabel.textContent = isDark ? 'Dark mode' : 'Light mode';
+  });
+
+  var scriptField = document.getElementById('scriptField');
+  var charCount = document.getElementById('charCount');
+  function updateCount(){ charCount.textContent = scriptField.value.length; }
+  scriptField.addEventListener('input', updateCount);
+  updateCount();
+
+  var recordToggle = document.getElementById('recordToggle');
+  var consentBox = document.getElementById('consentBox');
+  var lockedLine = document.getElementById('lockedLine');
+  var recordOn = true;
+  function applyRecordState(){
+    recordToggle.classList.toggle('danger-on', recordOn);
+    consentBox.style.display = recordOn ? 'flex' : 'none';
+    lockedLine.style.display = recordOn ? 'inline' : 'none';
+  }
+  recordToggle.addEventListener('click', function(){
+    recordOn = !recordOn;
+    applyRecordState();
+  });
+  applyRecordState();
+</script>
+
+</body>
+</html>
