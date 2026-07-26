@@ -40,6 +40,24 @@ Tasks within a milestone are independent enough to hand to different agents/mode
 
 ---
 
+## M1.5 — Codebase hygiene: KMP architecture, DI, testing, comment noise
+
+**Goal:** pay down the technical debt M0/M1 accumulated while the surface area is still small, and lock in conventions before M2 adds repositories/resolvers/more screens on top. No user-visible behavior change — this milestone touches structure, not features. Audited 2026-07-26 against KMP architecture/DI/testing idiom and general software practice; findings below are concrete, not speculative.
+
+**Acceptance test:** `./gradlew ktlintCheck` (or detekt, whichever is chosen) passes clean; `DriverFactory` no longer triggers the `expect class ... Beta` compiler warning; `MainActivity` resolves `DialerOnboardingViewModel`/`DefaultDialerGateway` via DI instead of constructing them inline; new Compose UI tests (Robolectric-based, run on the JVM via `:shared:testDebugUnitTest` — no emulator needed) cover the NOT_REQUESTED/REQUESTING/DENIED/GRANTED-or-ALREADY_DEFAULT states of the onboarding screen, closing the gap against M1's own acceptance test ("UI tests covering grant/deny/already-granted states"), which was only ever verified manually on-device; onboarding UI strings live in Compose Multiplatform string resources, not literal Kotlin strings; comment-to-code ratio in `PassthroughInCallService.kt`/`InCallActivity.kt`/`InCallState.kt`/`OnboardingScreens.kt` drops to WHY-only comments (no restated-code comments, matching the project's own stated comment policy).
+
+| Task | Agent | Model |
+|---|---|---|
+| Adopt Koin (KMP-native DI) — define an onboarding module (gateway + view-model), wire into `MainActivity`/an `Application` class instead of inline construction. *Recommended over manual DI given M2 is about to add repositories/resolvers/multiple screens; flag to the user if a different choice is preferred before implementing.* | general-purpose | sonnet |
+| Replace `expect class DriverFactory` with an `expect fun` factory returning a plain interface (drops the Beta expect/actual-class gate, standard KMP idiom) | general-purpose | sonnet |
+| Add Robolectric + Compose UI test infra to `shared`; write the onboarding UI tests described in the acceptance test above | general-purpose | sonnet |
+| Add ktlint or detekt, wire into CI, fix whatever the initial baseline run flags | general-purpose | sonnet |
+| Comment-noise pass across M0/M1 files: strip comments that restate code or repeat what's already in README/commit history; keep only non-obvious WHY comments | general-purpose | haiku |
+| Extract hardcoded onboarding UI strings (`OnboardingScreens.kt`, `CallScreen.kt`) into Compose Multiplatform string resources | cavecrew-builder | haiku |
+| Document the resulting conventions in `docs/SPEC.md` (feature-based package structure, interface-in-commonMain + actual-in-platform pattern, prefer hand-written fakes over mocking frameworks in commonTest since MockK etc. aren't multiplatform) | cavecrew-builder | haiku |
+
+---
+
 ## M2 — Manual number blocking + rules precedence + call log
 
 **Goal:** first real blocking feature end-to-end, and the precedence engine every later milestone builds on.
@@ -182,4 +200,4 @@ Process milestone, mostly non-code — track as deliverables, not features.
 
 ## Suggested execution order
 
-M0 → M1 → M2 are strictly sequential (each is the foundation for the next). From M3 onward, M3/M4/M7 can run in parallel (independent of each other, all depend only on M2's resolver). M5 and M6 both depend on M1's `ConnectionService` and M2's resolver but not on M3/M4, so they can also run in parallel with those. M8–M11 are backlog, no hard ordering, pull opportunistically.
+M0 → M1 → M1.5 → M2 are strictly sequential (each is the foundation for the next). M1.5 changes no runtime behavior, so it's low-risk to slot in, but do it before M2 — M2 is exactly where the DI/testing conventions it establishes start paying off (repositories, resolver, more screens). From M3 onward, M3/M4/M7 can run in parallel (independent of each other, all depend only on M2's resolver). M5 and M6 both depend on M1's `InCallService` and M2's resolver but not on M3/M4, so they can also run in parallel with those. M8–M11 are backlog, no hard ordering, pull opportunistically.
