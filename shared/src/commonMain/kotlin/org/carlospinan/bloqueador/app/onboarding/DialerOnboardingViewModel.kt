@@ -14,13 +14,12 @@ import kotlinx.coroutines.flow.asStateFlow
 class DialerOnboardingViewModel(
     private val gateway: DefaultDialerGateway,
 ) : ViewModel() {
-
-    private val _state = MutableStateFlow(
-        if (gateway.isDefaultDialer()) DialerOnboardingState.ALREADY_DEFAULT else DialerOnboardingState.NOT_REQUESTED,
-    )
+    private val _state =
+        MutableStateFlow(
+            if (gateway.isDefaultDialer()) DialerOnboardingState.ALREADY_DEFAULT else DialerOnboardingState.NOT_REQUESTED,
+        )
     val state: StateFlow<DialerOnboardingState> = _state.asStateFlow()
 
-    /** User tapped "Continue" (or "Try again"); UI is about to launch the OS intent. */
     fun onRequestStarted() {
         when (_state.value) {
             DialerOnboardingState.NOT_REQUESTED, DialerOnboardingState.DENIED ->
@@ -32,7 +31,6 @@ class DialerOnboardingViewModel(
         }
     }
 
-    /** The OS role/dialer-change intent returned a result. */
     fun onRequestResult(granted: Boolean) {
         check(_state.value == DialerOnboardingState.REQUESTING) {
             "onRequestResult received outside REQUESTING (was ${_state.value})"

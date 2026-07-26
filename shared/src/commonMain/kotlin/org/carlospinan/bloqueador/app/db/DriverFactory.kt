@@ -2,10 +2,8 @@ package org.carlospinan.bloqueador.app.db
 
 import app.cash.sqldelight.db.SqlDriver
 
-expect class DriverFactory {
+interface DriverFactory {
     fun createDriver(): SqlDriver
 }
 
-fun createDatabase(driverFactory: DriverFactory): AppDatabase {
-    return AppDatabase(driverFactory.createDriver())
-}
+fun createDatabase(driverFactory: DriverFactory): AppDatabase = AppDatabase(driverFactory.createDriver())

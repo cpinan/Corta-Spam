@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +32,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import bloqueallamadas.shared.generated.resources.Res
+import bloqueallamadas.shared.generated.resources.action_continue
+import bloqueallamadas.shared.generated.resources.action_continue_without_default
+import bloqueallamadas.shared.generated.resources.action_not_now
+import bloqueallamadas.shared.generated.resources.action_try_again
+import bloqueallamadas.shared.generated.resources.onboarding_denied_body
+import bloqueallamadas.shared.generated.resources.onboarding_denied_title
+import bloqueallamadas.shared.generated.resources.onboarding_dialer_icon
+import bloqueallamadas.shared.generated.resources.onboarding_never_do_ads
+import bloqueallamadas.shared.generated.resources.onboarding_never_do_header
+import bloqueallamadas.shared.generated.resources.onboarding_never_do_record
+import bloqueallamadas.shared.generated.resources.onboarding_never_do_send_data
+import bloqueallamadas.shared.generated.resources.onboarding_open_source
+import bloqueallamadas.shared.generated.resources.onboarding_reason_autoresponder_body
+import bloqueallamadas.shared.generated.resources.onboarding_reason_autoresponder_title
+import bloqueallamadas.shared.generated.resources.onboarding_reason_revert_body
+import bloqueallamadas.shared.generated.resources.onboarding_reason_screen_body
+import bloqueallamadas.shared.generated.resources.onboarding_reason_screen_title
+import bloqueallamadas.shared.generated.resources.onboarding_requesting_indicator
+import bloqueallamadas.shared.generated.resources.onboarding_subtitle
+import bloqueallamadas.shared.generated.resources.onboarding_title
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Top-level Android default-dialer onboarding flow. Renders [content] once the
@@ -49,9 +72,10 @@ fun DialerOnboardingScreen(
     val state by viewModel.state.collectAsState()
     var skipped by remember { mutableStateOf(false) }
 
-    val isPastOnboarding = skipped ||
-        state == DialerOnboardingState.GRANTED ||
-        state == DialerOnboardingState.ALREADY_DEFAULT
+    val isPastOnboarding =
+        skipped ||
+            state == DialerOnboardingState.GRANTED ||
+            state == DialerOnboardingState.ALREADY_DEFAULT
 
     if (isPastOnboarding) {
         content()
@@ -63,21 +87,23 @@ fun DialerOnboardingScreen(
             when (state) {
                 DialerOnboardingState.REQUESTING -> RequestingIndicatorScreen()
 
-                DialerOnboardingState.DENIED -> DeniedScreen(
-                    onRetry = {
-                        viewModel.onRequestStarted()
-                        onRequestRole()
-                    },
-                    onContinueWithoutDefault = { skipped = true },
-                )
+                DialerOnboardingState.DENIED ->
+                    DeniedScreen(
+                        onRetry = {
+                            viewModel.onRequestStarted()
+                            onRequestRole()
+                        },
+                        onContinueWithoutDefault = { skipped = true },
+                    )
 
-                DialerOnboardingState.NOT_REQUESTED -> PermissionExplainerScreen(
-                    onContinue = {
-                        viewModel.onRequestStarted()
-                        onRequestRole()
-                    },
-                    onNotNow = { skipped = true },
-                )
+                DialerOnboardingState.NOT_REQUESTED ->
+                    PermissionExplainerScreen(
+                        onContinue = {
+                            viewModel.onRequestStarted()
+                            onRequestRole()
+                        },
+                        onNotNow = { skipped = true },
+                    )
 
                 DialerOnboardingState.GRANTED, DialerOnboardingState.ALREADY_DEFAULT -> Unit
             }
@@ -91,10 +117,12 @@ fun PermissionExplainerScreen(
     onNotNow: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp)
-            .padding(top = 28.dp, bottom = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = 20.dp)
+                .padding(top = 28.dp, bottom = 16.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -103,15 +131,14 @@ fun PermissionExplainerScreen(
             IconCircle()
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "We need to become your default phone app",
+                text = stringResource(Res.string.onboarding_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This is the only way Android lets an app see who's calling before " +
-                    "you answer, and speak a greeting to callers you haven't approved yet.",
+                text = stringResource(Res.string.onboarding_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -121,16 +148,16 @@ fun PermissionExplainerScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         ReasonRow(
-            title = "Screen calls silently.",
-            body = "We check the number against your rules before your phone ever rings.",
+            title = stringResource(Res.string.onboarding_reason_screen_title),
+            body = stringResource(Res.string.onboarding_reason_screen_body),
         )
         ReasonRow(
-            title = "Power the optional auto-responder.",
-            body = "Only used if you turn it on yourself in Settings.",
+            title = stringResource(Res.string.onboarding_reason_autoresponder_title),
+            body = stringResource(Res.string.onboarding_reason_autoresponder_body),
         )
         ReasonRow(
             title = null,
-            body = "You can switch back to your phone's original dialer at any time in Android Settings.",
+            body = stringResource(Res.string.onboarding_reason_revert_body),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -140,11 +167,11 @@ fun PermissionExplainerScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
-            Text("Continue")
+            Text(stringResource(Res.string.action_continue))
         }
         Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = onNotNow, modifier = Modifier.fillMaxWidth()) {
-            Text("Not now")
+            Text(stringResource(Res.string.action_not_now))
         }
     }
 }
@@ -152,23 +179,28 @@ fun PermissionExplainerScreen(
 @Composable
 private fun IconCircle() {
     Box(
-        modifier = Modifier
-            .size(56.dp)
-            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+        modifier =
+            Modifier
+                .size(56.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        Text("☎", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(Res.string.onboarding_dialer_icon), style = MaterialTheme.typography.titleLarge)
     }
 }
 
 @Composable
-private fun ReasonRow(title: String?, body: String) {
+private fun ReasonRow(
+    title: String?,
+    body: String,
+) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Box(
-            modifier = Modifier
-                .padding(top = 4.dp, end = 10.dp)
-                .size(6.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape),
+            modifier =
+                Modifier
+                    .padding(top = 4.dp, end = 10.dp)
+                    .size(6.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape),
         )
         Column {
             if (title != null) {
@@ -188,15 +220,15 @@ private fun NeverDoBox() {
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                text = "WHAT WE WILL NEVER DO",
+                text = stringResource(Res.string.onboarding_never_do_header),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
             )
             Spacer(modifier = Modifier.height(8.dp))
             listOf(
-                "Record any call unless you separately turn that on, per call type.",
-                "Send your call data, contacts, or numbers off this device.",
-                "Show ads or share information with third parties.",
+                stringResource(Res.string.onboarding_never_do_record),
+                stringResource(Res.string.onboarding_never_do_send_data),
+                stringResource(Res.string.onboarding_never_do_ads),
             ).forEach { line ->
                 Text(
                     text = "✓  $line",
@@ -206,7 +238,7 @@ private fun NeverDoBox() {
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "This app is open source — view the code",
+                text = stringResource(Res.string.onboarding_open_source),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -217,14 +249,14 @@ private fun NeverDoBox() {
 @Composable
 fun RequestingIndicatorScreen() {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         CircularProgressIndicator()
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Waiting for the system dialog…",
+            text = stringResource(Res.string.onboarding_requesting_indicator),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
         )
@@ -237,31 +269,30 @@ fun DeniedScreen(
     onContinueWithoutDefault: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Not set as your default phone app",
+            text = stringResource(Res.string.onboarding_denied_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Without this, call screening and the auto-responder can't run. " +
-                "You can turn it on later from Settings.",
+            text = stringResource(Res.string.onboarding_denied_body),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(20.dp))
         Button(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
-            Text("Try again")
+            Text(stringResource(Res.string.action_try_again))
         }
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedButton(onClick = onContinueWithoutDefault, modifier = Modifier.fillMaxWidth()) {
-            Text("Continue without it")
+            Text(stringResource(Res.string.action_continue_without_default))
         }
     }
 }

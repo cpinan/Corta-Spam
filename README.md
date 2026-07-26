@@ -6,7 +6,7 @@ Open-source call-blocking app for Android + iOS. TrueCaller-style blocking capab
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown, each independently testable, with tasks tagged for agent/model assignment.
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — screen map, navigation graph, and a ready-to-use design prompt for Claude.
 
-Status: M0 (repo & KMM scaffold) and M1 (Android default-dialer foundation) done and verified on-device. Next up is M2 in `docs/MILESTONES.md`.
+Status: M0 (repo & KMM scaffold), M1 (Android default-dialer foundation), and M1.5 (codebase hygiene) done. Next up is M2 in `docs/MILESTONES.md`.
 
 ## Project layout
 
@@ -18,6 +18,62 @@ docs/         Spec, milestones, navigation, manual QA scripts
 ```
 
 ## Progress log
+
+### M1.5 — Codebase hygiene pass (2026-07-26)
+
+Goal: pay down the DI/testing/lint debt M0/M1 accumulated before M2 adds
+repositories, resolvers, and more screens on top. No user-visible behavior
+change.
+
+- **Koin adopted for dependency injection**, replacing manual construction.
+  `initKoin()` lives in commonMain; each platform declares its own bindings
+  via `expect fun platformModule(): Module`. Android's `BloqueaLlamadasApp`
+  calls `initKoin { androidLogger(); androidContext(this) }` from
+  `Application.onCreate()`; `MainActivity` resolves its view model via
+  `by inject()` instead of constructing it inline.
+- **`DriverFactory` expect/actual-class dropped**, which was triggering
+  Kotlin's Beta `-Xexpect-actual-classes` compiler warning. Now a plain
+  commonMain `interface` with `AndroidDriverFactory`/`IosDriverFactory`
+  concrete classes bound per-platform through Koin instead.
+- **Robolectric + Compose UI tests added** for the onboarding screen
+  (`DialerOnboardingScreenTest`, 5 cases: NOT_REQUESTED/REQUESTING/DENIED/
+  GRANTED/ALREADY_DEFAULT), running on the JVM via
+  `:shared:testDebugUnitTest` — no emulator needed.
+- **Onboarding + call-screen strings extracted** into Compose Multiplatform
+  string resources (`shared/src/commonMain/composeResources/values/strings.xml`).
+- **ktlint adopted**, wired into CI as its own job, baseline violations
+  fixed across all existing source.
+- **Conventions documented** in `docs/SPEC.md` §6 (package structure, the
+  interface-over-expect/actual pattern, Koin usage, string resources,
+  hand-written test fakes, ktlint/EditorConfig setup) so M2 follows the
+  same patterns.
+- **Verified on-device**, not just via a green build: installed and drove
+  the onboarding flow after both the Koin refactor and the string
+  extraction, confirming the UI is pixel-identical to before.
+- **Edge-to-edge insets fix**, found while testing on a second physical
+  device: nothing in the codebase applied `WindowInsets` anywhere, so every
+  screen only avoided the status bar / navigation bar by the coincidence of
+  its own fixed padding — not guaranteed on a device with a taller status
+  bar, a cutout, or 3-button vs. gesture nav. Added `enableEdgeToEdge()` in
+  `MainActivity`/`InCallActivity` and `Modifier.safeDrawingPadding()` on
+  every top-level screen's content Column (`App`, all three onboarding
+  states, `CallScreen`). Verified fixed on a real motorola razr 50 ultra
+  (3-button nav) in addition to the Pixel. Also added a standing
+  edge-to-edge on-device check to `docs/MILESTONES.md` for future
+  Android-UI milestones.
+- Two build/tooling issues hit and fixed along the way, worth knowing about
+  if you touch these areas again:
+  1. `koin-android:4.2.0` transitively pulls `androidx.activity-ktx:1.12.4`,
+     which needs AGP 8.9.1+ (project is on 8.7.3, deliberately not bumped —
+     too large a migration for this pass). Fixed with a project-wide
+     `resolutionStrategy.force(...)` pinning the `androidx.activity` family
+     back to 1.9.3.
+  2. ktlint-gradle's own `filter { exclude(...) }` (and even task-level
+     `SourceTask.exclude(...)`) does not reliably keep it off KMP-generated
+     source dirs (SQLDelight, Compose resources). What actually works is an
+     `.editorconfig` rule (`[**/build/**]` → `ktlint_standard = disabled`),
+     since ktlint applies EditorConfig per-file inside its own engine
+     regardless of how Gradle collected the file list.
 
 ### M1 — Android default-dialer foundation (2026-07-26)
 

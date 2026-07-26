@@ -2,6 +2,8 @@
 
 Read `SPEC.md` first, especially §1 (platform capability matrix) — it explains why several milestones below are Android-only. Every milestone must end in a state where the app **builds and the new behavior is demonstrably working**, not just "code written." Each milestone lists its acceptance test.
 
+**Standing on-device check, every milestone that touches Android UI:** verify edge-to-edge layout — status bar and navigation bar insets specifically. `targetSdk` 36 enforces edge-to-edge (an app can no longer opt out), so content can draw underneath the status bar or nav bar if `WindowInsets` padding isn't applied where it needs to be. Check on-device, not just in a build: confirm top content (titles, app bars) isn't obscured by the status bar, and bottom content (buttons, bottom sheets) isn't obscured by the navigation bar — on both a 3-button-nav device and a gesture-nav device if both are available, since the nav bar's inset size differs between the two.
+
 Task tags:
 - **Agent** — which subagent type fits the task shape (see system's available agent list).
 - **Model** — cost/capability tier suggested: `haiku` (mechanical, low ambiguity), `sonnet` (standard feature work), `opus` (architecture decisions, ambiguous tradeoffs, cross-cutting design).

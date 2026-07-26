@@ -1,0 +1,11 @@
+root = true
+
+[*.{kt,kts}]
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Generated code (SQLDelight, Compose Multiplatform resources) lands under build/
+# and gets swept into ktlint-gradle's per-source-set KMP tasks regardless of the
+# plugin's own `filter { exclude(...) }` config -- disabling rules here is the
+# reliable fix, since ktlint applies EditorConfig per-file inside its own engine.
+[**/build/**]
+ktlint_standard = disabled

@@ -4,12 +4,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-private class FakeGateway(var isDefault: Boolean) : DefaultDialerGateway {
+private class FakeGateway(
+    var isDefault: Boolean,
+) : DefaultDialerGateway {
     override fun isDefaultDialer(): Boolean = isDefault
 }
 
 class DialerOnboardingViewModelTest {
-
     @Test
     fun startsNotRequestedWhenNotDefault() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false))

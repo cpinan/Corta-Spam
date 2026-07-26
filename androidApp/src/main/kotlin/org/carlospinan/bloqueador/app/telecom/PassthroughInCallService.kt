@@ -22,7 +22,6 @@ import android.telecom.InCallService
  * themselves.
  */
 class PassthroughInCallService : InCallService() {
-
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
         InCallState.attach(call)

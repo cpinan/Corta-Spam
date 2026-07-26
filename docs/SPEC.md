@@ -71,3 +71,176 @@ Beyond the 9 requested features, an app doing what TrueCaller does needs these t
 | 9. No ads | Design constraint — no ad SDK dependency is ever added, enforced by not adding the dependency |
 
 See `MILESTONES.md` for the actionable, agent-assignable breakdown, and `NAVIGATION.md` for the screen map and Claude design prompt.
+
+## 6. Conventions locked in at M1.5 (codebase hygiene)
+
+Milestone 1.5 was a codebase hygiene pass to establish shared patterns before M2 (repositories/resolvers/more screens) expands the codebase. All new feature work from M2 onward must follow these conventions.
+
+### 6.1 Package structure: feature-based, not layer-based
+
+Packages are organized by feature (`onboarding/`, `call/`, `telecom/`, `db/`, `di/`, etc.), not by architectural layer. Each feature package holds whatever mix of UI, state, domain, and platform code that feature requires.
+
+```
+shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/
+  onboarding/
+    OnboardingScreens.kt         (Compose UI: explainer/denied/requesting screens)
+    DialerOnboardingViewModel.kt (state)
+    DialerOnboardingState.kt     (enum)
+    DefaultDialerGateway.kt      (interface)
+  call/
+    CallScreen.kt                (Compose UI; commonMain even though Android-only for now)
+  db/
+    DriverFactory.kt             (interface; SQLDelight schema/queries are generated, not hand-authored)
+  di/
+    KoinInit.kt
+    PlatformModule.kt
+```
+
+The androidApp module mirrors this by feature too: `telecom/` holds `PassthroughInCallService.kt`, `InCallActivity.kt`, `InCallState.kt` (the platform-specific half of the `call` feature).
+
+Avoid global buckets like `ui/`, `data/`, `viewmodel/`, or `presentation/`. This keeps feature-specific concerns colocated and makes it easier to navigate the codebase without context-switching across layers.
+
+### 6.2 Platform abstraction: interfaces, not expect/actual classes
+
+Define a plain Kotlin `interface` in `commonMain` for any logic that needs platform-specific implementations:
+
+```kotlin
+// shared/src/commonMain/kotlin/.../db/DriverFactory.kt
+interface DriverFactory {
+  fun createDriver(): SqlDriver
+}
+```
+
+Each platform implements the interface as a concrete class in its source set:
+
+```kotlin
+// shared/src/androidMain/kotlin/.../db/AndroidDriverFactory.kt
+class AndroidDriverFactory(private val context: Context) : DriverFactory {
+  override fun createDriver(): SqlDriver = /* Android impl */
+}
+
+// shared/src/iosMain/kotlin/.../db/IosDriverFactory.kt
+class IosDriverFactory : DriverFactory {
+  override fun createDriver(): SqlDriver = /* iOS impl */
+}
+```
+
+Do not use `expect class`/`actual class`. The expect/actual mechanism triggers Kotlin's Beta `-Xexpect-actual-classes` compiler warning, and Android implementations often require a constructor parameter (e.g., `android.content.Context`) that `expect`/`actual` cannot cleanly vary across platforms. Instead, let Koin (see 6.3) construct and bind the concrete implementation to the interface.
+
+### 6.3 Dependency injection: Koin
+
+Use Koin (`io.insert-koin:koin-core` in `commonMain`, `koin-android` in `androidMain`) for all dependency resolution.
+
+**Common setup:**
+
+```kotlin
+// shared/src/commonMain/kotlin/.../di/KoinInit.kt
+fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
+  startKoin {
+    appDeclaration()
+    modules(platformModule())
+  }
+}
+```
+
+**Platform module declaration:**
+
+```kotlin
+// shared/src/commonMain/kotlin/.../di/PlatformModule.kt
+expect fun platformModule(): Module
+
+// shared/src/androidMain/kotlin/.../di/PlatformModule.android.kt
+actual fun platformModule(): Module = module {
+  single<DriverFactory> { AndroidDriverFactory(androidContext()) }
+  single<DefaultDialerGateway> { AndroidDefaultDialerGateway(androidContext()) }
+  factory { DialerOnboardingViewModel(get()) }
+}
+
+// shared/src/iosMain/kotlin/.../di/PlatformModule.ios.kt
+actual fun platformModule(): Module = module {
+  single<DriverFactory> { IosDriverFactory() }
+}
+```
+
+Note iOS's module only binds `DriverFactory` — default-dialer onboarding (`DefaultDialerGateway`, `DialerOnboardingViewModel`) is Android-only (§1), so iOS has no gateway implementation and doesn't need one. Bind interface types explicitly (`single<DriverFactory> { ... }`, not bare `single { ... }`) so Koin resolves by the interface, not the concrete class.
+
+**Android entry point:**
+
+```kotlin
+// androidApp/src/main/kotlin/.../BloqueaLlamadasApp.kt
+class BloqueaLlamadasApp : Application() {
+  override fun onCreate() {
+    super.onCreate()
+    initKoin {
+      androidLogger()
+      androidContext(this@BloqueaLlamadasApp)
+    }
+  }
+}
+
+// androidApp/.../MainActivity.kt
+class MainActivity : ComponentActivity() {
+  private val viewModel: DialerOnboardingViewModel by inject()
+  // ...
+}
+```
+
+Resolve dependencies via Koin's `by inject()` property delegate, not manual constructor wiring.
+
+### 6.4 UI strings: no hardcoded literals
+
+All UI text must live in Compose Multiplatform string resources at `shared/src/commonMain/composeResources/values/strings.xml`, never hardcoded in Composables:
+
+```xml
+<!-- shared/src/commonMain/composeResources/values/strings.xml -->
+<string name="onboarding_title">We need to become your default phone app</string>
+<string name="action_continue">Continue</string>
+```
+
+```kotlin
+@Composable
+fun PermissionExplainerScreen(onContinue: () -> Unit, onNotNow: () -> Unit) {
+  Column {
+    Text(stringResource(Res.string.onboarding_title))
+    Button(onClick = onContinue) { Text(stringResource(Res.string.action_continue)) }
+  }
+}
+```
+
+**Important:** Apostrophes in string content do not need backslash-escaping in Compose Multiplatform resource files — unlike Android's classic aapt, CMP's parser renders a literal backslash if you escape. Write `don't` directly, not `don\'t`.
+
+### 6.5 Testing: hand-written fakes, no mocking libraries
+
+Implement test doubles as hand-written fake classes in both `commonTest` and `androidUnitTest`, not via mocking frameworks like MockK (not Kotlin-Multiplatform-safe).
+
+```kotlin
+// shared/src/commonTest/kotlin/.../onboarding/DialerOnboardingViewModelTest.kt
+private class FakeGateway(var isDefault: Boolean) : DefaultDialerGateway {
+  override fun isDefaultDialer(): Boolean = isDefault
+}
+
+@Test
+fun grantedResultMovesToGranted() {
+  val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false))
+  viewModel.onRequestStarted()
+  viewModel.onRequestResult(granted = true)
+  assertEquals(DialerOnboardingState.GRANTED, viewModel.state.value)
+}
+```
+
+**Naming gotcha:** `androidUnitTest` compiles together with `commonTest` (they share a compilation unit), so a private top-level class with the same simple name in both — e.g. two files each declaring `private class FakeGateway` — fails with a JVM "Redeclaration" error, since top-level `private` in Kotlin restricts *visibility*, not the class's binary name. Give the `androidUnitTest`-side fake a distinct name (this project uses `FakeScreenTestGateway` in `DialerOnboardingScreenTest.kt`).
+
+**Android Compose UI tests** that require rendering and visibility assertions (e.g., full onboarding screen flow) live in `shared/src/androidUnitTest` and use Robolectric + `androidx.compose.ui.test.junit4.createComposeRule()` with `@RunWith(AndroidJUnit4::class)` and `@GraphicsMode(GraphicsMode.Mode.NATIVE)`. Run via `./gradlew :shared:testDebugUnitTest` (no emulator needed).
+
+### 6.6 Lint: ktlint with EditorConfig
+
+**Gradle:** Use the `org.jlleitschuh.gradle.ktlint` plugin. Run via `./gradlew ktlintCheck` (check) or `./gradlew ktlintFormat` (auto-fix). Wire into CI.
+
+**EditorConfig (.editorconfig):** Set `ktlint_function_naming_ignore_when_annotated_with = Composable` so Compose's PascalCase function names (a deliberate exception to camelCase) are not flagged. Disable standard rules for build-generated directories since ktlint-gradle's per-source-set excludes don't reliably reach KMP-generated sources (EditorConfig rule disabling is applied per-file by ktlint's own engine regardless of Gradle's file list):
+
+```
+[**/build/**]
+ktlint_standard = disabled
+```
+
+This keeps generated SQLDelight and Compose-resources code from ever failing `ktlintCheck`, without needing a plugin-level filter per source set.

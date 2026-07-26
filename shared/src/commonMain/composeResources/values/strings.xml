@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_dialer_icon">☎</string>
+    <string name="onboarding_title">We need to become your default phone app</string>
+    <string name="onboarding_subtitle">This is the only way Android lets an app see who's calling before you answer, and speak a greeting to callers you haven't approved yet.</string>
+    <string name="onboarding_reason_screen_title">Screen calls silently.</string>
+    <string name="onboarding_reason_screen_body">We check the number against your rules before your phone ever rings.</string>
+    <string name="onboarding_reason_autoresponder_title">Power the optional auto-responder.</string>
+    <string name="onboarding_reason_autoresponder_body">Only used if you turn it on yourself in Settings.</string>
+    <string name="onboarding_reason_revert_body">You can switch back to your phone's original dialer at any time in Android Settings.</string>
+    <string name="onboarding_never_do_header">WHAT WE WILL NEVER DO</string>
+    <string name="onboarding_never_do_record">Record any call unless you separately turn that on, per call type.</string>
+    <string name="onboarding_never_do_send_data">Send your call data, contacts, or numbers off this device.</string>
+    <string name="onboarding_never_do_ads">Show ads or share information with third parties.</string>
+    <string name="onboarding_open_source">This app is open source — view the code</string>
+    <string name="onboarding_requesting_indicator">Waiting for the system dialog…</string>
+    <string name="onboarding_denied_title">Not set as your default phone app</string>
+    <string name="onboarding_denied_body">Without this, call screening and the auto-responder can't run. You can turn it on later from Settings.</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_not_now">Not now</string>
+    <string name="action_try_again">Try again</string>
+    <string name="action_continue_without_default">Continue without it</string>
+    <string name="call_status_ringing">Incoming call</string>
+    <string name="call_status_dialing">Calling…</string>
+    <string name="call_status_active">In call</string>
+    <string name="call_unknown_number">Unknown number</string>
+    <string name="action_decline">Decline</string>
+    <string name="action_answer">Answer</string>
+    <string name="action_hang_up">Hang up</string>
+</resources>
