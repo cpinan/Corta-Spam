@@ -94,6 +94,7 @@ sqldelight {
     databases {
         create("AppDatabase") {
             packageName.set("org.carlospinan.bloqueador.app.db")
+            verifyMigrations.set(true)
         }
     }
 }
