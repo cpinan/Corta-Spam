@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS ActionRule (
     attempts INTEGER NOT NULL DEFAULT 3,
     window_minutes INTEGER NOT NULL DEFAULT 5,
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch('now'))
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 CREATE TABLE IF NOT EXISTS CallAttempt (

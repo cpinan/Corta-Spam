@@ -2,7 +2,7 @@
 CREATE TABLE CallLogEntry_new (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     number TEXT NOT NULL,
-    timestamp INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
     rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', NULL)),
     rule_id INTEGER,
