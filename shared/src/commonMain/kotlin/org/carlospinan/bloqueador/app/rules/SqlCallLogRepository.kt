@@ -43,6 +43,15 @@ class SqlCallLogRepository(
             queries.countBlockedCallsThisMonth().executeAsOne().toInt()
         }
 
+    override suspend fun blockedStats(): BlockedStats =
+        withContext(Dispatchers.IO) {
+            BlockedStats(
+                today = queries.countBlockedCallsToday().executeAsOne().toInt(),
+                thisWeek = queries.countBlockedCallsThisWeek().executeAsOne().toInt(),
+                thisMonth = queries.countBlockedCallsThisMonth().executeAsOne().toInt(),
+            )
+        }
+
     override suspend fun logCall(
         number: String,
         timestamp: Long,

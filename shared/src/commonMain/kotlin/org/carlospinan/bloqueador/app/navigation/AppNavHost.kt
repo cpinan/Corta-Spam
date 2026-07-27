@@ -7,6 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
+import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
 import org.carlospinan.bloqueador.app.blocklist.ManualBlockListScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogScreen
@@ -25,24 +26,28 @@ object Routes {
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
+    // Shared ViewModels scoped to the NavHost — survive across route changes
+    // and keep state consistent when navigating between hub and detail screens.
+    val homeViewModel = koinViewModel<HomeViewModel>()
+    val callLogViewModel = koinViewModel<CallLogViewModel>()
+    val blockListViewModel = koinViewModel<BlockListViewModel>()
+
     NavHost(
         navController = navController,
         startDestination = Routes.HOME,
     ) {
         composable(Routes.HOME) {
-            val viewModel = koinViewModel<HomeViewModel>()
-            val state by viewModel.state.collectAsState()
+            val state by homeViewModel.state.collectAsState()
             HomeScreen(
                 state = state,
                 onNavigateToCallLog = { navController.navigate(Routes.CALL_LOG) },
                 onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) },
-                onToggleBlocking = viewModel::toggleBlocking,
+                onToggleBlocking = homeViewModel::toggleBlocking,
             )
         }
 
         composable(Routes.CALL_LOG) {
-            val viewModel = koinViewModel<CallLogViewModel>()
-            val entries by viewModel.entries.collectAsState()
+            val entries by callLogViewModel.entries.collectAsState()
             CallLogScreen(
                 entries = entries,
                 onBack = { navController.popBackStack() },
@@ -50,10 +55,9 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Routes.BLOCK_LIST) {
-            val viewModel = koinViewModel<BlockListViewModel>()
-            val blockedCount by viewModel.blockedCount.collectAsState()
-            val allowlistedCount by viewModel.allowlistedCount.collectAsState()
-            org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen(
+            val blockedCount by blockListViewModel.blockedCount.collectAsState()
+            val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
+            BlockListHubScreen(
                 blockedCount = blockedCount,
                 allowlistedCount = allowlistedCount,
                 onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
@@ -63,23 +67,21 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Routes.MANUAL_BLOCK_LIST) {
-            val viewModel = koinViewModel<BlockListViewModel>()
-            val blocked by viewModel.blockedNumbers.collectAsState()
+            val blocked by blockListViewModel.blockedNumbers.collectAsState()
             ManualBlockListScreen(
                 numbers = blocked,
-                onAdd = viewModel::addBlockedNumber,
-                onRemove = viewModel::removeBlockedNumber,
+                onAdd = blockListViewModel::addBlockedNumber,
+                onRemove = blockListViewModel::removeBlockedNumber,
                 onBack = { navController.popBackStack() },
             )
         }
 
         composable(Routes.ALLOWLIST) {
-            val viewModel = koinViewModel<BlockListViewModel>()
-            val allowlisted by viewModel.allowlistedNumbers.collectAsState()
+            val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
             AllowlistScreen(
                 numbers = allowlisted,
-                onAdd = viewModel::addAllowlistedNumber,
-                onRemove = viewModel::removeAllowlistedNumber,
+                onAdd = blockListViewModel::addAllowlistedNumber,
+                onRemove = blockListViewModel::removeAllowlistedNumber,
                 onBack = { navController.popBackStack() },
             )
         }

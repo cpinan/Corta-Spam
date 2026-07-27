@@ -6,6 +6,7 @@ import android.telecom.InCallService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.ResolveContext
@@ -25,10 +26,11 @@ class PassthroughInCallService :
     KoinComponent {
     private val ruleRepository: RuleRepository by inject()
     private val callLogRepository: CallLogRepository by inject()
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var serviceScope: CoroutineScope? = null
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
+        serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
         val number =
             call.details
@@ -36,22 +38,17 @@ class PassthroughInCallService :
                 ?.schemeSpecificPart
                 .orEmpty()
 
-        serviceScope.launch {
+        serviceScope?.launch {
             val decision = evaluateCall(number)
+            callLogRepository.logCall(
+                number = number,
+                timestamp = currentTimestamp(),
+                decision = decision,
+            )
             if (decision.isBlocked) {
                 call.reject(false, null)
-                callLogRepository.logCall(
-                    number = number,
-                    timestamp = currentTimestamp(),
-                    decision = decision,
-                )
             } else {
                 InCallState.attach(call)
-                callLogRepository.logCall(
-                    number = number,
-                    timestamp = currentTimestamp(),
-                    decision = decision,
-                )
                 startActivity(
                     Intent(this@PassthroughInCallService, InCallActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -63,6 +60,12 @@ class PassthroughInCallService :
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
         InCallState.detach(call)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope?.cancel()
+        serviceScope = null
     }
 
     private suspend fun evaluateCall(number: String): RuleDecision {

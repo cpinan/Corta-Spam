@@ -27,11 +27,12 @@ class HomeViewModel(
 
     fun refresh() {
         viewModelScope.launch {
+            val stats = callLogRepository.blockedStats()
             _state.value =
                 HomeUiState(
-                    blockedToday = callLogRepository.blockedCountToday(),
-                    blockedThisWeek = callLogRepository.blockedCountThisWeek(),
-                    blockedThisMonth = callLogRepository.blockedCountThisMonth(),
+                    blockedToday = stats.today,
+                    blockedThisWeek = stats.thisWeek,
+                    blockedThisMonth = stats.thisMonth,
                     isLoading = false,
                 )
         }

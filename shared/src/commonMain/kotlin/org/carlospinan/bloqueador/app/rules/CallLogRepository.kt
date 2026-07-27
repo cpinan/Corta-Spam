@@ -22,6 +22,9 @@ interface CallLogRepository {
     /** Count of blocked calls in the current month. */
     suspend fun blockedCountThisMonth(): Int
 
+    /** Batched stats query — single DB round-trip instead of 3 sequential calls. */
+    suspend fun blockedStats(): BlockedStats
+
     /** Log a call screening decision. */
     suspend fun logCall(
         number: String,
@@ -41,4 +44,10 @@ data class CallLogEntryData(
     val ruleType: String?,
     val ruleId: Long?,
     val ruleDetail: String?,
+)
+
+data class BlockedStats(
+    val today: Int,
+    val thisWeek: Int,
+    val thisMonth: Int,
 )
