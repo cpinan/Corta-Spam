@@ -71,4 +71,16 @@
     <!-- Call log -->
     <string name="call_log_title">Call Log</string>
     <string name="call_log_empty_hint">No calls logged yet. Calls will appear here once screening begins.</string>
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="home_settings">Settings</string>
+    <string name="settings_blocking_enabled">Blocking enabled</string>
+    <string name="settings_blocking_enabled_desc">When off, all calls are allowed through.</string>
+    <string name="settings_auto_allow_contacts">Auto-allow contacts</string>
+    <string name="settings_auto_allow_contacts_desc">Contacts bypass all block rules.</string>
+    <string name="settings_default_action">Default action</string>
+    <string name="settings_default_action_desc">What to do with numbers that match no rule.</string>
+    <string name="settings_default_action_allow">Allow</string>
+    <string name="settings_default_action_block">Block</string>
+    <string name="settings_default_action_ask">Ask</string>
 </resources>

@@ -23,6 +23,7 @@ import bloqueallamadas.shared.generated.resources.home_blocked_this_month
 import bloqueallamadas.shared.generated.resources.home_blocked_this_week
 import bloqueallamadas.shared.generated.resources.home_blocked_today
 import bloqueallamadas.shared.generated.resources.home_manage_block_list
+import bloqueallamadas.shared.generated.resources.home_settings
 import bloqueallamadas.shared.generated.resources.home_title
 import bloqueallamadas.shared.generated.resources.home_view_call_log
 import org.jetbrains.compose.resources.stringResource
@@ -32,6 +33,7 @@ fun HomeScreen(
     state: HomeUiState,
     onNavigateToCallLog: () -> Unit,
     onNavigateToBlockList: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onToggleBlocking: (Boolean) -> Unit,
 ) {
     MaterialTheme {
@@ -111,6 +113,12 @@ fun HomeScreen(
 
                 androidx.compose.material3.TextButton(onClick = onNavigateToBlockList) {
                     Text(text = stringResource(Res.string.home_manage_block_list))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                androidx.compose.material3.TextButton(onClick = onNavigateToSettings) {
+                    Text(text = stringResource(Res.string.home_settings))
                 }
             }
         }

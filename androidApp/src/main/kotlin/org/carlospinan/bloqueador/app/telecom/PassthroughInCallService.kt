@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
@@ -14,6 +15,7 @@ import org.carlospinan.bloqueador.app.rules.ResolveContext
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import org.carlospinan.bloqueador.app.rules.RuleRepository
+import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -28,6 +30,7 @@ class PassthroughInCallService :
     private val ruleRepository: RuleRepository by inject()
     private val callLogRepository: CallLogRepository by inject()
     private val contactsGateway: ContactsGateway by inject()
+    private val settingsRepository: SettingsRepository by inject()
     private var serviceScope: CoroutineScope? = null
 
     override fun onCallAdded(call: Call) {
@@ -71,6 +74,9 @@ class PassthroughInCallService :
     }
 
     private suspend fun evaluateCall(number: String): RuleDecision {
+        if (!settingsRepository.blockingEnabled.first()) {
+            return RuleDecision.DefaultAllow
+        }
         val contactNumbers =
             if (contactsGateway.hasPermission()) {
                 contactsGateway.contactNumbers()

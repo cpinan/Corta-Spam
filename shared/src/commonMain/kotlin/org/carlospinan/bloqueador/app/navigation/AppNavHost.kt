@@ -16,6 +16,8 @@ import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
+import org.carlospinan.bloqueador.app.settings.SettingsScreen
+import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 object Routes {
@@ -26,6 +28,7 @@ object Routes {
     const val ALLOWLIST = "allowlist"
     const val PATTERNS = "patterns"
     const val COUNTRIES = "countries"
+    const val SETTINGS = "settings"
 }
 
 @Composable
@@ -35,6 +38,7 @@ fun AppNavHost(navController: NavHostController) {
     val homeViewModel = koinViewModel<HomeViewModel>()
     val callLogViewModel = koinViewModel<CallLogViewModel>()
     val blockListViewModel = koinViewModel<BlockListViewModel>()
+    val settingsViewModel = koinViewModel<SettingsViewModel>()
 
     NavHost(
         navController = navController,
@@ -46,6 +50,7 @@ fun AppNavHost(navController: NavHostController) {
                 state = state,
                 onNavigateToCallLog = { navController.navigate(Routes.CALL_LOG) },
                 onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) },
+                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                 onToggleBlocking = homeViewModel::toggleBlocking,
             )
         }
@@ -114,6 +119,21 @@ fun AppNavHost(navController: NavHostController) {
                 onAdd = blockListViewModel::addCountryRule,
                 onToggle = blockListViewModel::toggleCountryRule,
                 onRemove = blockListViewModel::removeCountryRule,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.SETTINGS) {
+            val blockingEnabled by settingsViewModel.blockingEnabled.collectAsState()
+            val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
+            val defaultAction by settingsViewModel.defaultAction.collectAsState()
+            SettingsScreen(
+                blockingEnabled = blockingEnabled,
+                autoAllowContacts = autoAllowContacts,
+                defaultAction = defaultAction,
+                onSetBlockingEnabled = settingsViewModel::setBlockingEnabled,
+                onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
+                onSetDefaultAction = settingsViewModel::setDefaultAction,
                 onBack = { navController.popBackStack() },
             )
         }

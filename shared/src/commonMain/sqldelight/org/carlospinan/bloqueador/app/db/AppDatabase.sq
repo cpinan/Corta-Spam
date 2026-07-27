@@ -127,3 +127,15 @@ WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'start of month');
 
 clearCallLog:
 DELETE FROM CallLogEntry;
+
+-- AppSettings (key-value store for app preferences)
+CREATE TABLE AppSettings (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+selectSetting:
+SELECT value FROM AppSettings WHERE key = ?;
+
+upsertSetting:
+INSERT OR REPLACE INTO AppSettings(key, value) VALUES (?, ?);
