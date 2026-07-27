@@ -221,4 +221,44 @@ class RulePrecedenceResolverTest {
     fun matchesPattern_emptyPatternReturnsFalse() {
         assertFalse(RulePrecedenceResolver.matchesPattern("+34600123", ""))
     }
+
+    @Test
+    fun contacts_overridesManualBlock() {
+        val ctx =
+            emptyContext.copy(
+                contactNumbers = setOf("+34600123456"),
+                blockedNumbers = setOf("+34600123456"),
+            )
+        val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+        assertTrue(decision is RuleDecision.Allowlist)
+        assertFalse(decision.isBlocked)
+    }
+
+    @Test
+    fun contacts_overridesPattern() {
+        val ctx =
+            emptyContext.copy(
+                contactNumbers = setOf("+34900123456"),
+                enabledPatterns = listOf(PatternRule(id = 1, pattern = "+34900*", label = null, enabled = true)),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.Allowlist)
+    }
+
+    @Test
+    fun contacts_emptySet_doesNotAffectOutcome() {
+        val ctx = emptyContext.copy(blockedNumbers = setOf("+34600123456"))
+        assertTrue(RulePrecedenceResolver.evaluate("+34600123456", ctx) is RuleDecision.ManualBlock)
+    }
+
+    @Test
+    fun contacts_combinedWithAllowlist() {
+        val ctx =
+            emptyContext.copy(
+                contactNumbers = setOf("+34900123456"),
+                allowlistedNumbers = setOf("+34900999999"),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.Allowlist)
+        assertTrue(RulePrecedenceResolver.evaluate("+34900999999", ctx) is RuleDecision.Allowlist)
+        assertFalse(RulePrecedenceResolver.evaluate("+34900111111", ctx).isBlocked)
+    }
 }

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
+import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
+import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 
 class BlockListViewModel(
@@ -25,11 +27,27 @@ class BlockListViewModel(
             .allowlistedNumbers()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val patternRules: StateFlow<List<PatternRuleEntry>> =
+        ruleRepository
+            .patternRules()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val countryRules: StateFlow<List<CountryRuleEntry>> =
+        ruleRepository
+            .countryRules()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _blockedCount = MutableStateFlow(0)
     val blockedCount: StateFlow<Int> = _blockedCount.asStateFlow()
 
     private val _allowlistedCount = MutableStateFlow(0)
     val allowlistedCount: StateFlow<Int> = _allowlistedCount.asStateFlow()
+
+    private val _patternCount = MutableStateFlow(0)
+    val patternCount: StateFlow<Int> = _patternCount.asStateFlow()
+
+    private val _countryCount = MutableStateFlow(0)
+    val countryCount: StateFlow<Int> = _countryCount.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -37,6 +55,12 @@ class BlockListViewModel(
         }
         viewModelScope.launch {
             allowlistedNumbers.collect { _allowlistedCount.value = it.size }
+        }
+        viewModelScope.launch {
+            patternRules.collect { _patternCount.value = it.size }
+        }
+        viewModelScope.launch {
+            countryRules.collect { _countryCount.value = it.size }
         }
     }
 
@@ -61,6 +85,54 @@ class BlockListViewModel(
     fun removeAllowlistedNumber(id: Long) {
         viewModelScope.launch {
             ruleRepository.removeAllowlistedNumber(id)
+        }
+    }
+
+    fun addPatternRule(
+        pattern: String,
+        label: String?,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.addPatternRule(pattern, label)
+        }
+    }
+
+    fun togglePatternRule(
+        id: Long,
+        enabled: Boolean,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.togglePatternRule(id, enabled)
+        }
+    }
+
+    fun removePatternRule(id: Long) {
+        viewModelScope.launch {
+            ruleRepository.removePatternRule(id)
+        }
+    }
+
+    fun addCountryRule(
+        countryCode: String,
+        countryName: String,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.addCountryRule(countryCode, countryName)
+        }
+    }
+
+    fun toggleCountryRule(
+        id: Long,
+        enabled: Boolean,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.toggleCountryRule(id, enabled)
+        }
+    }
+
+    fun removeCountryRule(id: Long) {
+        viewModelScope.launch {
+            ruleRepository.removeCountryRule(id)
         }
     }
 }

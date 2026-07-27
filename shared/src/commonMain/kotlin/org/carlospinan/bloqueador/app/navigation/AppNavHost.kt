@@ -9,7 +9,9 @@ import androidx.navigation.compose.composable
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
+import org.carlospinan.bloqueador.app.blocklist.CountryRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.ManualBlockListScreen
+import org.carlospinan.bloqueador.app.blocklist.PatternRuleScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.home.HomeScreen
@@ -22,6 +24,8 @@ object Routes {
     const val BLOCK_LIST = "block_list"
     const val MANUAL_BLOCK_LIST = "manual_block_list"
     const val ALLOWLIST = "allowlist"
+    const val PATTERNS = "patterns"
+    const val COUNTRIES = "countries"
 }
 
 @Composable
@@ -57,11 +61,17 @@ fun AppNavHost(navController: NavHostController) {
         composable(Routes.BLOCK_LIST) {
             val blockedCount by blockListViewModel.blockedCount.collectAsState()
             val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
+            val patternCount by blockListViewModel.patternCount.collectAsState()
+            val countryCount by blockListViewModel.countryCount.collectAsState()
             BlockListHubScreen(
                 blockedCount = blockedCount,
                 allowlistedCount = allowlistedCount,
+                patternCount = patternCount,
+                countryCount = countryCount,
                 onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
                 onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
+                onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
+                onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
                 onBack = { navController.popBackStack() },
             )
         }
@@ -82,6 +92,28 @@ fun AppNavHost(navController: NavHostController) {
                 numbers = allowlisted,
                 onAdd = blockListViewModel::addAllowlistedNumber,
                 onRemove = blockListViewModel::removeAllowlistedNumber,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.PATTERNS) {
+            val patterns by blockListViewModel.patternRules.collectAsState()
+            PatternRuleScreen(
+                patterns = patterns,
+                onAdd = blockListViewModel::addPatternRule,
+                onToggle = blockListViewModel::togglePatternRule,
+                onRemove = blockListViewModel::removePatternRule,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.COUNTRIES) {
+            val countries by blockListViewModel.countryRules.collectAsState()
+            CountryRuleScreen(
+                countries = countries,
+                onAdd = blockListViewModel::addCountryRule,
+                onToggle = blockListViewModel::toggleCountryRule,
+                onRemove = blockListViewModel::removeCountryRule,
                 onBack = { navController.popBackStack() },
             )
         }

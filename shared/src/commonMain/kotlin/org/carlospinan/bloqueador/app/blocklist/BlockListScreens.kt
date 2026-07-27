@@ -40,6 +40,21 @@ import bloqueallamadas.shared.generated.resources.block_list_empty_hint
 import bloqueallamadas.shared.generated.resources.block_list_hub_title
 import bloqueallamadas.shared.generated.resources.block_list_manual_title
 import bloqueallamadas.shared.generated.resources.block_list_title
+import bloqueallamadas.shared.generated.resources.country_add_hint
+import bloqueallamadas.shared.generated.resources.country_add_title
+import bloqueallamadas.shared.generated.resources.country_empty_hint
+import bloqueallamadas.shared.generated.resources.country_name_hint
+import bloqueallamadas.shared.generated.resources.country_title
+import bloqueallamadas.shared.generated.resources.hub_countries
+import bloqueallamadas.shared.generated.resources.hub_patterns
+import bloqueallamadas.shared.generated.resources.pattern_add_hint
+import bloqueallamadas.shared.generated.resources.pattern_add_title
+import bloqueallamadas.shared.generated.resources.pattern_android_only
+import bloqueallamadas.shared.generated.resources.pattern_empty_hint
+import bloqueallamadas.shared.generated.resources.pattern_label_hint
+import bloqueallamadas.shared.generated.resources.pattern_title
+import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
+import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -213,11 +228,196 @@ fun AllowlistScreen(
 }
 
 @Composable
+fun PatternRuleScreen(
+    patterns: List<PatternRuleEntry>,
+    onAdd: (String, String?) -> Unit,
+    onToggle: (Long, Boolean) -> Unit,
+    onRemove: (Long) -> Unit,
+    onBack: () -> Unit,
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.pattern_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(Res.string.pattern_android_only),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = { showAddDialog = true }) {
+                    Text(text = stringResource(Res.string.action_add))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (patterns.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.pattern_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn {
+                        items(patterns, key = { it.id }) { entry ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = entry.pattern,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                        if (entry.label != null) {
+                                            Text(
+                                                text = entry.label,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    Row {
+                                        androidx.compose.material3.Switch(
+                                            checked = entry.enabled,
+                                            onCheckedChange = { onToggle(entry.id, it) },
+                                        )
+                                        TextButton(onClick = { onRemove(entry.id) }) {
+                                            Text(
+                                                text = "✕",
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AddPatternDialog(
+            onConfirm = { pattern, label ->
+                onAdd(pattern, label)
+                showAddDialog = false
+            },
+            onDismiss = { showAddDialog = false },
+        )
+    }
+}
+
+@Composable
+fun CountryRuleScreen(
+    countries: List<CountryRuleEntry>,
+    onAdd: (String, String) -> Unit,
+    onToggle: (Long, Boolean) -> Unit,
+    onRemove: (Long) -> Unit,
+    onBack: () -> Unit,
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.country_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = { showAddDialog = true }) {
+                    Text(text = stringResource(Res.string.action_add))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (countries.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.country_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn {
+                        items(countries, key = { it.id }) { entry ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "${entry.countryName} (+${entry.countryCode})",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                    }
+                                    Row {
+                                        androidx.compose.material3.Switch(
+                                            checked = entry.enabled,
+                                            onCheckedChange = { onToggle(entry.id, it) },
+                                        )
+                                        TextButton(onClick = { onRemove(entry.id) }) {
+                                            Text(
+                                                text = "✕",
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AddCountryDialog(
+            onConfirm = { code, name ->
+                onAdd(code, name)
+                showAddDialog = false
+            },
+            onDismiss = { showAddDialog = false },
+        )
+    }
+}
+
+@Composable
 fun BlockListHubScreen(
     blockedCount: Int,
     allowlistedCount: Int,
+    patternCount: Int,
+    countryCount: Int,
     onNavigateToManual: () -> Unit,
     onNavigateToAllowlist: () -> Unit,
+    onNavigateToPatterns: () -> Unit,
+    onNavigateToCountries: () -> Unit,
     onBack: () -> Unit,
 ) {
     MaterialTheme {
@@ -232,48 +432,63 @@ fun BlockListHubScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth().clickable(onClick = onNavigateToManual).padding(vertical = 4.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.block_list_manual_title),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            text = "$blockedCount",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
+                HubRow(
+                    title = stringResource(Res.string.block_list_manual_title),
+                    count = blockedCount,
+                    onClick = onNavigateToManual,
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth().clickable(onClick = onNavigateToAllowlist).padding(vertical = 4.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.allowlist_title),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            text = "$allowlistedCount",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
+                HubRow(
+                    title = stringResource(Res.string.allowlist_title),
+                    count = allowlistedCount,
+                    onClick = onNavigateToAllowlist,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                HubRow(
+                    title = stringResource(Res.string.hub_patterns),
+                    count = patternCount,
+                    onClick = onNavigateToPatterns,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                HubRow(
+                    title = stringResource(Res.string.hub_countries),
+                    count = countryCount,
+                    onClick = onNavigateToCountries,
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun HubRow(
+    title: String,
+    count: Int,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 4.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = "$count",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
@@ -302,6 +517,102 @@ private fun AddNumberDialog(
             TextButton(
                 onClick = { if (number.isNotBlank()) onConfirm(number.trim()) },
                 enabled = number.isNotBlank(),
+            ) {
+                Text(stringResource(Res.string.action_add))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.action_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun AddPatternDialog(
+    onConfirm: (String, String?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var pattern by remember { mutableStateOf("") }
+    var label by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.pattern_add_title)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = pattern,
+                    onValueChange = { pattern = it },
+                    label = { Text(stringResource(Res.string.pattern_add_hint)) },
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text(stringResource(Res.string.pattern_label_hint)) },
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (pattern.isNotBlank()) {
+                        onConfirm(pattern.trim(), label.trim().ifBlank { null })
+                    }
+                },
+                enabled = pattern.isNotBlank(),
+            ) {
+                Text(stringResource(Res.string.action_add))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.action_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun AddCountryDialog(
+    onConfirm: (String, String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var code by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.country_add_title)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it },
+                    label = { Text(stringResource(Res.string.country_add_hint)) },
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(Res.string.country_name_hint)) },
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (code.isNotBlank() && name.isNotBlank()) {
+                        onConfirm(code.trim(), name.trim())
+                    }
+                },
+                enabled = code.isNotBlank() && name.isNotBlank(),
             ) {
                 Text(stringResource(Res.string.action_add))
             }

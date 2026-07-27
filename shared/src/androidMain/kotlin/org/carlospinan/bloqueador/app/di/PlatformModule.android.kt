@@ -1,5 +1,7 @@
 package org.carlospinan.bloqueador.app.di
 
+import org.carlospinan.bloqueador.app.contacts.AndroidContactsGateway
+import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.db.AndroidDriverFactory
 import org.carlospinan.bloqueador.app.db.DriverFactory
 import org.carlospinan.bloqueador.app.onboarding.AndroidDefaultDialerGateway
@@ -13,5 +15,6 @@ actual fun platformModule(): Module =
     module {
         single<DriverFactory> { AndroidDriverFactory(androidContext()) }
         single<DefaultDialerGateway> { AndroidDefaultDialerGateway(androidContext()) }
+        single<ContactsGateway> { AndroidContactsGateway(androidContext()) }
         factory { DialerOnboardingViewModel(get()) }
     }

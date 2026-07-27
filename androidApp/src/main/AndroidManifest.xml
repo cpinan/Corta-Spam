@@ -5,6 +5,7 @@
          default phone app (docs/SPEC.md §1/§4). -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
         android:name=".BloqueaLlamadasApp"
