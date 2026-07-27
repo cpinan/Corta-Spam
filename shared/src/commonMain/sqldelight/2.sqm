@@ -1,0 +1,16 @@
+-- Expand CallLogEntry.rule_type CHECK to allow SPAM / ACTION / AUTO_RESPONDER.
+CREATE TABLE CallLogEntry_new (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    number TEXT NOT NULL,
+    timestamp INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
+    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', NULL)),
+    rule_id INTEGER,
+    rule_detail TEXT
+);
+
+INSERT INTO CallLogEntry_new SELECT id, number, timestamp, action, rule_type, rule_id, rule_detail FROM CallLogEntry;
+
+DROP TABLE CallLogEntry;
+
+ALTER TABLE CallLogEntry_new RENAME TO CallLogEntry;

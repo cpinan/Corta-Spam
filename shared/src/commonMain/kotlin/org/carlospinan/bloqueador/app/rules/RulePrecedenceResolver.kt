@@ -1,12 +1,15 @@
 package org.carlospinan.bloqueador.app.rules
 
+import org.carlospinan.bloqueador.app.spam.SpamProviderClient
+
 /**
  * Evaluates an incoming phone number against the rule set in precedence order:
  * 1. Contacts/allowlist — always bypasses blocks
  * 2. Manual block — exact number match
  * 3. Pattern — glob/contains match against enabled patterns
  * 4. Country — country code match against enabled country rules
- * 5. Default — allow through
+ * 5. Spam — external provider lookup (if enabled)
+ * 6. Default — allow through
  *
  * This is stateless and pure — all data is passed in, making it trivially testable.
  */
@@ -16,36 +19,19 @@ data class ResolveContext(
     val blockedNumbers: Set<String>,
     val enabledPatterns: List<PatternRule>,
     val enabledCountryCodes: Set<String>,
+    val spamProvider: SpamProviderClient? = null,
+    val spamEnabled: Boolean = false,
 )
 
 object RulePrecedenceResolver {
-    fun evaluate(
+    suspend fun evaluate(
         number: String,
         context: ResolveContext,
-        parseCountryCode: (String) -> String? = { PhoneNumberParser.parseCountryCode(it) },
-    ): RuleDecision =
-        evaluate(
-            number = number,
-            allowlistedNumbers = context.allowlistedNumbers,
-            contactNumbers = context.contactNumbers,
-            blockedNumbers = context.blockedNumbers,
-            enabledPatterns = context.enabledPatterns,
-            enabledCountryCodes = context.enabledCountryCodes,
-            parseCountryCode = parseCountryCode,
-        )
-
-    fun evaluate(
-        number: String,
-        allowlistedNumbers: Set<String>,
-        contactNumbers: Set<String> = emptySet(),
-        blockedNumbers: Set<String>,
-        enabledPatterns: List<PatternRule>,
-        enabledCountryCodes: Set<String>,
         parseCountryCode: (String) -> String? = { PhoneNumberParser.parseCountryCode(it) },
     ): RuleDecision {
         val normalized = number.trim()
 
-        val mergedAllowlist = allowlistedNumbers + contactNumbers
+        val mergedAllowlist = context.allowlistedNumbers + context.contactNumbers
 
         // 1. Allowlist check (highest priority — contacts + manual allowlist)
         if (normalized in mergedAllowlist) {
@@ -53,12 +39,12 @@ object RulePrecedenceResolver {
         }
 
         // 2. Manual block check
-        if (normalized in blockedNumbers) {
+        if (normalized in context.blockedNumbers) {
             return RuleDecision.ManualBlock(ruleId = -1, label = null)
         }
 
         // 3. Pattern match
-        for (pattern in enabledPatterns) {
+        for (pattern in context.enabledPatterns) {
             if (matchesPattern(normalized, pattern.pattern)) {
                 return RuleDecision.PatternBlock(
                     ruleId = pattern.id,
@@ -70,7 +56,7 @@ object RulePrecedenceResolver {
 
         // 4. Country code match
         val countryCode = parseCountryCode(normalized)
-        if (countryCode != null && countryCode in enabledCountryCodes) {
+        if (countryCode != null && countryCode in context.enabledCountryCodes) {
             return RuleDecision.CountryBlock(
                 ruleId = -1,
                 countryCode = countryCode,
@@ -78,7 +64,18 @@ object RulePrecedenceResolver {
             )
         }
 
-        // 5. Default: allow
+        // 5. Spam provider (if enabled)
+        if (context.spamEnabled && context.spamProvider != null) {
+            val result = context.spamProvider.lookup(normalized)
+            if (result != null && result.isSpam) {
+                return RuleDecision.SpamHit(
+                    confidence = result.confidence,
+                    source = result.source,
+                )
+            }
+        }
+
+        // 6. Default: allow
         return RuleDecision.DefaultAllow
     }
 

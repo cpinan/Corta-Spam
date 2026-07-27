@@ -37,6 +37,8 @@ import bloqueallamadas.shared.generated.resources.settings_default_action_allow
 import bloqueallamadas.shared.generated.resources.settings_default_action_ask
 import bloqueallamadas.shared.generated.resources.settings_default_action_block
 import bloqueallamadas.shared.generated.resources.settings_default_action_desc
+import bloqueallamadas.shared.generated.resources.settings_spam_provider
+import bloqueallamadas.shared.generated.resources.settings_spam_provider_desc
 import bloqueallamadas.shared.generated.resources.settings_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -45,9 +47,11 @@ fun SettingsScreen(
     blockingEnabled: Boolean,
     autoAllowContacts: Boolean,
     defaultAction: DefaultAction,
+    spamEnabled: Boolean,
     onSetBlockingEnabled: (Boolean) -> Unit,
     onSetAutoAllowContacts: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
+    onSetSpamEnabled: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     var showDefaultActionDialog by remember { mutableStateOf(false) }
@@ -92,6 +96,15 @@ fun SettingsScreen(
                             DefaultAction.ASK -> stringResource(Res.string.settings_default_action_ask)
                         },
                     onClick = { showDefaultActionDialog = true },
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingToggle(
+                    title = stringResource(Res.string.settings_spam_provider),
+                    description = stringResource(Res.string.settings_spam_provider_desc),
+                    checked = spamEnabled,
+                    onCheckedChange = onSetSpamEnabled,
                 )
             }
         }

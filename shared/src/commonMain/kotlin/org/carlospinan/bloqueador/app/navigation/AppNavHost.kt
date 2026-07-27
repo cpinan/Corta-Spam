@@ -127,13 +127,16 @@ fun AppNavHost(navController: NavHostController) {
             val blockingEnabled by settingsViewModel.blockingEnabled.collectAsState()
             val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
             val defaultAction by settingsViewModel.defaultAction.collectAsState()
+            val spamEnabled by settingsViewModel.spamEnabled.collectAsState()
             SettingsScreen(
                 blockingEnabled = blockingEnabled,
                 autoAllowContacts = autoAllowContacts,
                 defaultAction = defaultAction,
+                spamEnabled = spamEnabled,
                 onSetBlockingEnabled = settingsViewModel::setBlockingEnabled,
                 onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
                 onSetDefaultAction = settingsViewModel::setDefaultAction,
+                onSetSpamEnabled = settingsViewModel::setSpamEnabled,
                 onBack = { navController.popBackStack() },
             )
         }

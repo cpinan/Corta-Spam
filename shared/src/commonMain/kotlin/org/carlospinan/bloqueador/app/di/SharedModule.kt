@@ -13,6 +13,10 @@ import org.carlospinan.bloqueador.app.rules.SqlRuleRepository
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.settings.SqlSettingsRepository
+import org.carlospinan.bloqueador.app.spam.NoOpSpamProvider
+import org.carlospinan.bloqueador.app.spam.SpamProviderClient
+import org.carlospinan.bloqueador.app.spam.SpamProviderRepository
+import org.carlospinan.bloqueador.app.spam.SqlSpamProviderRepository
 import org.koin.dsl.module
 
 /** Shared module: repositories, ViewModels, and resolver. Bound after platform module provides DriverFactory + AppDatabase. */
@@ -23,11 +27,13 @@ val sharedModule =
         single<RuleRepository> { SqlRuleRepository(get()) }
         single<CallLogRepository> { SqlCallLogRepository(get()) }
         single<SettingsRepository> { SqlSettingsRepository(get()) }
+        single<SpamProviderRepository> { SqlSpamProviderRepository(get()) }
+        single<SpamProviderClient> { NoOpSpamProvider() }
 
         single<ContactsGateway> { StubContactsGateway() }
 
         factory { HomeViewModel(get()) }
         factory { BlockListViewModel(get()) }
         factory { CallLogViewModel(get()) }
-        factory { SettingsViewModel(get()) }
+        factory { SettingsViewModel(get(), get()) }
     }

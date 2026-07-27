@@ -16,6 +16,8 @@ import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
+import org.carlospinan.bloqueador.app.spam.SpamProviderClient
+import org.carlospinan.bloqueador.app.spam.SpamProviderRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -31,6 +33,8 @@ class PassthroughInCallService :
     private val callLogRepository: CallLogRepository by inject()
     private val contactsGateway: ContactsGateway by inject()
     private val settingsRepository: SettingsRepository by inject()
+    private val spamProviderRepository: SpamProviderRepository by inject()
+    private val spamProvider: SpamProviderClient by inject()
     private var serviceScope: CoroutineScope? = null
 
     override fun onCallAdded(call: Call) {
@@ -83,6 +87,7 @@ class PassthroughInCallService :
             } else {
                 emptySet()
             }
+        val spamEnabled = spamProviderRepository.enabled.first()
         val context =
             ResolveContext(
                 allowlistedNumbers = ruleRepository.allowlistedNumberSet(),
@@ -90,6 +95,8 @@ class PassthroughInCallService :
                 blockedNumbers = ruleRepository.blockedNumberSet(),
                 enabledPatterns = ruleRepository.enabledPatterns(),
                 enabledCountryCodes = ruleRepository.enabledCountryCodeSet(),
+                spamProvider = spamProvider,
+                spamEnabled = spamEnabled,
             )
         return RulePrecedenceResolver.evaluate(number, context)
     }
