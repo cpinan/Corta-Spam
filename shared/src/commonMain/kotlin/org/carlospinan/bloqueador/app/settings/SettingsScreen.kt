@@ -30,6 +30,8 @@ import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_cancel
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
+import bloqueallamadas.shared.generated.resources.settings_autoresponder
+import bloqueallamadas.shared.generated.resources.settings_autoresponder_desc
 import bloqueallamadas.shared.generated.resources.settings_blocking_enabled
 import bloqueallamadas.shared.generated.resources.settings_blocking_enabled_desc
 import bloqueallamadas.shared.generated.resources.settings_default_action
@@ -52,6 +54,7 @@ fun SettingsScreen(
     onSetAutoAllowContacts: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
+    onNavigateToAutoResponder: () -> Unit,
     onBack: () -> Unit,
 ) {
     var showDefaultActionDialog by remember { mutableStateOf(false) }
@@ -105,6 +108,15 @@ fun SettingsScreen(
                     description = stringResource(Res.string.settings_spam_provider_desc),
                     checked = spamEnabled,
                     onCheckedChange = onSetSpamEnabled,
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingDropdown(
+                    title = stringResource(Res.string.settings_autoresponder),
+                    description = stringResource(Res.string.settings_autoresponder_desc),
+                    value = stringResource(Res.string.settings_autoresponder),
+                    onClick = onNavigateToAutoResponder,
                 )
             }
         }

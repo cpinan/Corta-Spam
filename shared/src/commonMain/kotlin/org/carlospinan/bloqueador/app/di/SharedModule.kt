@@ -1,5 +1,8 @@
 package org.carlospinan.bloqueador.app.di
 
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
+import org.carlospinan.bloqueador.app.autoresponder.SqlAutoResponderRepository
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
@@ -29,6 +32,7 @@ val sharedModule =
         single<SettingsRepository> { SqlSettingsRepository(get()) }
         single<SpamProviderRepository> { SqlSpamProviderRepository(get()) }
         single<SpamProviderClient> { NoOpSpamProvider() }
+        single<AutoResponderRepository> { SqlAutoResponderRepository(get()) }
 
         single<ContactsGateway> { StubContactsGateway() }
 
@@ -36,4 +40,5 @@ val sharedModule =
         factory { BlockListViewModel(get()) }
         factory { CallLogViewModel(get()) }
         factory { SettingsViewModel(get(), get()) }
+        factory { AutoResponderViewModel(get()) }
     }

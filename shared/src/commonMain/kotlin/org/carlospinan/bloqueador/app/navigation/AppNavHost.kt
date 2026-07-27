@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderScreen
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
 import org.carlospinan.bloqueador.app.blocklist.ActionRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
@@ -31,6 +33,7 @@ object Routes {
     const val COUNTRIES = "countries"
     const val ACTION_RULES = "action_rules"
     const val SETTINGS = "settings"
+    const val AUTO_RESPONDER = "auto_responder"
 }
 
 @Composable
@@ -41,6 +44,7 @@ fun AppNavHost(navController: NavHostController) {
     val callLogViewModel = koinViewModel<CallLogViewModel>()
     val blockListViewModel = koinViewModel<BlockListViewModel>()
     val settingsViewModel = koinViewModel<SettingsViewModel>()
+    val autoResponderViewModel = koinViewModel<AutoResponderViewModel>()
 
     NavHost(
         navController = navController,
@@ -153,6 +157,22 @@ fun AppNavHost(navController: NavHostController) {
                 onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
                 onSetDefaultAction = settingsViewModel::setDefaultAction,
                 onSetSpamEnabled = settingsViewModel::setSpamEnabled,
+                onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.AUTO_RESPONDER) {
+            val config by autoResponderViewModel.config.collectAsState()
+            val validationError by autoResponderViewModel.validationError.collectAsState()
+            AutoResponderScreen(
+                config = config,
+                validationError = validationError,
+                onSetEnabled = autoResponderViewModel::setEnabled,
+                onSetScript = autoResponderViewModel::setScript,
+                onSetRecordingEnabled = autoResponderViewModel::setRecordingEnabled,
+                onPickAudio = { /* Android file picker wired later via platform callback */ },
+                onClearAudio = autoResponderViewModel::clearAudioUri,
                 onBack = { navController.popBackStack() },
             )
         }

@@ -3,12 +3,14 @@ package org.carlospinan.bloqueador.app.telecom
 import android.content.Intent
 import android.telecom.Call
 import android.telecom.InCallService
+import android.telecom.VideoProfile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.ResolveContext
@@ -22,9 +24,8 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 /**
- * M2: Evaluates incoming calls against the rule set.
- * Allowed calls pass through to the UI; blocked calls are rejected immediately
- * and logged with the firing rule's reason.
+ * Evaluates incoming calls against the rule set.
+ * Blocked calls are rejected, or answered + greeted when auto-responder is on.
  */
 class PassthroughInCallService :
     InCallService(),
@@ -35,11 +36,37 @@ class PassthroughInCallService :
     private val settingsRepository: SettingsRepository by inject()
     private val spamProviderRepository: SpamProviderRepository by inject()
     private val spamProvider: SpamProviderClient by inject()
+    private val autoResponderRepository: AutoResponderRepository by inject()
     private var serviceScope: CoroutineScope? = null
+    private var autoResponderAudio: AutoResponderAudio? = null
+    private var activeCall: Call? = null
+
+    private val callCallback =
+        object : Call.Callback() {
+            override fun onStateChanged(
+                call: Call,
+                state: Int,
+            ) {
+                if (state == Call.STATE_ACTIVE) {
+                    serviceScope?.launch {
+                        val config = autoResponderRepository.config.first()
+                        autoResponderAudio?.play(
+                            script = config.script,
+                            audioUri = config.audioUri.ifBlank { null },
+                            onComplete = {
+                                call.disconnect()
+                            },
+                        )
+                    }
+                }
+            }
+        }
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        autoResponderAudio = AutoResponderAudio(this).also { it.prepare() }
+        activeCall = call
 
         val number =
             call.details
@@ -55,7 +82,15 @@ class PassthroughInCallService :
                 decision = decision,
             )
             if (decision.isBlocked) {
-                call.reject(false, null)
+                val autoConfig = autoResponderRepository.config.first()
+                if (autoConfig.enabled &&
+                    autoConfig.validate() is org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig.ValidationResult.Ok
+                ) {
+                    call.registerCallback(callCallback)
+                    call.answer(VideoProfile.STATE_AUDIO_ONLY)
+                } else {
+                    call.reject(false, null)
+                }
             } else {
                 InCallState.attach(call)
                 startActivity(
@@ -68,11 +103,17 @@ class PassthroughInCallService :
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
+        call.unregisterCallback(callCallback)
         InCallState.detach(call)
+        if (activeCall == call) {
+            activeCall = null
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        autoResponderAudio?.release()
+        autoResponderAudio = null
         serviceScope?.cancel()
         serviceScope = null
     }
@@ -91,7 +132,6 @@ class PassthroughInCallService :
         val spamEnabled = spamProviderRepository.enabled.first()
         val actionRules = ruleRepository.enabledActionRules()
 
-        // Record attempt and prune old rows (keep 24h for multi-window rules).
         ruleRepository.recordCallAttempt(number, now)
         ruleRepository.deleteExpiredAttempts(now - 24L * 60L * 60L * 1000L)
 
