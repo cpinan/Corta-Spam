@@ -139,3 +139,45 @@ SELECT value FROM AppSettings WHERE key = ?;
 
 upsertSetting:
 INSERT OR REPLACE INTO AppSettings(key, value) VALUES (?, ?);
+
+-- ActionRule (block after N attempts within T minutes)
+CREATE TABLE ActionRule (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    label TEXT,
+    attempts INTEGER NOT NULL DEFAULT 3,
+    window_minutes INTEGER NOT NULL DEFAULT 5,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now'))
+);
+
+selectAllActionRules:
+SELECT * FROM ActionRule ORDER BY created_at DESC;
+
+insertActionRule:
+INSERT INTO ActionRule(label, attempts, window_minutes) VALUES (?, ?, ?);
+
+toggleActionRule:
+UPDATE ActionRule SET enabled = ? WHERE id = ?;
+
+deleteActionRuleById:
+DELETE FROM ActionRule WHERE id = ?;
+
+-- CallAttempt (individual timestamps for action-rule counting)
+CREATE TABLE CallAttempt (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    phone_number TEXT NOT NULL,
+    timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX idx_call_attempt_number_time
+    ON CallAttempt(phone_number, timestamp DESC);
+
+insertCallAttempt:
+INSERT INTO CallAttempt(phone_number, timestamp) VALUES (?, ?);
+
+countRecentAttempts:
+SELECT count(*) AS count FROM CallAttempt
+WHERE phone_number = ? AND timestamp >= ?;
+
+deleteExpiredAttempts:
+DELETE FROM CallAttempt WHERE timestamp < ?;

@@ -80,6 +80,24 @@ class SqlRuleRepository(
                 }
             }
 
+    override fun actionRules(): Flow<List<ActionRuleEntry>> =
+        queries
+            .selectAllActionRules()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { list ->
+                list.map {
+                    ActionRuleEntry(
+                        id = it.id,
+                        label = it.label,
+                        attempts = it.attempts.toInt(),
+                        windowMinutes = it.window_minutes.toInt(),
+                        enabled = it.enabled == 1L,
+                        createdAt = it.created_at,
+                    )
+                }
+            }
+
     override suspend fun blockedNumberSet(): Set<String> =
         withContext(Dispatchers.IO) {
             queries
@@ -119,6 +137,46 @@ class SqlRuleRepository(
                 .map { it.country_code }
                 .toSet()
         }
+
+    override suspend fun enabledActionRules(): List<ActionRule> =
+        withContext(Dispatchers.IO) {
+            queries
+                .selectAllActionRules()
+                .executeAsList()
+                .filter { it.enabled == 1L }
+                .map {
+                    ActionRule(
+                        id = it.id,
+                        label = it.label,
+                        attempts = it.attempts.toInt(),
+                        windowMinutes = it.window_minutes.toInt(),
+                        enabled = true,
+                    )
+                }
+        }
+
+    override suspend fun recordCallAttempt(
+        number: String,
+        timestampMillis: Long,
+    ) {
+        withContext(Dispatchers.IO) {
+            queries.insertCallAttempt(number, timestampMillis).value
+        }
+    }
+
+    override suspend fun countRecentAttempts(
+        number: String,
+        sinceTimestampMillis: Long,
+    ): Int =
+        withContext(Dispatchers.IO) {
+            queries.countRecentAttempts(number, sinceTimestampMillis).executeAsOne().toInt()
+        }
+
+    override suspend fun deleteExpiredAttempts(beforeTimestampMillis: Long) {
+        withContext(Dispatchers.IO) {
+            queries.deleteExpiredAttempts(beforeTimestampMillis).value
+        }
+    }
 
     override suspend fun addBlockedNumber(
         number: String,
@@ -195,6 +253,31 @@ class SqlRuleRepository(
     override suspend fun removeCountryRule(id: Long) {
         withContext(Dispatchers.IO) {
             queries.deleteCountryRuleById(id).value
+        }
+    }
+
+    override suspend fun addActionRule(
+        label: String?,
+        attempts: Int,
+        windowMinutes: Int,
+    ) {
+        withContext(Dispatchers.IO) {
+            queries.insertActionRule(label, attempts.toLong(), windowMinutes.toLong()).value
+        }
+    }
+
+    override suspend fun toggleActionRule(
+        id: Long,
+        enabled: Boolean,
+    ) {
+        withContext(Dispatchers.IO) {
+            queries.toggleActionRule(if (enabled) 1L else 0L, id).value
+        }
+    }
+
+    override suspend fun removeActionRule(id: Long) {
+        withContext(Dispatchers.IO) {
+            queries.deleteActionRuleById(id).value
         }
     }
 }

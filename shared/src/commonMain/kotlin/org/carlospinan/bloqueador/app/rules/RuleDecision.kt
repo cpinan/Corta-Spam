@@ -2,7 +2,7 @@ package org.carlospinan.bloqueador.app.rules
 
 /**
  * Represents the outcome of evaluating an incoming call against all rules.
- * Precedence order: ALLOWLIST > MANUAL_BLOCK > PATTERN > COUNTRY > SPAM > DEFAULT_ALLOW.
+ * Precedence order: ALLOWLIST > MANUAL_BLOCK > PATTERN > COUNTRY > SPAM > ACTION > DEFAULT_ALLOW.
  */
 sealed class RuleDecision {
     /** Number is on the contacts or manual allowlist — bypass all block rules. */
@@ -34,6 +34,14 @@ sealed class RuleDecision {
         val source: String,
     ) : RuleDecision()
 
+    /** Number crossed an action-rule attempt threshold within its window. */
+    data class ActionBlock(
+        val ruleId: Long,
+        val label: String?,
+        val attempts: Int,
+        val windowMinutes: Int,
+    ) : RuleDecision()
+
     /** No blocking rule matched — call is allowed through. */
     data object DefaultAllow : RuleDecision()
 
@@ -50,6 +58,7 @@ sealed class RuleDecision {
                 is PatternBlock -> label ?: "Pattern match: $pattern"
                 is CountryBlock -> "Country: $countryName ($countryCode)"
                 is SpamHit -> "Spam ($source, ${(confidence * 100).toInt()}%)"
+                is ActionBlock -> label ?: "Repeated calls ($attempts in ${windowMinutes}m)"
                 is DefaultAllow -> null
             }
 
@@ -62,6 +71,7 @@ sealed class RuleDecision {
                 is PatternBlock -> "PATTERN"
                 is CountryBlock -> "COUNTRY"
                 is SpamHit -> "SPAM"
+                is ActionBlock -> "ACTION"
                 is DefaultAllow -> null
             }
 }

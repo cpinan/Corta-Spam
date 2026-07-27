@@ -9,7 +9,8 @@ import org.carlospinan.bloqueador.app.spam.SpamProviderClient
  * 3. Pattern — glob/contains match against enabled patterns
  * 4. Country — country code match against enabled country rules
  * 5. Spam — external provider lookup (if enabled)
- * 6. Default — allow through
+ * 6. Action — repeated-call threshold within time window
+ * 7. Default — allow through
  *
  * This is stateless and pure — all data is passed in, making it trivially testable.
  */
@@ -21,6 +22,9 @@ data class ResolveContext(
     val enabledCountryCodes: Set<String>,
     val spamProvider: SpamProviderClient? = null,
     val spamEnabled: Boolean = false,
+    val enabledActionRules: List<ActionRule> = emptyList(),
+    /** Pre-computed attempt counts keyed by window minutes (for each distinct window). */
+    val attemptCountsByWindowMinutes: Map<Int, Int> = emptyMap(),
 )
 
 object RulePrecedenceResolver {
@@ -75,7 +79,20 @@ object RulePrecedenceResolver {
             }
         }
 
-        // 6. Default: allow
+        // 6. Action rules (block after N attempts within window)
+        for (rule in context.enabledActionRules) {
+            val count = context.attemptCountsByWindowMinutes[rule.windowMinutes] ?: 0
+            if (count >= rule.attempts) {
+                return RuleDecision.ActionBlock(
+                    ruleId = rule.id,
+                    label = rule.label,
+                    attempts = rule.attempts,
+                    windowMinutes = rule.windowMinutes,
+                )
+            }
+        }
+
+        // 7. Default: allow
         return RuleDecision.DefaultAllow
     }
 

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import org.carlospinan.bloqueador.app.blocklist.ActionRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
@@ -28,6 +29,7 @@ object Routes {
     const val ALLOWLIST = "allowlist"
     const val PATTERNS = "patterns"
     const val COUNTRIES = "countries"
+    const val ACTION_RULES = "action_rules"
     const val SETTINGS = "settings"
 }
 
@@ -68,15 +70,18 @@ fun AppNavHost(navController: NavHostController) {
             val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
             val patternCount by blockListViewModel.patternCount.collectAsState()
             val countryCount by blockListViewModel.countryCount.collectAsState()
+            val actionCount by blockListViewModel.actionCount.collectAsState()
             BlockListHubScreen(
                 blockedCount = blockedCount,
                 allowlistedCount = allowlistedCount,
                 patternCount = patternCount,
                 countryCount = countryCount,
+                actionCount = actionCount,
                 onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
                 onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
                 onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
                 onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
+                onNavigateToActions = { navController.navigate(Routes.ACTION_RULES) },
                 onBack = { navController.popBackStack() },
             )
         }
@@ -119,6 +124,17 @@ fun AppNavHost(navController: NavHostController) {
                 onAdd = blockListViewModel::addCountryRule,
                 onToggle = blockListViewModel::toggleCountryRule,
                 onRemove = blockListViewModel::removeCountryRule,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.ACTION_RULES) {
+            val actions by blockListViewModel.actionRules.collectAsState()
+            ActionRuleScreen(
+                rules = actions,
+                onAdd = blockListViewModel::addActionRule,
+                onToggle = blockListViewModel::toggleActionRule,
+                onRemove = blockListViewModel::removeActionRule,
                 onBack = { navController.popBackStack() },
             )
         }

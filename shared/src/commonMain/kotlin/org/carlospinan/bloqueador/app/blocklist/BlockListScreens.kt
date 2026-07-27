@@ -30,7 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_add
+import bloqueallamadas.shared.generated.resources.action_android_only
+import bloqueallamadas.shared.generated.resources.action_attempts_hint
 import bloqueallamadas.shared.generated.resources.action_cancel
+import bloqueallamadas.shared.generated.resources.action_empty_hint
+import bloqueallamadas.shared.generated.resources.action_label_hint
+import bloqueallamadas.shared.generated.resources.action_rule_add_title
+import bloqueallamadas.shared.generated.resources.action_rule_title
+import bloqueallamadas.shared.generated.resources.action_window_hint
 import bloqueallamadas.shared.generated.resources.allowlist_add_hint
 import bloqueallamadas.shared.generated.resources.allowlist_add_title
 import bloqueallamadas.shared.generated.resources.allowlist_empty_hint
@@ -45,6 +52,7 @@ import bloqueallamadas.shared.generated.resources.country_add_title
 import bloqueallamadas.shared.generated.resources.country_empty_hint
 import bloqueallamadas.shared.generated.resources.country_search_hint
 import bloqueallamadas.shared.generated.resources.country_title
+import bloqueallamadas.shared.generated.resources.hub_actions
 import bloqueallamadas.shared.generated.resources.hub_countries
 import bloqueallamadas.shared.generated.resources.hub_patterns
 import bloqueallamadas.shared.generated.resources.pattern_add_hint
@@ -53,6 +61,7 @@ import bloqueallamadas.shared.generated.resources.pattern_android_only
 import bloqueallamadas.shared.generated.resources.pattern_empty_hint
 import bloqueallamadas.shared.generated.resources.pattern_label_hint
 import bloqueallamadas.shared.generated.resources.pattern_title
+import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.COUNTRIES
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
@@ -415,10 +424,12 @@ fun BlockListHubScreen(
     allowlistedCount: Int,
     patternCount: Int,
     countryCount: Int,
+    actionCount: Int,
     onNavigateToManual: () -> Unit,
     onNavigateToAllowlist: () -> Unit,
     onNavigateToPatterns: () -> Unit,
     onNavigateToCountries: () -> Unit,
+    onNavigateToActions: () -> Unit,
     onBack: () -> Unit,
 ) {
     MaterialTheme {
@@ -461,6 +472,14 @@ fun BlockListHubScreen(
                     title = stringResource(Res.string.hub_countries),
                     count = countryCount,
                     onClick = onNavigateToCountries,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                HubRow(
+                    title = stringResource(Res.string.hub_actions),
+                    count = actionCount,
+                    onClick = onNavigateToActions,
                 )
             }
         }
@@ -636,6 +655,161 @@ private fun AddCountryDialog(
             }
         },
         confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.action_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+fun ActionRuleScreen(
+    rules: List<ActionRuleEntry>,
+    onAdd: (String?, Int, Int) -> Unit,
+    onToggle: (Long, Boolean) -> Unit,
+    onRemove: (Long) -> Unit,
+    onBack: () -> Unit,
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.action_rule_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(Res.string.action_android_only),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = { showAddDialog = true }) {
+                    Text(text = stringResource(Res.string.action_add))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (rules.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.action_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn {
+                        items(rules, key = { it.id }) { entry ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "${entry.attempts} calls / ${entry.windowMinutes} min",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                        if (entry.label != null) {
+                                            Text(
+                                                text = entry.label,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    androidx.compose.material3.Switch(
+                                        checked = entry.enabled,
+                                        onCheckedChange = { onToggle(entry.id, it) },
+                                    )
+                                    TextButton(onClick = { onRemove(entry.id) }) {
+                                        Text(
+                                            text = "✕",
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AddActionRuleDialog(
+            onConfirm = { label, attempts, windowMinutes ->
+                onAdd(label, attempts, windowMinutes)
+                showAddDialog = false
+            },
+            onDismiss = { showAddDialog = false },
+        )
+    }
+}
+
+@Composable
+private fun AddActionRuleDialog(
+    onConfirm: (String?, Int, Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var label by remember { mutableStateOf("") }
+    var attemptsText by remember { mutableStateOf("3") }
+    var windowText by remember { mutableStateOf("5") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.action_rule_add_title)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = attemptsText,
+                    onValueChange = { attemptsText = it.filter { ch -> ch.isDigit() }.take(3) },
+                    label = { Text(stringResource(Res.string.action_attempts_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = windowText,
+                    onValueChange = { windowText = it.filter { ch -> ch.isDigit() }.take(4) },
+                    label = { Text(stringResource(Res.string.action_window_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text(stringResource(Res.string.action_label_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val attempts = attemptsText.toIntOrNull() ?: return@TextButton
+                    val window = windowText.toIntOrNull() ?: return@TextButton
+                    if (attempts < 1 || window < 1) return@TextButton
+                    onConfirm(label.ifBlank { null }, attempts, window)
+                },
+            ) {
+                Text(stringResource(Res.string.action_add))
+            }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(Res.string.action_cancel))

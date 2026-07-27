@@ -86,4 +86,13 @@
     <!-- Spam provider -->
     <string name="settings_spam_provider">Spam provider</string>
     <string name="settings_spam_provider_desc">Check numbers against an external spam database. No data leaves your device unless you configure a provider.</string>
+    <!-- Action rules -->
+    <string name="hub_actions">Action Rules</string>
+    <string name="action_rule_title">Action Rules</string>
+    <string name="action_rule_add_title">Add action rule</string>
+    <string name="action_empty_hint">No action rules. Block numbers after repeated calls within a time window.</string>
+    <string name="action_attempts_hint">Attempts (e.g. 3)</string>
+    <string name="action_window_hint">Window minutes (e.g. 5)</string>
+    <string name="action_label_hint">Label (optional)</string>
+    <string name="action_android_only">Android only</string>
 </resources>

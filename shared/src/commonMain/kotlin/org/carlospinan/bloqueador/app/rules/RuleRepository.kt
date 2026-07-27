@@ -19,6 +19,9 @@ interface RuleRepository {
     /** All country rules, sorted by country name. */
     fun countryRules(): Flow<List<CountryRuleEntry>>
 
+    /** All action rules, most recent first. */
+    fun actionRules(): Flow<List<ActionRuleEntry>>
+
     /** Snapshot of current blocked numbers as a set (for resolver). */
     suspend fun blockedNumberSet(): Set<String>
 
@@ -30,6 +33,24 @@ interface RuleRepository {
 
     /** Snapshot of enabled country codes as a set (for resolver). */
     suspend fun enabledCountryCodeSet(): Set<String>
+
+    /** Snapshot of enabled action rules (for resolver). */
+    suspend fun enabledActionRules(): List<ActionRule>
+
+    /** Record an incoming call attempt for action-rule counting. */
+    suspend fun recordCallAttempt(
+        number: String,
+        timestampMillis: Long,
+    )
+
+    /** Count attempts for [number] since [sinceTimestampMillis]. */
+    suspend fun countRecentAttempts(
+        number: String,
+        sinceTimestampMillis: Long,
+    ): Int
+
+    /** Delete attempt rows older than [beforeTimestampMillis]. */
+    suspend fun deleteExpiredAttempts(beforeTimestampMillis: Long)
 
     suspend fun addBlockedNumber(
         number: String,
@@ -68,6 +89,19 @@ interface RuleRepository {
     )
 
     suspend fun removeCountryRule(id: Long)
+
+    suspend fun addActionRule(
+        label: String?,
+        attempts: Int,
+        windowMinutes: Int,
+    )
+
+    suspend fun toggleActionRule(
+        id: Long,
+        enabled: Boolean,
+    )
+
+    suspend fun removeActionRule(id: Long)
 }
 
 data class BlockedNumberEntry(
@@ -96,6 +130,15 @@ data class CountryRuleEntry(
     val id: Long,
     val countryCode: String,
     val countryName: String,
+    val enabled: Boolean,
+    val createdAt: Long,
+)
+
+data class ActionRuleEntry(
+    val id: Long,
+    val label: String?,
+    val attempts: Int,
+    val windowMinutes: Int,
     val enabled: Boolean,
     val createdAt: Long,
 )

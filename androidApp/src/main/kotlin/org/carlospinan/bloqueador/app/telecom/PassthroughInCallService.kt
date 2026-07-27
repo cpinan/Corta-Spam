@@ -81,6 +81,7 @@ class PassthroughInCallService :
         if (!settingsRepository.blockingEnabled.first()) {
             return RuleDecision.DefaultAllow
         }
+        val now = currentTimestamp()
         val contactNumbers =
             if (contactsGateway.hasPermission()) {
                 contactsGateway.contactNumbers()
@@ -88,6 +89,21 @@ class PassthroughInCallService :
                 emptySet()
             }
         val spamEnabled = spamProviderRepository.enabled.first()
+        val actionRules = ruleRepository.enabledActionRules()
+
+        // Record attempt and prune old rows (keep 24h for multi-window rules).
+        ruleRepository.recordCallAttempt(number, now)
+        ruleRepository.deleteExpiredAttempts(now - 24L * 60L * 60L * 1000L)
+
+        val attemptCountsByWindow =
+            actionRules
+                .map { it.windowMinutes }
+                .distinct()
+                .associateWith { windowMinutes ->
+                    val since = now - windowMinutes * 60L * 1000L
+                    ruleRepository.countRecentAttempts(number, since)
+                }
+
         val context =
             ResolveContext(
                 allowlistedNumbers = ruleRepository.allowlistedNumberSet(),
@@ -97,6 +113,8 @@ class PassthroughInCallService :
                 enabledCountryCodes = ruleRepository.enabledCountryCodeSet(),
                 spamProvider = spamProvider,
                 spamEnabled = spamEnabled,
+                enabledActionRules = actionRules,
+                attemptCountsByWindowMinutes = attemptCountsByWindow,
             )
         return RulePrecedenceResolver.evaluate(number, context)
     }
