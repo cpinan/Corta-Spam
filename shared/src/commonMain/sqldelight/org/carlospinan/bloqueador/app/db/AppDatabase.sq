@@ -5,7 +5,7 @@ CREATE TABLE BlockedNumber (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     number TEXT NOT NULL,
     label TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     UNIQUE(number)
 );
 
@@ -13,7 +13,7 @@ CREATE TABLE AllowlistedNumber (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     number TEXT NOT NULL,
     label TEXT,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     UNIQUE(number)
 );
 
@@ -22,7 +22,7 @@ CREATE TABLE PatternRule (
     pattern TEXT NOT NULL,
     label TEXT,
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch('now'))
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 CREATE TABLE CountryRule (
@@ -30,14 +30,14 @@ CREATE TABLE CountryRule (
     country_code TEXT NOT NULL,
     country_name TEXT NOT NULL,
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     UNIQUE(country_code)
 );
 
 CREATE TABLE CallLogEntry (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     number TEXT NOT NULL,
-    timestamp INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
     rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', NULL)),
     rule_id INTEGER,
@@ -113,17 +113,22 @@ SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT ?;
 selectAllCallLogEntries:
 SELECT * FROM CallLogEntry ORDER BY timestamp DESC;
 
+-- timestamp is stored in Unix millis (see insertCallLogEntry callers); strftime('%s', ...)
+-- returns seconds, so boundaries below are scaled to millis to match. strftime is used instead
+-- of the newer unixepoch() function because unixepoch() needs SQLite 3.38+ and isn't present in
+-- the SQLite bundled with older Android versions (confirmed crash on an API 33 emulator) —
+-- strftime has been available since SQLite 3.0 and accepts the same date modifiers.
 countBlockedCallsToday:
 SELECT count(*) AS count FROM CallLogEntry
-WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'start of day');
+WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of day') AS INTEGER) * 1000;
 
 countBlockedCallsThisWeek:
 SELECT count(*) AS count FROM CallLogEntry
-WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'weekday 0', '-6 days');
+WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of day', 'weekday 0', '-6 days') AS INTEGER) * 1000;
 
 countBlockedCallsThisMonth:
 SELECT count(*) AS count FROM CallLogEntry
-WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'start of month');
+WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of month') AS INTEGER) * 1000;
 
 clearCallLog:
 DELETE FROM CallLogEntry;
@@ -147,7 +152,7 @@ CREATE TABLE ActionRule (
     attempts INTEGER NOT NULL DEFAULT 3,
     window_minutes INTEGER NOT NULL DEFAULT 5,
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch('now'))
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 selectAllActionRules:

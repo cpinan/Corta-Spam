@@ -98,13 +98,16 @@ class SqlRuleRepository(
                 }
             }
 
-    override suspend fun blockedNumberSet(): Set<String> =
+    override suspend fun blockedNumberEntries(): List<BlockedNumberEntry> =
         withContext(Dispatchers.IO) {
-            queries
-                .selectAllBlockedNumbers()
-                .executeAsList()
-                .map { it.number }
-                .toSet()
+            queries.selectAllBlockedNumbers().executeAsList().map {
+                BlockedNumberEntry(
+                    id = it.id,
+                    number = it.number,
+                    label = it.label,
+                    createdAt = it.created_at,
+                )
+            }
         }
 
     override suspend fun allowlistedNumberSet(): Set<String> =
@@ -128,14 +131,21 @@ class SqlRuleRepository(
             }
         }
 
-    override suspend fun enabledCountryCodeSet(): Set<String> =
+    override suspend fun enabledCountryRules(): List<CountryRuleEntry> =
         withContext(Dispatchers.IO) {
             queries
                 .selectAllCountryRules()
                 .executeAsList()
                 .filter { it.enabled == 1L }
-                .map { it.country_code }
-                .toSet()
+                .map {
+                    CountryRuleEntry(
+                        id = it.id,
+                        countryCode = it.country_code,
+                        countryName = it.country_name,
+                        enabled = true,
+                        createdAt = it.created_at,
+                    )
+                }
         }
 
     override suspend fun enabledActionRules(): List<ActionRule> =

@@ -109,6 +109,7 @@ class AutoResponderAudio(
                             .build(),
                     )
                     setDataSource(context, Uri.parse(uriString))
+                    setOnPreparedListener { start() }
                     setOnCompletionListener {
                         release()
                         mediaPlayer = null
@@ -120,8 +121,7 @@ class AutoResponderAudio(
                         onComplete()
                         true
                     }
-                    prepare()
-                    start()
+                    prepareAsync()
                 }
         } catch (_: Exception) {
             onComplete()

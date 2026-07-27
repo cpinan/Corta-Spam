@@ -42,8 +42,11 @@ sealed class RuleDecision {
         val windowMinutes: Int,
     ) : RuleDecision()
 
-    /** No blocking rule matched — call is allowed through. */
+    /** No blocking rule matched — call is allowed through (settings default action ALLOW/ASK). */
     data object DefaultAllow : RuleDecision()
+
+    /** No blocking rule matched, but settings default action is BLOCK. */
+    data object DefaultBlock : RuleDecision()
 
     /** Whether this decision results in the call being blocked. */
     val isBlocked: Boolean
@@ -60,6 +63,18 @@ sealed class RuleDecision {
                 is SpamHit -> "Spam ($source, ${(confidence * 100).toInt()}%)"
                 is ActionBlock -> label ?: "Repeated calls ($attempts in ${windowMinutes}m)"
                 is DefaultAllow -> null
+                is DefaultBlock -> "No matching rule (default: block)"
+            }
+
+    /** Id of the rule that fired, for persistence in the call log, or null when not applicable. */
+    val loggedRuleId: Long?
+        get() =
+            when (this) {
+                is ManualBlock -> ruleId
+                is PatternBlock -> ruleId
+                is CountryBlock -> ruleId
+                is ActionBlock -> ruleId
+                is Allowlist, is SpamHit, is DefaultAllow, is DefaultBlock -> null
             }
 
     /** Rule type tag for persistence in the call log. */
@@ -73,5 +88,6 @@ sealed class RuleDecision {
                 is SpamHit -> "SPAM"
                 is ActionBlock -> "ACTION"
                 is DefaultAllow -> null
+                is DefaultBlock -> null
             }
 }

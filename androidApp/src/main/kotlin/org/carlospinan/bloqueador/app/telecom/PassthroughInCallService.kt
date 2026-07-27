@@ -4,6 +4,8 @@ import android.content.Intent
 import android.telecom.Call
 import android.telecom.InCallService
 import android.telecom.VideoProfile
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -64,6 +66,10 @@ class PassthroughInCallService :
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
+        // A second call (call waiting, dual-SIM) can arrive before the first is removed —
+        // release the prior call's resources instead of orphaning them.
+        serviceScope?.cancel()
+        autoResponderAudio?.release()
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         autoResponderAudio = AutoResponderAudio(this).also { it.prepare() }
         activeCall = call
@@ -75,30 +81,43 @@ class PassthroughInCallService :
                 .orEmpty()
 
         serviceScope?.launch {
-            val decision = evaluateCall(number)
-            callLogRepository.logCall(
-                number = number,
-                timestamp = currentTimestamp(),
-                decision = decision,
-            )
-            if (decision.isBlocked) {
-                val autoConfig = autoResponderRepository.config.first()
-                if (autoConfig.enabled &&
-                    autoConfig.validate() is org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig.ValidationResult.Ok
-                ) {
-                    call.registerCallback(callCallback)
-                    call.answer(VideoProfile.STATE_AUDIO_ONLY)
-                } else {
-                    call.reject(false, null)
-                }
-            } else {
-                InCallState.attach(call)
-                startActivity(
-                    Intent(this@PassthroughInCallService, InCallActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            try {
+                val decision = evaluateCall(number)
+                callLogRepository.logCall(
+                    number = number,
+                    timestamp = currentTimestamp(),
+                    decision = decision,
                 )
+                if (decision.isBlocked) {
+                    val autoConfig = autoResponderRepository.config.first()
+                    if (autoConfig.enabled &&
+                        autoConfig.validate() is org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig.ValidationResult.Ok
+                    ) {
+                        call.registerCallback(callCallback)
+                        call.answer(VideoProfile.STATE_AUDIO_ONLY)
+                    } else {
+                        call.reject(false, null)
+                    }
+                } else {
+                    attachCallUi(call)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Fail open: a broken rule evaluation must never leave a call with no UI and no
+                // way to answer/decline, so treat it like an unblocked call.
+                Log.e(TAG, "Call evaluation failed for call, failing open", e)
+                attachCallUi(call)
             }
         }
+    }
+
+    private fun attachCallUi(call: Call) {
+        InCallState.attach(call)
+        startActivity(
+            Intent(this@PassthroughInCallService, InCallActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
 
     override fun onCallRemoved(call: Call) {
@@ -124,40 +143,58 @@ class PassthroughInCallService :
         }
         val now = currentTimestamp()
         val contactNumbers =
-            if (contactsGateway.hasPermission()) {
+            if (settingsRepository.autoAllowContacts.first() && contactsGateway.hasPermission()) {
                 contactsGateway.contactNumbers()
             } else {
                 emptySet()
             }
         val spamEnabled = spamProviderRepository.enabled.first()
+        val defaultAction = settingsRepository.defaultAction.first()
         val actionRules = ruleRepository.enabledActionRules()
 
-        ruleRepository.recordCallAttempt(number, now)
+        // Private/restricted callers report an empty number — skip attempt tracking for them so
+        // unrelated withheld-number calls don't share a bucket and trip action rules together.
+        if (number.isNotBlank()) {
+            ruleRepository.recordCallAttempt(number, now)
+        }
         ruleRepository.deleteExpiredAttempts(now - 24L * 60L * 60L * 1000L)
 
         val attemptCountsByWindow =
-            actionRules
-                .map { it.windowMinutes }
-                .distinct()
-                .associateWith { windowMinutes ->
-                    val since = now - windowMinutes * 60L * 1000L
-                    ruleRepository.countRecentAttempts(number, since)
-                }
+            if (number.isBlank()) {
+                emptyMap()
+            } else {
+                actionRules
+                    .map { it.windowMinutes }
+                    .distinct()
+                    .associateWith { windowMinutes ->
+                        val since = now - windowMinutes * 60L * 1000L
+                        ruleRepository.countRecentAttempts(number, since)
+                    }
+            }
 
+        val blockedEntries = ruleRepository.blockedNumberEntries()
+        val countryEntries = ruleRepository.enabledCountryRules()
         val context =
             ResolveContext(
                 allowlistedNumbers = ruleRepository.allowlistedNumberSet(),
                 contactNumbers = contactNumbers,
-                blockedNumbers = ruleRepository.blockedNumberSet(),
+                blockedNumbers = blockedEntries.map { it.number }.toSet(),
+                blockedNumberDetails = blockedEntries.associateBy { it.number },
                 enabledPatterns = ruleRepository.enabledPatterns(),
-                enabledCountryCodes = ruleRepository.enabledCountryCodeSet(),
+                enabledCountryCodes = countryEntries.map { it.countryCode }.toSet(),
+                countryRuleDetails = countryEntries.associateBy { it.countryCode },
                 spamProvider = spamProvider,
                 spamEnabled = spamEnabled,
                 enabledActionRules = actionRules,
                 attemptCountsByWindowMinutes = attemptCountsByWindow,
+                defaultAction = defaultAction,
             )
         return RulePrecedenceResolver.evaluate(number, context)
     }
 
     private fun currentTimestamp(): Long = System.currentTimeMillis()
+
+    private companion object {
+        const val TAG = "PassthroughInCallService"
+    }
 }

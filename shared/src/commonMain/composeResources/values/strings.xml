@@ -82,7 +82,7 @@
     <string name="settings_default_action_desc">What to do with numbers that match no rule.</string>
     <string name="settings_default_action_allow">Allow</string>
     <string name="settings_default_action_block">Block</string>
-    <string name="settings_default_action_ask">Ask</string>
+    <string name="settings_default_action_ask">Ask (currently same as Allow — no review flow yet)</string>
     <!-- Spam provider -->
     <string name="settings_spam_provider">Spam provider</string>
     <string name="settings_spam_provider_desc">Check numbers against an external spam database. No data leaves your device unless you configure a provider.</string>

@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.rules
 
+import org.carlospinan.bloqueador.app.settings.DefaultAction
 import org.carlospinan.bloqueador.app.spam.SpamProviderClient
 
 /**
@@ -18,13 +19,19 @@ data class ResolveContext(
     val allowlistedNumbers: Set<String>,
     val contactNumbers: Set<String> = emptySet(),
     val blockedNumbers: Set<String>,
+    /** Full entries for numbers in [blockedNumbers], keyed by number — supplies real id/label when known. */
+    val blockedNumberDetails: Map<String, BlockedNumberEntry> = emptyMap(),
     val enabledPatterns: List<PatternRule>,
     val enabledCountryCodes: Set<String>,
+    /** Full entries for codes in [enabledCountryCodes], keyed by code — supplies real id/name when known. */
+    val countryRuleDetails: Map<String, CountryRuleEntry> = emptyMap(),
     val spamProvider: SpamProviderClient? = null,
     val spamEnabled: Boolean = false,
     val enabledActionRules: List<ActionRule> = emptyList(),
     /** Pre-computed attempt counts keyed by window minutes (for each distinct window). */
     val attemptCountsByWindowMinutes: Map<Int, Int> = emptyMap(),
+    /** What to do when no rule matches — settings-controlled (ALLOW/BLOCK/ASK). */
+    val defaultAction: DefaultAction = DefaultAction.ALLOW,
 )
 
 object RulePrecedenceResolver {
@@ -44,7 +51,8 @@ object RulePrecedenceResolver {
 
         // 2. Manual block check
         if (normalized in context.blockedNumbers) {
-            return RuleDecision.ManualBlock(ruleId = -1, label = null)
+            val entry = context.blockedNumberDetails[normalized]
+            return RuleDecision.ManualBlock(ruleId = entry?.id ?: -1, label = entry?.label)
         }
 
         // 3. Pattern match
@@ -61,10 +69,11 @@ object RulePrecedenceResolver {
         // 4. Country code match
         val countryCode = parseCountryCode(normalized)
         if (countryCode != null && countryCode in context.enabledCountryCodes) {
+            val entry = context.countryRuleDetails[countryCode]
             return RuleDecision.CountryBlock(
-                ruleId = -1,
+                ruleId = entry?.id ?: -1,
                 countryCode = countryCode,
-                countryName = countryCode,
+                countryName = entry?.countryName ?: countryCode,
             )
         }
 
@@ -92,8 +101,13 @@ object RulePrecedenceResolver {
             }
         }
 
-        // 7. Default: allow
-        return RuleDecision.DefaultAllow
+        // 7. Default: honor the user's chosen default action. ASK has no dedicated UI flow yet,
+        // so it falls back to allowing the call through like ALLOW.
+        return if (context.defaultAction == DefaultAction.BLOCK) {
+            RuleDecision.DefaultBlock
+        } else {
+            RuleDecision.DefaultAllow
+        }
     }
 
     /**

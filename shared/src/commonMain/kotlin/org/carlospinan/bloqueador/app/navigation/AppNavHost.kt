@@ -3,6 +3,8 @@ package org.carlospinan.bloqueador.app.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,6 +53,11 @@ fun AppNavHost(navController: NavHostController) {
         startDestination = Routes.HOME,
     ) {
         composable(Routes.HOME) {
+            // homeViewModel is NavHost-scoped and only refreshes once in init. Re-trigger on
+            // every ON_RESUME (covers both re-navigating to this route and the app coming back
+            // to the foreground after a call was blocked in the background) — otherwise stats
+            // go stale until the process restarts.
+            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { homeViewModel.refresh() }
             val state by homeViewModel.state.collectAsState()
             HomeScreen(
                 state = state,

@@ -39,6 +39,7 @@ kotlin {
             // DialerOnboardingViewModel, so its ViewModel supertype must be resolvable
             // on their compile classpath too.
             api(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.runtime.compose)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

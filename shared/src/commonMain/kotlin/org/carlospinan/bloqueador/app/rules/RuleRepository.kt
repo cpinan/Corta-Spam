@@ -22,8 +22,8 @@ interface RuleRepository {
     /** All action rules, most recent first. */
     fun actionRules(): Flow<List<ActionRuleEntry>>
 
-    /** Snapshot of current blocked numbers as a set (for resolver). */
-    suspend fun blockedNumberSet(): Set<String>
+    /** Snapshot of current blocked numbers with full metadata (for resolver). */
+    suspend fun blockedNumberEntries(): List<BlockedNumberEntry>
 
     /** Snapshot of current allowlisted numbers as a set (for resolver). */
     suspend fun allowlistedNumberSet(): Set<String>
@@ -31,8 +31,8 @@ interface RuleRepository {
     /** Snapshot of enabled pattern rules (for resolver). */
     suspend fun enabledPatterns(): List<PatternRule>
 
-    /** Snapshot of enabled country codes as a set (for resolver). */
-    suspend fun enabledCountryCodeSet(): Set<String>
+    /** Snapshot of enabled country rules with full metadata (for resolver). */
+    suspend fun enabledCountryRules(): List<CountryRuleEntry>
 
     /** Snapshot of enabled action rules (for resolver). */
     suspend fun enabledActionRules(): List<ActionRule>
