@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Onboarding -->
     <string name="onboarding_dialer_icon">☎</string>
     <string name="onboarding_title">We need to become your default phone app</string>
     <string name="onboarding_subtitle">This is the only way Android lets an app see who's calling before you answer, and speak a greeting to callers you haven't approved yet.</string>
@@ -16,10 +17,16 @@
     <string name="onboarding_requesting_indicator">Waiting for the system dialog…</string>
     <string name="onboarding_denied_title">Not set as your default phone app</string>
     <string name="onboarding_denied_body">Without this, call screening and the auto-responder can't run. You can turn it on later from Settings.</string>
+    <!-- Actions -->
     <string name="action_continue">Continue</string>
     <string name="action_not_now">Not now</string>
     <string name="action_try_again">Try again</string>
     <string name="action_continue_without_default">Continue without it</string>
+    <string name="action_add">Add</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_back">Back</string>
+    <!-- Call screen -->
     <string name="call_status_ringing">Incoming call</string>
     <string name="call_status_dialing">Calling…</string>
     <string name="call_status_active">In call</string>
@@ -27,4 +34,27 @@
     <string name="action_decline">Decline</string>
     <string name="action_answer">Answer</string>
     <string name="action_hang_up">Hang up</string>
+    <!-- Home -->
+    <string name="home_title">BloqueaLlamadas</string>
+    <string name="home_blocked_today">Blocked today</string>
+    <string name="home_blocked_this_week">This week</string>
+    <string name="home_blocked_this_month">This month</string>
+    <string name="home_view_call_log">View call log</string>
+    <string name="home_manage_block_list">Manage block lists</string>
+    <!-- Block list hub -->
+    <string name="block_list_hub_title">Block Lists</string>
+    <string name="block_list_manual_title">Blocked Numbers</string>
+    <!-- Manual block list -->
+    <string name="block_list_title">Blocked Numbers</string>
+    <string name="block_list_empty_hint">No numbers blocked yet. Add a number to start blocking calls.</string>
+    <string name="block_list_add_title">Block a number</string>
+    <string name="block_list_add_hint">Phone number</string>
+    <!-- Allowlist -->
+    <string name="allowlist_title">Allowlist</string>
+    <string name="allowlist_empty_hint">No numbers allowlisted. Numbers on your contacts bypass all block rules.</string>
+    <string name="allowlist_add_title">Allow a number</string>
+    <string name="allowlist_add_hint">Phone number</string>
+    <!-- Call log -->
+    <string name="call_log_title">Call Log</string>
+    <string name="call_log_empty_hint">No calls logged yet. Calls will appear here once screening begins.</string>
 </resources>

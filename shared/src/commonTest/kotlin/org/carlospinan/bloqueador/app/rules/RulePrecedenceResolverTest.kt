@@ -1,0 +1,224 @@
+package org.carlospinan.bloqueador.app.rules
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+class RulePrecedenceResolverTest {
+    private val emptyContext =
+        ResolveContext(
+            allowlistedNumbers = emptySet(),
+            blockedNumbers = emptySet(),
+            enabledPatterns = emptyList(),
+            enabledCountryCodes = emptySet(),
+        )
+
+    @Test
+    fun noRules_defaultsToAllow() {
+        val decision = RulePrecedenceResolver.evaluate("+34600123456", emptyContext)
+        assertTrue(decision is RuleDecision.DefaultAllow)
+        assertFalse(decision.isBlocked)
+    }
+
+    @Test
+    fun manualBlock_matchesExactNumber() {
+        val ctx = emptyContext.copy(blockedNumbers = setOf("+34600123456"))
+        val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+        assertTrue(decision is RuleDecision.ManualBlock)
+        assertTrue(decision.isBlocked)
+    }
+
+    @Test
+    fun manualBlock_doesNotMatchDifferentNumber() {
+        val ctx = emptyContext.copy(blockedNumbers = setOf("+34600123456"))
+        val decision = RulePrecedenceResolver.evaluate("+34600999999", ctx)
+        assertTrue(decision is RuleDecision.DefaultAllow)
+    }
+
+    @Test
+    fun allowlist_overridesManualBlock() {
+        val ctx =
+            emptyContext.copy(
+                allowlistedNumbers = setOf("+34600123456"),
+                blockedNumbers = setOf("+34600123456"),
+            )
+        val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+        assertTrue(decision is RuleDecision.Allowlist)
+        assertFalse(decision.isBlocked)
+    }
+
+    @Test
+    fun patternMatch_prefixGlob() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(
+                        PatternRule(id = 1, pattern = "+34900*", label = "Spanish spam", enabled = true),
+                    ),
+            )
+        val decision = RulePrecedenceResolver.evaluate("+34900123456", ctx)
+        assertTrue(decision is RuleDecision.PatternBlock)
+        assertEquals(1L, (decision as RuleDecision.PatternBlock).ruleId)
+    }
+
+    @Test
+    fun patternMatch_containsGlob() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(
+                        PatternRule(id = 2, pattern = "*900*", label = null, enabled = true),
+                    ),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.PatternBlock)
+        assertTrue(RulePrecedenceResolver.evaluate("0034900999", ctx) is RuleDecision.PatternBlock)
+        assertFalse(RulePrecedenceResolver.evaluate("+34600123", ctx).isBlocked)
+    }
+
+    @Test
+    fun patternMatch_exact() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(
+                        PatternRule(id = 3, pattern = "+34900", label = null, enabled = true),
+                    ),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34900", ctx) is RuleDecision.PatternBlock)
+        assertFalse(RulePrecedenceResolver.evaluate("+349001", ctx).isBlocked)
+    }
+
+    @Test
+    fun patternMatch_caseInsensitive() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(
+                        PatternRule(id = 4, pattern = "ABC*", label = null, enabled = true),
+                    ),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("abc123", ctx) is RuleDecision.PatternBlock)
+        assertTrue(RulePrecedenceResolver.evaluate("ABC123", ctx) is RuleDecision.PatternBlock)
+    }
+
+    @Test
+    fun countryBlock_matchesParsedCode() {
+        val ctx = emptyContext.copy(enabledCountryCodes = setOf("34"))
+        val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+        assertTrue(decision is RuleDecision.CountryBlock)
+        assertEquals("34", (decision as RuleDecision.CountryBlock).countryCode)
+    }
+
+    @Test
+    fun countryBlock_doesNotMatchDifferentCode() {
+        val ctx = emptyContext.copy(enabledCountryCodes = setOf("34"))
+        val decision = RulePrecedenceResolver.evaluate("+442012345678", ctx)
+        assertFalse(decision.isBlocked)
+    }
+
+    @Test
+    fun precedence_allowlistBeatsPattern() {
+        val ctx =
+            emptyContext.copy(
+                allowlistedNumbers = setOf("+34900123456"),
+                enabledPatterns =
+                    listOf(PatternRule(id = 1, pattern = "+34900*", label = null, enabled = true)),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.Allowlist)
+    }
+
+    @Test
+    fun precedence_manualBlockBeatsPattern() {
+        val ctx =
+            emptyContext.copy(
+                blockedNumbers = setOf("+34900123456"),
+                enabledPatterns =
+                    listOf(PatternRule(id = 1, pattern = "+34900*", label = null, enabled = true)),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.ManualBlock)
+    }
+
+    @Test
+    fun precedence_patternBeatsCountry() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(PatternRule(id = 1, pattern = "+34600*", label = null, enabled = true)),
+                enabledCountryCodes = setOf("34"),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+34600123456", ctx) is RuleDecision.PatternBlock)
+    }
+
+    @Test
+    fun noEnabledPatterns_doesNotBlock() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns = emptyList(),
+            )
+        assertFalse(RulePrecedenceResolver.evaluate("+34900123456", ctx).isBlocked)
+    }
+
+    @Test
+    fun disabledCountry_doesNotBlock() {
+        val ctx = emptyContext.copy(enabledCountryCodes = emptySet())
+        assertFalse(RulePrecedenceResolver.evaluate("+34600123456", ctx).isBlocked)
+    }
+
+    @Test
+    fun blockReason_isHumanReadable() {
+        val ctx = emptyContext.copy(blockedNumbers = setOf("+34600123456"))
+        val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+        assertEquals("Manually blocked", decision.blockReason)
+    }
+
+    @Test
+    fun blockReason_patternIncludesPattern() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(PatternRule(id = 1, pattern = "+34900*", label = "Spam prefix", enabled = true)),
+            )
+        val decision = RulePrecedenceResolver.evaluate("+34900123456", ctx)
+        assertEquals("Spam prefix", decision.blockReason)
+    }
+
+    @Test
+    fun patternMatch_suffixGlob() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(PatternRule(id = 1, pattern = "*1234", label = null, enabled = true)),
+            )
+        assertTrue(RulePrecedenceResolver.evaluate("+349001234", ctx) is RuleDecision.PatternBlock)
+        assertFalse(RulePrecedenceResolver.evaluate("+349001235", ctx).isBlocked)
+    }
+
+    @Test
+    fun emptyPattern_doesNotBlock() {
+        val ctx =
+            emptyContext.copy(
+                enabledPatterns =
+                    listOf(PatternRule(id = 1, pattern = "", label = null, enabled = true)),
+            )
+        assertFalse(RulePrecedenceResolver.evaluate("+34600123456", ctx).isBlocked)
+    }
+
+    @Test
+    fun whitespaceIsTrimmed() {
+        val ctx = emptyContext.copy(blockedNumbers = setOf("+34600123456"))
+        val decision = RulePrecedenceResolver.evaluate("  +34600123456  ", ctx)
+        assertTrue(decision is RuleDecision.ManualBlock)
+    }
+
+    @Test
+    fun matchesPattern_prefixOnly() {
+        assertTrue(RulePrecedenceResolver.matchesPattern("+34900123", "+34900*"))
+        assertFalse(RulePrecedenceResolver.matchesPattern("+34600123", "+34900*"))
+    }
+
+    @Test
+    fun matchesPattern_emptyPatternReturnsFalse() {
+        assertFalse(RulePrecedenceResolver.matchesPattern("+34600123", ""))
+    }
+}

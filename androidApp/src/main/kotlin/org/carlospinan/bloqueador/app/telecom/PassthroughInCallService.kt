@@ -3,35 +3,78 @@ package org.carlospinan.bloqueador.app.telecom
 import android.content.Intent
 import android.telecom.Call
 import android.telecom.InCallService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.carlospinan.bloqueador.app.rules.CallLogRepository
+import org.carlospinan.bloqueador.app.rules.ResolveContext
+import org.carlospinan.bloqueador.app.rules.RuleDecision
+import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
+import org.carlospinan.bloqueador.app.rules.RuleRepository
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
- * M1 scope: pure pass-through, no blocking logic (docs/MILESTONES.md M1).
- *
- * This is the mandatory in-call UI/audio contract for the default-dialer role
- * (docs/SPEC.md §1/§4). Real SIM connections still come from Android's own
- * telephony ConnectionService -- this class does not reimplement call
- * handling, it only owns the UI/audio contract.
- *
- * Deliberately does NOT write call-log entries itself: verified on-device
- * that Android's Telecom stack (`com.android.server.telecom`) logs every
- * call automatically regardless of which app holds the default-dialer role
- * -- a manual `ContentResolver.insert(CallLog.Calls.CONTENT_URI, ...)` here
- * produced a confirmed duplicate row per call (the system's own row carries
- * `phone_account_address` = the SIM's number; ours didn't and was strictly
- * redundant). Third-party default dialers are not expected to log calls
- * themselves.
+ * M2: Evaluates incoming calls against the rule set.
+ * Allowed calls pass through to the UI; blocked calls are rejected immediately
+ * and logged with the firing rule's reason.
  */
-class PassthroughInCallService : InCallService() {
+class PassthroughInCallService :
+    InCallService(),
+    KoinComponent {
+    private val ruleRepository: RuleRepository by inject()
+    private val callLogRepository: CallLogRepository by inject()
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
-        InCallState.attach(call)
-        startActivity(
-            Intent(this, InCallActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+
+        val number =
+            call.details
+                ?.handle
+                ?.schemeSpecificPart
+                .orEmpty()
+
+        serviceScope.launch {
+            val decision = evaluateCall(number)
+            if (decision.isBlocked) {
+                call.reject(false, null)
+                callLogRepository.logCall(
+                    number = number,
+                    timestamp = currentTimestamp(),
+                    decision = decision,
+                )
+            } else {
+                InCallState.attach(call)
+                callLogRepository.logCall(
+                    number = number,
+                    timestamp = currentTimestamp(),
+                    decision = decision,
+                )
+                startActivity(
+                    Intent(this@PassthroughInCallService, InCallActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }
     }
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
         InCallState.detach(call)
     }
+
+    private suspend fun evaluateCall(number: String): RuleDecision {
+        val context =
+            ResolveContext(
+                allowlistedNumbers = ruleRepository.allowlistedNumberSet(),
+                blockedNumbers = ruleRepository.blockedNumberSet(),
+                enabledPatterns = ruleRepository.enabledPatterns(),
+                enabledCountryCodes = ruleRepository.enabledCountryCodeSet(),
+            )
+        return RulePrecedenceResolver.evaluate(number, context)
+    }
+
+    private fun currentTimestamp(): Long = System.currentTimeMillis()
 }

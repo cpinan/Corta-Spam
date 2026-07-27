@@ -32,6 +32,9 @@ kotlin {
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
+            implementation(libs.navigation.compose)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
             // api, not implementation: consumers (androidApp) instantiate and hold
             // DialerOnboardingViewModel, so its ViewModel supertype must be resolvable
             // on their compile classpath too.

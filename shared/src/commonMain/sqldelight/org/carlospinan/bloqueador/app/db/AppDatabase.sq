@@ -1,13 +1,129 @@
--- Placeholder schema for M0. Real tables (blocked numbers, patterns,
--- countries, action rules, call log) land in M2 per docs/MILESTONES.md.
--- This table exists only to prove the SQLDelight driver is wired end to end.
-CREATE TABLE SchemaVersion (
-    id INTEGER NOT NULL PRIMARY KEY,
-    version INTEGER NOT NULL
+-- M2 schema: blocked numbers, pattern rules, country rules, allowlist, call log.
+-- Precedence: allowlist > manual block > pattern > country (evaluated in code, not SQL).
+
+CREATE TABLE BlockedNumber (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    number TEXT NOT NULL,
+    label TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    UNIQUE(number)
 );
 
-selectVersion:
-SELECT * FROM SchemaVersion;
+CREATE TABLE AllowlistedNumber (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    number TEXT NOT NULL,
+    label TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    UNIQUE(number)
+);
 
-insertVersion:
-INSERT INTO SchemaVersion(id, version) VALUES (?, ?);
+CREATE TABLE PatternRule (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    pattern TEXT NOT NULL,
+    label TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now'))
+);
+
+CREATE TABLE CountryRule (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    country_code TEXT NOT NULL,
+    country_name TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    UNIQUE(country_code)
+);
+
+CREATE TABLE CallLogEntry (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    number TEXT NOT NULL,
+    timestamp INTEGER NOT NULL DEFAULT (unixepoch('now')),
+    action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
+    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', NULL)),
+    rule_id INTEGER,
+    rule_detail TEXT
+);
+
+-- BlockedNumber queries
+selectAllBlockedNumbers:
+SELECT * FROM BlockedNumber ORDER BY created_at DESC;
+
+selectBlockedNumberByNumber:
+SELECT * FROM BlockedNumber WHERE number = ?;
+
+insertBlockedNumber:
+INSERT OR IGNORE INTO BlockedNumber(number, label) VALUES (?, ?);
+
+deleteBlockedNumberById:
+DELETE FROM BlockedNumber WHERE id = ?;
+
+countBlockedNumbers:
+SELECT count(*) AS count FROM BlockedNumber;
+
+-- AllowlistedNumber queries
+selectAllAllowlistedNumbers:
+SELECT * FROM AllowlistedNumber ORDER BY created_at DESC;
+
+selectAllowlistedNumberByNumber:
+SELECT * FROM AllowlistedNumber WHERE number = ?;
+
+insertAllowlistedNumber:
+INSERT OR IGNORE INTO AllowlistedNumber(number, label) VALUES (?, ?);
+
+deleteAllowlistedNumberById:
+DELETE FROM AllowlistedNumber WHERE id = ?;
+
+countAllowlistedNumbers:
+SELECT count(*) AS count FROM AllowlistedNumber;
+
+-- PatternRule queries
+selectAllPatternRules:
+SELECT * FROM PatternRule ORDER BY created_at DESC;
+
+insertPatternRule:
+INSERT INTO PatternRule(pattern, label) VALUES (?, ?);
+
+togglePatternRule:
+UPDATE PatternRule SET enabled = ? WHERE id = ?;
+
+deletePatternRuleById:
+DELETE FROM PatternRule WHERE id = ?;
+
+-- CountryRule queries
+selectAllCountryRules:
+SELECT * FROM CountryRule ORDER BY country_name ASC;
+
+insertCountryRule:
+INSERT OR IGNORE INTO CountryRule(country_code, country_name) VALUES (?, ?);
+
+toggleCountryRule:
+UPDATE CountryRule SET enabled = ? WHERE id = ?;
+
+deleteCountryRuleById:
+DELETE FROM CountryRule WHERE id = ?;
+
+-- CallLogEntry queries
+insertCallLogEntry:
+INSERT INTO CallLogEntry(number, timestamp, action, rule_type, rule_id, rule_detail)
+VALUES (?, ?, ?, ?, ?, ?);
+
+selectRecentCallLogEntries:
+SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT ?;
+
+selectAllCallLogEntries:
+SELECT * FROM CallLogEntry ORDER BY timestamp DESC;
+
+countBlockedCallsToday:
+SELECT count(*) AS count FROM CallLogEntry
+WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'start of day');
+
+countBlockedCallsThisWeek:
+SELECT count(*) AS count FROM CallLogEntry
+WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'weekday 0', '-6 days');
+
+countBlockedCallsThisMonth:
+SELECT count(*) AS count FROM CallLogEntry
+WHERE action = 'BLOCKED' AND timestamp >= unixepoch('now', 'start of month');
+
+clearCallLog:
+DELETE FROM CallLogEntry;
