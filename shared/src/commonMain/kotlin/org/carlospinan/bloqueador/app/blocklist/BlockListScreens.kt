@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,10 +41,9 @@ import bloqueallamadas.shared.generated.resources.block_list_empty_hint
 import bloqueallamadas.shared.generated.resources.block_list_hub_title
 import bloqueallamadas.shared.generated.resources.block_list_manual_title
 import bloqueallamadas.shared.generated.resources.block_list_title
-import bloqueallamadas.shared.generated.resources.country_add_hint
 import bloqueallamadas.shared.generated.resources.country_add_title
 import bloqueallamadas.shared.generated.resources.country_empty_hint
-import bloqueallamadas.shared.generated.resources.country_name_hint
+import bloqueallamadas.shared.generated.resources.country_search_hint
 import bloqueallamadas.shared.generated.resources.country_title
 import bloqueallamadas.shared.generated.resources.hub_countries
 import bloqueallamadas.shared.generated.resources.hub_patterns
@@ -53,6 +53,7 @@ import bloqueallamadas.shared.generated.resources.pattern_android_only
 import bloqueallamadas.shared.generated.resources.pattern_empty_hint
 import bloqueallamadas.shared.generated.resources.pattern_label_hint
 import bloqueallamadas.shared.generated.resources.pattern_title
+import org.carlospinan.bloqueador.app.rules.COUNTRIES
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.jetbrains.compose.resources.stringResource
@@ -582,8 +583,18 @@ private fun AddCountryDialog(
     onConfirm: (String, String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var code by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("") }
+    val filtered =
+        remember(query) {
+            if (query.isBlank()) {
+                COUNTRIES
+            } else {
+                COUNTRIES.filter {
+                    it.name.contains(query, ignoreCase = true) ||
+                        it.code.contains(query)
+                }
+            }
+        }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -591,32 +602,40 @@ private fun AddCountryDialog(
         text = {
             Column {
                 OutlinedTextField(
-                    value = code,
-                    onValueChange = { code = it },
-                    label = { Text(stringResource(Res.string.country_add_hint)) },
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(Res.string.country_search_hint)) },
                     singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(Res.string.country_name_hint)) },
-                    singleLine = true,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (code.isNotBlank() && name.isNotBlank()) {
-                        onConfirm(code.trim(), name.trim())
+                LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
+                    items(filtered, key = { it.code + it.name }) { country ->
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onConfirm(country.code, country.name)
+                                    }.padding(vertical = 10.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = country.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                text = "(+${country.code})",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
-                },
-                enabled = code.isNotBlank() && name.isNotBlank(),
-            ) {
-                Text(stringResource(Res.string.action_add))
+                }
             }
         },
+        confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(Res.string.action_cancel))

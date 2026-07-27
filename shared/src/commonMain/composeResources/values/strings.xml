@@ -65,8 +65,7 @@
     <string name="country_title">Country Rules</string>
     <string name="country_empty_hint">No countries added. Block or allow calls by country code.</string>
     <string name="country_add_title">Add country rule</string>
-    <string name="country_add_hint">Country code (e.g. 34, 44, 1)</string>
-    <string name="country_name_hint">Country name (e.g. Spain)</string>
+    <string name="country_search_hint">Search countries…</string>
     <string name="hub_patterns">Pattern Rules</string>
     <string name="hub_countries">Country Rules</string>
     <!-- Call log -->
