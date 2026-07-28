@@ -9,11 +9,12 @@ object AdaptiveRoutes {
     const val ALLOWLIST = "allowlist"
     const val PATTERNS = "patterns"
     const val COUNTRIES = "countries"
-    const val ACTION_RULES = "action_rules"
     const val SCHEDULES = "schedules"
     const val SETTINGS = "settings"
     const val AUTO_RESPONDER = "auto_responder"
     const val BACKUP = "backup"
+    const val PRIVACY_POLICY = "privacy_policy"
+    const val TERMS_CONDITIONS = "terms_conditions"
 
     fun callLogRoute(filter: String = "all"): String = "call_log/$filter"
 }
@@ -29,7 +30,6 @@ val blockListSectionRoutes =
         AdaptiveRoutes.ALLOWLIST,
         AdaptiveRoutes.PATTERNS,
         AdaptiveRoutes.COUNTRIES,
-        AdaptiveRoutes.ACTION_RULES,
         AdaptiveRoutes.SCHEDULES,
     )
 val settingsSectionRoutes =
@@ -37,6 +37,8 @@ val settingsSectionRoutes =
         AdaptiveRoutes.SETTINGS,
         AdaptiveRoutes.AUTO_RESPONDER,
         AdaptiveRoutes.BACKUP,
+        AdaptiveRoutes.PRIVACY_POLICY,
+        AdaptiveRoutes.TERMS_CONDITIONS,
     )
 val sectionRoutes =
     listOf(

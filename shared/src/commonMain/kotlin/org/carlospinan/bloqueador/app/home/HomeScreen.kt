@@ -11,9 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -31,9 +35,15 @@ import bloqueallamadas.shared.generated.resources.home_settings
 import bloqueallamadas.shared.generated.resources.home_title
 import bloqueallamadas.shared.generated.resources.home_view_call_log
 import bloqueallamadas.shared.generated.resources.home_view_stats
+import bloqueallamadas.shared.generated.resources.ic_block_lists
+import bloqueallamadas.shared.generated.resources.ic_call_log
+import bloqueallamadas.shared.generated.resources.ic_settings
+import bloqueallamadas.shared.generated.resources.ic_stats
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -54,7 +64,10 @@ fun HomeScreen(
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            AdaptiveContent(windowSizeClass = windowSizeClass) {
+            AdaptiveContent(
+                windowSizeClass = windowSizeClass,
+                contentModifier = Modifier.verticalScroll(rememberScrollState()),
+            ) {
                 val isWide = windowSizeClass != WindowSizeClass.Compact
 
                 if (isWide) {
@@ -207,18 +220,22 @@ private fun HomeQuickGrid(
         ) {
             HomeQuickItem(
                 title = stringResource(Res.string.home_view_call_log),
+                icon = Res.drawable.ic_call_log,
                 onClick = onNavigateToCallLog,
             )
             HomeQuickItem(
                 title = stringResource(Res.string.home_view_stats),
+                icon = Res.drawable.ic_stats,
                 onClick = onNavigateToStats,
             )
             HomeQuickItem(
                 title = stringResource(Res.string.home_manage_block_list),
+                icon = Res.drawable.ic_block_lists,
                 onClick = onNavigateToBlockList,
             )
             HomeQuickItem(
                 title = stringResource(Res.string.home_settings),
+                icon = Res.drawable.ic_settings,
                 onClick = onNavigateToSettings,
             )
         }
@@ -228,6 +245,7 @@ private fun HomeQuickGrid(
 @Composable
 private fun HomeQuickItem(
     title: String,
+    icon: DrawableResource,
     onClick: () -> Unit,
 ) {
     Card(
@@ -236,6 +254,13 @@ private fun HomeQuickItem(
         Column(
             modifier = Modifier.padding(12.dp),
         ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,

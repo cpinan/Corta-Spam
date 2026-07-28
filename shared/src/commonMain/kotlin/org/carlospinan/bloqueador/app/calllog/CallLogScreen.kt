@@ -12,12 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,10 +43,14 @@ import bloqueallamadas.shared.generated.resources.call_log_title
 import bloqueallamadas.shared.generated.resources.call_log_title_month
 import bloqueallamadas.shared.generated.resources.call_log_title_today
 import bloqueallamadas.shared.generated.resources.call_log_title_week
+import bloqueallamadas.shared.generated.resources.ic_allowlist
+import bloqueallamadas.shared.generated.resources.ic_blocked_number
+import bloqueallamadas.shared.generated.resources.ic_unknown_call
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -239,12 +245,24 @@ private fun CallLogDetailPane(
         } else {
             val isBlocked = entry.action == "BLOCKED"
             val actionColor = if (isBlocked) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
+            val statusIcon = if (isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
 
-            Text(
-                text = if (isBlocked) "Blocked call" else "Allowed call",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    painter = painterResource(statusIcon),
+                    contentDescription = if (isBlocked) "Blocked" else "Allowed",
+                    tint = actionColor,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = if (isBlocked) "Blocked call" else "Allowed call",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -313,6 +331,8 @@ private fun CallLogEntryRow(
 ) {
     val isBlocked = entry.action == "BLOCKED"
     val actionColor = if (isBlocked) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
+    val statusIcon =
+        if (isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
 
     Card(
         modifier = modifier
@@ -322,9 +342,15 @@ private fun CallLogEntryRow(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                painter = painterResource(statusIcon),
+                contentDescription = if (isBlocked) "Blocked" else "Allowed",
+                tint = actionColor,
+                modifier = Modifier.size(20.dp),
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = entry.number,

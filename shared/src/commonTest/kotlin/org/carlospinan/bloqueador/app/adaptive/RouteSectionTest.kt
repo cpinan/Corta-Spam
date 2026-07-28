@@ -26,7 +26,6 @@ class RouteSectionTest {
         assertEquals(2, routeSection(AdaptiveRoutes.ALLOWLIST))
         assertEquals(2, routeSection(AdaptiveRoutes.PATTERNS))
         assertEquals(2, routeSection(AdaptiveRoutes.COUNTRIES))
-        assertEquals(2, routeSection(AdaptiveRoutes.ACTION_RULES))
         assertEquals(2, routeSection(AdaptiveRoutes.SCHEDULES))
     }
 
@@ -35,6 +34,8 @@ class RouteSectionTest {
         assertEquals(3, routeSection(AdaptiveRoutes.SETTINGS))
         assertEquals(3, routeSection(AdaptiveRoutes.AUTO_RESPONDER))
         assertEquals(3, routeSection(AdaptiveRoutes.BACKUP))
+        assertEquals(3, routeSection(AdaptiveRoutes.PRIVACY_POLICY))
+        assertEquals(3, routeSection(AdaptiveRoutes.TERMS_CONDITIONS))
     }
 
     @Test

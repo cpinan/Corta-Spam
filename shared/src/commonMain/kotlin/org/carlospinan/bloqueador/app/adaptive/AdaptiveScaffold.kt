@@ -10,11 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,12 +18,17 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
+import bloqueallamadas.shared.generated.resources.Res
+import bloqueallamadas.shared.generated.resources.ic_block_lists
+import bloqueallamadas.shared.generated.resources.ic_call_log
+import bloqueallamadas.shared.generated.resources.ic_home
+import bloqueallamadas.shared.generated.resources.ic_settings
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 data class NavItem(
     val label: String,
-    val icon: ImageVector,
+    val icon: DrawableResource,
     val contentDescription: String,
 )
 
@@ -42,10 +42,10 @@ fun AdaptiveScaffold(
 ) {
     val navItems =
         listOf(
-            NavItem("Home", Icons.Default.Home, "Home"),
-            NavItem("Log", Icons.AutoMirrored.Filled.List, "Call Log"),
-            NavItem("Lists", Icons.Default.Lock, "Block Lists"),
-            NavItem("Settings", Icons.Default.Settings, "Settings"),
+            NavItem("Home", Res.drawable.ic_home, "Home"),
+            NavItem("Log", Res.drawable.ic_call_log, "Call Log"),
+            NavItem("Lists", Res.drawable.ic_block_lists, "Block Lists"),
+            NavItem("Settings", Res.drawable.ic_settings, "Settings"),
         )
 
     when (windowSizeClass) {
@@ -68,7 +68,12 @@ fun AdaptiveScaffold(
                         NavigationBarItem(
                             selected = selectedIndex == index,
                             onClick = { onNavigate(index) },
-                            icon = { Icon(item.icon, contentDescription = item.contentDescription) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(item.icon),
+                                    contentDescription = item.contentDescription,
+                                )
+                            },
                             label = { Text(item.label) },
                         )
                     }
@@ -82,7 +87,12 @@ fun AdaptiveScaffold(
                         NavigationRailItem(
                             selected = selectedIndex == index,
                             onClick = { onNavigate(index) },
-                            icon = { Icon(item.icon, contentDescription = item.contentDescription) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(item.icon),
+                                    contentDescription = item.contentDescription,
+                                )
+                            },
                             label = { Text(item.label) },
                         )
                     }
@@ -108,7 +118,12 @@ fun AdaptiveScaffold(
                         NavigationRailItem(
                             selected = selectedIndex == index,
                             onClick = { onNavigate(index) },
-                            icon = { Icon(item.icon, contentDescription = item.contentDescription) },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(item.icon),
+                                    contentDescription = item.contentDescription,
+                                )
+                            },
                             label = { Text(item.label) },
                             alwaysShowLabel = true,
                         )

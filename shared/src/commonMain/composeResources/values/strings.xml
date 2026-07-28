@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Onboarding -->
-    <string name="onboarding_dialer_icon">☎</string>
     <string name="onboarding_title">We need to become your default phone app</string>
     <string name="onboarding_subtitle">This is the only way Android lets an app see who's calling before you answer, and speak a greeting to callers you haven't approved yet.</string>
     <string name="onboarding_reason_screen_title">Screen calls silently.</string>
@@ -28,7 +27,7 @@
     <string name="action_skip">Skip</string>
     <string name="action_back">Back</string>
     <!-- Welcome -->
-    <string name="welcome_title">BloqueaLlamadas</string>
+    <string name="welcome_title">Corta Spam</string>
     <string name="welcome_subtitle">Open-source call blocking.\nNo ads. No tracking. No data leaves your device.</string>
     <string name="welcome_get_started">Get Started</string>
     <!-- Call screen -->
@@ -40,7 +39,7 @@
     <string name="action_answer">Answer</string>
     <string name="action_hang_up">Hang up</string>
     <!-- Home -->
-    <string name="home_title">BloqueaLlamadas</string>
+    <string name="home_title">Corta Spam</string>
     <string name="home_blocking_enabled">Blocking is on</string>
     <string name="home_blocked_today">Blocked today</string>
     <string name="home_blocked_this_week">This week</string>
@@ -110,6 +109,9 @@
     <string name="backup_title">Backup &amp; Restore</string>
     <string name="backup_export">Export rules to file</string>
     <string name="backup_import">Import rules from file</string>
+    <!-- Privacy -->
+    <string name="settings_privacy">Privacy &amp; open source</string>
+    <string name="settings_privacy_desc">Source code, license, no data collection</string>
     <!-- Action rules -->
     <string name="hub_actions">Action Rules</string>
     <string name="action_rule_title">Action Rules</string>

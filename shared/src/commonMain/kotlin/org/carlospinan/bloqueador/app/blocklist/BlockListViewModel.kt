@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
@@ -39,11 +38,6 @@ class BlockListViewModel(
             .countryRules()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val actionRules: StateFlow<List<ActionRuleEntry>> =
-        ruleRepository
-            .actionRules()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     val scheduleRules: StateFlow<List<ScheduleRuleEntry>> =
         ruleRepository
             .scheduleRules()
@@ -61,9 +55,6 @@ class BlockListViewModel(
     private val _countryCount = MutableStateFlow(0)
     val countryCount: StateFlow<Int> = _countryCount.asStateFlow()
 
-    private val _actionCount = MutableStateFlow(0)
-    val actionCount: StateFlow<Int> = _actionCount.asStateFlow()
-
     private val _scheduleCount = MutableStateFlow(0)
     val scheduleCount: StateFlow<Int> = _scheduleCount.asStateFlow()
 
@@ -79,9 +70,6 @@ class BlockListViewModel(
         }
         viewModelScope.launch {
             countryRules.collect { _countryCount.value = it.size }
-        }
-        viewModelScope.launch {
-            actionRules.collect { _actionCount.value = it.size }
         }
         viewModelScope.launch {
             scheduleRules.collect { _scheduleCount.value = it.size }
@@ -157,32 +145,6 @@ class BlockListViewModel(
     fun removeCountryRule(id: Long) {
         viewModelScope.launch {
             ruleRepository.removeCountryRule(id)
-        }
-    }
-
-    fun addActionRule(
-        label: String?,
-        attempts: Int,
-        windowMinutes: Int,
-        patternId: Long? = null,
-    ) {
-        viewModelScope.launch {
-            ruleRepository.addActionRule(label, attempts, windowMinutes, patternId)
-        }
-    }
-
-    fun toggleActionRule(
-        id: Long,
-        enabled: Boolean,
-    ) {
-        viewModelScope.launch {
-            ruleRepository.toggleActionRule(id, enabled)
-        }
-    }
-
-    fun removeActionRule(id: Long) {
-        viewModelScope.launch {
-            ruleRepository.removeActionRule(id)
         }
     }
 

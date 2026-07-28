@@ -23,7 +23,6 @@ import org.carlospinan.bloqueador.app.autoresponder.AutoResponderScreen
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
 import org.carlospinan.bloqueador.app.backup.BackupScreen
 import org.carlospinan.bloqueador.app.backup.BackupViewModel
-import org.carlospinan.bloqueador.app.blocklist.ActionRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
@@ -36,6 +35,7 @@ import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
+import org.carlospinan.bloqueador.app.settings.InfoScreen
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.stats.StatsScreen
@@ -51,11 +51,12 @@ object Routes {
     const val ALLOWLIST = "allowlist"
     const val PATTERNS = "patterns"
     const val COUNTRIES = "countries"
-    const val ACTION_RULES = "action_rules"
     const val SCHEDULES = "schedules"
     const val SETTINGS = "settings"
     const val AUTO_RESPONDER = "auto_responder"
     const val BACKUP = "backup"
+    const val PRIVACY_POLICY = "privacy_policy"
+    const val TERMS_CONDITIONS = "terms_conditions"
 
     fun callLogRoute(filter: String = "all"): String = "call_log/$filter"
 }
@@ -142,20 +143,17 @@ fun AppNavHost(
                 val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
                 val patternCount by blockListViewModel.patternCount.collectAsState()
                 val countryCount by blockListViewModel.countryCount.collectAsState()
-                val actionCount by blockListViewModel.actionCount.collectAsState()
                 val scheduleCount by blockListViewModel.scheduleCount.collectAsState()
                 BlockListHubScreen(
                     blockedCount = blockedCount,
                     allowlistedCount = allowlistedCount,
                     patternCount = patternCount,
                     countryCount = countryCount,
-                    actionCount = actionCount,
                     scheduleCount = scheduleCount,
                     onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
                     onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
                     onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
                     onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
-                    onNavigateToActions = { navController.navigate(Routes.ACTION_RULES) },
                     onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) },
                     onBack = { navController.popBackStack() },
                 )
@@ -207,19 +205,6 @@ fun AppNavHost(
                 )
             }
 
-            composable(Routes.ACTION_RULES) {
-                val actions by blockListViewModel.actionRules.collectAsState()
-                val patterns by blockListViewModel.patternRules.collectAsState()
-                ActionRuleScreen(
-                    rules = actions,
-                    patterns = patterns,
-                    onAdd = blockListViewModel::addActionRule,
-                    onToggle = blockListViewModel::toggleActionRule,
-                    onRemove = blockListViewModel::removeActionRule,
-                    onBack = { navController.popBackStack() },
-                )
-            }
-
             composable(Routes.SCHEDULES) {
                 val schedules by blockListViewModel.scheduleRules.collectAsState()
                 ScheduleRuleScreen(
@@ -249,6 +234,8 @@ fun AppNavHost(
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) },
                     onNavigateToBackup = { navController.navigate(Routes.BACKUP) },
+                    onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) },
+                    onNavigateToTerms = { navController.navigate(Routes.TERMS_CONDITIONS) },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -282,6 +269,48 @@ fun AppNavHost(
                             backupViewModel.importJson(content)
                         }
                     },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(Routes.PRIVACY_POLICY) {
+                InfoScreen(
+                    title = "Privacy Policy",
+                    body =
+                        "Corta Spam does not collect, transmit, or share any personal data. " +
+                            "No analytics, no telemetry, no advertising. No data leaves your device " +
+                            "unless you explicitly enable the optional spam provider.\n\n" +
+                            "All rules, settings, and call logs are stored locally in a SQLite database. " +
+                            "You can delete them at any time by clearing the app data or uninstalling the app.\n\n" +
+                            "Network access is limited to the optional spam provider check, which sends " +
+                            "only the incoming caller's number to a public spam database. No contact data, " +
+                            "device identifiers, or call audio is ever transmitted.\n\n" +
+                            "The app is fully open source. Every line of code can be audited independently " +
+                            "at its public repository.",
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(Routes.TERMS_CONDITIONS) {
+                InfoScreen(
+                    title = "Terms & Conditions",
+                    body =
+                        "Corta Spam is open-source software provided under the MIT License.\n\n" +
+                            "Permission is hereby granted, free of charge, to any person obtaining a copy " +
+                            "of this software and associated documentation files (the \"Software\"), to deal " +
+                            "in the Software without restriction, including without limitation the rights " +
+                            "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell " +
+                            "copies of the Software, and to permit persons to whom the Software is " +
+                            "furnished to do so, subject to the following conditions:\n\n" +
+                            "The above copyright notice and this permission notice shall be included in " +
+                            "all copies or substantial portions of the Software.\n\n" +
+                            "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR " +
+                            "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, " +
+                            "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE " +
+                            "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER " +
+                            "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, " +
+                            "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN " +
+                            "THE SOFTWARE.",
                     onBack = { navController.popBackStack() },
                 )
             }

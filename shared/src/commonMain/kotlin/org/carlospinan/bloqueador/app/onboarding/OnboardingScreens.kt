@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.onboarding
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,9 +38,9 @@ import bloqueallamadas.shared.generated.resources.action_continue
 import bloqueallamadas.shared.generated.resources.action_continue_without_default
 import bloqueallamadas.shared.generated.resources.action_not_now
 import bloqueallamadas.shared.generated.resources.action_try_again
+import bloqueallamadas.shared.generated.resources.ic_brand_app
 import bloqueallamadas.shared.generated.resources.onboarding_denied_body
 import bloqueallamadas.shared.generated.resources.onboarding_denied_title
-import bloqueallamadas.shared.generated.resources.onboarding_dialer_icon
 import bloqueallamadas.shared.generated.resources.onboarding_never_do_ads
 import bloqueallamadas.shared.generated.resources.onboarding_never_do_header
 import bloqueallamadas.shared.generated.resources.onboarding_never_do_record
@@ -53,6 +54,7 @@ import bloqueallamadas.shared.generated.resources.onboarding_reason_screen_title
 import bloqueallamadas.shared.generated.resources.onboarding_requesting_indicator
 import bloqueallamadas.shared.generated.resources.onboarding_subtitle
 import bloqueallamadas.shared.generated.resources.onboarding_title
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -178,15 +180,11 @@ fun PermissionExplainerScreen(
 
 @Composable
 private fun IconCircle() {
-    Box(
-        modifier =
-            Modifier
-                .size(56.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(stringResource(Res.string.onboarding_dialer_icon), style = MaterialTheme.typography.titleLarge)
-    }
+    Image(
+        painter = painterResource(Res.drawable.ic_brand_app),
+        contentDescription = null,
+        modifier = Modifier.size(56.dp),
+    )
 }
 
 @Composable

@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -27,6 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_cancel
+import bloqueallamadas.shared.generated.resources.ic_autoresponder
+import bloqueallamadas.shared.generated.resources.ic_backup
+import bloqueallamadas.shared.generated.resources.ic_blocking
+import bloqueallamadas.shared.generated.resources.ic_contacts
+import bloqueallamadas.shared.generated.resources.ic_default_action
+import bloqueallamadas.shared.generated.resources.ic_privacy
+import bloqueallamadas.shared.generated.resources.ic_spam_provider
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
 import bloqueallamadas.shared.generated.resources.settings_autoresponder
@@ -46,6 +57,8 @@ import bloqueallamadas.shared.generated.resources.settings_spam_provider_desc
 import bloqueallamadas.shared.generated.resources.settings_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -62,6 +75,8 @@ fun SettingsScreen(
     onRequestContactsPermission: () -> Unit,
     onNavigateToAutoResponder: () -> Unit,
     onNavigateToBackup: () -> Unit,
+    onNavigateToPrivacy: () -> Unit = {},
+    onNavigateToTerms: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     var showDefaultActionDialog by remember { mutableStateOf(false) }
@@ -69,7 +84,10 @@ fun SettingsScreen(
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            AdaptiveContent(windowSizeClass = windowSizeClass) {
+            AdaptiveContent(
+                windowSizeClass = windowSizeClass,
+                contentModifier = Modifier.verticalScroll(rememberScrollState()),
+            ) {
                 Text(
                     text = stringResource(Res.string.settings_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -80,6 +98,7 @@ fun SettingsScreen(
                 SettingToggle(
                     title = stringResource(Res.string.settings_blocking_enabled),
                     description = stringResource(Res.string.settings_blocking_enabled_desc),
+                    icon = Res.drawable.ic_blocking,
                     checked = blockingEnabled,
                     onCheckedChange = onSetBlockingEnabled,
                 )
@@ -89,6 +108,7 @@ fun SettingsScreen(
                 SettingToggle(
                     title = stringResource(Res.string.settings_auto_allow_contacts),
                     description = stringResource(Res.string.settings_auto_allow_contacts_desc),
+                    icon = Res.drawable.ic_contacts,
                     checked = autoAllowContacts,
                     onCheckedChange = onSetAutoAllowContacts,
                 )
@@ -105,6 +125,7 @@ fun SettingsScreen(
                 SettingDropdown(
                     title = stringResource(Res.string.settings_default_action),
                     description = stringResource(Res.string.settings_default_action_desc),
+                    icon = Res.drawable.ic_default_action,
                     value =
                         when (defaultAction) {
                             DefaultAction.ALLOW -> stringResource(Res.string.settings_default_action_allow)
@@ -119,6 +140,7 @@ fun SettingsScreen(
                 SettingToggle(
                     title = stringResource(Res.string.settings_spam_provider),
                     description = stringResource(Res.string.settings_spam_provider_desc),
+                    icon = Res.drawable.ic_spam_provider,
                     checked = spamEnabled,
                     onCheckedChange = onSetSpamEnabled,
                 )
@@ -128,6 +150,7 @@ fun SettingsScreen(
                 SettingDropdown(
                     title = stringResource(Res.string.settings_autoresponder),
                     description = stringResource(Res.string.settings_autoresponder_desc),
+                    icon = Res.drawable.ic_autoresponder,
                     value = stringResource(Res.string.settings_autoresponder),
                     onClick = onNavigateToAutoResponder,
                 )
@@ -137,8 +160,29 @@ fun SettingsScreen(
                 SettingDropdown(
                     title = stringResource(Res.string.settings_backup),
                     description = stringResource(Res.string.settings_backup_desc),
+                    icon = Res.drawable.ic_backup,
                     value = stringResource(Res.string.settings_backup),
                     onClick = onNavigateToBackup,
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingDropdown(
+                    title = "Privacy Policy",
+                    description = "How your data is handled",
+                    icon = Res.drawable.ic_privacy,
+                    value = "View",
+                    onClick = onNavigateToPrivacy,
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingDropdown(
+                    title = "Terms & Conditions",
+                    description = "Open source license and usage terms",
+                    icon = Res.drawable.ic_privacy,
+                    value = "View",
+                    onClick = onNavigateToTerms,
                 )
             }
         }
@@ -160,6 +204,7 @@ fun SettingsScreen(
 private fun SettingToggle(
     title: String,
     description: String,
+    icon: DrawableResource,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
@@ -169,9 +214,15 @@ private fun SettingToggle(
                 Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -195,28 +246,41 @@ private fun SettingToggle(
 private fun SettingDropdown(
     title: String,
     description: String,
+    icon: DrawableResource,
     value: String,
     onClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

@@ -15,12 +15,13 @@ import androidx.compose.ui.unit.dp
 fun AdaptiveContent(
     windowSizeClass: WindowSizeClass,
     modifier: Modifier = Modifier,
+    contentModifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     when (windowSizeClass) {
         WindowSizeClass.Compact -> {
             Column(
-                modifier = modifier.fillMaxWidth().padding(24.dp),
+                modifier = modifier.fillMaxWidth().padding(24.dp).then(contentModifier),
                 content = content,
             )
         }
@@ -34,7 +35,8 @@ fun AdaptiveContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 600.dp)
-                        .padding(24.dp),
+                        .padding(24.dp)
+                        .then(contentModifier),
                     content = content,
                 )
             }
