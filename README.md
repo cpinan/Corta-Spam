@@ -4,28 +4,35 @@ Open-source call blocking app. No ads. No tracking. No data leaves your device.
 
 Screens incoming calls before your phone rings. Checks every number against your rules — manual blocklist, pattern matching, country blocking, quiet hours — plus an optional community spam provider. Blocks, allows, or answers with a custom greeting.
 
+**Spanish / LATAM localized.** Available in English and Spanish (Perú first market).
+
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 151 automated tests pass. Android APK builds. iOS deferred.
+M0–M10 complete. Adaptive landscape/tablet layout integrated. i18n (English + Spanish) done. Open source under MIT License. 158+ automated tests pass. Android APK builds. iOS deferred.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
 - [`docs/ADAPTIVE_PLAN.md`](docs/ADAPTIVE_PLAN.md) — landscape/tablet layout plan
 - [`docs/STORE_COMPLIANCE.md`](docs/STORE_COMPLIANCE.md) — Google Play declaration + privacy policy
+- [`LICENSE`](LICENSE) — MIT License
 
 ## Features
 
 - **Manual blocking** — block or allow specific numbers
 - **Pattern rules** — block by prefix, suffix, or wildcard (`+34900*`, `*1234`)
 - **Country blocking** — block all numbers from a country code
-- **Quiet hours** — silence all calls on a schedule (TimePicker with presets)
+- **Quiet hours** — silence all calls on a schedule (TimePicker with presets: Night, Siesta, Work)
 - **Auto-responder** — answer blocked calls with TTS greeting or custom audio
 - **Spam provider** — optional community spam database (off by default)
 - **Call log** — every call with outcome and rule detail (list-detail two-pane on tablet)
 - **Stats** — blocked-call counts by day/week/month
 - **Backup/restore** — export/import all rules as JSON
 - **Adaptive layout** — bottom bar on phone, nav rail on tablet/landscape, content capped at 600dp
+- **Duplicate warnings** — warns when adding a number already present in the other list
+- **Precedence engine** — manual block overrides contacts and allowlist
 - **Corta Spam icon** — custom "Call Barrier" identity (navy handset, coral barrier, cream field)
+- **Privacy & Terms** — in-app privacy policy and MIT license terms
+- **i18n** — English (default) + Spanish (es) locale support
 
 ## Project layout
 
@@ -66,7 +73,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 151 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 158+ tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ```
 
@@ -80,6 +87,17 @@ node design/iconography/render_ui_icons.mjs
 # Expected output: "Rendered and validated 21 interface icons."
 ```
 
+## Localization
+
+String resources are in `shared/src/commonMain/composeResources/`:
+
+| Directory | Language |
+|---|---|
+| `values/` | English (default) |
+| `values-es/` | Spanish (LATAM) |
+
+Add new locales by creating a `values-<code>/strings.xml` file following the same key structure.
+
 ## License
 
-MIT — see [Terms & Conditions](docs/STORE_COMPLIANCE.md) in-app or at the public repository.
+MIT — see [`LICENSE`](LICENSE). Corta Spam is free and open source.

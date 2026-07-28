@@ -4,28 +4,35 @@ App de bloqueo de llamadas de código abierto. Sin anuncios. Sin rastreo. Tus da
 
 Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada número contra tus reglas — bloqueo manual, patrones, bloqueo por país, horas de silencio — más un proveedor comunitario de spam opcional. Bloquea, permite o responde con un saludo personalizado.
 
+**Localizado para LATAM.** Disponible en inglés y español (Perú como primer mercado).
+
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). 151 pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n (inglés + español) terminado. Código abierto bajo licencia MIT. 158+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
 - [`docs/ADAPTIVE_PLAN.md`](docs/ADAPTIVE_PLAN.md) — plan de diseño adaptativo horizontal/tablet
 - [`docs/STORE_COMPLIANCE.md`](docs/STORE_COMPLIANCE.md) — declaración para Google Play + política de privacidad
+- [`LICENSE`](LICENSE) — Licencia MIT
 
 ## Funcionalidades
 
 - **Bloqueo manual** — bloquea o permite números específicos
 - **Reglas de patrón** — bloquea por prefijo, sufijo o comodín (`+34900*`, `*1234`)
 - **Bloqueo por país** — bloquea todas las llamadas de un código de país
-- **Horas de silencio** — silencia todas las llamadas en un horario (TimePicker con ajustes rápidos)
+- **Horas de silencio** — silencia todas las llamadas en un horario (TimePicker con ajustes: Noche, Siesta, Trabajo)
 - **Auto-respondedor** — responde llamadas bloqueadas con saludo TTS o audio personalizado
 - **Proveedor de spam** — base de datos comunitaria opcional (desactivada por defecto)
 - **Registro de llamadas** — historial con resultado y detalle de la regla (panel dividido en tablet)
 - **Estadísticas** — conteo de llamadas bloqueadas por día/semana/mes
-- **Copia de seguridad** — exporta/importa todas las reglas como JSON
+- **Respaldo** — exporta/importa todas las reglas como JSON
 - **Diseño adaptativo** — barra inferior en móvil, barra lateral en tablet/apaisado, contenido centrado a 600dp
-- **Identidad visual** — icono "Barrera de Llamadas" (auricular azul marino, barrera coral, fondo crema)
+- **Avisos de duplicados** — advierte al agregar un número que ya está en la otra lista
+- **Motor de precedencia** — el bloqueo manual tiene prioridad sobre contactos y lista de permitidos
+- **Icono Corta Spam** — identidad "Barrera de Llamadas" (auricular azul marino, barrera coral, fondo crema)
+- **Privacidad y Términos** — política de privacidad y licencia MIT dentro de la app
+- **i18n** — inglés (predeterminado) + español (es)
 
 ## Estructura del proyecto
 
@@ -66,7 +73,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 151 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 158+ pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
 
@@ -80,6 +87,17 @@ node design/iconography/render_ui_icons.mjs
 # Salida esperada: "Rendered and validated 21 interface icons."
 ```
 
+## Localización
+
+Los recursos de texto están en `shared/src/commonMain/composeResources/`:
+
+| Directorio | Idioma |
+|---|---|
+| `values/` | Inglés (predeterminado) |
+| `values-es/` | Español (LATAM) |
+
+Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la misma estructura de claves.
+
 ## Licencia
 
-MIT — consulta [Términos y Condiciones](docs/STORE_COMPLIANCE.md) en la app o en el repositorio público.
+MIT — consulta [`LICENSE`](LICENSE). Corta Spam es software libre y de código abierto.
