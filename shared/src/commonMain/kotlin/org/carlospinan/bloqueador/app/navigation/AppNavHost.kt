@@ -17,6 +17,7 @@ import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
 import org.carlospinan.bloqueador.app.blocklist.CountryRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.ManualBlockListScreen
 import org.carlospinan.bloqueador.app.blocklist.PatternRuleScreen
+import org.carlospinan.bloqueador.app.blocklist.ScheduleRuleScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.home.HomeScreen
@@ -34,6 +35,7 @@ object Routes {
     const val PATTERNS = "patterns"
     const val COUNTRIES = "countries"
     const val ACTION_RULES = "action_rules"
+    const val SCHEDULES = "schedules"
     const val SETTINGS = "settings"
     const val AUTO_RESPONDER = "auto_responder"
 }
@@ -82,17 +84,20 @@ fun AppNavHost(navController: NavHostController) {
             val patternCount by blockListViewModel.patternCount.collectAsState()
             val countryCount by blockListViewModel.countryCount.collectAsState()
             val actionCount by blockListViewModel.actionCount.collectAsState()
+            val scheduleCount by blockListViewModel.scheduleCount.collectAsState()
             BlockListHubScreen(
                 blockedCount = blockedCount,
                 allowlistedCount = allowlistedCount,
                 patternCount = patternCount,
                 countryCount = countryCount,
                 actionCount = actionCount,
+                scheduleCount = scheduleCount,
                 onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
                 onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
                 onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
                 onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
                 onNavigateToActions = { navController.navigate(Routes.ACTION_RULES) },
+                onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) },
                 onBack = { navController.popBackStack() },
             )
         }
@@ -146,6 +151,17 @@ fun AppNavHost(navController: NavHostController) {
                 onAdd = blockListViewModel::addActionRule,
                 onToggle = blockListViewModel::toggleActionRule,
                 onRemove = blockListViewModel::removeActionRule,
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.SCHEDULES) {
+            val schedules by blockListViewModel.scheduleRules.collectAsState()
+            ScheduleRuleScreen(
+                rules = schedules,
+                onAdd = blockListViewModel::addScheduleRule,
+                onToggle = blockListViewModel::toggleScheduleRule,
+                onRemove = blockListViewModel::removeScheduleRule,
                 onBack = { navController.popBackStack() },
             )
         }

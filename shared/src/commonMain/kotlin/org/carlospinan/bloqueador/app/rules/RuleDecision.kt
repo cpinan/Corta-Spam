@@ -2,7 +2,7 @@ package org.carlospinan.bloqueador.app.rules
 
 /**
  * Represents the outcome of evaluating an incoming call against all rules.
- * Precedence order: ALLOWLIST > MANUAL_BLOCK > PATTERN > COUNTRY > SPAM > ACTION > DEFAULT_ALLOW.
+ * Precedence order: ALLOWLIST > MANUAL_BLOCK > PATTERN > COUNTRY > SPAM > ACTION > SCHEDULE > DEFAULT_ALLOW.
  */
 sealed class RuleDecision {
     /** Number is on the contacts or manual allowlist — bypass all block rules. */
@@ -42,6 +42,12 @@ sealed class RuleDecision {
         val windowMinutes: Int,
     ) : RuleDecision()
 
+    /** Number called during an enabled quiet-hours window and isn't allowlisted. */
+    data class ScheduleBlock(
+        val ruleId: Long,
+        val label: String?,
+    ) : RuleDecision()
+
     /** No blocking rule matched — call is allowed through (settings default action ALLOW/ASK). */
     data object DefaultAllow : RuleDecision()
 
@@ -62,6 +68,7 @@ sealed class RuleDecision {
                 is CountryBlock -> "Country: $countryName ($countryCode)"
                 is SpamHit -> "Spam ($source, ${(confidence * 100).toInt()}%)"
                 is ActionBlock -> label ?: "Repeated calls ($attempts in ${windowMinutes}m)"
+                is ScheduleBlock -> label ?: "Quiet hours"
                 is DefaultAllow -> null
                 is DefaultBlock -> "No matching rule (default: block)"
             }
@@ -74,6 +81,7 @@ sealed class RuleDecision {
                 is PatternBlock -> ruleId
                 is CountryBlock -> ruleId
                 is ActionBlock -> ruleId
+                is ScheduleBlock -> ruleId
                 is Allowlist, is SpamHit, is DefaultAllow, is DefaultBlock -> null
             }
 
@@ -87,6 +95,7 @@ sealed class RuleDecision {
                 is CountryBlock -> "COUNTRY"
                 is SpamHit -> "SPAM"
                 is ActionBlock -> "ACTION"
+                is ScheduleBlock -> "SCHEDULE"
                 is DefaultAllow -> null
                 is DefaultBlock -> null
             }

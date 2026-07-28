@@ -22,6 +22,9 @@ interface RuleRepository {
     /** All action rules, most recent first. */
     fun actionRules(): Flow<List<ActionRuleEntry>>
 
+    /** All schedule (quiet hours) rules, most recent first. */
+    fun scheduleRules(): Flow<List<ScheduleRuleEntry>>
+
     /** Snapshot of current blocked numbers with full metadata (for resolver). */
     suspend fun blockedNumberEntries(): List<BlockedNumberEntry>
 
@@ -36,6 +39,9 @@ interface RuleRepository {
 
     /** Snapshot of enabled action rules (for resolver). */
     suspend fun enabledActionRules(): List<ActionRule>
+
+    /** Snapshot of enabled schedule rules (for resolver). */
+    suspend fun enabledScheduleRules(): List<ScheduleRule>
 
     /** Record an incoming call attempt for action-rule counting. */
     suspend fun recordCallAttempt(
@@ -102,6 +108,19 @@ interface RuleRepository {
     )
 
     suspend fun removeActionRule(id: Long)
+
+    suspend fun addScheduleRule(
+        label: String?,
+        startMinute: Int,
+        endMinute: Int,
+    )
+
+    suspend fun toggleScheduleRule(
+        id: Long,
+        enabled: Boolean,
+    )
+
+    suspend fun removeScheduleRule(id: Long)
 }
 
 data class BlockedNumberEntry(
@@ -139,6 +158,15 @@ data class ActionRuleEntry(
     val label: String?,
     val attempts: Int,
     val windowMinutes: Int,
+    val enabled: Boolean,
+    val createdAt: Long,
+)
+
+data class ScheduleRuleEntry(
+    val id: Long,
+    val label: String?,
+    val startMinute: Int,
+    val endMinute: Int,
     val enabled: Boolean,
     val createdAt: Long,
 )

@@ -11,7 +11,8 @@ import org.carlospinan.bloqueador.app.spam.SpamProviderClient
  * 4. Country — country code match against enabled country rules
  * 5. Spam — external provider lookup (if enabled)
  * 6. Action — repeated-call threshold within time window
- * 7. Default — allow through
+ * 7. Schedule — quiet-hours window active
+ * 8. Default — allow through
  *
  * This is stateless and pure — all data is passed in, making it trivially testable.
  */
@@ -30,6 +31,9 @@ data class ResolveContext(
     val enabledActionRules: List<ActionRule> = emptyList(),
     /** Pre-computed attempt counts keyed by window minutes (for each distinct window). */
     val attemptCountsByWindowMinutes: Map<Int, Int> = emptyMap(),
+    val enabledScheduleRules: List<ScheduleRule> = emptyList(),
+    /** Minutes since local midnight (0-1439) at evaluation time, or null to skip schedule checks. */
+    val currentLocalMinuteOfDay: Int? = null,
     /** What to do when no rule matches — settings-controlled (ALLOW/BLOCK/ASK). */
     val defaultAction: DefaultAction = DefaultAction.ALLOW,
 )
@@ -101,7 +105,17 @@ object RulePrecedenceResolver {
             }
         }
 
-        // 7. Default: honor the user's chosen default action. ASK has no dedicated UI flow yet,
+        // 7. Schedule rules (quiet hours)
+        val currentMinute = context.currentLocalMinuteOfDay
+        if (currentMinute != null) {
+            for (rule in context.enabledScheduleRules) {
+                if (isWithinWindow(currentMinute, rule.startMinute, rule.endMinute)) {
+                    return RuleDecision.ScheduleBlock(ruleId = rule.id, label = rule.label)
+                }
+            }
+        }
+
+        // 8. Default: honor the user's chosen default action. ASK has no dedicated UI flow yet,
         // so it falls back to allowing the call through like ALLOW.
         return if (context.defaultAction == DefaultAction.BLOCK) {
             RuleDecision.DefaultBlock
@@ -109,6 +123,21 @@ object RulePrecedenceResolver {
             RuleDecision.DefaultAllow
         }
     }
+
+    /**
+     * True when [minute] (0-1439) falls in the half-open window [startMinute, endMinute).
+     * When endMinute <= startMinute the window crosses midnight, e.g. 22:00-07:00.
+     */
+    internal fun isWithinWindow(
+        minute: Int,
+        startMinute: Int,
+        endMinute: Int,
+    ): Boolean =
+        if (startMinute <= endMinute) {
+            minute in startMinute until endMinute
+        } else {
+            minute >= startMinute || minute < endMinute
+        }
 
     /**
      * Simple glob-style pattern matching.

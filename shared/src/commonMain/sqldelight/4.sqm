@@ -1,0 +1,25 @@
+-- Expand CallLogEntry.rule_type CHECK to allow SCHEDULE; add ScheduleRule (quiet hours).
+CREATE TABLE CallLogEntry_new (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    number TEXT NOT NULL,
+    timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
+    action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
+    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', NULL)),
+    rule_id INTEGER,
+    rule_detail TEXT
+);
+
+INSERT INTO CallLogEntry_new SELECT id, number, timestamp, action, rule_type, rule_id, rule_detail FROM CallLogEntry;
+
+DROP TABLE CallLogEntry;
+
+ALTER TABLE CallLogEntry_new RENAME TO CallLogEntry;
+
+CREATE TABLE IF NOT EXISTS ScheduleRule (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    label TEXT,
+    start_minute INTEGER NOT NULL,
+    end_minute INTEGER NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
+);

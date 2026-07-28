@@ -98,6 +98,24 @@ class SqlRuleRepository(
                 }
             }
 
+    override fun scheduleRules(): Flow<List<ScheduleRuleEntry>> =
+        queries
+            .selectAllScheduleRules()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { list ->
+                list.map {
+                    ScheduleRuleEntry(
+                        id = it.id,
+                        label = it.label,
+                        startMinute = it.start_minute.toInt(),
+                        endMinute = it.end_minute.toInt(),
+                        enabled = it.enabled == 1L,
+                        createdAt = it.created_at,
+                    )
+                }
+            }
+
     override suspend fun blockedNumberEntries(): List<BlockedNumberEntry> =
         withContext(Dispatchers.IO) {
             queries.selectAllBlockedNumbers().executeAsList().map {
@@ -160,6 +178,23 @@ class SqlRuleRepository(
                         label = it.label,
                         attempts = it.attempts.toInt(),
                         windowMinutes = it.window_minutes.toInt(),
+                        enabled = true,
+                    )
+                }
+        }
+
+    override suspend fun enabledScheduleRules(): List<ScheduleRule> =
+        withContext(Dispatchers.IO) {
+            queries
+                .selectAllScheduleRules()
+                .executeAsList()
+                .filter { it.enabled == 1L }
+                .map {
+                    ScheduleRule(
+                        id = it.id,
+                        label = it.label,
+                        startMinute = it.start_minute.toInt(),
+                        endMinute = it.end_minute.toInt(),
                         enabled = true,
                     )
                 }
@@ -288,6 +323,31 @@ class SqlRuleRepository(
     override suspend fun removeActionRule(id: Long) {
         withContext(Dispatchers.IO) {
             queries.deleteActionRuleById(id).value
+        }
+    }
+
+    override suspend fun addScheduleRule(
+        label: String?,
+        startMinute: Int,
+        endMinute: Int,
+    ) {
+        withContext(Dispatchers.IO) {
+            queries.insertScheduleRule(label, startMinute.toLong(), endMinute.toLong()).value
+        }
+    }
+
+    override suspend fun toggleScheduleRule(
+        id: Long,
+        enabled: Boolean,
+    ) {
+        withContext(Dispatchers.IO) {
+            queries.toggleScheduleRule(if (enabled) 1L else 0L, id).value
+        }
+    }
+
+    override suspend fun removeScheduleRule(id: Long) {
+        withContext(Dispatchers.IO) {
+            queries.deleteScheduleRuleById(id).value
         }
     }
 }

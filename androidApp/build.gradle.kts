@@ -29,4 +29,5 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+    implementation(libs.kotlinx.datetime)
 }

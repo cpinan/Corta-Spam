@@ -12,6 +12,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
@@ -187,12 +190,21 @@ class PassthroughInCallService :
                 spamEnabled = spamEnabled,
                 enabledActionRules = actionRules,
                 attemptCountsByWindowMinutes = attemptCountsByWindow,
+                enabledScheduleRules = ruleRepository.enabledScheduleRules(),
+                currentLocalMinuteOfDay = currentLocalMinuteOfDay(),
                 defaultAction = defaultAction,
             )
         return RulePrecedenceResolver.evaluate(number, context)
     }
 
     private fun currentTimestamp(): Long = System.currentTimeMillis()
+
+    // Quiet hours are a wall-clock concept, so this must use the local calendar day/time
+    // (DST-aware via kotlinx-datetime), not a UTC epoch computation.
+    private fun currentLocalMinuteOfDay(): Int {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        return now.hour * 60 + now.minute
+    }
 
     private companion object {
         const val TAG = "PassthroughInCallService"

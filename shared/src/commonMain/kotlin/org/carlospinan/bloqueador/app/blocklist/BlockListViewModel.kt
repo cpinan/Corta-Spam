@@ -14,6 +14,7 @@ import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RuleRepository
+import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 
 class BlockListViewModel(
     private val ruleRepository: RuleRepository,
@@ -43,6 +44,11 @@ class BlockListViewModel(
             .actionRules()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val scheduleRules: StateFlow<List<ScheduleRuleEntry>> =
+        ruleRepository
+            .scheduleRules()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _blockedCount = MutableStateFlow(0)
     val blockedCount: StateFlow<Int> = _blockedCount.asStateFlow()
 
@@ -57,6 +63,9 @@ class BlockListViewModel(
 
     private val _actionCount = MutableStateFlow(0)
     val actionCount: StateFlow<Int> = _actionCount.asStateFlow()
+
+    private val _scheduleCount = MutableStateFlow(0)
+    val scheduleCount: StateFlow<Int> = _scheduleCount.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -73,6 +82,9 @@ class BlockListViewModel(
         }
         viewModelScope.launch {
             actionRules.collect { _actionCount.value = it.size }
+        }
+        viewModelScope.launch {
+            scheduleRules.collect { _scheduleCount.value = it.size }
         }
     }
 
@@ -170,6 +182,31 @@ class BlockListViewModel(
     fun removeActionRule(id: Long) {
         viewModelScope.launch {
             ruleRepository.removeActionRule(id)
+        }
+    }
+
+    fun addScheduleRule(
+        label: String?,
+        startMinute: Int,
+        endMinute: Int,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.addScheduleRule(label, startMinute, endMinute)
+        }
+    }
+
+    fun toggleScheduleRule(
+        id: Long,
+        enabled: Boolean,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.toggleScheduleRule(id, enabled)
+        }
+    }
+
+    fun removeScheduleRule(id: Long) {
+        viewModelScope.launch {
+            ruleRepository.removeScheduleRule(id)
         }
     }
 }
