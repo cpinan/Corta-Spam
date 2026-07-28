@@ -53,6 +53,12 @@ import bloqueallamadas.shared.generated.resources.block_list_empty_hint
 import bloqueallamadas.shared.generated.resources.block_list_hub_title
 import bloqueallamadas.shared.generated.resources.block_list_manual_title
 import bloqueallamadas.shared.generated.resources.block_list_title
+import bloqueallamadas.shared.generated.resources.blocklist_add_allowlist
+import bloqueallamadas.shared.generated.resources.blocklist_add_block
+import bloqueallamadas.shared.generated.resources.blocklist_duplicate_allowlist_body
+import bloqueallamadas.shared.generated.resources.blocklist_duplicate_allowlist_title
+import bloqueallamadas.shared.generated.resources.blocklist_duplicate_blocked_body
+import bloqueallamadas.shared.generated.resources.blocklist_duplicate_blocked_title
 import bloqueallamadas.shared.generated.resources.country_add_title
 import bloqueallamadas.shared.generated.resources.country_empty_hint
 import bloqueallamadas.shared.generated.resources.country_search_hint
@@ -79,8 +85,13 @@ import bloqueallamadas.shared.generated.resources.schedule_hour_hint
 import bloqueallamadas.shared.generated.resources.schedule_invalid_time
 import bloqueallamadas.shared.generated.resources.schedule_label_hint
 import bloqueallamadas.shared.generated.resources.schedule_minute_hint
+import bloqueallamadas.shared.generated.resources.schedule_preset_night
+import bloqueallamadas.shared.generated.resources.schedule_preset_siesta
+import bloqueallamadas.shared.generated.resources.schedule_preset_work
+import bloqueallamadas.shared.generated.resources.schedule_quick_presets
 import bloqueallamadas.shared.generated.resources.schedule_rule_add_title
 import bloqueallamadas.shared.generated.resources.schedule_rule_title
+import bloqueallamadas.shared.generated.resources.schedule_select_time
 import bloqueallamadas.shared.generated.resources.schedule_start_hint
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
@@ -191,12 +202,9 @@ fun ManualBlockListScreen(
     if (showDuplicateWarning) {
         AlertDialog(
             onDismissRequest = { showDuplicateWarning = false },
-            title = { Text("Number already allowlisted") },
+            title = { Text(stringResource(Res.string.blocklist_duplicate_allowlist_title)) },
             text = {
-                Text(
-                    "This number is in your Allowlist. " +
-                        "Manual block takes priority — it will still be blocked.",
-                )
+                Text(stringResource(Res.string.blocklist_duplicate_allowlist_body))
             },
             confirmButton = {
                 TextButton(
@@ -205,7 +213,7 @@ fun ManualBlockListScreen(
                         showDuplicateWarning = false
                     },
                 ) {
-                    Text("Add to Block List")
+                    Text(stringResource(Res.string.blocklist_add_block))
                 }
             },
             dismissButton = {
@@ -314,12 +322,9 @@ fun AllowlistScreen(
     if (showDuplicateWarning) {
         AlertDialog(
             onDismissRequest = { showDuplicateWarning = false },
-            title = { Text("Number already blocked") },
+            title = { Text(stringResource(Res.string.blocklist_duplicate_blocked_title)) },
             text = {
-                Text(
-                    "This number is in your Manual Block list. " +
-                        "Adding it to the Allowlist won't override the block.",
-                )
+                Text(stringResource(Res.string.blocklist_duplicate_blocked_body))
             },
             confirmButton = {
                 TextButton(
@@ -328,7 +333,7 @@ fun AllowlistScreen(
                         showDuplicateWarning = false
                     },
                 ) {
-                    Text("Add to Allowlist")
+                    Text(stringResource(Res.string.blocklist_add_allowlist))
                 }
             },
             dismissButton = {
@@ -981,7 +986,7 @@ private fun AddScheduleRuleDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Quick presets",
+                    text = stringResource(Res.string.schedule_quick_presets),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -995,21 +1000,21 @@ private fun AddScheduleRuleDialog(
                         onClick = {
                             startHour = 22; startMinute = 0; endHour = 7; endMinute = 0
                         },
-                        label = { Text("Night") },
+                        label = { Text(stringResource(Res.string.schedule_preset_night)) },
                     )
                     androidx.compose.material3.FilterChip(
                         selected = false,
                         onClick = {
                             startHour = 14; startMinute = 0; endHour = 16; endMinute = 0
                         },
-                        label = { Text("Siesta") },
+                        label = { Text(stringResource(Res.string.schedule_preset_siesta)) },
                     )
                     androidx.compose.material3.FilterChip(
                         selected = false,
                         onClick = {
                             startHour = 9; startMinute = 0; endHour = 18; endMinute = 0
                         },
-                        label = { Text("Work") },
+                        label = { Text(stringResource(Res.string.schedule_preset_work)) },
                     )
                 }
 
@@ -1085,7 +1090,7 @@ private fun TimePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select time") },
+        title = { Text(stringResource(Res.string.schedule_select_time)) },
         text = {
             TimePicker(state = state)
         },

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
+import bloqueallamadas.shared.generated.resources.about_open_source
 import bloqueallamadas.shared.generated.resources.ic_brand_app
 import bloqueallamadas.shared.generated.resources.welcome_get_started
 import bloqueallamadas.shared.generated.resources.welcome_subtitle
@@ -73,6 +74,14 @@ fun WelcomeScreen(onGetStarted: () -> Unit) {
                 ) {
                     Text(stringResource(Res.string.welcome_get_started))
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = stringResource(Res.string.about_open_source),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

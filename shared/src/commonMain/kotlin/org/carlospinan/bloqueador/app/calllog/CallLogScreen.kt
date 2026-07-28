@@ -43,6 +43,9 @@ import bloqueallamadas.shared.generated.resources.call_log_title
 import bloqueallamadas.shared.generated.resources.call_log_title_month
 import bloqueallamadas.shared.generated.resources.call_log_title_today
 import bloqueallamadas.shared.generated.resources.call_log_title_week
+import bloqueallamadas.shared.generated.resources.call_log_allowed_label
+import bloqueallamadas.shared.generated.resources.call_log_blocked_label
+import bloqueallamadas.shared.generated.resources.call_log_detail_placeholder
 import bloqueallamadas.shared.generated.resources.ic_allowlist
 import bloqueallamadas.shared.generated.resources.ic_blocked_number
 import bloqueallamadas.shared.generated.resources.ic_unknown_call
@@ -238,7 +241,7 @@ private fun CallLogDetailPane(
     ) {
         if (entry == null) {
             Text(
-                text = "Select a call to see details",
+                text = stringResource(Res.string.call_log_detail_placeholder),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -253,12 +256,12 @@ private fun CallLogDetailPane(
             ) {
                 Icon(
                     painter = painterResource(statusIcon),
-                    contentDescription = if (isBlocked) "Blocked" else "Allowed",
+                contentDescription = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
                     tint = actionColor,
                     modifier = Modifier.size(20.dp),
                 )
                 Text(
-                    text = if (isBlocked) "Blocked call" else "Allowed call",
+                    text = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -347,7 +350,7 @@ private fun CallLogEntryRow(
         ) {
             Icon(
                 painter = painterResource(statusIcon),
-                contentDescription = if (isBlocked) "Blocked" else "Allowed",
+                contentDescription = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
                 tint = actionColor,
                 modifier = Modifier.size(20.dp),
             )

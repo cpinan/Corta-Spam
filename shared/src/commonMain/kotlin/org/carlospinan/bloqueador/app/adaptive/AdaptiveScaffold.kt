@@ -23,8 +23,13 @@ import bloqueallamadas.shared.generated.resources.ic_block_lists
 import bloqueallamadas.shared.generated.resources.ic_call_log
 import bloqueallamadas.shared.generated.resources.ic_home
 import bloqueallamadas.shared.generated.resources.ic_settings
+import bloqueallamadas.shared.generated.resources.nav_home
+import bloqueallamadas.shared.generated.resources.nav_lists
+import bloqueallamadas.shared.generated.resources.nav_log
+import bloqueallamadas.shared.generated.resources.nav_settings
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 data class NavItem(
     val label: String,
@@ -42,10 +47,10 @@ fun AdaptiveScaffold(
 ) {
     val navItems =
         listOf(
-            NavItem("Home", Res.drawable.ic_home, "Home"),
-            NavItem("Log", Res.drawable.ic_call_log, "Call Log"),
-            NavItem("Lists", Res.drawable.ic_block_lists, "Block Lists"),
-            NavItem("Settings", Res.drawable.ic_settings, "Settings"),
+            NavItem(stringResource(Res.string.nav_home), Res.drawable.ic_home, stringResource(Res.string.nav_home)),
+            NavItem(stringResource(Res.string.nav_log), Res.drawable.ic_call_log, stringResource(Res.string.nav_log)),
+            NavItem(stringResource(Res.string.nav_lists), Res.drawable.ic_block_lists, stringResource(Res.string.nav_lists)),
+            NavItem(stringResource(Res.string.nav_settings), Res.drawable.ic_settings, stringResource(Res.string.nav_settings)),
         )
 
     when (windowSizeClass) {

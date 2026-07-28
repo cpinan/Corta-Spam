@@ -52,8 +52,12 @@ import bloqueallamadas.shared.generated.resources.settings_default_action_ask
 import bloqueallamadas.shared.generated.resources.settings_default_action_block
 import bloqueallamadas.shared.generated.resources.settings_default_action_desc
 import bloqueallamadas.shared.generated.resources.settings_grant_contacts
+import bloqueallamadas.shared.generated.resources.settings_privacy_desc
+import bloqueallamadas.shared.generated.resources.settings_privacy_title
 import bloqueallamadas.shared.generated.resources.settings_spam_provider
 import bloqueallamadas.shared.generated.resources.settings_spam_provider_desc
+import bloqueallamadas.shared.generated.resources.settings_terms_desc
+import bloqueallamadas.shared.generated.resources.settings_terms_title
 import bloqueallamadas.shared.generated.resources.settings_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
@@ -168,8 +172,8 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 SettingDropdown(
-                    title = "Privacy Policy",
-                    description = "How your data is handled",
+                    title = stringResource(Res.string.settings_privacy_title),
+                    description = stringResource(Res.string.settings_privacy_desc),
                     icon = Res.drawable.ic_privacy,
                     value = "View",
                     onClick = onNavigateToPrivacy,
@@ -178,8 +182,8 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 SettingDropdown(
-                    title = "Terms & Conditions",
-                    description = "Open source license and usage terms",
+                    title = stringResource(Res.string.settings_terms_title),
+                    description = stringResource(Res.string.settings_terms_desc),
                     icon = Res.drawable.ic_privacy,
                     value = "View",
                     onClick = onNavigateToTerms,

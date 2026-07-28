@@ -109,9 +109,6 @@
     <string name="backup_title">Backup &amp; Restore</string>
     <string name="backup_export">Export rules to file</string>
     <string name="backup_import">Import rules from file</string>
-    <!-- Privacy -->
-    <string name="settings_privacy">Privacy &amp; open source</string>
-    <string name="settings_privacy_desc">Source code, license, no data collection</string>
     <!-- Action rules -->
     <string name="hub_actions">Action Rules</string>
     <string name="action_rule_title">Action Rules</string>
@@ -150,4 +147,36 @@
     <string name="autoresponder_error_empty">Script or audio file required when enabled.</string>
     <string name="autoresponder_error_too_long">Script is too long (max 500 characters).</string>
     <string name="autoresponder_error_consent">Recording requires consent line in script.</string>
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_log">Log</string>
+    <string name="nav_lists">Lists</string>
+    <string name="nav_settings">Settings</string>
+    <!-- Duplicate warnings -->
+    <string name="blocklist_duplicate_allowlist_title">Number already allowlisted</string>
+    <string name="blocklist_duplicate_allowlist_body">This number is in your Allowlist. Manual block takes priority — it will still be blocked.</string>
+    <string name="blocklist_add_block">Add to Block List</string>
+    <string name="blocklist_duplicate_blocked_title">Number already blocked</string>
+    <string name="blocklist_duplicate_blocked_body">This number is in your Manual Block list. Adding it to the Allowlist won\'t override the block.</string>
+    <string name="blocklist_add_allowlist">Add to Allowlist</string>
+    <!-- Schedule presets -->
+    <string name="schedule_quick_presets">Quick presets</string>
+    <string name="schedule_preset_night">Night</string>
+    <string name="schedule_preset_siesta">Siesta</string>
+    <string name="schedule_preset_work">Work</string>
+    <string name="schedule_select_time">Select time</string>
+    <!-- Call log detail -->
+    <string name="call_log_detail_placeholder">Select a call to see details</string>
+    <string name="call_log_blocked_label">Blocked call</string>
+    <string name="call_log_allowed_label">Allowed call</string>
+    <!-- Actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_view">View</string>
+    <!-- Privacy -->
+    <string name="settings_privacy_title">Privacy Policy</string>
+    <string name="settings_privacy_desc">How your data is handled</string>
+    <string name="settings_terms_title">Terms &amp; Conditions</string>
+    <string name="settings_terms_desc">Open source license and usage terms</string>
+    <!-- About -->
+    <string name="about_open_source">Open source · MIT License</string>
 </resources>
