@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +31,8 @@ import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
 import bloqueallamadas.shared.generated.resources.settings_autoresponder
 import bloqueallamadas.shared.generated.resources.settings_autoresponder_desc
+import bloqueallamadas.shared.generated.resources.settings_backup
+import bloqueallamadas.shared.generated.resources.settings_backup_desc
 import bloqueallamadas.shared.generated.resources.settings_blocking_enabled
 import bloqueallamadas.shared.generated.resources.settings_blocking_enabled_desc
 import bloqueallamadas.shared.generated.resources.settings_default_action
@@ -39,9 +40,12 @@ import bloqueallamadas.shared.generated.resources.settings_default_action_allow
 import bloqueallamadas.shared.generated.resources.settings_default_action_ask
 import bloqueallamadas.shared.generated.resources.settings_default_action_block
 import bloqueallamadas.shared.generated.resources.settings_default_action_desc
+import bloqueallamadas.shared.generated.resources.settings_grant_contacts
 import bloqueallamadas.shared.generated.resources.settings_spam_provider
 import bloqueallamadas.shared.generated.resources.settings_spam_provider_desc
 import bloqueallamadas.shared.generated.resources.settings_title
+import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
+import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -50,20 +54,22 @@ fun SettingsScreen(
     autoAllowContacts: Boolean,
     defaultAction: DefaultAction,
     spamEnabled: Boolean,
+    showGrantContacts: Boolean,
     onSetBlockingEnabled: (Boolean) -> Unit,
     onSetAutoAllowContacts: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
+    onRequestContactsPermission: () -> Unit,
     onNavigateToAutoResponder: () -> Unit,
+    onNavigateToBackup: () -> Unit,
     onBack: () -> Unit,
 ) {
     var showDefaultActionDialog by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.settings_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -86,6 +92,13 @@ fun SettingsScreen(
                     checked = autoAllowContacts,
                     onCheckedChange = onSetAutoAllowContacts,
                 )
+
+                if (showGrantContacts && autoAllowContacts) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = onRequestContactsPermission) {
+                        Text(stringResource(Res.string.settings_grant_contacts))
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -117,6 +130,15 @@ fun SettingsScreen(
                     description = stringResource(Res.string.settings_autoresponder_desc),
                     value = stringResource(Res.string.settings_autoresponder),
                     onClick = onNavigateToAutoResponder,
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingDropdown(
+                    title = stringResource(Res.string.settings_backup),
+                    description = stringResource(Res.string.settings_backup_desc),
+                    value = stringResource(Res.string.settings_backup),
+                    onClick = onNavigateToBackup,
                 )
             }
         }

@@ -3,6 +3,8 @@ package org.carlospinan.bloqueador.app.blocklist
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -28,15 +29,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
+import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
+import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_add
 import bloqueallamadas.shared.generated.resources.action_android_only
+import bloqueallamadas.shared.generated.resources.action_any_number
 import bloqueallamadas.shared.generated.resources.action_attempts_hint
 import bloqueallamadas.shared.generated.resources.action_cancel
 import bloqueallamadas.shared.generated.resources.action_empty_hint
 import bloqueallamadas.shared.generated.resources.action_label_hint
 import bloqueallamadas.shared.generated.resources.action_rule_add_title
 import bloqueallamadas.shared.generated.resources.action_rule_title
+import bloqueallamadas.shared.generated.resources.action_skip
 import bloqueallamadas.shared.generated.resources.action_window_hint
 import bloqueallamadas.shared.generated.resources.allowlist_add_hint
 import bloqueallamadas.shared.generated.resources.allowlist_add_title
@@ -60,12 +66,15 @@ import bloqueallamadas.shared.generated.resources.pattern_add_hint
 import bloqueallamadas.shared.generated.resources.pattern_add_title
 import bloqueallamadas.shared.generated.resources.pattern_android_only
 import bloqueallamadas.shared.generated.resources.pattern_empty_hint
+import bloqueallamadas.shared.generated.resources.pattern_examples
 import bloqueallamadas.shared.generated.resources.pattern_label_hint
 import bloqueallamadas.shared.generated.resources.pattern_title
 import bloqueallamadas.shared.generated.resources.schedule_empty_hint
 import bloqueallamadas.shared.generated.resources.schedule_end_hint
+import bloqueallamadas.shared.generated.resources.schedule_hour_hint
 import bloqueallamadas.shared.generated.resources.schedule_invalid_time
 import bloqueallamadas.shared.generated.resources.schedule_label_hint
+import bloqueallamadas.shared.generated.resources.schedule_minute_hint
 import bloqueallamadas.shared.generated.resources.schedule_rule_add_title
 import bloqueallamadas.shared.generated.resources.schedule_rule_title
 import bloqueallamadas.shared.generated.resources.schedule_start_hint
@@ -79,17 +88,19 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ManualBlockListScreen(
     numbers: List<org.carlospinan.bloqueador.app.rules.BlockedNumberEntry>,
+    allowlistedNumbers: Set<String> = emptySet(),
     onAdd: (String) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var pendingNumber by remember { mutableStateOf("") }
+    var showDuplicateWarning by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.block_list_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -153,10 +164,44 @@ fun ManualBlockListScreen(
             title = stringResource(Res.string.block_list_add_title),
             hint = stringResource(Res.string.block_list_add_hint),
             onConfirm = { number ->
-                onAdd(number)
-                showAddDialog = false
+                if (number in allowlistedNumbers) {
+                    pendingNumber = number
+                    showAddDialog = false
+                    showDuplicateWarning = true
+                } else {
+                    onAdd(number)
+                    showAddDialog = false
+                }
             },
             onDismiss = { showAddDialog = false },
+        )
+    }
+
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Number already allowlisted") },
+            text = {
+                Text(
+                    "This number is in your Allowlist. " +
+                        "Manual block takes priority — it will still be blocked.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAdd(pendingNumber)
+                        showDuplicateWarning = false
+                    },
+                ) {
+                    Text("Add to Block List")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text(stringResource(Res.string.action_cancel))
+                }
+            },
         )
     }
 }
@@ -164,17 +209,19 @@ fun ManualBlockListScreen(
 @Composable
 fun AllowlistScreen(
     numbers: List<org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry>,
+    blockedNumbers: Set<String> = emptySet(),
     onAdd: (String) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var pendingNumber by remember { mutableStateOf("") }
+    var showDuplicateWarning by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.allowlist_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -238,10 +285,44 @@ fun AllowlistScreen(
             title = stringResource(Res.string.allowlist_add_title),
             hint = stringResource(Res.string.allowlist_add_hint),
             onConfirm = { number ->
-                onAdd(number)
-                showAddDialog = false
+                if (number in blockedNumbers) {
+                    pendingNumber = number
+                    showAddDialog = false
+                    showDuplicateWarning = true
+                } else {
+                    onAdd(number)
+                    showAddDialog = false
+                }
             },
             onDismiss = { showAddDialog = false },
+        )
+    }
+
+    if (showDuplicateWarning) {
+        AlertDialog(
+            onDismissRequest = { showDuplicateWarning = false },
+            title = { Text("Number already blocked") },
+            text = {
+                Text(
+                    "This number is in your Manual Block list. " +
+                        "Adding it to the Allowlist won't override the block.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAdd(pendingNumber)
+                        showDuplicateWarning = false
+                    },
+                ) {
+                    Text("Add to Allowlist")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDuplicateWarning = false }) {
+                    Text(stringResource(Res.string.action_cancel))
+                }
+            },
         )
     }
 }
@@ -255,12 +336,11 @@ fun PatternRuleScreen(
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.pattern_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -353,12 +433,11 @@ fun CountryRuleScreen(
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.country_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -427,6 +506,7 @@ fun CountryRuleScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BlockListHubScreen(
     blockedCount: Int,
@@ -443,11 +523,11 @@ fun BlockListHubScreen(
     onNavigateToSchedules: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val windowSizeClass = rememberWindowSizeClass()
+
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.block_list_hub_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -455,52 +535,78 @@ fun BlockListHubScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                HubRow(
-                    title = stringResource(Res.string.block_list_manual_title),
-                    count = blockedCount,
-                    onClick = onNavigateToManual,
-                )
+                val columns =
+                    when (windowSizeClass) {
+                        WindowSizeClass.Compact -> 2
+                        WindowSizeClass.Medium -> 4
+                        WindowSizeClass.Expanded -> 4
+                    }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                HubRow(
-                    title = stringResource(Res.string.allowlist_title),
-                    count = allowlistedCount,
-                    onClick = onNavigateToAllowlist,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                HubRow(
-                    title = stringResource(Res.string.hub_patterns),
-                    count = patternCount,
-                    onClick = onNavigateToPatterns,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                HubRow(
-                    title = stringResource(Res.string.hub_countries),
-                    count = countryCount,
-                    onClick = onNavigateToCountries,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                HubRow(
-                    title = stringResource(Res.string.hub_actions),
-                    count = actionCount,
-                    onClick = onNavigateToActions,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                HubRow(
-                    title = stringResource(Res.string.hub_schedules),
-                    count = scheduleCount,
-                    onClick = onNavigateToSchedules,
-                )
+                FlowRow(
+                    maxItemsInEachRow = columns,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HubCard(
+                        title = stringResource(Res.string.block_list_manual_title),
+                        count = blockedCount,
+                        onClick = onNavigateToManual,
+                    )
+                    HubCard(
+                        title = stringResource(Res.string.allowlist_title),
+                        count = allowlistedCount,
+                        onClick = onNavigateToAllowlist,
+                    )
+                    HubCard(
+                        title = stringResource(Res.string.hub_patterns),
+                        count = patternCount,
+                        onClick = onNavigateToPatterns,
+                    )
+                    HubCard(
+                        title = stringResource(Res.string.hub_countries),
+                        count = countryCount,
+                        onClick = onNavigateToCountries,
+                    )
+                    HubCard(
+                        title = stringResource(Res.string.hub_actions),
+                        count = actionCount,
+                        onClick = onNavigateToActions,
+                    )
+                    HubCard(
+                        title = stringResource(Res.string.hub_schedules),
+                        count = scheduleCount,
+                        onClick = onNavigateToSchedules,
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun HubCard(
+    title: String,
+    count: Int,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.clickable(onClick = onClick).padding(vertical = 4.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = "$count",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
@@ -594,6 +700,12 @@ private fun AddPatternDialog(
                     label = { Text(stringResource(Res.string.pattern_label_hint)) },
                     singleLine = true,
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(Res.string.pattern_examples),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
         confirmButton = {
@@ -676,7 +788,7 @@ private fun AddCountryDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.action_cancel))
+                Text(stringResource(Res.string.action_skip))
             }
         },
     )
@@ -685,18 +797,18 @@ private fun AddCountryDialog(
 @Composable
 fun ActionRuleScreen(
     rules: List<ActionRuleEntry>,
-    onAdd: (String?, Int, Int) -> Unit,
+    patterns: List<PatternRuleEntry>,
+    onAdd: (String?, Int, Int, Long?) -> Unit,
     onToggle: (Long, Boolean) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.action_rule_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -740,6 +852,14 @@ fun ActionRuleScreen(
                                             text = "${entry.attempts} calls / ${entry.windowMinutes} min",
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
+                                        if (entry.patternId != null) {
+                                            val patternName = patterns.find { it.id == entry.patternId }?.pattern ?: "pattern"
+                                            Text(
+                                                text = "matches $patternName",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
                                         if (entry.label != null) {
                                             Text(
                                                 text = entry.label,
@@ -769,8 +889,9 @@ fun ActionRuleScreen(
 
     if (showAddDialog) {
         AddActionRuleDialog(
-            onConfirm = { label, attempts, windowMinutes ->
-                onAdd(label, attempts, windowMinutes)
+            patterns = patterns,
+            onConfirm = { label, attempts, windowMinutes, patternId ->
+                onAdd(label, attempts, windowMinutes, patternId)
                 showAddDialog = false
             },
             onDismiss = { showAddDialog = false },
@@ -780,12 +901,14 @@ fun ActionRuleScreen(
 
 @Composable
 private fun AddActionRuleDialog(
-    onConfirm: (String?, Int, Int) -> Unit,
+    patterns: List<PatternRuleEntry>,
+    onConfirm: (String?, Int, Int, Long?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var label by remember { mutableStateOf("") }
     var attemptsText by remember { mutableStateOf("3") }
     var windowText by remember { mutableStateOf("5") }
+    var selectedPatternId by remember { mutableStateOf<Long?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -808,6 +931,57 @@ private fun AddActionRuleDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                if (patterns.isNotEmpty()) {
+                    var showPatternPicker by remember { mutableStateOf(false) }
+                    val selectedPattern = patterns.find { it.id == selectedPatternId }
+                    Text(
+                        text =
+                            if (selectedPattern != null) "Pattern: ${selectedPattern.pattern}" else stringResource(Res.string.action_any_number),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.fillMaxWidth().clickable { showPatternPicker = true }.padding(vertical = 4.dp),
+                    )
+                    if (showPatternPicker) {
+                        AlertDialog(
+                            onDismissRequest = { showPatternPicker = false },
+                            title = { Text(stringResource(Res.string.pattern_title)) },
+                            text = {
+                                LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                                    item {
+                                        TextButton(
+                                            onClick = {
+                                                selectedPatternId = null
+                                                showPatternPicker = false
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                        ) {
+                                            Text(stringResource(Res.string.action_any_number))
+                                        }
+                                    }
+                                    items(patterns, key = { it.id }) { pattern ->
+                                        TextButton(
+                                            onClick = {
+                                                selectedPatternId = pattern.id
+                                                showPatternPicker = false
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                        ) {
+                                            Text(pattern.pattern)
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {},
+                            dismissButton = {
+                                TextButton(onClick = { showPatternPicker = false }) {
+                                    Text(stringResource(Res.string.action_cancel))
+                                }
+                            },
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
                 OutlinedTextField(
                     value = label,
                     onValueChange = { label = it },
@@ -823,7 +997,7 @@ private fun AddActionRuleDialog(
                     val attempts = attemptsText.toIntOrNull() ?: return@TextButton
                     val window = windowText.toIntOrNull() ?: return@TextButton
                     if (attempts < 1 || window < 1) return@TextButton
-                    onConfirm(label.ifBlank { null }, attempts, window)
+                    onConfirm(label.ifBlank { null }, attempts, window, selectedPatternId)
                 },
             ) {
                 Text(stringResource(Res.string.action_add))
@@ -846,12 +1020,11 @@ fun ScheduleRuleScreen(
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
                     text = stringResource(Res.string.schedule_rule_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -949,31 +1122,77 @@ private fun AddScheduleRuleDialog(
     onDismiss: () -> Unit,
 ) {
     var label by remember { mutableStateOf("") }
-    var startText by remember { mutableStateOf("22:00") }
-    var endText by remember { mutableStateOf("07:00") }
+    var startHour by remember { mutableStateOf("22") }
+    var startMin by remember { mutableStateOf("00") }
+    var endHour by remember { mutableStateOf("07") }
+    var endMin by remember { mutableStateOf("00") }
     var showError by remember { mutableStateOf(false) }
+
+    fun parseIntOrNull(s: String): Int? = s.filter { it.isDigit() }.take(3).toIntOrNull()
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.schedule_rule_add_title)) },
         text = {
             Column {
-                OutlinedTextField(
-                    value = startText,
-                    onValueChange = { startText = it },
-                    label = { Text(stringResource(Res.string.schedule_start_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                Text(
+                    text = stringResource(Res.string.schedule_start_hint),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = endText,
-                    onValueChange = { endText = it },
-                    label = { Text(stringResource(Res.string.schedule_end_hint)) },
-                    singleLine = true,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedTextField(
+                        value = startHour,
+                        onValueChange = { startHour = it.filter { ch -> ch.isDigit() }.take(2) },
+                        label = { Text(stringResource(Res.string.schedule_hour_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(":", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(
+                        value = startMin,
+                        onValueChange = { startMin = it.filter { ch -> ch.isDigit() }.take(2) },
+                        label = { Text(stringResource(Res.string.schedule_minute_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = stringResource(Res.string.schedule_end_hint),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedTextField(
+                        value = endHour,
+                        onValueChange = { endHour = it.filter { ch -> ch.isDigit() }.take(2) },
+                        label = { Text(stringResource(Res.string.schedule_hour_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(":", style = MaterialTheme.typography.titleMedium)
+                    OutlinedTextField(
+                        value = endMin,
+                        onValueChange = { endMin = it.filter { ch -> ch.isDigit() }.take(2) },
+                        label = { Text(stringResource(Res.string.schedule_minute_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = label,
                     onValueChange = { label = it },
@@ -994,13 +1213,21 @@ private fun AddScheduleRuleDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val start = parseHHmmToMinuteOfDay(startText)
-                    val end = parseHHmmToMinuteOfDay(endText)
-                    if (start == null || end == null) {
+                    val sh = parseIntOrNull(startHour)
+                    val sm = parseIntOrNull(startMin)
+                    val eh = parseIntOrNull(endHour)
+                    val em = parseIntOrNull(endMin)
+                    if (sh == null || sm == null || eh == null || em == null ||
+                        sh !in 0..23 || sm !in 0..59 || eh !in 0..23 || em !in 0..59
+                    ) {
                         showError = true
                         return@TextButton
                     }
-                    onConfirm(label.ifBlank { null }, start, end)
+                    onConfirm(
+                        label.ifBlank { null },
+                        sh * 60 + sm,
+                        eh * 60 + em,
+                    )
                 },
             ) {
                 Text(stringResource(Res.string.action_add))

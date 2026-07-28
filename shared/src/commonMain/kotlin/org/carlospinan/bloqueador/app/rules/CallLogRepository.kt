@@ -25,6 +25,9 @@ interface CallLogRepository {
     /** Batched stats query — single DB round-trip instead of 3 sequential calls. */
     suspend fun blockedStats(): BlockedStats
 
+    /** Count blocked calls per day for the last [daysBack] days. Returns ordered by date descending. */
+    suspend fun blockedByDay(daysBack: Int): List<DayStat>
+
     /** Log a call screening decision. */
     suspend fun logCall(
         number: String,
@@ -50,4 +53,10 @@ data class BlockedStats(
     val today: Int,
     val thisWeek: Int,
     val thisMonth: Int,
+)
+
+data class DayStat(
+    val dateLabel: String,
+    val count: Int,
+    val cutoffEpochMillis: Long,
 )

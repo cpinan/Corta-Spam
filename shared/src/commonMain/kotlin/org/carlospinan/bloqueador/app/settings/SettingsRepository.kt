@@ -20,4 +20,8 @@ interface SettingsRepository {
     suspend fun setAutoAllowContacts(enabled: Boolean)
 
     suspend fun setDefaultAction(action: DefaultAction)
+
+    val welcomeShown: Boolean
+
+    suspend fun setWelcomeShown()
 }

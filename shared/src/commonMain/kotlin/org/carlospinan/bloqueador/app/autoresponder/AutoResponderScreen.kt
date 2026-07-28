@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -37,6 +36,8 @@ import bloqueallamadas.shared.generated.resources.autoresponder_recording
 import bloqueallamadas.shared.generated.resources.autoresponder_recording_desc
 import bloqueallamadas.shared.generated.resources.autoresponder_script_hint
 import bloqueallamadas.shared.generated.resources.autoresponder_title
+import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
+import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -50,16 +51,14 @@ fun AutoResponderScreen(
     onClearAudio: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val windowSizeClass = rememberWindowSizeClass()
+
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .safeDrawingPadding()
-                        .padding(24.dp)
-                        .verticalScroll(rememberScrollState()),
-            ) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                ) {
                 Text(
                     text = stringResource(Res.string.autoresponder_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -189,6 +188,7 @@ fun AutoResponderScreen(
                         )
                     }
                 }
+            }
             }
         }
     }

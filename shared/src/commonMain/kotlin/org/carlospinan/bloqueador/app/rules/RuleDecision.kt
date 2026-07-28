@@ -2,7 +2,7 @@ package org.carlospinan.bloqueador.app.rules
 
 /**
  * Represents the outcome of evaluating an incoming call against all rules.
- * Precedence order: ALLOWLIST > MANUAL_BLOCK > PATTERN > COUNTRY > SPAM > ACTION > SCHEDULE > DEFAULT_ALLOW.
+ * Precedence order: MANUAL_BLOCK > ALLOWLIST > PATTERN > COUNTRY > SPAM > ACTION > SCHEDULE > DEFAULT_ALLOW.
  */
 sealed class RuleDecision {
     /** Number is on the contacts or manual allowlist — bypass all block rules. */

@@ -9,12 +9,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
+import org.carlospinan.bloqueador.app.settings.SettingsRepository
+import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DialerOnboardingViewModel by inject()
+    private val settingsRepository: SettingsRepository by inject()
+    private val autoResponderViewModel: AutoResponderViewModel by inject()
 
     private val roleRequestLauncher =
         registerForActivityResult(
@@ -23,16 +37,79 @@ class MainActivity : ComponentActivity() {
             viewModel.onRequestResult(granted = result.resultCode == RESULT_OK)
         }
 
+    private val audioPickerLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.toString()?.let {
+                scope.launch { autoResponderViewModel.setAudioUri(it) }
+            }
+        }
+
+    private val contactsPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { _ -> }
+
+    private var importResultCallback: ((String) -> Unit)? = null
+
+    private val importFileLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.GetContent(),
+        ) { uri ->
+            uri?.let {
+                contentResolver.openInputStream(it)?.use { stream ->
+                    val text = stream.bufferedReader().readText()
+                    importResultCallback?.invoke(text)
+                }
+            }
+        }
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val showWelcome = !settingsRepository.welcomeShown
+
         setContent {
-            DialerOnboardingScreen(
-                viewModel = viewModel,
-                onRequestRole = ::launchDefaultDialerRequest,
-                content = { App() },
-            )
+            var welcomeDone by remember { mutableStateOf(!showWelcome) }
+            val scopeCompose = rememberCoroutineScope()
+
+            if (!welcomeDone) {
+                WelcomeScreen(
+                    onGetStarted = {
+                        scopeCompose.launch { settingsRepository.setWelcomeShown() }
+                        welcomeDone = true
+                    },
+                )
+            } else {
+                DialerOnboardingScreen(
+                    viewModel = viewModel,
+                    onRequestRole = ::launchDefaultDialerRequest,
+                    content = {
+                        App(
+                            onPickAudio = { audioPickerLauncher.launch("audio/*") },
+                            onRequestContactsPermission = {
+                                contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
+                            },
+                            onShareFile = { json ->
+                                val shareIntent =
+                                    Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, json)
+                                    }
+                                startActivity(Intent.createChooser(shareIntent, "Share backup"))
+                            },
+                            onPickImportFile = { onResult ->
+                                importResultCallback = onResult
+                                importFileLauncher.launch("application/json")
+                            },
+                        )
+                    },
+                )
+            }
         }
     }
 

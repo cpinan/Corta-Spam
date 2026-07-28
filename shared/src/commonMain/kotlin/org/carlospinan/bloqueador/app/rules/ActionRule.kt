@@ -6,5 +6,6 @@ data class ActionRule(
     val label: String?,
     val attempts: Int,
     val windowMinutes: Int,
+    val patternId: Long?,
     val enabled: Boolean,
 )

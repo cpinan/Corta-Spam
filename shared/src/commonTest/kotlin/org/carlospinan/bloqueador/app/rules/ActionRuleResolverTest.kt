@@ -18,7 +18,7 @@ class ActionRuleResolverTest {
     @Test
     fun underThreshold_allows() =
         runTest {
-            val rule = ActionRule(id = 1, label = "spam", attempts = 3, windowMinutes = 5, enabled = true)
+            val rule = ActionRule(id = 1, label = "spam", attempts = 3, windowMinutes = 5, patternId = null, enabled = true)
             val ctx =
                 emptyContext.copy(
                     enabledActionRules = listOf(rule),
@@ -32,7 +32,7 @@ class ActionRuleResolverTest {
     @Test
     fun atThreshold_blocks() =
         runTest {
-            val rule = ActionRule(id = 1, label = "spam", attempts = 3, windowMinutes = 5, enabled = true)
+            val rule = ActionRule(id = 1, label = "spam", attempts = 3, windowMinutes = 5, patternId = null, enabled = true)
             val ctx =
                 emptyContext.copy(
                     enabledActionRules = listOf(rule),
@@ -48,7 +48,7 @@ class ActionRuleResolverTest {
     @Test
     fun overThreshold_blocks() =
         runTest {
-            val rule = ActionRule(id = 2, label = null, attempts = 3, windowMinutes = 5, enabled = true)
+            val rule = ActionRule(id = 2, label = null, attempts = 3, windowMinutes = 5, patternId = null, enabled = true)
             val ctx =
                 emptyContext.copy(
                     enabledActionRules = listOf(rule),
@@ -62,7 +62,7 @@ class ActionRuleResolverTest {
     @Test
     fun differentWindow_usesOwnCount() =
         runTest {
-            val rule = ActionRule(id = 1, label = null, attempts = 3, windowMinutes = 10, enabled = true)
+            val rule = ActionRule(id = 1, label = null, attempts = 3, windowMinutes = 10, patternId = null, enabled = true)
             val ctx =
                 emptyContext.copy(
                     enabledActionRules = listOf(rule),
@@ -74,7 +74,7 @@ class ActionRuleResolverTest {
     @Test
     fun allowlist_beatsAction() =
         runTest {
-            val rule = ActionRule(id = 1, label = null, attempts = 1, windowMinutes = 5, enabled = true)
+            val rule = ActionRule(id = 1, label = null, attempts = 1, windowMinutes = 5, patternId = null, enabled = true)
             val ctx =
                 emptyContext.copy(
                     allowlistedNumbers = setOf("+34600123456"),
@@ -87,7 +87,7 @@ class ActionRuleResolverTest {
     @Test
     fun manualBlock_beatsAction() =
         runTest {
-            val rule = ActionRule(id = 1, label = null, attempts = 1, windowMinutes = 5, enabled = true)
+            val rule = ActionRule(id = 1, label = null, attempts = 1, windowMinutes = 5, patternId = null, enabled = true)
             val ctx =
                 emptyContext.copy(
                     blockedNumbers = setOf("+34600123456"),
@@ -109,8 +109,8 @@ class ActionRuleResolverTest {
         runTest {
             val rules =
                 listOf(
-                    ActionRule(id = 1, label = "first", attempts = 2, windowMinutes = 5, enabled = true),
-                    ActionRule(id = 2, label = "second", attempts = 2, windowMinutes = 5, enabled = true),
+                    ActionRule(id = 1, label = "first", attempts = 2, windowMinutes = 5, patternId = null, enabled = true),
+                    ActionRule(id = 2, label = "second", attempts = 2, windowMinutes = 5, patternId = null, enabled = true),
                 )
             val ctx =
                 emptyContext.copy(

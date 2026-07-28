@@ -43,4 +43,17 @@ class SqlSettingsRepository(
         store.write("default_action", action.key)
         _defaultAction.value = action
     }
+
+    private var _welcomeShown: Boolean = false
+    override val welcomeShown: Boolean
+        get() = _welcomeShown
+
+    init {
+        _welcomeShown = store.readBool("welcome_shown", false)
+    }
+
+    override suspend fun setWelcomeShown() {
+        store.writeBool("welcome_shown", true)
+        _welcomeShown = true
+    }
 }

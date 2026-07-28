@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.sqldelight)
 }
 
@@ -26,6 +27,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(libs.sqldelight.runtime)
@@ -36,6 +38,7 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+            implementation(libs.kotlinx.serialization.json)
             // api, not implementation: consumers (androidApp) instantiate and hold
             // DialerOnboardingViewModel, so its ViewModel supertype must be resolvable
             // on their compile classpath too.

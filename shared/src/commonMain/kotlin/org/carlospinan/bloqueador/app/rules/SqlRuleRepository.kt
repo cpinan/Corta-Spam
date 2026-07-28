@@ -7,6 +7,9 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import org.carlospinan.bloqueador.app.backup.BackupData
+import org.carlospinan.bloqueador.app.backup.ImportResult
 import org.carlospinan.bloqueador.app.db.AppDatabase
 
 class SqlRuleRepository(
@@ -92,6 +95,7 @@ class SqlRuleRepository(
                         label = it.label,
                         attempts = it.attempts.toInt(),
                         windowMinutes = it.window_minutes.toInt(),
+                        patternId = it.pattern_id,
                         enabled = it.enabled == 1L,
                         createdAt = it.created_at,
                     )
@@ -178,6 +182,7 @@ class SqlRuleRepository(
                         label = it.label,
                         attempts = it.attempts.toInt(),
                         windowMinutes = it.window_minutes.toInt(),
+                        patternId = it.pattern_id,
                         enabled = true,
                     )
                 }
@@ -305,9 +310,10 @@ class SqlRuleRepository(
         label: String?,
         attempts: Int,
         windowMinutes: Int,
+        patternId: Long?,
     ) {
         withContext(Dispatchers.IO) {
-            queries.insertActionRule(label, attempts.toLong(), windowMinutes.toLong()).value
+            queries.insertActionRule(label, attempts.toLong(), windowMinutes.toLong(), patternId).value
         }
     }
 
@@ -349,5 +355,143 @@ class SqlRuleRepository(
         withContext(Dispatchers.IO) {
             queries.deleteScheduleRuleById(id).value
         }
+    }
+
+    override suspend fun exportAll(): String =
+        withContext(Dispatchers.IO) {
+            val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            val data =
+                BackupData(
+                    exportedAt = now,
+                    blockedNumbers =
+                        queries.selectAllBlockedNumbers().executeAsList().map {
+                            org.carlospinan.bloqueador.app.backup.BackupBlockedNumber(
+                                number = it.number,
+                                label = it.label,
+                                createdAt = it.created_at,
+                            )
+                        },
+                    allowlistedNumbers =
+                        queries.selectAllAllowlistedNumbers().executeAsList().map {
+                            org.carlospinan.bloqueador.app.backup.BackupAllowlistedNumber(
+                                number = it.number,
+                                label = it.label,
+                                createdAt = it.created_at,
+                            )
+                        },
+                    patternRules =
+                        queries.selectAllPatternRules().executeAsList().map {
+                            org.carlospinan.bloqueador.app.backup.BackupPatternRule(
+                                pattern = it.pattern,
+                                label = it.label,
+                                enabled = it.enabled == 1L,
+                                createdAt = it.created_at,
+                            )
+                        },
+                    countryRules =
+                        queries.selectAllCountryRules().executeAsList().map {
+                            org.carlospinan.bloqueador.app.backup.BackupCountryRule(
+                                countryCode = it.country_code,
+                                countryName = it.country_name,
+                                enabled = it.enabled == 1L,
+                                createdAt = it.created_at,
+                            )
+                        },
+                    actionRules =
+                        queries.selectAllActionRules().executeAsList().map {
+                            org.carlospinan.bloqueador.app.backup.BackupActionRule(
+                                label = it.label,
+                                attempts = it.attempts.toInt(),
+                                windowMinutes = it.window_minutes.toInt(),
+                                patternId = it.pattern_id,
+                                enabled = it.enabled == 1L,
+                                createdAt = it.created_at,
+                            )
+                        },
+                    scheduleRules =
+                        queries.selectAllScheduleRules().executeAsList().map {
+                            org.carlospinan.bloqueador.app.backup.BackupScheduleRule(
+                                label = it.label,
+                                startMinute = it.start_minute.toInt(),
+                                endMinute = it.end_minute.toInt(),
+                                enabled = it.enabled == 1L,
+                                createdAt = it.created_at,
+                            )
+                        },
+                )
+            json.encodeToString(BackupData.serializer(), data)
+        }
+
+    override suspend fun importAll(jsonStr: String): ImportResult =
+        withContext(Dispatchers.IO) {
+            val data = json.decodeFromString(BackupData.serializer(), jsonStr)
+            var blocked = 0
+            var allowlisted = 0
+            var patterns = 0
+            var countries = 0
+            var actions = 0
+            var schedules = 0
+
+            for (entry in data.blockedNumbers) {
+                queries.insertBlockedNumber(entry.number, entry.label)
+                blocked++
+            }
+            for (entry in data.allowlistedNumbers) {
+                queries.insertAllowlistedNumber(entry.number, entry.label)
+                allowlisted++
+            }
+            for (entry in data.patternRules) {
+                queries.insertPatternRule(entry.pattern, entry.label)
+                if (!entry.enabled) {
+                    val inserted = queries.selectAllPatternRules().executeAsList().lastOrNull()
+                    if (inserted != null) {
+                        queries.togglePatternRule(0, inserted.id)
+                    }
+                }
+                patterns++
+            }
+            for (entry in data.countryRules) {
+                queries.insertCountryRule(entry.countryCode, entry.countryName)
+                if (!entry.enabled) {
+                    val inserted = queries.selectAllCountryRules().executeAsList().lastOrNull()
+                    if (inserted != null) {
+                        queries.toggleCountryRule(0, inserted.id)
+                    }
+                }
+                countries++
+            }
+            for (entry in data.actionRules) {
+                queries.insertActionRule(entry.label, entry.attempts.toLong(), entry.windowMinutes.toLong(), entry.patternId)
+                if (!entry.enabled) {
+                    val inserted = queries.selectAllActionRules().executeAsList().lastOrNull()
+                    if (inserted != null) {
+                        queries.toggleActionRule(0, inserted.id)
+                    }
+                }
+                actions++
+            }
+            for (entry in data.scheduleRules) {
+                queries.insertScheduleRule(entry.label, entry.startMinute.toLong(), entry.endMinute.toLong())
+                if (!entry.enabled) {
+                    val inserted = queries.selectAllScheduleRules().executeAsList().lastOrNull()
+                    if (inserted != null) {
+                        queries.toggleScheduleRule(0, inserted.id)
+                    }
+                }
+                schedules++
+            }
+
+            ImportResult(
+                blockedNumbersImported = blocked,
+                allowlistedNumbersImported = allowlisted,
+                patternsImported = patterns,
+                countriesImported = countries,
+                actionsImported = actions,
+                schedulesImported = schedules,
+            )
+        }
+
+    companion object {
+        private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
     }
 }

@@ -25,7 +25,12 @@
     <string name="action_add">Add</string>
     <string name="action_remove">Remove</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_skip">Skip</string>
     <string name="action_back">Back</string>
+    <!-- Welcome -->
+    <string name="welcome_title">BloqueaLlamadas</string>
+    <string name="welcome_subtitle">Open-source call blocking.\nNo ads. No tracking. No data leaves your device.</string>
+    <string name="welcome_get_started">Get Started</string>
     <!-- Call screen -->
     <string name="call_status_ringing">Incoming call</string>
     <string name="call_status_dialing">Calling…</string>
@@ -36,11 +41,16 @@
     <string name="action_hang_up">Hang up</string>
     <!-- Home -->
     <string name="home_title">BloqueaLlamadas</string>
+    <string name="home_blocking_enabled">Blocking is on</string>
     <string name="home_blocked_today">Blocked today</string>
     <string name="home_blocked_this_week">This week</string>
     <string name="home_blocked_this_month">This month</string>
     <string name="home_view_call_log">View call log</string>
+    <string name="home_view_stats">View stats</string>
     <string name="home_manage_block_list">Manage block lists</string>
+    <!-- Stats -->
+    <string name="stats_title">Blocked Calls — Last 7 Days</string>
+    <string name="stats_empty">No blocked calls in the last 7 days.</string>
     <!-- Block list hub -->
     <string name="block_list_hub_title">Block Lists</string>
     <string name="block_list_manual_title">Blocked Numbers</string>
@@ -60,6 +70,7 @@
     <string name="pattern_add_title">Add pattern rule</string>
     <string name="pattern_add_hint">Pattern (e.g. +34900*, *1234)</string>
     <string name="pattern_label_hint">Label (optional)</string>
+    <string name="pattern_examples">Prefix: +34900* matches +34900123456\nSuffix: *1234 matches any number ending in 1234\nContains: *900* matches any number containing 900\nExact: +34900123456 matches only that number</string>
     <string name="pattern_android_only">Android only</string>
     <!-- Countries -->
     <string name="country_title">Country Rules</string>
@@ -70,7 +81,13 @@
     <string name="hub_countries">Country Rules</string>
     <!-- Call log -->
     <string name="call_log_title">Call Log</string>
+    <string name="call_log_title_today">Call Log — Today</string>
+    <string name="call_log_title_week">Call Log — This Week</string>
+    <string name="call_log_title_month">Call Log — This Month</string>
     <string name="call_log_empty_hint">No calls logged yet. Calls will appear here once screening begins.</string>
+    <string name="call_log_action_block">Block this number</string>
+    <string name="call_log_action_allowlist">Add to allowlist</string>
+    <string name="call_log_action_copy">Copy number</string>
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="home_settings">Settings</string>
@@ -78,6 +95,7 @@
     <string name="settings_blocking_enabled_desc">When off, all calls are allowed through.</string>
     <string name="settings_auto_allow_contacts">Auto-allow contacts</string>
     <string name="settings_auto_allow_contacts_desc">Contacts bypass all block rules.</string>
+    <string name="settings_grant_contacts">Grant contacts permission</string>
     <string name="settings_default_action">Default action</string>
     <string name="settings_default_action_desc">What to do with numbers that match no rule.</string>
     <string name="settings_default_action_allow">Allow</string>
@@ -86,6 +104,12 @@
     <!-- Spam provider -->
     <string name="settings_spam_provider">Spam provider</string>
     <string name="settings_spam_provider_desc">Check numbers against an external spam database. No data leaves your device unless you configure a provider.</string>
+    <!-- Backup -->
+    <string name="settings_backup">Backup &amp; Restore</string>
+    <string name="settings_backup_desc">Export or import your rules and settings.</string>
+    <string name="backup_title">Backup &amp; Restore</string>
+    <string name="backup_export">Export rules to file</string>
+    <string name="backup_import">Import rules from file</string>
     <!-- Action rules -->
     <string name="hub_actions">Action Rules</string>
     <string name="action_rule_title">Action Rules</string>
@@ -94,16 +118,19 @@
     <string name="action_attempts_hint">Attempts (e.g. 3)</string>
     <string name="action_window_hint">Window minutes (e.g. 5)</string>
     <string name="action_label_hint">Label (optional)</string>
+    <string name="action_any_number">Any number</string>
     <string name="action_android_only">Android only</string>
     <!-- Schedule rules (quiet hours) -->
     <string name="hub_schedules">Quiet Hours</string>
     <string name="schedule_rule_title">Quiet Hours</string>
     <string name="schedule_rule_add_title">Add quiet hours</string>
     <string name="schedule_empty_hint">No quiet hours set. Block everything except the allowlist during a time window.</string>
-    <string name="schedule_start_hint">Start (HH:mm, e.g. 22:00)</string>
-    <string name="schedule_end_hint">End (HH:mm, e.g. 07:00)</string>
+    <string name="schedule_start_hint">Start time</string>
+    <string name="schedule_end_hint">End time</string>
+    <string name="schedule_hour_hint">Hour (0-23)</string>
+    <string name="schedule_minute_hint">Min (0-59)</string>
     <string name="schedule_label_hint">Label (optional)</string>
-    <string name="schedule_invalid_time">Enter times as HH:mm, e.g. 22:00</string>
+    <string name="schedule_invalid_time">Enter valid times (hour 0-23, minute 0-59)</string>
     <!-- Auto-responder -->
     <string name="settings_autoresponder">Auto-responder</string>
     <string name="settings_autoresponder_desc">Answer blocked calls with a greeting.</string>

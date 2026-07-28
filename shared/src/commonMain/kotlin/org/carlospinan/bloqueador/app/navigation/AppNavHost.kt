@@ -6,10 +6,23 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
+import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.adaptive.routeSection
+import org.carlospinan.bloqueador.app.adaptive.sectionRoutes
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderScreen
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
+import org.carlospinan.bloqueador.app.backup.BackupScreen
+import org.carlospinan.bloqueador.app.backup.BackupViewModel
 import org.carlospinan.bloqueador.app.blocklist.ActionRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
@@ -22,13 +35,17 @@ import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
+import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
+import org.carlospinan.bloqueador.app.stats.StatsScreen
+import org.carlospinan.bloqueador.app.stats.StatsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 object Routes {
     const val HOME = "home"
-    const val CALL_LOG = "call_log"
+    const val CALL_LOG = "call_log/{filter}"
+    const val STATS = "stats"
     const val BLOCK_LIST = "block_list"
     const val MANUAL_BLOCK_LIST = "manual_block_list"
     const val ALLOWLIST = "allowlist"
@@ -38,166 +55,263 @@ object Routes {
     const val SCHEDULES = "schedules"
     const val SETTINGS = "settings"
     const val AUTO_RESPONDER = "auto_responder"
+    const val BACKUP = "backup"
+
+    fun callLogRoute(filter: String = "all"): String = "call_log/$filter"
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController) {
-    // Shared ViewModels scoped to the NavHost — survive across route changes
-    // and keep state consistent when navigating between hub and detail screens.
+fun AppNavHost(
+    navController: NavHostController,
+    onPickAudio: (() -> Unit)? = null,
+    onRequestContactsPermission: (() -> Unit)? = null,
+    onShareFile: ((String) -> Unit)? = null,
+    onPickImportFile: (((String) -> Unit) -> Unit)? = null,
+) {
+    val windowSizeClass = rememberWindowSizeClass()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val selectedSection = routeSection(currentRoute)
+
     val homeViewModel = koinViewModel<HomeViewModel>()
     val callLogViewModel = koinViewModel<CallLogViewModel>()
     val blockListViewModel = koinViewModel<BlockListViewModel>()
     val settingsViewModel = koinViewModel<SettingsViewModel>()
     val autoResponderViewModel = koinViewModel<AutoResponderViewModel>()
+    val statsViewModel = koinViewModel<StatsViewModel>()
+    val backupViewModel = koinViewModel<BackupViewModel>()
 
-    NavHost(
-        navController = navController,
-        startDestination = Routes.HOME,
+    AdaptiveScaffold(
+        windowSizeClass = windowSizeClass,
+        selectedIndex = selectedSection,
+        onNavigate = { index ->
+            val destination = sectionRoutes.getOrElse(index) { Routes.HOME }
+            navController.navigate(destination) {
+                popUpTo(Routes.HOME)
+                launchSingleTop = true
+            }
+        },
     ) {
-        composable(Routes.HOME) {
-            // homeViewModel is NavHost-scoped and only refreshes once in init. Re-trigger on
-            // every ON_RESUME (covers both re-navigating to this route and the app coming back
-            // to the foreground after a call was blocked in the background) — otherwise stats
-            // go stale until the process restarts.
-            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { homeViewModel.refresh() }
-            val state by homeViewModel.state.collectAsState()
-            HomeScreen(
-                state = state,
-                onNavigateToCallLog = { navController.navigate(Routes.CALL_LOG) },
-                onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) },
-                onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                onToggleBlocking = homeViewModel::toggleBlocking,
-            )
-        }
+        NavHost(
+            navController = navController,
+            startDestination = Routes.HOME,
+        ) {
+            composable(Routes.HOME) {
+                val state by homeViewModel.state.collectAsState()
+                val blockingEnabled by homeViewModel.blockingEnabled.collectAsState()
+                HomeScreen(
+                    state = state,
+                    blockingEnabled = blockingEnabled,
+                    onNavigateToCallLog = { navController.navigate(Routes.callLogRoute()) },
+                    onNavigateToCallLogToday = { navController.navigate(Routes.callLogRoute("today")) },
+                    onNavigateToCallLogThisWeek = { navController.navigate(Routes.callLogRoute("week")) },
+                    onNavigateToCallLogThisMonth = { navController.navigate(Routes.callLogRoute("month")) },
+                    onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) },
+                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                    onNavigateToStats = { navController.navigate(Routes.STATS) },
+                    onToggleBlocking = homeViewModel::toggleBlocking,
+                )
+            }
 
-        composable(Routes.CALL_LOG) {
-            val entries by callLogViewModel.entries.collectAsState()
-            CallLogScreen(
-                entries = entries,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(
+                route = Routes.CALL_LOG,
+                arguments = listOf(navArgument("filter") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val filter = backStackEntry.arguments?.getString("filter") ?: "all"
+                val allEntries by callLogViewModel.entries.collectAsState()
+                val filtered = filterEntries(allEntries, filter)
+                CallLogScreen(
+                    entries = filtered,
+                    filter = filter,
+                    onBlockNumber = blockListViewModel::addBlockedNumber,
+                    onAllowlistNumber = blockListViewModel::addAllowlistedNumber,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.BLOCK_LIST) {
-            val blockedCount by blockListViewModel.blockedCount.collectAsState()
-            val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
-            val patternCount by blockListViewModel.patternCount.collectAsState()
-            val countryCount by blockListViewModel.countryCount.collectAsState()
-            val actionCount by blockListViewModel.actionCount.collectAsState()
-            val scheduleCount by blockListViewModel.scheduleCount.collectAsState()
-            BlockListHubScreen(
-                blockedCount = blockedCount,
-                allowlistedCount = allowlistedCount,
-                patternCount = patternCount,
-                countryCount = countryCount,
-                actionCount = actionCount,
-                scheduleCount = scheduleCount,
-                onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
-                onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
-                onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
-                onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
-                onNavigateToActions = { navController.navigate(Routes.ACTION_RULES) },
-                onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) },
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.STATS) {
+                val state by statsViewModel.state.collectAsState()
+                StatsScreen(
+                    state = state,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.MANUAL_BLOCK_LIST) {
-            val blocked by blockListViewModel.blockedNumbers.collectAsState()
-            ManualBlockListScreen(
-                numbers = blocked,
-                onAdd = blockListViewModel::addBlockedNumber,
-                onRemove = blockListViewModel::removeBlockedNumber,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.BLOCK_LIST) {
+                val blockedCount by blockListViewModel.blockedCount.collectAsState()
+                val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
+                val patternCount by blockListViewModel.patternCount.collectAsState()
+                val countryCount by blockListViewModel.countryCount.collectAsState()
+                val actionCount by blockListViewModel.actionCount.collectAsState()
+                val scheduleCount by blockListViewModel.scheduleCount.collectAsState()
+                BlockListHubScreen(
+                    blockedCount = blockedCount,
+                    allowlistedCount = allowlistedCount,
+                    patternCount = patternCount,
+                    countryCount = countryCount,
+                    actionCount = actionCount,
+                    scheduleCount = scheduleCount,
+                    onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
+                    onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
+                    onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
+                    onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
+                    onNavigateToActions = { navController.navigate(Routes.ACTION_RULES) },
+                    onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) },
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.ALLOWLIST) {
-            val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
-            AllowlistScreen(
-                numbers = allowlisted,
-                onAdd = blockListViewModel::addAllowlistedNumber,
-                onRemove = blockListViewModel::removeAllowlistedNumber,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.MANUAL_BLOCK_LIST) {
+                val blocked by blockListViewModel.blockedNumbers.collectAsState()
+                val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
+                ManualBlockListScreen(
+                    numbers = blocked,
+                    allowlistedNumbers = allowlisted.map { it.number }.toSet(),
+                    onAdd = blockListViewModel::addBlockedNumber,
+                    onRemove = blockListViewModel::removeBlockedNumber,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.PATTERNS) {
-            val patterns by blockListViewModel.patternRules.collectAsState()
-            PatternRuleScreen(
-                patterns = patterns,
-                onAdd = blockListViewModel::addPatternRule,
-                onToggle = blockListViewModel::togglePatternRule,
-                onRemove = blockListViewModel::removePatternRule,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.ALLOWLIST) {
+                val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
+                val blocked by blockListViewModel.blockedNumbers.collectAsState()
+                AllowlistScreen(
+                    numbers = allowlisted,
+                    blockedNumbers = blocked.map { it.number }.toSet(),
+                    onAdd = blockListViewModel::addAllowlistedNumber,
+                    onRemove = blockListViewModel::removeAllowlistedNumber,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.COUNTRIES) {
-            val countries by blockListViewModel.countryRules.collectAsState()
-            CountryRuleScreen(
-                countries = countries,
-                onAdd = blockListViewModel::addCountryRule,
-                onToggle = blockListViewModel::toggleCountryRule,
-                onRemove = blockListViewModel::removeCountryRule,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.PATTERNS) {
+                val patterns by blockListViewModel.patternRules.collectAsState()
+                PatternRuleScreen(
+                    patterns = patterns,
+                    onAdd = blockListViewModel::addPatternRule,
+                    onToggle = blockListViewModel::togglePatternRule,
+                    onRemove = blockListViewModel::removePatternRule,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.ACTION_RULES) {
-            val actions by blockListViewModel.actionRules.collectAsState()
-            ActionRuleScreen(
-                rules = actions,
-                onAdd = blockListViewModel::addActionRule,
-                onToggle = blockListViewModel::toggleActionRule,
-                onRemove = blockListViewModel::removeActionRule,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.COUNTRIES) {
+                val countries by blockListViewModel.countryRules.collectAsState()
+                CountryRuleScreen(
+                    countries = countries,
+                    onAdd = blockListViewModel::addCountryRule,
+                    onToggle = blockListViewModel::toggleCountryRule,
+                    onRemove = blockListViewModel::removeCountryRule,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.SCHEDULES) {
-            val schedules by blockListViewModel.scheduleRules.collectAsState()
-            ScheduleRuleScreen(
-                rules = schedules,
-                onAdd = blockListViewModel::addScheduleRule,
-                onToggle = blockListViewModel::toggleScheduleRule,
-                onRemove = blockListViewModel::removeScheduleRule,
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.ACTION_RULES) {
+                val actions by blockListViewModel.actionRules.collectAsState()
+                val patterns by blockListViewModel.patternRules.collectAsState()
+                ActionRuleScreen(
+                    rules = actions,
+                    patterns = patterns,
+                    onAdd = blockListViewModel::addActionRule,
+                    onToggle = blockListViewModel::toggleActionRule,
+                    onRemove = blockListViewModel::removeActionRule,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.SETTINGS) {
-            val blockingEnabled by settingsViewModel.blockingEnabled.collectAsState()
-            val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
-            val defaultAction by settingsViewModel.defaultAction.collectAsState()
-            val spamEnabled by settingsViewModel.spamEnabled.collectAsState()
-            SettingsScreen(
-                blockingEnabled = blockingEnabled,
-                autoAllowContacts = autoAllowContacts,
-                defaultAction = defaultAction,
-                spamEnabled = spamEnabled,
-                onSetBlockingEnabled = settingsViewModel::setBlockingEnabled,
-                onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
-                onSetDefaultAction = settingsViewModel::setDefaultAction,
-                onSetSpamEnabled = settingsViewModel::setSpamEnabled,
-                onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) },
-                onBack = { navController.popBackStack() },
-            )
-        }
+            composable(Routes.SCHEDULES) {
+                val schedules by blockListViewModel.scheduleRules.collectAsState()
+                ScheduleRuleScreen(
+                    rules = schedules,
+                    onAdd = blockListViewModel::addScheduleRule,
+                    onToggle = blockListViewModel::toggleScheduleRule,
+                    onRemove = blockListViewModel::removeScheduleRule,
+                    onBack = { navController.popBackStack() },
+                )
+            }
 
-        composable(Routes.AUTO_RESPONDER) {
-            val config by autoResponderViewModel.config.collectAsState()
-            val validationError by autoResponderViewModel.validationError.collectAsState()
-            AutoResponderScreen(
-                config = config,
-                validationError = validationError,
-                onSetEnabled = autoResponderViewModel::setEnabled,
-                onSetScript = autoResponderViewModel::setScript,
-                onSetRecordingEnabled = autoResponderViewModel::setRecordingEnabled,
-                onPickAudio = { /* Android file picker wired later via platform callback */ },
-                onClearAudio = autoResponderViewModel::clearAudioUri,
-                onBack = { navController.popBackStack() },
-            )
+            composable(Routes.SETTINGS) {
+                val blockingEnabled by settingsViewModel.blockingEnabled.collectAsState()
+                val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
+                val defaultAction by settingsViewModel.defaultAction.collectAsState()
+                val spamEnabled by settingsViewModel.spamEnabled.collectAsState()
+                SettingsScreen(
+                    blockingEnabled = blockingEnabled,
+                    autoAllowContacts = autoAllowContacts,
+                    defaultAction = defaultAction,
+                    spamEnabled = spamEnabled,
+                    showGrantContacts = onRequestContactsPermission != null,
+                    onSetBlockingEnabled = settingsViewModel::setBlockingEnabled,
+                    onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
+                    onSetDefaultAction = settingsViewModel::setDefaultAction,
+                    onSetSpamEnabled = settingsViewModel::setSpamEnabled,
+                    onRequestContactsPermission = onRequestContactsPermission ?: {},
+                    onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) },
+                    onNavigateToBackup = { navController.navigate(Routes.BACKUP) },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(Routes.AUTO_RESPONDER) {
+                val config by autoResponderViewModel.config.collectAsState()
+                val validationError by autoResponderViewModel.validationError.collectAsState()
+                AutoResponderScreen(
+                    config = config,
+                    validationError = validationError,
+                    onSetEnabled = autoResponderViewModel::setEnabled,
+                    onSetScript = autoResponderViewModel::setScript,
+                    onSetRecordingEnabled = autoResponderViewModel::setRecordingEnabled,
+                    onPickAudio = onPickAudio ?: {},
+                    onClearAudio = autoResponderViewModel::clearAudioUri,
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(Routes.BACKUP) {
+                val state by backupViewModel.state.collectAsState()
+                BackupScreen(
+                    state = state,
+                    onExport = {
+                        backupViewModel.exportJson { json ->
+                            onShareFile?.invoke(json)
+                        }
+                    },
+                    onImport = {
+                        onPickImportFile?.invoke { content ->
+                            backupViewModel.importJson(content)
+                        }
+                    },
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
+}
+
+private fun filterEntries(
+    entries: List<CallLogEntryData>,
+    filter: String,
+): List<CallLogEntryData> {
+    if (filter == "all") return entries
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val todayStart =
+        kotlinx.datetime.LocalDateTime(now.year, now.monthNumber, now.dayOfMonth, 0, 0, 0)
+    val todayStartEpoch =
+        todayStart.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+    val cutoff =
+        when (filter) {
+            "today" -> todayStartEpoch
+            "week" -> {
+                val daysBack = now.dayOfWeek.ordinal
+                todayStartEpoch - daysBack * 86_400_000L
+            }
+            "month" -> {
+                val monthStart =
+                    kotlinx.datetime.LocalDateTime(now.year, now.monthNumber, 1, 0, 0, 0)
+                monthStart.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+            }
+            else -> return entries
+        }
+    return entries.filter { it.timestamp >= cutoff }
 }

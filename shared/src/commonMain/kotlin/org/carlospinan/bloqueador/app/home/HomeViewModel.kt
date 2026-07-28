@@ -3,10 +3,13 @@ package org.carlospinan.bloqueador.app.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
+import org.carlospinan.bloqueador.app.settings.SettingsRepository
 
 data class HomeUiState(
     val blockedToday: Int = 0,
@@ -17,9 +20,14 @@ data class HomeUiState(
 
 class HomeViewModel(
     private val callLogRepository: CallLogRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
+
+    val blockingEnabled: StateFlow<Boolean> =
+        settingsRepository.blockingEnabled
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     init {
         refresh()
@@ -39,6 +47,8 @@ class HomeViewModel(
     }
 
     fun toggleBlocking(enabled: Boolean) {
-        // M2 scope: toggle is visual only; actual blocking state managed at service level.
+        viewModelScope.launch {
+            settingsRepository.setBlockingEnabled(enabled)
+        }
     }
 }

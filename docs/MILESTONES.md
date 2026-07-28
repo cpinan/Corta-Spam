@@ -1,5 +1,11 @@
 # Milestones
 
+> **Current status (2026-07-28):** M0-M10 are implemented and verified (rules engine, all rule types with UI, call screening via PassthroughInCallService, auto-responder, schedule rules, action rules with optional pattern linking, call log with number actions, home dashboard with filtered call log navigation, welcome screen, blocking toggle, contacts permission request, audio file picker, bundled spam heuristics, backup/restore, stats). Android APK builds. All unit tests pass. 
+>
+> **Adaptive layout phase (2026-07-28):** 3-tier window size detection (Compact/Medium/Expanded), adaptive content capping (max 600dp centered on wider screens), navigation rail on tablet/landscape, FlowRow grid on block list hub. See `docs/ADAPTIVE_PLAN.md` for details. 
+>
+> iOS is not yet wired (CallDirectoryProvider extension pending). Pending on-device QA per `QA_M2_M8_MANUAL.md`.
+
 Read `SPEC.md` first, especially §1 (platform capability matrix) — it explains why several milestones below are Android-only. Every milestone must end in a state where the app **builds and the new behavior is demonstrably working**, not just "code written." Each milestone lists its acceptance test.
 
 **Standing on-device check, every milestone that touches Android UI:** verify edge-to-edge layout — status bar and navigation bar insets specifically. `targetSdk` 36 enforces edge-to-edge (an app can no longer opt out), so content can draw underneath the status bar or nav bar if `WindowInsets` padding isn't applied where it needs to be. Check on-device, not just in a build: confirm top content (titles, app bars) isn't obscured by the status bar, and bottom content (buttons, bottom sheets) isn't obscured by the navigation bar — on both a 3-button-nav device and a gesture-nav device if both are available, since the nav bar's inset size differs between the two.
@@ -203,3 +209,29 @@ Process milestone, mostly non-code — track as deliverables, not features.
 ## Suggested execution order
 
 M0 → M1 → M1.5 → M2 are strictly sequential (each is the foundation for the next). M1.5 changes no runtime behavior, so it's low-risk to slot in, but do it before M2 — M2 is exactly where the DI/testing conventions it establishes start paying off (repositories, resolver, more screens). From M3 onward, M3/M4/M7 can run in parallel (independent of each other, all depend only on M2's resolver). M5 and M6 both depend on M1's `InCallService` and M2's resolver but not on M3/M4, so they can also run in parallel with those. M8–M11 are backlog, no hard ordering, pull opportunistically.
+
+## M12 — Adaptive landscape / tablet support
+
+**Goal:** app layout adapts to window size — bottom nav on phone, nav rail on tablet/landscape, capped content width on wide screens.
+
+**Acceptance test:** visual verification on phone portrait (nav bar visible), phone landscape (nav rail visible), tablet landscape (nav rail visible, wider layout). Content is capped at 600dp on wider screens and centered.
+
+| Task | Agent | Model |
+|---|---|---|
+| Window size detection (3-tier: Compact <600dp, Medium 600-839dp, Expanded >=840dp) | builder | sonnet |
+| Adaptive content wrapper (capped width, centered) | builder | sonnet |
+| Navigation rail / bottom bar integration (AdaptiveScaffold) | builder | sonnet |
+| Screen adaptations (Home, CallLog, BlockListHub, Settings, Stats, AutoResponder, Backup) | builder | sonnet |
+| Android configChanges manifest update | builder | haiku |
+
+**Status:** Implemented 2026-07-28. Pending on-device QA. Two-pane list-detail layouts (CallLog Expanded, Settings Expanded) deferred for follow-up.
+
+## M13 — Store compliance
+
+**Status:** Created 2026-07-28. See `docs/STORE_COMPLIANCE.md`.
+
+| Task | Agent | Model |
+|---|---|---|
+| Google Play declaration form draft | builder | sonnet |
+| Privacy policy doc | builder | sonnet |
+| App Store review notes (iOS placeholder) | builder | sonnet |

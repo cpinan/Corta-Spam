@@ -5,8 +5,8 @@ import org.carlospinan.bloqueador.app.spam.SpamProviderClient
 
 /**
  * Evaluates an incoming phone number against the rule set in precedence order:
- * 1. Contacts/allowlist — always bypasses blocks
- * 2. Manual block — exact number match
+ * 1. Manual block — exact number match (overrides allowlist and contacts)
+ * 2. Contacts/allowlist — always bypasses blocks
  * 3. Pattern — glob/contains match against enabled patterns
  * 4. Country — country code match against enabled country rules
  * 5. Spam — external provider lookup (if enabled)
@@ -48,15 +48,15 @@ object RulePrecedenceResolver {
 
         val mergedAllowlist = context.allowlistedNumbers + context.contactNumbers
 
-        // 1. Allowlist check (highest priority — contacts + manual allowlist)
-        if (normalized in mergedAllowlist) {
-            return RuleDecision.Allowlist
-        }
-
-        // 2. Manual block check
+        // 1. Manual block check (highest priority — overrides allowlist and contacts)
         if (normalized in context.blockedNumbers) {
             val entry = context.blockedNumberDetails[normalized]
             return RuleDecision.ManualBlock(ruleId = entry?.id ?: -1, label = entry?.label)
+        }
+
+        // 2. Allowlist check (contacts + manual allowlist)
+        if (normalized in mergedAllowlist) {
+            return RuleDecision.Allowlist
         }
 
         // 3. Pattern match
@@ -94,6 +94,10 @@ object RulePrecedenceResolver {
 
         // 6. Action rules (block after N attempts within window)
         for (rule in context.enabledActionRules) {
+            if (rule.patternId != null) {
+                val pattern = context.enabledPatterns.find { it.id == rule.patternId }
+                if (pattern == null || !matchesPattern(normalized, pattern.pattern)) continue
+            }
             val count = context.attemptCountsByWindowMinutes[rule.windowMinutes] ?: 0
             if (count >= rule.attempts) {
                 return RuleDecision.ActionBlock(

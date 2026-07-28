@@ -1,0 +1,57 @@
+package org.carlospinan.bloqueador.app.adaptive
+
+object AdaptiveRoutes {
+    const val HOME = "home"
+    const val CALL_LOG = "call_log/{filter}"
+    const val STATS = "stats"
+    const val BLOCK_LIST = "block_list"
+    const val MANUAL_BLOCK_LIST = "manual_block_list"
+    const val ALLOWLIST = "allowlist"
+    const val PATTERNS = "patterns"
+    const val COUNTRIES = "countries"
+    const val ACTION_RULES = "action_rules"
+    const val SCHEDULES = "schedules"
+    const val SETTINGS = "settings"
+    const val AUTO_RESPONDER = "auto_responder"
+    const val BACKUP = "backup"
+
+    fun callLogRoute(filter: String = "all"): String = "call_log/$filter"
+}
+
+val homeSectionRoutes =
+    setOf(AdaptiveRoutes.HOME, AdaptiveRoutes.STATS)
+val callLogSectionRoutes =
+    setOf(AdaptiveRoutes.CALL_LOG)
+val blockListSectionRoutes =
+    setOf(
+        AdaptiveRoutes.BLOCK_LIST,
+        AdaptiveRoutes.MANUAL_BLOCK_LIST,
+        AdaptiveRoutes.ALLOWLIST,
+        AdaptiveRoutes.PATTERNS,
+        AdaptiveRoutes.COUNTRIES,
+        AdaptiveRoutes.ACTION_RULES,
+        AdaptiveRoutes.SCHEDULES,
+    )
+val settingsSectionRoutes =
+    setOf(
+        AdaptiveRoutes.SETTINGS,
+        AdaptiveRoutes.AUTO_RESPONDER,
+        AdaptiveRoutes.BACKUP,
+    )
+val sectionRoutes =
+    listOf(
+        AdaptiveRoutes.HOME,
+        AdaptiveRoutes.callLogRoute(),
+        AdaptiveRoutes.BLOCK_LIST,
+        AdaptiveRoutes.SETTINGS,
+    )
+
+fun routeSection(route: String?): Int =
+    when {
+        route == null -> 0
+        route in homeSectionRoutes -> 0
+        route.startsWith("call_log") -> 1
+        route in blockListSectionRoutes -> 2
+        route in settingsSectionRoutes -> 3
+        else -> 0
+    }

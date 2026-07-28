@@ -41,12 +41,38 @@ class RulePrecedenceResolverTest {
         }
 
     @Test
-    fun allowlist_overridesManualBlock() =
+    fun manualBlock_overridesAllowlist() =
         runTest {
             val ctx =
                 emptyContext.copy(
                     allowlistedNumbers = setOf("+34600123456"),
                     blockedNumbers = setOf("+34600123456"),
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.ManualBlock)
+            assertTrue(decision.isBlocked)
+        }
+
+    @Test
+    fun manualBlock_overridesContacts() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    contactNumbers = setOf("+34600123456"),
+                    blockedNumbers = setOf("+34600123456"),
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.ManualBlock)
+            assertTrue(decision.isBlocked)
+        }
+
+    @Test
+    fun allowlistStillWorksWithoutManualBlock() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    allowlistedNumbers = setOf("+34600123456"),
+                    blockedNumbers = setOf("+34600999999"),
                 )
             val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
             assertTrue(decision is RuleDecision.Allowlist)
@@ -244,7 +270,7 @@ class RulePrecedenceResolverTest {
     }
 
     @Test
-    fun contacts_overridesManualBlock() =
+    fun manualBlock_overridesContacts_legacyCase() =
         runTest {
             val ctx =
                 emptyContext.copy(
@@ -252,8 +278,8 @@ class RulePrecedenceResolverTest {
                     blockedNumbers = setOf("+34600123456"),
                 )
             val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
-            assertTrue(decision is RuleDecision.Allowlist)
-            assertFalse(decision.isBlocked)
+            assertTrue(decision is RuleDecision.ManualBlock)
+            assertTrue(decision.isBlocked)
         }
 
     @Test

@@ -76,6 +76,36 @@ class SqlCallLogRepository(
         }
     }
 
+    override suspend fun blockedByDay(daysBack: Int): List<DayStat> =
+        withContext(Dispatchers.IO) {
+            val entries = queries.selectAllCallLogEntries().executeAsList()
+            val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            val dayMillis = 86_400_000L
+            val cutoff = now - daysBack * dayMillis
+            (0 until daysBack).map { dayOffset ->
+                val dayStart = cutoff + dayOffset * dayMillis
+                val dayEnd = dayStart + dayMillis
+                val count =
+                    entries.count {
+                        it.action == "BLOCKED" && it.timestamp >= dayStart && it.timestamp < dayEnd
+                    }
+                val epochDay = dayStart / dayMillis
+                val label = dayLabel(epochDay)
+                DayStat(dateLabel = label, count = count, cutoffEpochMillis = dayStart)
+            }.reversed()
+        }
+
+    private fun dayLabel(epochDay: Long): String {
+        val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+        val today = now / 86_400_000L
+        val diff = today - epochDay
+        return when (diff) {
+            0L -> "Today"
+            1L -> "Yesterday"
+            else -> "${diff}d ago"
+        }
+    }
+
     private fun org.carlospinan.bloqueador.app.db.CallLogEntry.toData() =
         CallLogEntryData(
             id = id,

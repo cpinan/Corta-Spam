@@ -100,6 +100,7 @@ interface RuleRepository {
         label: String?,
         attempts: Int,
         windowMinutes: Int,
+        patternId: Long? = null,
     )
 
     suspend fun toggleActionRule(
@@ -121,6 +122,12 @@ interface RuleRepository {
     )
 
     suspend fun removeScheduleRule(id: Long)
+
+    /** Export all rules as a JSON string. */
+    suspend fun exportAll(): String
+
+    /** Import rules from a JSON string. Returns counts of what was imported. */
+    suspend fun importAll(json: String): org.carlospinan.bloqueador.app.backup.ImportResult
 }
 
 data class BlockedNumberEntry(
@@ -158,6 +165,7 @@ data class ActionRuleEntry(
     val label: String?,
     val attempts: Int,
     val windowMinutes: Int,
+    val patternId: Long?,
     val enabled: Boolean,
     val createdAt: Long,
 )

@@ -164,9 +164,10 @@ class BlockListViewModel(
         label: String?,
         attempts: Int,
         windowMinutes: Int,
+        patternId: Long? = null,
     ) {
         viewModelScope.launch {
-            ruleRepository.addActionRule(label, attempts, windowMinutes)
+            ruleRepository.addActionRule(label, attempts, windowMinutes, patternId)
         }
     }
 

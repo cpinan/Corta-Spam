@@ -151,6 +151,7 @@ CREATE TABLE ActionRule (
     label TEXT,
     attempts INTEGER NOT NULL DEFAULT 3,
     window_minutes INTEGER NOT NULL DEFAULT 5,
+    pattern_id INTEGER REFERENCES PatternRule(id),
     enabled INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
@@ -159,7 +160,7 @@ selectAllActionRules:
 SELECT * FROM ActionRule ORDER BY created_at DESC;
 
 insertActionRule:
-INSERT INTO ActionRule(label, attempts, window_minutes) VALUES (?, ?, ?);
+INSERT INTO ActionRule(label, attempts, window_minutes, pattern_id) VALUES (?, ?, ?, ?);
 
 toggleActionRule:
 UPDATE ActionRule SET enabled = ? WHERE id = ?;
