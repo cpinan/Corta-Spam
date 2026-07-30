@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Integração -->
+    <string name="onboarding_title">Precisamos ser seu app de telefone padrão</string>
+    <string name="onboarding_subtitle">É a única forma do Android permitir que um app veja quem está ligando antes de você atender, e reproduza uma saudação para chamadas não aprovadas.</string>
+    <string name="onboarding_reason_screen_title">Filtre chamadas silenciosamente.</string>
+    <string name="onboarding_reason_screen_body">Verificamos o número contra suas regras antes do telefone tocar.</string>
+    <string name="onboarding_reason_autoresponder_title">Potencializa o auto-respondedor opcional.</string>
+    <string name="onboarding_reason_autoresponder_body">Usado somente se você ativar em Ajustes.</string>
+    <string name="onboarding_reason_revert_body">Você pode voltar ao discador original a qualquer momento nos Ajustes do Android.</string>
+    <string name="onboarding_never_do_header">O QUE NUNCA FAREMOS</string>
+    <string name="onboarding_never_do_record">Gravar qualquer chamada a menos que você ative separadamente.</string>
+    <string name="onboarding_never_do_send_data">Enviar seus dados de chamadas, contatos ou números para fora do dispositivo.</string>
+    <string name="onboarding_never_do_ads">Exibir anúncios ou compartilhar informações com terceiros.</string>
+    <string name="onboarding_open_source">Este app é open source — ver o código</string>
+    <string name="onboarding_requesting_indicator">Aguardando o diálogo do sistema…</string>
+    <string name="onboarding_denied_title">Não definido como app de telefone padrão</string>
+    <string name="onboarding_denied_body">Sem isso, o filtro de chamadas e o auto-respondedor não funcionam. Você pode ativar depois nos Ajustes.</string>
+
+    <!-- Ações -->
+    <string name="action_continue">Continuar</string>
+    <string name="action_not_now">Agora não</string>
+    <string name="action_try_again">Tentar novamente</string>
+    <string name="action_continue_without_default">Continuar sem</string>
+    <string name="action_add">Adicionar</string>
+    <string name="action_remove">Remover</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_skip">Pular</string>
+    <string name="action_back">Voltar</string>
+    <string name="action_ok">OK</string>
+    <string name="action_view">Ver</string>
+
+    <!-- Boas-vindas -->
+    <string name="welcome_title">Corta Spam</string>
+    <string name="welcome_subtitle">Bloqueio de chamadas open source.\nSem anúncios. Sem rastreamento. Seus dados nunca saem do dispositivo.</string>
+    <string name="welcome_get_started">Começar</string>
+
+    <!-- Chamada -->
+    <string name="call_status_ringing">Chamada recebida</string>
+    <string name="call_status_dialing">Chamando…</string>
+    <string name="call_status_active">Em chamada</string>
+    <string name="call_unknown_number">Número desconhecido</string>
+    <string name="action_decline">Recusar</string>
+    <string name="action_answer">Atender</string>
+    <string name="action_hang_up">Desligar</string>
+
+    <!-- Início -->
+    <string name="home_title">Corta Spam</string>
+    <string name="home_blocking_enabled">Bloqueio ativado</string>
+    <string name="home_blocked_today">Bloqueadas hoje</string>
+    <string name="home_blocked_this_week">Esta semana</string>
+    <string name="home_blocked_this_month">Este mês</string>
+    <string name="home_view_call_log">Ver registro</string>
+    <string name="home_view_stats">Ver estatísticas</string>
+    <string name="home_manage_block_list">Gerenciar listas</string>
+    <string name="home_settings">Ajustes</string>
+
+    <!-- Estatísticas -->
+    <string name="stats_title">Chamadas Bloqueadas — Últimos 7 Dias</string>
+    <string name="stats_empty">Nenhuma chamada bloqueada nos últimos 7 dias.</string>
+    <string name="stats_loading">Carregando…</string>
+    <string name="stats_blocked_count">%d bloqueadas</string>
+
+    <!-- Listas de bloqueio -->
+    <string name="block_list_hub_title">Listas de Bloqueio</string>
+    <string name="block_list_manual_title">Números Bloqueados</string>
+    <string name="block_list_title">Números Bloqueados</string>
+    <string name="block_list_empty_hint">Nenhum número bloqueado. Adicione um para começar a filtrar.</string>
+    <string name="block_list_add_title">Bloquear número</string>
+    <string name="block_list_add_hint">Número de telefone</string>
+
+    <!-- Permitidos -->
+    <string name="allowlist_title">Lista de Permitidos</string>
+    <string name="allowlist_empty_hint">Nenhum número permitido. Contatos ignoram todas as regras de bloqueio.</string>
+    <string name="allowlist_add_title">Permitir número</string>
+    <string name="allowlist_add_hint">Número de telefone</string>
+
+    <!-- Padrões -->
+    <string name="pattern_title">Regras de Padrão</string>
+    <string name="pattern_empty_hint">Nenhum padrão adicionado. Use curingas como +55* para bloquear faixas.</string>
+    <string name="pattern_add_title">Adicionar padrão</string>
+    <string name="pattern_add_hint">Padrão (ex: +55*, *1234)</string>
+    <string name="pattern_label_hint">Rótulo (opcional)</string>
+    <string name="pattern_examples">Prefixo: +55* corresponde a +5511999999999\nSufixo: *1234 corresponde a qualquer número terminado em 1234\nContém: *900* corresponde a qualquer número contendo 900\nExato: +5511999999999 corresponde apenas a esse número</string>
+    <string name="pattern_android_only">Somente Android</string>
+
+    <!-- Países -->
+    <string name="country_title">Regras por País</string>
+    <string name="country_empty_hint">Nenhum país adicionado. Bloqueie por código de país.</string>
+    <string name="country_add_title">Adicionar país</string>
+    <string name="country_search_hint">Buscar países…</string>
+    <string name="hub_patterns">Regras de Padrão</string>
+    <string name="hub_countries">Regras por País</string>
+
+    <!-- Registro -->
+    <string name="call_log_title">Registro de Chamadas</string>
+    <string name="call_log_title_today">Registro — Hoje</string>
+    <string name="call_log_title_week">Registro — Esta Semana</string>
+    <string name="call_log_title_month">Registro — Este Mês</string>
+    <string name="call_log_empty_hint">Nenhuma chamada registrada. Aparecerão quando o filtro começar.</string>
+    <string name="call_log_action_block">Bloquear este número</string>
+    <string name="call_log_action_allowlist">Adicionar aos permitidos</string>
+    <string name="call_log_action_callback">Retornar chamada</string>
+    <string name="call_log_action_copy">Copiar número</string>
+
+    <!-- Ajustes -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_blocking_enabled">Bloqueio ativado</string>
+    <string name="settings_blocking_enabled_desc">Quando desativado, todas as chamadas passam.</string>
+    <string name="settings_auto_allow_contacts">Auto-permitir contatos</string>
+    <string name="settings_auto_allow_contacts_desc">Contatos ignoram todas as regras de bloqueio.</string>
+    <string name="settings_grant_contacts">Conceder permissão de contatos</string>
+    <string name="settings_default_action">Ação padrão</string>
+    <string name="settings_default_action_desc">O que fazer com números que não correspondem a nenhuma regra.</string>
+    <string name="settings_default_action_allow">Permitir</string>
+    <string name="settings_default_action_block">Bloquear</string>
+    <string name="settings_default_action_ask">Perguntar (igual a Permitir — sem fluxo de revisão ainda)</string>
+
+    <!-- Spam -->
+    <string name="settings_spam_provider">Provedor de spam</string>
+    <string name="settings_spam_provider_desc">Verifica números contra uma base externa. Nenhum dado sai do dispositivo a menos que você configure um provedor.</string>
+
+    <!-- Backup -->
+    <string name="settings_backup">Backup e Restauração</string>
+    <string name="settings_backup_desc">Exporte ou importe suas regras e ajustes.</string>
+    <string name="backup_title">Backup e Restauração</string>
+    <string name="backup_export">Exportar regras para arquivo</string>
+    <string name="backup_import">Importar regras de arquivo</string>
+
+    <!-- Privacidade -->
+    <string name="settings_privacy_title">Política de Privacidade</string>
+    <string name="settings_privacy_desc">Como seus dados são tratados</string>
+    <string name="settings_terms_title">Termos e Condições</string>
+    <string name="settings_terms_desc">Licença open source e termos de uso</string>
+
+    <!-- Auto-respondedor -->
+    <string name="settings_autoresponder">Auto-respondedor (Experimental)</string>
+    <string name="settings_autoresponder_desc">Responde chamadas bloqueadas com uma saudação.</string>
+    <string name="autoresponder_title">Auto-respondedor</string>
+    <string name="autoresponder_experimental_badge">Experimental — pode não funcionar em todos os dispositivos</string>
+    <string name="autoresponder_enabled">Ativado</string>
+    <string name="autoresponder_enabled_desc">Quando ativo, chamadas bloqueadas são atendidas com saudação em vez de rejeitadas.</string>
+    <string name="autoresponder_script_hint">Roteiro de saudação</string>
+    <string name="autoresponder_audio_tts">Texto para voz</string>
+    <string name="autoresponder_audio_custom">Arquivo de áudio personalizado</string>
+    <string name="autoresponder_pick_audio">Selecionar arquivo</string>
+    <string name="autoresponder_clear_audio">Usar texto para voz</string>
+    <string name="autoresponder_recording">Gravar mensagem do chamador</string>
+    <string name="autoresponder_recording_desc">Desativado por padrão. Não confiável em Android moderno.</string>
+    <string name="autoresponder_consent_hint">Roteiro deve incluir: "Esta chamada pode ser gravada"</string>
+    <string name="autoresponder_error_empty">Roteiro ou áudio necessário quando ativado.</string>
+    <string name="autoresponder_error_too_long">Roteiro muito longo (máx. 500 caracteres).</string>
+    <string name="autoresponder_error_consent">Gravação requer aviso de consentimento no roteiro.</string>
+
+    <!-- Navegação -->
+    <string name="nav_home">Início</string>
+    <string name="nav_log">Registro</string>
+    <string name="nav_lists">Listas</string>
+    <string name="nav_settings">Ajustes</string>
+
+    <!-- Duplicados -->
+    <string name="blocklist_duplicate_allowlist_title">Número já na lista de permitidos</string>
+    <string name="blocklist_duplicate_allowlist_body">Este número está na sua Lista de Permitidos. O bloqueio manual tem prioridade — ainda será bloqueado.</string>
+    <string name="blocklist_add_block">Adicionar à Lista de Bloqueio</string>
+    <string name="blocklist_duplicate_blocked_title">Número já bloqueado</string>
+    <string name="blocklist_duplicate_blocked_body">Este número está na sua Lista de Bloqueados. Adicioná-lo aos Permitidos não anula o bloqueio.</string>
+    <string name="blocklist_add_allowlist">Adicionar aos Permitidos</string>
+
+    <!-- Horas de silêncio -->
+    <string name="hub_schedules">Horas de Silêncio</string>
+    <string name="schedule_rule_title">Horas de Silêncio</string>
+    <string name="schedule_rule_add_title">Adicionar horas de silêncio</string>
+    <string name="schedule_empty_hint">Nenhum horário configurado. Bloqueia tudo exceto permitidos durante o período.</string>
+    <string name="schedule_start_hint">Hora de início</string>
+    <string name="schedule_end_hint">Hora de fim</string>
+    <string name="schedule_hour_hint">Hora (0-23)</string>
+    <string name="schedule_minute_hint">Min (0-59)</string>
+    <string name="schedule_label_hint">Rótulo (opcional)</string>
+    <string name="schedule_invalid_time">Insira horários válidos (hora 0-23, minuto 0-59)</string>
+    <string name="schedule_select_time">Selecionar horário</string>
+    <string name="schedule_quick_presets">Predefinições rápidas</string>
+    <string name="schedule_preset_night">Noite</string>
+    <string name="schedule_preset_siesta">Sesta</string>
+    <string name="schedule_preset_work">Trabalho</string>
+
+    <!-- Registro de chamadas - detalhes -->
+    <string name="call_log_detail_placeholder">Selecione uma chamada para ver detalhes</string>
+    <string name="call_log_blocked_label">Chamada bloqueada</string>
+    <string name="call_log_allowed_label">Chamada permitida</string>
+    <string name="call_log_time_label">Horário</string>
+    <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
+    <string name="call_log_just_now">Agora mesmo</string>
+    <string name="call_log_action_label">Ação</string>
+    <string name="call_log_rule_label">Regra</string>
+
+    <!-- Sobre -->
+    <string name="about_open_source">Open source · Licença MIT</string>
+</resources>

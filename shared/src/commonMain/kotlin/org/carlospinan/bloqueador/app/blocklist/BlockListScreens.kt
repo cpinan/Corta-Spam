@@ -41,6 +41,7 @@ import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_add
 import bloqueallamadas.shared.generated.resources.action_android_only
 import bloqueallamadas.shared.generated.resources.action_cancel
+import bloqueallamadas.shared.generated.resources.action_ok
 import bloqueallamadas.shared.generated.resources.action_remove
 import bloqueallamadas.shared.generated.resources.action_skip
 import bloqueallamadas.shared.generated.resources.allowlist_add_hint
@@ -1096,7 +1097,7 @@ private fun TimePickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(state.hour, state.minute) }) {
-                Text("OK")
+                Text(stringResource(Res.string.action_ok))
             }
         },
         dismissButton = {

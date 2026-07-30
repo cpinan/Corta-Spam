@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ऑनबोर्डिंग -->
+    <string name="onboarding_title">हमें आपका डिफ़ॉल्ट फ़ोन ऐप बनना होगा</string>
+    <string name="onboarding_subtitle">यह एकमात्र तरीका है जिससे Android किसी ऐप को आपके उत्तर देने से पहले कॉलर को देखने और अस्वीकृत कॉलर्स को ग्रीटिंग सुनाने की अनुमति देता है।</string>
+    <string name="onboarding_reason_screen_title">चुपचाप कॉल स्क्रीन करें।</string>
+    <string name="onboarding_reason_screen_body">फ़ोन बजने से पहले हम आपके नियमों के विरुद्ध नंबर की जाँच करते हैं।</string>
+    <string name="onboarding_reason_autoresponder_title">वैकल्पिक ऑटो-रिस्पॉन्डर को शक्ति दें।</string>
+    <string name="onboarding_reason_autoresponder_body">केवल तभी उपयोग होता है जब आप इसे सेटिंग्स में चालू करते हैं।</string>
+    <string name="onboarding_reason_revert_body">आप किसी भी समय Android सेटिंग्स में अपने फ़ोन के मूल डायलर पर वापस जा सकते हैं।</string>
+    <string name="onboarding_never_do_header">हम कभी नहीं करेंगे</string>
+    <string name="onboarding_never_do_record">जब तक आप अलग से चालू न करें, कोई कॉल रिकॉर्ड नहीं करेंगे।</string>
+    <string name="onboarding_never_do_send_data">आपका कॉल डेटा, संपर्क या नंबर इस डिवाइस से बाहर नहीं भेजेंगे।</string>
+    <string name="onboarding_never_do_ads">विज्ञापन नहीं दिखाएँगे या तीसरे पक्षों के साथ जानकारी साझा नहीं करेंगे।</string>
+    <string name="onboarding_open_source">यह ऐप ओपन सोर्स है — कोड देखें</string>
+    <string name="onboarding_requesting_indicator">सिस्टम डायलॉग की प्रतीक्षा कर रहे हैं…</string>
+    <string name="onboarding_denied_title">डिफ़ॉल्ट फ़ोन ऐप के रूप में सेट नहीं</string>
+    <string name="onboarding_denied_body">इसके बिना, कॉल स्क्रीनिंग और ऑटो-रिस्पॉन्डर काम नहीं कर सकते। आप इसे बाद में सेटिंग्स से चालू कर सकते हैं।</string>
+
+    <!-- कार्रवाइयाँ -->
+    <string name="action_continue">जारी रखें</string>
+    <string name="action_not_now">अभी नहीं</string>
+    <string name="action_try_again">पुनः प्रयास करें</string>
+    <string name="action_continue_without_default">इसके बिना जारी रखें</string>
+    <string name="action_add">जोड़ें</string>
+    <string name="action_remove">हटाएँ</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_skip">छोड़ें</string>
+    <string name="action_back">वापस</string>
+    <string name="action_ok">ठीक है</string>
+    <string name="action_view">देखें</string>
+
+    <!-- स्वागत -->
+    <string name="welcome_title">Corta Spam</string>
+    <string name="welcome_subtitle">ओपन-सोर्स कॉल ब्लॉकिंग।\nकोई विज्ञापन नहीं। कोई ट्रैकिंग नहीं। आपका डेटा कभी डिवाइस नहीं छोड़ता।</string>
+    <string name="welcome_get_started">शुरू करें</string>
+
+    <!-- कॉल स्क्रीन -->
+    <string name="call_status_ringing">इनकमिंग कॉल</string>
+    <string name="call_status_dialing">कॉल कर रहे हैं…</string>
+    <string name="call_status_active">कॉल जारी है</string>
+    <string name="call_unknown_number">अज्ञात नंबर</string>
+    <string name="action_decline">अस्वीकार करें</string>
+    <string name="action_answer">उत्तर दें</string>
+    <string name="action_hang_up">कॉल काटें</string>
+
+    <!-- होम -->
+    <string name="home_title">Corta Spam</string>
+    <string name="home_blocking_enabled">ब्लॉकिंग चालू है</string>
+    <string name="home_blocked_today">आज ब्लॉक की गई</string>
+    <string name="home_blocked_this_week">इस सप्ताह</string>
+    <string name="home_blocked_this_month">इस महीने</string>
+    <string name="home_view_call_log">कॉल लॉग देखें</string>
+    <string name="home_view_stats">आँकड़े देखें</string>
+    <string name="home_manage_block_list">ब्लॉक सूचियाँ प्रबंधित करें</string>
+    <string name="home_settings">सेटिंग्स</string>
+
+    <!-- आँकड़े -->
+    <string name="stats_title">ब्लॉक की गई कॉल — पिछले 7 दिन</string>
+    <string name="stats_empty">पिछले 7 दिनों में कोई कॉल ब्लॉक नहीं हुई।</string>
+    <string name="stats_loading">लोड हो रहा है…</string>
+    <string name="stats_blocked_count">%d ब्लॉक की गईं</string>
+
+    <!-- ब्लॉक सूची हब -->
+    <string name="block_list_hub_title">ब्लॉक सूचियाँ</string>
+    <string name="block_list_manual_title">ब्लॉक किए गए नंबर</string>
+    <string name="block_list_title">ब्लॉक किए गए नंबर</string>
+    <string name="block_list_empty_hint">अभी तक कोई नंबर ब्लॉक नहीं किया गया। कॉल ब्लॉक करना शुरू करने के लिए एक नंबर जोड़ें।</string>
+    <string name="block_list_add_title">नंबर ब्लॉक करें</string>
+    <string name="block_list_add_hint">फ़ोन नंबर</string>
+
+    <!-- अनुमति सूची -->
+    <string name="allowlist_title">अनुमति सूची</string>
+    <string name="allowlist_empty_hint">कोई नंबर अनुमति सूची में नहीं। संपर्क सभी ब्लॉक नियमों को बायपास करते हैं।</string>
+    <string name="allowlist_add_title">नंबर को अनुमति दें</string>
+    <string name="allowlist_add_hint">फ़ोन नंबर</string>
+
+    <!-- पैटर्न -->
+    <string name="pattern_title">पैटर्न नियम</string>
+    <string name="pattern_empty_hint">कोई पैटर्न नहीं जोड़ा गया। नंबर रेंज ब्लॉक करने के लिए +91* जैसे वाइल्डकार्ड का उपयोग करें।</string>
+    <string name="pattern_add_title">पैटर्न नियम जोड़ें</string>
+    <string name="pattern_add_hint">पैटर्न (जैसे +91*, *1234)</string>
+    <string name="pattern_label_hint">लेबल (वैकल्पिक)</string>
+    <string name="pattern_examples">उपसर्ग: +91* +919999999999 से मेल खाता है\nप्रत्यय: *1234, 1234 से समाप्त होने वाले किसी भी नंबर से मेल खाता है\nशामिल: *900*, 900 वाले किसी भी नंबर से मेल खाता है\nसटीक: +919999999999 केवल उस नंबर से मेल खाता है</string>
+    <string name="pattern_android_only">केवल Android</string>
+
+    <!-- देश -->
+    <string name="country_title">देश नियम</string>
+    <string name="country_empty_hint">कोई देश नहीं जोड़ा गया। देश कोड द्वारा कॉल ब्लॉक करें।</string>
+    <string name="country_add_title">देश नियम जोड़ें</string>
+    <string name="country_search_hint">देश खोजें…</string>
+    <string name="hub_patterns">पैटर्न नियम</string>
+    <string name="hub_countries">देश नियम</string>
+
+    <!-- कॉल लॉग -->
+    <string name="call_log_title">कॉल लॉग</string>
+    <string name="call_log_title_today">कॉल लॉग — आज</string>
+    <string name="call_log_title_week">कॉल लॉग — इस सप्ताह</string>
+    <string name="call_log_title_month">कॉल लॉग — इस महीने</string>
+    <string name="call_log_empty_hint">अभी तक कोई कॉल लॉग नहीं। स्क्रीनिंग शुरू होने पर कॉल यहाँ दिखाई देंगी।</string>
+    <string name="call_log_action_block">इस नंबर को ब्लॉक करें</string>
+    <string name="call_log_action_allowlist">अनुमति सूची में जोड़ें</string>
+    <string name="call_log_action_callback">वापस कॉल करें</string>
+    <string name="call_log_action_copy">नंबर कॉपी करें</string>
+
+    <!-- सेटिंग्स -->
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_blocking_enabled">ब्लॉकिंग सक्षम</string>
+    <string name="settings_blocking_enabled_desc">बंद होने पर, सभी कॉल अनुमत हैं।</string>
+    <string name="settings_auto_allow_contacts">संपर्कों को स्वतः अनुमति दें</string>
+    <string name="settings_auto_allow_contacts_desc">संपर्क सभी ब्लॉक नियमों को बायपास करते हैं।</string>
+    <string name="settings_grant_contacts">संपर्क अनुमति दें</string>
+    <string name="settings_default_action">डिफ़ॉल्ट कार्रवाई</string>
+    <string name="settings_default_action_desc">बिना किसी नियम से मेल खाने वाले नंबरों के साथ क्या करें।</string>
+    <string name="settings_default_action_allow">अनुमति दें</string>
+    <string name="settings_default_action_block">ब्लॉक करें</string>
+    <string name="settings_default_action_ask">पूछें (अभी अनुमति के समान — समीक्षा प्रवाह अभी नहीं है)</string>
+
+    <!-- स्पैम -->
+    <string name="settings_spam_provider">स्पैम प्रदाता</string>
+    <string name="settings_spam_provider_desc">बाहरी स्पैम डेटाबेस के विरुद्ध नंबर जाँचें। जब तक आप प्रदाता कॉन्फ़िगर न करें, कोई डेटा डिवाइस नहीं छोड़ता।</string>
+
+    <!-- बैकअप -->
+    <string name="settings_backup">बैकअप और पुनर्स्थापना</string>
+    <string name="settings_backup_desc">अपने नियम और सेटिंग्स निर्यात या आयात करें।</string>
+    <string name="backup_title">बैकअप और पुनर्स्थापना</string>
+    <string name="backup_export">नियमों को फ़ाइल में निर्यात करें</string>
+    <string name="backup_import">फ़ाइल से नियम आयात करें</string>
+
+    <!-- गोपनीयता -->
+    <string name="settings_privacy_title">गोपनीयता नीति</string>
+    <string name="settings_privacy_desc">आपका डेटा कैसे संभाला जाता है</string>
+    <string name="settings_terms_title">नियम और शर्तें</string>
+    <string name="settings_terms_desc">ओपन सोर्स लाइसेंस और उपयोग की शर्तें</string>
+
+    <!-- ऑटो-रिस्पॉन्डर -->
+    <string name="settings_autoresponder">ऑटो-रिस्पॉन्डर (प्रायोगिक)</string>
+    <string name="settings_autoresponder_desc">ब्लॉक की गई कॉल का ग्रीटिंग के साथ उत्तर दें।</string>
+    <string name="autoresponder_title">ऑटो-रिस्पॉन्डर</string>
+    <string name="autoresponder_experimental_badge">प्रायोगिक — सभी डिवाइस पर विश्वसनीय रूप से काम नहीं कर सकता</string>
+    <string name="autoresponder_enabled">सक्षम</string>
+    <string name="autoresponder_enabled_desc">चालू होने पर, ब्लॉक की गई कॉल चुपचाप अस्वीकार करने के बजाय ग्रीटिंग के साथ उत्तर दी जाती हैं।</string>
+    <string name="autoresponder_script_hint">ग्रीटिंग स्क्रिप्ट</string>
+    <string name="autoresponder_audio_tts">टेक्स्ट-टू-स्पीच</string>
+    <string name="autoresponder_audio_custom">कस्टम ऑडियो फ़ाइल</string>
+    <string name="autoresponder_pick_audio">ऑडियो फ़ाइल चुनें</string>
+    <string name="autoresponder_clear_audio">TTS का उपयोग करें</string>
+    <string name="autoresponder_recording">कॉलर का संदेश रिकॉर्ड करें</string>
+    <string name="autoresponder_recording_desc">डिफ़ॉल्ट रूप से बंद। आधुनिक Android पर विश्वसनीय रूप से समर्थित नहीं।</string>
+    <string name="autoresponder_consent_hint">स्क्रिप्ट में शामिल होना चाहिए: "यह कॉल रिकॉर्ड की जा सकती है"</string>
+    <string name="autoresponder_error_empty">सक्षम होने पर स्क्रिप्ट या ऑडियो फ़ाइल आवश्यक है।</string>
+    <string name="autoresponder_error_too_long">स्क्रिप्ट बहुत लंबी है (अधिकतम 500 अक्षर)।</string>
+    <string name="autoresponder_error_consent">रिकॉर्डिंग के लिए स्क्रिप्ट में सहमति पंक्ति आवश्यक है।</string>
+
+    <!-- नेविगेशन -->
+    <string name="nav_home">होम</string>
+    <string name="nav_log">लॉग</string>
+    <string name="nav_lists">सूचियाँ</string>
+    <string name="nav_settings">सेटिंग्स</string>
+
+    <!-- डुप्लिकेट चेतावनियाँ -->
+    <string name="blocklist_duplicate_allowlist_title">नंबर पहले से अनुमति सूची में है</string>
+    <string name="blocklist_duplicate_allowlist_body">यह नंबर आपकी अनुमति सूची में है। मैन्युअल ब्लॉक को प्राथमिकता है — यह फिर भी ब्लॉक किया जाएगा।</string>
+    <string name="blocklist_add_block">ब्लॉक सूची में जोड़ें</string>
+    <string name="blocklist_duplicate_blocked_title">नंबर पहले से ब्लॉक है</string>
+    <string name="blocklist_duplicate_blocked_body">यह नंबर आपकी मैन्युअल ब्लॉक सूची में है। इसे अनुमति सूची में जोड़ने से ब्लॉक ओवरराइड नहीं होगा।</string>
+    <string name="blocklist_add_allowlist">अनुमति सूची में जोड़ें</string>
+
+    <!-- शांत घंटे -->
+    <string name="hub_schedules">शांत घंटे</string>
+    <string name="schedule_rule_title">शांत घंटे</string>
+    <string name="schedule_rule_add_title">शांत घंटे जोड़ें</string>
+    <string name="schedule_empty_hint">कोई शांत घंटे सेट नहीं। समय विंडो के दौरान अनुमति सूची को छोड़कर सब कुछ ब्लॉक करें।</string>
+    <string name="schedule_start_hint">प्रारंभ समय</string>
+    <string name="schedule_end_hint">समाप्ति समय</string>
+    <string name="schedule_hour_hint">घंटा (0-23)</string>
+    <string name="schedule_minute_hint">मिनट (0-59)</string>
+    <string name="schedule_label_hint">लेबल (वैकल्पिक)</string>
+    <string name="schedule_invalid_time">मान्य समय दर्ज करें (घंटा 0-23, मिनट 0-59)</string>
+    <string name="schedule_select_time">समय चुनें</string>
+    <string name="schedule_quick_presets">त्वरित प्रीसेट</string>
+    <string name="schedule_preset_night">रात</string>
+    <string name="schedule_preset_siesta">दोपहर</string>
+    <string name="schedule_preset_work">काम</string>
+
+    <!-- कॉल लॉग विवरण -->
+    <string name="call_log_detail_placeholder">विवरण देखने के लिए कॉल चुनें</string>
+    <string name="call_log_blocked_label">ब्लॉक की गई कॉल</string>
+    <string name="call_log_allowed_label">अनुमत कॉल</string>
+    <string name="call_log_time_label">समय</string>
+    <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
+    <string name="call_log_just_now">अभी-अभी</string>
+    <string name="call_log_action_label">कार्रवाई</string>
+    <string name="call_log_rule_label">नियम</string>
+
+    <!-- के बारे में -->
+    <string name="about_open_source">ओपन सोर्स · MIT लाइसेंस</string>
+</resources>

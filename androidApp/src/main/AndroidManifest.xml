@@ -44,6 +44,8 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 

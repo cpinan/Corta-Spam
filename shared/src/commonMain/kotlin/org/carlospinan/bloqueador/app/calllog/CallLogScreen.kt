@@ -37,6 +37,7 @@ import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_cancel
 import bloqueallamadas.shared.generated.resources.call_log_action_allowlist
 import bloqueallamadas.shared.generated.resources.call_log_action_block
+import bloqueallamadas.shared.generated.resources.call_log_action_callback
 import bloqueallamadas.shared.generated.resources.call_log_action_copy
 import bloqueallamadas.shared.generated.resources.call_log_empty_hint
 import bloqueallamadas.shared.generated.resources.call_log_title
@@ -46,9 +47,17 @@ import bloqueallamadas.shared.generated.resources.call_log_title_week
 import bloqueallamadas.shared.generated.resources.call_log_allowed_label
 import bloqueallamadas.shared.generated.resources.call_log_blocked_label
 import bloqueallamadas.shared.generated.resources.call_log_detail_placeholder
+import bloqueallamadas.shared.generated.resources.call_log_action_label
+import bloqueallamadas.shared.generated.resources.call_log_just_now
+import bloqueallamadas.shared.generated.resources.call_log_rule_label
+import bloqueallamadas.shared.generated.resources.call_log_time_label
 import bloqueallamadas.shared.generated.resources.ic_allowlist
 import bloqueallamadas.shared.generated.resources.ic_blocked_number
 import bloqueallamadas.shared.generated.resources.ic_unknown_call
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
@@ -63,6 +72,7 @@ fun CallLogScreen(
     onBlockNumber: (String) -> Unit = {},
     onAllowlistNumber: (String) -> Unit = {},
     onCopyNumber: (String) -> Unit = {},
+    onCallBack: (String) -> Unit = {},
     onBack: () -> Unit,
 ) {
     var selectedNumber by remember { mutableStateOf<String?>(null) }
@@ -102,6 +112,10 @@ fun CallLogScreen(
                         },
                         onCopyNumber = { number ->
                             onCopyNumber(number)
+                            selectedEntry = null
+                        },
+                        onCallBack = { number ->
+                            onCallBack(number)
                             selectedEntry = null
                         },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -161,6 +175,15 @@ fun CallLogScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(stringResource(Res.string.call_log_action_allowlist))
+                        }
+                        TextButton(
+                            onClick = {
+                                onCallBack(number)
+                                selectedNumber = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(Res.string.call_log_action_callback))
                         }
                         TextButton(
                             onClick = {
@@ -234,6 +257,7 @@ private fun CallLogDetailPane(
     onBlockNumber: (String) -> Unit,
     onAllowlistNumber: (String) -> Unit,
     onCopyNumber: (String) -> Unit,
+    onCallBack: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -256,7 +280,7 @@ private fun CallLogDetailPane(
             ) {
                 Icon(
                     painter = painterResource(statusIcon),
-                contentDescription = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
+                    contentDescription = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
                     tint = actionColor,
                     modifier = Modifier.size(20.dp),
                 )
@@ -276,14 +300,23 @@ private fun CallLogDetailPane(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            CallLogDetailRow("Action", entry.action, actionColor)
+            CallLogDetailRow(stringResource(Res.string.call_log_action_label), entry.action, actionColor)
             if (entry.ruleDetail != null) {
-                CallLogDetailRow("Rule", entry.ruleDetail)
+                CallLogDetailRow(stringResource(Res.string.call_log_rule_label), entry.ruleDetail)
             }
+            CallLogDetailRow(
+                stringResource(Res.string.call_log_time_label),
+                formatTimestamp(entry.timestamp),
+            )
 
             Spacer(modifier = Modifier.height(18.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = { onCallBack(entry.number) },
+                ) {
+                    Text(stringResource(Res.string.call_log_action_callback))
+                }
                 androidx.compose.material3.OutlinedButton(
                     onClick = { onAllowlistNumber(entry.number) },
                 ) {
@@ -364,6 +397,11 @@ private fun CallLogEntryRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Text(
+                    text = formatTimestamp(entry.timestamp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             Text(
                 text = entry.action,
@@ -372,4 +410,15 @@ private fun CallLogEntryRow(
             )
         }
     }
+}
+
+private fun formatTimestamp(epochMillis: Long): String {
+    val now = Clock.System.now().toEpochMilliseconds()
+    if (now - epochMillis < 60_000L) return "Now"
+    val instant = Instant.fromEpochMilliseconds(epochMillis)
+    val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+    val month = local.month.name.lowercase().replaceFirstChar { it.uppercase() }.take(3)
+    val hour = local.hour.toString().padStart(2, '0')
+    val minute = local.minute.toString().padStart(2, '0')
+    return "$month ${local.dayOfMonth}, ${local.year} · $hour:$minute"
 }

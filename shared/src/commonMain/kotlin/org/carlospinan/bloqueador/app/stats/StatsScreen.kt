@@ -18,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
+import bloqueallamadas.shared.generated.resources.stats_blocked_count
 import bloqueallamadas.shared.generated.resources.stats_empty
+import bloqueallamadas.shared.generated.resources.stats_loading
 import bloqueallamadas.shared.generated.resources.stats_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
@@ -44,7 +46,7 @@ fun StatsScreen(
 
                 if (state.isLoading) {
                     Text(
-                        text = "Loading...",
+                        text = stringResource(Res.string.stats_loading),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -81,7 +83,7 @@ private fun DayStatCard(day: DayStat) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = "${day.count} blocked",
+                text = stringResource(Res.string.stats_blocked_count, day.count),
                 style = MaterialTheme.typography.titleMedium,
                 color =
                     if (day.count > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,

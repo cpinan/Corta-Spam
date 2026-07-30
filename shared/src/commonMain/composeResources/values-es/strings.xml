@@ -58,6 +58,8 @@
     <!-- Estadísticas -->
     <string name="stats_title">Llamadas bloqueadas — Últimos 7 días</string>
     <string name="stats_empty">Sin llamadas bloqueadas en los últimos 7 días.</string>
+    <string name="stats_loading">Cargando…</string>
+    <string name="stats_blocked_count">%d bloqueadas</string>
 
     <!-- Listas de bloqueo -->
     <string name="block_list_hub_title">Listas de Bloqueo</string>
@@ -98,10 +100,16 @@
     <string name="call_log_empty_hint">Aún no hay llamadas registradas. Aparecerán cuando comience el filtrado.</string>
     <string name="call_log_action_block">Bloquear este número</string>
     <string name="call_log_action_allowlist">Agregar a permitidos</string>
+    <string name="call_log_action_callback">Devolver llamada</string>
     <string name="call_log_action_copy">Copiar número</string>
     <string name="call_log_detail_placeholder">Selecciona una llamada para ver detalles</string>
     <string name="call_log_blocked_label">Llamada bloqueada</string>
     <string name="call_log_allowed_label">Llamada permitida</string>
+    <string name="call_log_time_label">Hora</string>
+    <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
+    <string name="call_log_just_now">Ahora mismo</string>
+    <string name="call_log_action_label">Acción</string>
+    <string name="call_log_rule_label">Regla</string>
 
     <!-- Ajustes -->
     <string name="settings_title">Ajustes</string>
@@ -134,9 +142,10 @@
     <string name="settings_terms_desc">Licencia de código abierto y términos de uso</string>
 
     <!-- Auto-respondedor -->
-    <string name="settings_autoresponder">Auto-respondedor</string>
+    <string name="settings_autoresponder">Auto-respondedor (Experimental)</string>
     <string name="settings_autoresponder_desc">Responde llamadas bloqueadas con un saludo.</string>
     <string name="autoresponder_title">Auto-respondedor</string>
+    <string name="autoresponder_experimental_badge">Experimental — puede no funcionar en todos los dispositivos</string>
     <string name="autoresponder_enabled">Activado</string>
     <string name="autoresponder_enabled_desc">Cuando está activo, las llamadas bloqueadas se contestan con un saludo en vez de rechazarse.</string>
     <string name="autoresponder_script_hint">Guion de saludo</string>

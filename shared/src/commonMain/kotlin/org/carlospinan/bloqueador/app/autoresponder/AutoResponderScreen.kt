@@ -34,6 +34,7 @@ import bloqueallamadas.shared.generated.resources.autoresponder_error_too_long
 import bloqueallamadas.shared.generated.resources.autoresponder_pick_audio
 import bloqueallamadas.shared.generated.resources.autoresponder_recording
 import bloqueallamadas.shared.generated.resources.autoresponder_recording_desc
+import bloqueallamadas.shared.generated.resources.autoresponder_experimental_badge
 import bloqueallamadas.shared.generated.resources.autoresponder_script_hint
 import bloqueallamadas.shared.generated.resources.autoresponder_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
@@ -64,7 +65,15 @@ fun AutoResponderScreen(
                     style = MaterialTheme.typography.headlineMedium,
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(Res.string.autoresponder_experimental_badge),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(

@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_cancel
+import bloqueallamadas.shared.generated.resources.action_view
 import bloqueallamadas.shared.generated.resources.ic_autoresponder
 import bloqueallamadas.shared.generated.resources.ic_backup
 import bloqueallamadas.shared.generated.resources.ic_blocking
@@ -38,6 +39,7 @@ import bloqueallamadas.shared.generated.resources.ic_contacts
 import bloqueallamadas.shared.generated.resources.ic_default_action
 import bloqueallamadas.shared.generated.resources.ic_privacy
 import bloqueallamadas.shared.generated.resources.ic_spam_provider
+import bloqueallamadas.shared.generated.resources.autoresponder_experimental_badge
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
 import bloqueallamadas.shared.generated.resources.settings_autoresponder
@@ -141,21 +143,11 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                SettingToggle(
-                    title = stringResource(Res.string.settings_spam_provider),
-                    description = stringResource(Res.string.settings_spam_provider_desc),
-                    icon = Res.drawable.ic_spam_provider,
-                    checked = spamEnabled,
-                    onCheckedChange = onSetSpamEnabled,
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 SettingDropdown(
                     title = stringResource(Res.string.settings_autoresponder),
                     description = stringResource(Res.string.settings_autoresponder_desc),
                     icon = Res.drawable.ic_autoresponder,
-                    value = stringResource(Res.string.settings_autoresponder),
+                    value = stringResource(Res.string.autoresponder_experimental_badge),
                     onClick = onNavigateToAutoResponder,
                 )
 
@@ -175,7 +167,7 @@ fun SettingsScreen(
                     title = stringResource(Res.string.settings_privacy_title),
                     description = stringResource(Res.string.settings_privacy_desc),
                     icon = Res.drawable.ic_privacy,
-                    value = "View",
+                    value = stringResource(Res.string.action_view),
                     onClick = onNavigateToPrivacy,
                 )
 
@@ -185,7 +177,7 @@ fun SettingsScreen(
                     title = stringResource(Res.string.settings_terms_title),
                     description = stringResource(Res.string.settings_terms_desc),
                     icon = Res.drawable.ic_privacy,
-                    value = "View",
+                    value = stringResource(Res.string.action_view),
                     onClick = onNavigateToTerms,
                 )
             }

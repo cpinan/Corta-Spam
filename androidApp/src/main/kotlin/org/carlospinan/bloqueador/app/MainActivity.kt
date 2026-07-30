@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app
 
 import android.app.role.RoleManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.telecom.TelecomManager
@@ -105,6 +106,12 @@ class MainActivity : ComponentActivity() {
                             onPickImportFile = { onResult ->
                                 importResultCallback = onResult
                                 importFileLauncher.launch("application/json")
+                            },
+                            onCallBack = { number ->
+                                val dialIntent = Intent(Intent.ACTION_DIAL).apply {
+                                    data = Uri.parse("tel:$number")
+                                }
+                                startActivity(dialIntent)
                             },
                         )
                     },

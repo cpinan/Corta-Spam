@@ -10,6 +10,7 @@ fun App(
     onRequestContactsPermission: (() -> Unit)? = null,
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
+    onCallBack: ((String) -> Unit)? = null,
 ) {
     val navController = rememberNavController()
     AppNavHost(
@@ -18,5 +19,6 @@ fun App(
         onRequestContactsPermission = onRequestContactsPermission,
         onShareFile = onShareFile,
         onPickImportFile = onPickImportFile,
+        onCallBack = onCallBack,
     )
 }

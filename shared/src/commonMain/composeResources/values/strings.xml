@@ -50,6 +50,8 @@
     <!-- Stats -->
     <string name="stats_title">Blocked Calls — Last 7 Days</string>
     <string name="stats_empty">No blocked calls in the last 7 days.</string>
+    <string name="stats_loading">Loading…</string>
+    <string name="stats_blocked_count">%d blocked</string>
     <!-- Block list hub -->
     <string name="block_list_hub_title">Block Lists</string>
     <string name="block_list_manual_title">Blocked Numbers</string>
@@ -86,6 +88,7 @@
     <string name="call_log_empty_hint">No calls logged yet. Calls will appear here once screening begins.</string>
     <string name="call_log_action_block">Block this number</string>
     <string name="call_log_action_allowlist">Add to allowlist</string>
+    <string name="call_log_action_callback">Call back</string>
     <string name="call_log_action_copy">Copy number</string>
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -131,9 +134,10 @@
     <string name="schedule_label_hint">Label (optional)</string>
     <string name="schedule_invalid_time">Enter valid times (hour 0-23, minute 0-59)</string>
     <!-- Auto-responder -->
-    <string name="settings_autoresponder">Auto-responder</string>
+    <string name="settings_autoresponder">Auto-responder (Experimental)</string>
     <string name="settings_autoresponder_desc">Answer blocked calls with a greeting.</string>
     <string name="autoresponder_title">Auto-responder</string>
+    <string name="autoresponder_experimental_badge">Experimental — may not work reliably on all devices</string>
     <string name="autoresponder_enabled">Enabled</string>
     <string name="autoresponder_enabled_desc">When on, blocked calls are answered and greeted instead of rejected silently.</string>
     <string name="autoresponder_script_hint">Greeting script</string>
@@ -169,6 +173,11 @@
     <string name="call_log_detail_placeholder">Select a call to see details</string>
     <string name="call_log_blocked_label">Blocked call</string>
     <string name="call_log_allowed_label">Allowed call</string>
+    <string name="call_log_time_label">Time</string>
+    <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
+    <string name="call_log_just_now">Just now</string>
+    <string name="call_log_action_label">Action</string>
+    <string name="call_log_rule_label">Rule</string>
     <!-- Actions -->
     <string name="action_ok">OK</string>
     <string name="action_view">View</string>

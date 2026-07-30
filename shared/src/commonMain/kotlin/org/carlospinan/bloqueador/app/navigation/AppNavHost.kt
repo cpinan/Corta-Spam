@@ -11,6 +11,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import bloqueallamadas.shared.generated.resources.Res
+import bloqueallamadas.shared.generated.resources.settings_privacy_title
+import bloqueallamadas.shared.generated.resources.settings_terms_title
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -40,6 +43,7 @@ import org.carlospinan.bloqueador.app.settings.SettingsScreen
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.stats.StatsScreen
 import org.carlospinan.bloqueador.app.stats.StatsViewModel
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 object Routes {
@@ -68,6 +72,7 @@ fun AppNavHost(
     onRequestContactsPermission: (() -> Unit)? = null,
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
+    onCallBack: ((String) -> Unit)? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -103,13 +108,13 @@ fun AppNavHost(
                 HomeScreen(
                     state = state,
                     blockingEnabled = blockingEnabled,
-                    onNavigateToCallLog = { navController.navigate(Routes.callLogRoute()) },
-                    onNavigateToCallLogToday = { navController.navigate(Routes.callLogRoute("today")) },
-                    onNavigateToCallLogThisWeek = { navController.navigate(Routes.callLogRoute("week")) },
-                    onNavigateToCallLogThisMonth = { navController.navigate(Routes.callLogRoute("month")) },
-                    onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) },
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                    onNavigateToStats = { navController.navigate(Routes.STATS) },
+                    onNavigateToCallLog = { navController.navigate(Routes.callLogRoute()) { launchSingleTop = true } },
+                    onNavigateToCallLogToday = { navController.navigate(Routes.callLogRoute("today")) { launchSingleTop = true } },
+                    onNavigateToCallLogThisWeek = { navController.navigate(Routes.callLogRoute("week")) { launchSingleTop = true } },
+                    onNavigateToCallLogThisMonth = { navController.navigate(Routes.callLogRoute("month")) { launchSingleTop = true } },
+                    onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) { launchSingleTop = true } },
+                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
+                    onNavigateToStats = { navController.navigate(Routes.STATS) { launchSingleTop = true } },
                     onToggleBlocking = homeViewModel::toggleBlocking,
                 )
             }
@@ -126,6 +131,8 @@ fun AppNavHost(
                     filter = filter,
                     onBlockNumber = blockListViewModel::addBlockedNumber,
                     onAllowlistNumber = blockListViewModel::addAllowlistedNumber,
+                    onCopyNumber = {},
+                    onCallBack = onCallBack ?: {},
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -150,11 +157,11 @@ fun AppNavHost(
                     patternCount = patternCount,
                     countryCount = countryCount,
                     scheduleCount = scheduleCount,
-                    onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) },
-                    onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) },
-                    onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) },
-                    onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) },
-                    onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) },
+                    onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) { launchSingleTop = true } },
+                    onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) { launchSingleTop = true } },
+                    onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) { launchSingleTop = true } },
+                    onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) { launchSingleTop = true } },
+                    onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) { launchSingleTop = true } },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -232,10 +239,10 @@ fun AppNavHost(
                     onSetDefaultAction = settingsViewModel::setDefaultAction,
                     onSetSpamEnabled = settingsViewModel::setSpamEnabled,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
-                    onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) },
-                    onNavigateToBackup = { navController.navigate(Routes.BACKUP) },
-                    onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) },
-                    onNavigateToTerms = { navController.navigate(Routes.TERMS_CONDITIONS) },
+                    onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) { launchSingleTop = true } },
+                    onNavigateToBackup = { navController.navigate(Routes.BACKUP) { launchSingleTop = true } },
+                    onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) { launchSingleTop = true } },
+                    onNavigateToTerms = { navController.navigate(Routes.TERMS_CONDITIONS) { launchSingleTop = true } },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -275,7 +282,7 @@ fun AppNavHost(
 
             composable(Routes.PRIVACY_POLICY) {
                 InfoScreen(
-                    title = "Privacy Policy",
+                    title = stringResource(Res.string.settings_privacy_title),
                     body =
                         "Corta Spam does not collect, transmit, or share any personal data. " +
                             "No analytics, no telemetry, no advertising. No data leaves your device " +
@@ -293,7 +300,7 @@ fun AppNavHost(
 
             composable(Routes.TERMS_CONDITIONS) {
                 InfoScreen(
-                    title = "Terms & Conditions",
+                    title = stringResource(Res.string.settings_terms_title),
                     body =
                         "Corta Spam is open-source software provided under the MIT License.\n\n" +
                             "Permission is hereby granted, free of charge, to any person obtaining a copy " +
