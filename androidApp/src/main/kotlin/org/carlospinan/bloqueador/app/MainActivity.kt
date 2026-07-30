@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.telecom.TelecomManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -111,9 +112,9 @@ class MainActivity : ComponentActivity() {
                                 importFileLauncher.launch("application/json")
                             },
                             onCallBack = { number ->
-                                val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-                                    data = Uri.parse("tel:$number")
-                                }
+                                Toast.makeText(this@MainActivity, "Dialing $number", Toast.LENGTH_SHORT).show()
+                                val dialIntent = Intent(Intent.ACTION_DIAL)
+                                dialIntent.data = Uri.parse("tel:${number.trim()}")
                                 startActivity(dialIntent)
                             },
                             onCopyNumber = { number ->
