@@ -73,6 +73,7 @@ fun AppNavHost(
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
     onCallBack: ((String) -> Unit)? = null,
+    onCopyNumber: ((String) -> Unit)? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -92,6 +93,7 @@ fun AppNavHost(
         selectedIndex = selectedSection,
         onNavigate = { index ->
             val destination = sectionRoutes.getOrElse(index) { Routes.HOME }
+            if (currentRoute == destination) return@AdaptiveScaffold
             navController.navigate(destination) {
                 popUpTo(Routes.HOME)
                 launchSingleTop = true
@@ -131,7 +133,7 @@ fun AppNavHost(
                     filter = filter,
                     onBlockNumber = blockListViewModel::addBlockedNumber,
                     onAllowlistNumber = blockListViewModel::addAllowlistedNumber,
-                    onCopyNumber = {},
+                    onCopyNumber = onCopyNumber ?: {},
                     onCallBack = onCallBack ?: {},
                     onBack = { navController.popBackStack() },
                 )

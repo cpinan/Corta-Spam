@@ -11,6 +11,7 @@ fun App(
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
     onCallBack: ((String) -> Unit)? = null,
+    onCopyNumber: ((String) -> Unit)? = null,
 ) {
     val navController = rememberNavController()
     AppNavHost(
@@ -20,5 +21,6 @@ fun App(
         onShareFile = onShareFile,
         onPickImportFile = onPickImportFile,
         onCallBack = onCallBack,
+        onCopyNumber = onCopyNumber,
     )
 }

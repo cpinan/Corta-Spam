@@ -1,6 +1,9 @@
 package org.carlospinan.bloqueador.app
 
 import android.app.role.RoleManager
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -112,6 +115,10 @@ class MainActivity : ComponentActivity() {
                                     data = Uri.parse("tel:$number")
                                 }
                                 startActivity(dialIntent)
+                            },
+                            onCopyNumber = { number ->
+                                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("phone_number", number))
                             },
                         )
                     },
