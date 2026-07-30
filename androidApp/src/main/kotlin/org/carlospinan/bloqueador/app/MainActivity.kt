@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
                                 Toast.makeText(this@MainActivity, "Dialing $number", Toast.LENGTH_SHORT).show()
                                 val dialIntent = Intent(Intent.ACTION_DIAL)
                                 dialIntent.data = Uri.parse("tel:${number.trim()}")
-                                startActivity(dialIntent)
+                                this@MainActivity.startActivity(dialIntent)
                             },
                             onCopyNumber = { number ->
                                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
