@@ -4,10 +4,12 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +23,7 @@ import org.carlospinan.bloqueador.app.call.CallScreen
 class InCallActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate")
         enableEdgeToEdge()
         showOverLockScreen()
         dismissKeyguard()
@@ -28,6 +31,7 @@ class InCallActivity : ComponentActivity() {
         setContent {
             val uiState by InCallState.state.collectAsState()
             val current = uiState
+
             if (current != null) {
                 CallScreen(
                     number = current.number,
@@ -37,9 +41,17 @@ class InCallActivity : ComponentActivity() {
                     onHangUp = InCallState::hangUp,
                 )
             } else {
-                LaunchedEffect(Unit) { finish() }
+                LaunchedEffect(Unit) {
+                    Log.d(TAG, "State is null, finishing")
+                    finish()
+                }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy")
     }
 
     private fun showOverLockScreen() {
@@ -63,5 +75,9 @@ class InCallActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
         }
+    }
+
+    companion object {
+        private const val TAG = "InCallActivity"
     }
 }

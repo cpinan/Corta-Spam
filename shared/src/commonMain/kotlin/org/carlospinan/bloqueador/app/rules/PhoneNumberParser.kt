@@ -14,4 +14,11 @@ object PhoneNumberParser {
             cleaned.startsWith(code) && cleaned.length >= code.length + 4
         }
     }
+
+    /**
+     * Strip all non-digit characters for fuzzy comparison across different
+     * number formats (E.164, local, formatted, etc.).
+     */
+    fun normalizeForComparison(number: String): String =
+        number.filter { it.isDigit() }
 }

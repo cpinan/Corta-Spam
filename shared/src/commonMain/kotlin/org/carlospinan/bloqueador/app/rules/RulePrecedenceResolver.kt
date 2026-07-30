@@ -44,13 +44,20 @@ object RulePrecedenceResolver {
         context: ResolveContext,
         parseCountryCode: (String) -> String? = { PhoneNumberParser.parseCountryCode(it) },
     ): RuleDecision {
-        val normalized = number.trim()
+        val normalized = PhoneNumberParser.normalizeForComparison(number)
+        if (normalized.isEmpty()) return context.defaultAction.let { if (it == DefaultAction.BLOCK) RuleDecision.DefaultBlock else RuleDecision.DefaultAllow }
 
-        val mergedAllowlist = context.allowlistedNumbers + context.contactNumbers
+        val normalizedAllowlist = context.allowlistedNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
+        val normalizedContacts = context.contactNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
+        val normalizedBlocked = context.blockedNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
+
+        val mergedAllowlist = normalizedAllowlist + normalizedContacts
 
         // 1. Manual block check (highest priority — overrides allowlist and contacts)
-        if (normalized in context.blockedNumbers) {
-            val entry = context.blockedNumberDetails[normalized]
+        if (normalized in normalizedBlocked) {
+            val entry = context.blockedNumberDetails.entries.firstOrNull {
+                PhoneNumberParser.normalizeForComparison(it.key) == normalized
+            }?.value
             return RuleDecision.ManualBlock(ruleId = entry?.id ?: -1, label = entry?.label)
         }
 
@@ -119,8 +126,7 @@ object RulePrecedenceResolver {
             }
         }
 
-        // 8. Default: honor the user's chosen default action. ASK has no dedicated UI flow yet,
-        // so it falls back to allowing the call through like ALLOW.
+        // 8. Default: honor the user's chosen default action.
         return if (context.defaultAction == DefaultAction.BLOCK) {
             RuleDecision.DefaultBlock
         } else {
@@ -161,12 +167,14 @@ object RulePrecedenceResolver {
         val startsWithStar = trimmed.startsWith('*')
         val endsWithStar = trimmed.endsWith('*')
         val core = trimmed.trim('*')
+        val normalizedCore = PhoneNumberParser.normalizeForComparison(core)
+        val normalizedNumber = PhoneNumberParser.normalizeForComparison(number)
 
         return when {
-            startsWithStar && endsWithStar -> number.contains(core, ignoreCase = true)
-            startsWithStar -> number.endsWith(core, ignoreCase = true)
-            endsWithStar -> number.startsWith(core, ignoreCase = true)
-            else -> number.equals(core, ignoreCase = true)
+            startsWithStar && endsWithStar -> normalizedNumber.contains(normalizedCore)
+            startsWithStar -> normalizedNumber.endsWith(normalizedCore)
+            endsWithStar -> normalizedNumber.startsWith(normalizedCore)
+            else -> normalizedNumber == normalizedCore
         }
     }
 }

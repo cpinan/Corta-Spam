@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 
 class AndroidContactsGateway(
     private val context: Context,
@@ -29,9 +30,12 @@ class AndroidContactsGateway(
                 cursor?.let {
                     val numberIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
                     while (it.moveToNext()) {
-                        val number = it.getString(numberIndex)
-                        if (!number.isNullOrBlank()) {
-                            numbers.add(number.trim())
+                        val raw = it.getString(numberIndex)
+                        if (!raw.isNullOrBlank()) {
+                            val normalized = PhoneNumberParser.normalizeForComparison(raw)
+                            if (normalized.isNotEmpty()) {
+                                numbers.add(normalized)
+                            }
                         }
                     }
                 }
