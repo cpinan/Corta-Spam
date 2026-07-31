@@ -10,5 +10,6 @@ class AndroidDriverFactory(
     private val context: Context,
 ) : DriverFactory {
     override fun createDriver(): SqlDriver = AndroidSqliteDriver(AppDatabase.Schema, context, "bloquellamadas.db")
+
     override val databaseDispatcher: CoroutineDispatcher = Dispatchers.IO
 }

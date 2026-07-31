@@ -3,10 +3,10 @@ package org.carlospinan.bloqueador.app.rules
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import org.carlospinan.bloqueador.app.db.AppDatabase
 
 class SqlCallLogRepository(
@@ -80,7 +80,7 @@ class SqlCallLogRepository(
         withContext(Dispatchers.Default) {
             val entries = queries.selectAllCallLogEntries().executeAsList()
             val now =
-                kotlinx.datetime.Clock.System
+                Clock.System
                     .now()
                     .toEpochMilliseconds()
             val dayMillis = 86_400_000L
@@ -101,7 +101,7 @@ class SqlCallLogRepository(
 
     private fun dayLabel(epochDay: Long): String {
         val now =
-            kotlinx.datetime.Clock.System
+            Clock.System
                 .now()
                 .toEpochMilliseconds()
         val today = now / 86_400_000L

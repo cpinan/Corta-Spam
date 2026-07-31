@@ -125,7 +125,7 @@ fun AppNavHost(
                 route = Routes.CALL_LOG,
                 arguments = listOf(navArgument("filter") { type = NavType.StringType }),
             ) { backStackEntry ->
-                val filter = backStackEntry.arguments?.getString("filter") ?: "all"
+                val filter = (backStackEntry.arguments?.get("filter") as? String) ?: "all"
                 val allEntries by callLogViewModel.entries.collectAsState()
                 val filtered = filterEntries(allEntries, filter)
                 CallLogScreen(

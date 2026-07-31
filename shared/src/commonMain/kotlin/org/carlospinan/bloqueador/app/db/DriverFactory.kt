@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 
 interface DriverFactory {
     fun createDriver(): SqlDriver
+
     val databaseDispatcher: CoroutineDispatcher
 }
 

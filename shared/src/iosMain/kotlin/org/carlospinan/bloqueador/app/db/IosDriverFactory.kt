@@ -7,5 +7,6 @@ import kotlinx.coroutines.Dispatchers
 
 class IosDriverFactory : DriverFactory {
     override fun createDriver(): SqlDriver = NativeSqliteDriver(AppDatabase.Schema, "bloquellamadas.db")
+
     override val databaseDispatcher: CoroutineDispatcher = Dispatchers.Default
 }

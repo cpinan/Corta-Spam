@@ -3,10 +3,10 @@ package org.carlospinan.bloqueador.app.rules
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import org.carlospinan.bloqueador.app.backup.BackupData
 import org.carlospinan.bloqueador.app.backup.ImportResult
@@ -360,7 +360,7 @@ class SqlRuleRepository(
     override suspend fun exportAll(): String =
         withContext(Dispatchers.Default) {
             val now =
-                kotlinx.datetime.Clock.System
+                Clock.System
                     .now()
                     .toEpochMilliseconds()
             val data =
