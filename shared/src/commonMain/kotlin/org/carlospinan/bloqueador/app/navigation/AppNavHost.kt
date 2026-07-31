@@ -12,7 +12,7 @@ import androidx.navigation.navArgument
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.settings_privacy_title
 import bloqueallamadas.shared.generated.resources.settings_terms_title
-import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -36,6 +36,7 @@ import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
+import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.carlospinan.bloqueador.app.settings.InfoScreen
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
@@ -125,7 +126,7 @@ fun AppNavHost(
                 route = Routes.CALL_LOG,
                 arguments = listOf(navArgument("filter") { type = NavType.StringType }),
             ) { backStackEntry ->
-                val filter = (backStackEntry.arguments?.get("filter") as? String) ?: "all"
+                val filter = backStackEntry.arguments?.getString("filter") ?: "all"
                 val allEntries by callLogViewModel.entries.collectAsState()
                 val filtered = filterEntries(allEntries, filter)
                 CallLogScreen(
@@ -332,7 +333,10 @@ private fun filterEntries(
     filter: String,
 ): List<CallLogEntryData> {
     if (filter == "all") return entries
-    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val now =
+        Instant
+            .fromEpochMilliseconds(currentTimeMillis())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
     val todayStart =
         kotlinx.datetime.LocalDateTime(now.year, now.monthNumber, now.dayOfMonth, 0, 0, 0)
     val todayStartEpoch =

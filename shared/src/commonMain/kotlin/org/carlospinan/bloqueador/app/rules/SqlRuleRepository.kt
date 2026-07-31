@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import org.carlospinan.bloqueador.app.backup.BackupData
 import org.carlospinan.bloqueador.app.backup.ImportResult
@@ -359,10 +358,7 @@ class SqlRuleRepository(
 
     override suspend fun exportAll(): String =
         withContext(Dispatchers.Default) {
-            val now =
-                Clock.System
-                    .now()
-                    .toEpochMilliseconds()
+            val now = currentTimeMillis()
             val data =
                 BackupData(
                     exportedAt = now,

@@ -51,7 +51,6 @@ import bloqueallamadas.shared.generated.resources.call_log_title_today
 import bloqueallamadas.shared.generated.resources.call_log_title_week
 import bloqueallamadas.shared.generated.resources.ic_allowlist
 import bloqueallamadas.shared.generated.resources.ic_blocked_number
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -59,6 +58,7 @@ import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
+import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -433,7 +433,7 @@ private fun CallLogEntryRow(
 }
 
 private fun formatTimestamp(epochMillis: Long): String {
-    val now = Clock.System.now().toEpochMilliseconds()
+    val now = currentTimeMillis()
     if (now - epochMillis < 60_000L) return "Now"
     val instant = Instant.fromEpochMilliseconds(epochMillis)
     val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())

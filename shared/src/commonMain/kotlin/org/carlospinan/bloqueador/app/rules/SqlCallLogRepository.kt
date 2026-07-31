@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import org.carlospinan.bloqueador.app.db.AppDatabase
 
 class SqlCallLogRepository(
@@ -79,10 +78,7 @@ class SqlCallLogRepository(
     override suspend fun blockedByDay(daysBack: Int): List<DayStat> =
         withContext(Dispatchers.Default) {
             val entries = queries.selectAllCallLogEntries().executeAsList()
-            val now =
-                Clock.System
-                    .now()
-                    .toEpochMilliseconds()
+            val now = currentTimeMillis()
             val dayMillis = 86_400_000L
             val cutoff = now - daysBack * dayMillis
             (0 until daysBack)
@@ -100,10 +96,7 @@ class SqlCallLogRepository(
         }
 
     private fun dayLabel(epochDay: Long): String {
-        val now =
-            Clock.System
-                .now()
-                .toEpochMilliseconds()
+        val now = currentTimeMillis()
         val today = now / 86_400_000L
         val diff = today - epochDay
         return when (diff) {
