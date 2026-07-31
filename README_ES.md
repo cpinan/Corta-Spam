@@ -4,11 +4,11 @@ App de bloqueo de llamadas de código abierto. Sin anuncios. Sin rastreo. Tus da
 
 Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada número contra tus reglas — bloqueo manual, patrones, bloqueo por país, horas de silencio — más un proveedor comunitario de spam opcional. Bloquea, permite o responde con un saludo personalizado.
 
-**Localizado para LATAM.** Disponible en inglés y español (Perú como primer mercado).
+**i18n**: Inglés, Español (LATAM), Portugués (Brasil), Hindi.
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n (inglés + español) terminado. Código abierto bajo licencia MIT. 158+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 159+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -22,17 +22,18 @@ M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n (inglés 
 - **Reglas de patrón** — bloquea por prefijo, sufijo o comodín (`+34900*`, `*1234`)
 - **Bloqueo por país** — bloquea todas las llamadas de un código de país
 - **Horas de silencio** — silencia todas las llamadas en un horario (TimePicker con ajustes: Noche, Siesta, Trabajo)
-- **Auto-respondedor** — responde llamadas bloqueadas con saludo TTS o audio personalizado
-- **Proveedor de spam** — base de datos comunitaria opcional (desactivada por defecto)
-- **Registro de llamadas** — historial con resultado y detalle de la regla (panel dividido en tablet)
+- **Auto-respondedor (Experimental)** — responde llamadas bloqueadas con saludo TTS o audio personalizado
+- **Registro de llamadas** — historial con hora local, resultado y detalle de la regla (panel dividido en tablet)
+- **Devolver llamada** — toca cualquier número en el registro para devolver la llamada
+- **Copiar número** — copia números al portapapeles desde el registro
 - **Estadísticas** — conteo de llamadas bloqueadas por día/semana/mes
 - **Respaldo** — exporta/importa todas las reglas como JSON
 - **Diseño adaptativo** — barra inferior en móvil, barra lateral en tablet/apaisado, contenido centrado a 600dp
 - **Avisos de duplicados** — advierte al agregar un número que ya está en la otra lista
 - **Motor de precedencia** — el bloqueo manual tiene prioridad sobre contactos y lista de permitidos
-- **Icono Corta Spam** — identidad "Barrera de Llamadas" (auricular azul marino, barrera coral, fondo crema)
+- **Normalización de contactos** — compara números formateados de contactos con números entrantes sin formato
 - **Privacidad y Términos** — política de privacidad y licencia MIT dentro de la app
-- **i18n** — inglés (predeterminado) + español (es)
+- **i18n** — inglés (predeterminado), español (es), portugués (pt), hindi (hi)
 
 ## Estructura del proyecto
 
@@ -58,6 +59,9 @@ design/       Iconografía — maestros SVG, renderizador Sharp, activos de marc
 # con dispositivo/emulador conectado:
 adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
 adb shell am start -n org.carlospinan.bloqueador.app/.MainActivity
+
+# o usa el script auxiliar:
+./install_android.sh
 ```
 
 ## Compilar y ejecutar — iOS
@@ -73,7 +77,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 158+ pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 159+ pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
 
@@ -95,6 +99,8 @@ Los recursos de texto están en `shared/src/commonMain/composeResources/`:
 |---|---|
 | `values/` | Inglés (predeterminado) |
 | `values-es/` | Español (LATAM) |
+| `values-pt/` | Portugués (Brasil) |
+| `values-hi/` | Hindi |
 
 Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la misma estructura de claves.
 

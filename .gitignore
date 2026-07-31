@@ -22,5 +22,11 @@ xcuserdata/
 # Kotlin/Native
 .konan/
 
+# Node
+node_modules/
+
+# Tool configs (local only)
+.codex/
+
 # macOS
 .DS_Store
