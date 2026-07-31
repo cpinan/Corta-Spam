@@ -110,6 +110,30 @@ A complete 13-module HTML course walks through every layer of the app — Gradle
 
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 45 quiz questions included.
 
+## Recent Fixes
+
+**iOS (2026-07-30):**
+- Fixed Koin initialization — `initKoin()` now called in `MainViewController.kt` before Compose UI launches (was only initialized on Android via `BloqueaLlamadasApp.onCreate`)
+- Added `CADisableMinimumFrameDurationOnPhone: true` to Info.plist via `project.yml` (required by Compose Multiplatform for high-refresh-rate iPhones)
+- Replaced `Dispatchers.IO` with `Dispatchers.Default` throughout shared module (internal API on Kotlin/Native)
+- Replaced `Clock.System` with platform `expect/actual currentTimeMillis()` for iOS compatibility
+- Added `databaseDispatcher` to `DriverFactory` interface (Android: `IO`, iOS: `Default`)
+- Fixed Navigation Compose `arguments?.getString()` → `Map` cast for KMP compatibility
+- Removed leftover `import kotlinx.coroutines.IO` (internal on Native)
+- **Known**: Metal GPU rendering may hang on certain iOS simulators (e.g., iPhone 16 Pro on macOS 26). Use iPhone SE or physical device. Software rendering fallback pending.
+
+**Android (2026-07-30):**
+- Added Call back action in call log (`ACTION_DIAL` intent)
+- Added local timestamps to call log entries via `currentTimeMillis()` expect/actual
+- Fixed bottom nav double-tap screen reload with section-aware root comparison
+- InCallActivity now shows instantly on call arrival (wins race against system UI)
+- Added KeyguardManager dismiss for full-screen incoming call takeover
+- Hidden spam provider toggle from settings (backend preserved)
+- Auto-responder marked as Experimental
+- Stats screen de-hardcoded (Loading, blocked count)
+- Copy number now wired to clipboard (`ClipboardManager`)
+- Phone number normalization for cross-format contact matching (`normalizeForComparison`)
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Corta Spam is free and open source.

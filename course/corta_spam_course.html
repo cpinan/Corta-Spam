@@ -194,7 +194,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div>
 <h1>Corta Spam</h1>
 <p>From Zero to Master: Kotlin Multiplatform Android App Development</p>
-<p style="font-size:.85rem">A 13-module course walking through a real production app</p>
+<p style="font-size:.85rem">A 14-module course walking through a real production app</p>
 </div>
 <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙 Dark Mode</button>
 </div></div></div>
@@ -210,7 +210,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- Table of Contents -->
 <nav class="toc" id="toc">
   <h2>Course Modules</h2>
-  <p style="font-size:.85rem;margin-bottom:12px;color:var(--muted)"><b>Part 1:</b> Foundation (1-3) · <b>Part 2:</b> Navigation & Layout (4-5) · <b>Part 3:</b> Data Layer (6-7) · <b>Part 4:</b> Android Platform (8-9) · <b>Part 5:</b> Domain Logic (10-11) · <b>Part 6:</b> Quality (12-13)</p>
+  <p style="font-size:.85rem;margin-bottom:12px;color:var(--muted)"><b>Part 1:</b> Foundation (1-3) · <b>Part 2:</b> Navigation & Layout (4-5) · <b>Part 3:</b> Data Layer (6-7) · <b>Part 4:</b> Android Platform (8-9) · <b>Part 5:</b> Domain Logic (10-11) · <b>Part 6:</b> Quality (12-13) · <b>Part 7:</b> iOS Debugging (14)</p>
   <div class="toc-grid" id="toc-grid"></div>
 </nav>
 
@@ -390,6 +390,11 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="callout"><h3>KMP vs Alternatives</h3>
 <ul><li><b>Flutter:</b> Dart language (new skill), custom rendering engine (not native UI), no access to Telecom APIs without plugins</li><li><b>React Native:</b> JavaScript bridge (performance overhead), platform modules needed for native APIs</li><li><b>KMP:</b> Native Android APIs accessible with zero bridging. Same Kotlin skills as Android dev.</li></ul></div>
+
+<div class="callout"><h3>Common KMP iOS Pitfalls</h3>
+<p>iOS Kotlin/Native compilation often reveals issues hidden on JVM. The Corta Spam project hit several real-world gotchas:</p>
+<ul><li><code>Dispatchers.IO</code> is marked <code>@InternalCoroutinesApi</code> on Kotlin/Native — crashes at compile time. Use <code>Dispatchers.Default</code> or an expect/actual dispatcher.</li><li><code>kotlinx.datetime.Clock.System</code> may not resolve on all Native toolchains — platform-specific time providers (expect/actual) are more reliable.</li><li>Navigation Compose KMP <code>Bundle.getString()</code> doesn't compile for iOS — cast to <code>Map&lt;String, *&gt;</code> instead.</li><li>Koin must be initialized manually on iOS — Android's <code>Application.onCreate()</code> doesn't exist on iOS.</li><li>Compose Multiplatform Metal GPU rendering may hang on certain iOS simulators — restart the simulator or test on a different device model.</li></ul>
+<p>See <b>Module 14</b> for full debugging procedures and real crash logs for each of these errors.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
@@ -1570,12 +1575,131 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </section>
 
 <!-- ================================================================ -->
+<!-- MODULE 14: iOS Debugging -->
+<!-- ================================================================ -->
+<section class="module" id="m14">
+<h2>Module 14: iOS Debugging &amp; Troubleshooting</h2>
+<p>Every real KMP project hits iOS-specific compilation errors and runtime crashes. Here's exactly what broke in Corta Spam and how each was diagnosed and fixed.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Decode Kotlin/Native compilation errors</li><li>Read iOS <code>.ips</code> crash reports</li><li>Use <code>launch --console</code> for Kotlin exception messages</li><li>Diagnose Metal GPU rendering hangs</li><li>Apply platform-specific workarounds (expect/actual, Map casts, simulator restarts)</li></ul></div>
+
+<h3>Error 1: Dispatchers.IO is internal on Kotlin/Native</h3>
+<p><b>Symptom:</b> <code>e: Cannot access 'val IO: CoroutineDispatcher': it is internal in 'kotlinx.coroutines.Dispatchers'</code></p>
+<p><b>Why:</b> <code>Dispatchers.IO</code> is annotated with <code>@InternalCoroutinesApi</code> in the Kotlin/Native artifact. It's platform-specific — Android implemented it as a thread pool, but Native/JS haven't stabilized it.</p>
+<p><b>Diagnosis:</b> The error message is self-explanatory, but the compiler may show 43+ occurrences cascading from other errors. <code>grep "Dispatchers.IO" -r shared/src/commonMain/</code> finds all instances.</p>
+<p><b>Fix:</b> Replace all <code>Dispatchers.IO</code> with <code>Dispatchers.Default</code> (43 occurrences across SqlRuleRepository, SqlCallLogRepository, KeyValueSettingsStore). <code>Default</code> is public on all platforms. For IO-heavy workloads, use expect/actual to provide the optimal dispatcher per platform.</p>
+<p class="file-label">DriverFactory.kt — added platform dispatcher</p>
+<pre><code><span class="line"><span class="kw">interface</span> <span class="tp">DriverFactory</span> {</span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">createDriver</span>(): <span class="tp">SqlDriver</span></span>
+<span class="line">    <span class="kw">val</span> databaseDispatcher: <span class="tp">CoroutineDispatcher</span></span>
+<span class="line">}</span></code></pre>
+
+<h3>Error 2: Clock.System unresolved on iOS</h3>
+<p><b>Symptom:</b> <code>e: Unresolved reference 'System'</code> at <code>Clock.System.now().toEpochMilliseconds()</code></p>
+<p><b>Why:</b> <code>kotlinx.datetime.Clock.System</code> companion doesn't always resolve correctly on Kotlin/Native toolchains, especially with the <code>import kotlinx.datetime.Clock</code> pattern.</p>
+<p><b>Fix:</b> Created expect/actual for getting current time in milliseconds:</p>
+<p class="file-label">commonMain — TimeProvider.kt</p>
+<pre><code><span class="line"><span class="kw">expect fun</span> <span class="fn">currentTimeMillis</span>(): <span class="tp">Long</span></span></code></pre>
+<p class="file-label">androidMain — TimeProvider.android.kt</p>
+<pre><code><span class="line"><span class="kw">actual fun</span> <span class="fn">currentTimeMillis</span>(): <span class="tp">Long</span> = <span class="tp">System</span>.<span class="fn">currentTimeMillis</span>()</span></code></pre>
+<p class="file-label">iosMain — TimeProvider.ios.kt</p>
+<pre><code><span class="line"><span class="kw">actual fun</span> <span class="fn">currentTimeMillis</span>(): <span class="tp">Long</span> = (<span class="tp">NSDate</span>().timeIntervalSince1970 * <span class="num">1000</span>).<span class="fn">toLong</span>()</span></code></pre>
+
+<h3>Error 3: Navigation Bundle.getString() not in KMP</h3>
+<p><b>Symptom:</b> <code>e: Unresolved reference 'getString'</code> at <code>backStackEntry.arguments?.getString("filter")</code></p>
+<p><b>Why:</b> Navigation Compose KMP <code>arguments</code> returns <code>Bundle?</code> but <code>Bundle</code> on iOS doesn't expose <code>getString()</code>. The method isn't part of the KMP-common API surface.</p>
+<p><b>Fix:</b> Cast to <code>Map&lt;String, *&gt;</code> — a pure Kotlin type available everywhere:</p>
+<pre><code><span class="line"><span class="cm">// Before (fails on iOS):</span></span>
+<span class="line"><span class="kw">val</span> filter = backStackEntry.arguments?.<span class="fn">getString</span>(<span class="str">"filter"</span>) ?: <span class="str">"all"</span></span>
+<span class="line"></span>
+<span class="line"><span class="cm">// After (works everywhere):</span></span>
+<span class="line"><span class="ann">@Suppress</span>(<span class="str">"UNCHECKED_CAST"</span>)</span>
+<span class="line"><span class="kw">val</span> filter = (backStackEntry.arguments <span class="kw">as?</span> <span class="tp">Map</span>&lt;<span class="tp">String</span>, *&gt;)?.<span class="fn">get</span>(<span class="str">"filter"</span>) <span class="kw">as?</span> <span class="tp">String</span> ?: <span class="str">"all"</span></span></code></pre>
+<p><b>Lesson:</b> When Navigation Compose KMP APIs fail, fall back to Kotlin stdlib types (<code>Map</code>, <code>List</code>) which compile on all targets.</p>
+
+<h3>Error 4: Leftover import kotlinx.coroutines.IO</h3>
+<p><b>Symptom:</b> 40+ cascading compilation errors after replacing <code>Dispatchers.IO</code> with <code>Dispatchers.Default</code></p>
+<p><b>Why:</b> <code>sed -i '' 's/Dispatchers\.IO/Dispatchers.Default/g'</code> only replaces occurrences of the qualified form. The bare <code>import kotlinx.coroutines.IO</code> survived but caused subsequent errors to be attributed to wrong lines.</p>
+<p><b>Diagnosis:</b> <code>grep "import kotlinx\.coroutines\.IO" -r shared/src/</code> — found 2 leftover imports in <code>SqlCallLogRepository.kt</code> and <code>SqlRuleRepository.kt</code>.</p>
+<p><b>Fix:</b> Delete the bare import lines and add <code>import kotlinx.datetime.Clock</code> where needed.</p>
+
+<h3>Error 5: Koin not initialized — SIGABRT on launch</h3>
+<p><b>Symptom:</b> App launches, shows white screen, crashes with <code>SIGABRT</code>. Crash report shows <code>terminateWithUnhandledException</code>.</p>
+<p><b>Why:</b> Android initializes Koin in <code>BloqueaLlamadasApp.onCreate()</code> which is called by the Android framework. iOS has no equivalent — <code>MainViewController</code> created the Compose UI without first calling <code>initKoin()</code>, so <code>koinViewModel()</code> threw <code>DefinitionNotFoundException</code>.</p>
+<p><b>Diagnosis:</b> The <code>.ips</code> crash report showed the stack trace ending in <code>static iOSApp.$main()</code> → <code>ComposeContainerView</code>. No Kotlin exception message visible. Fixed by running <code>xcrun simctl launch --console</code> which streams Kotlin exception output to the terminal.</p>
+<p><b>Fix:</b></p>
+<p class="file-label">MainViewController.kt (before and after)</p>
+<pre><code><span class="line"><span class="cm">// Before:</span></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">MainViewController</span>(): <span class="tp">UIViewController</span> = <span class="fn">ComposeUIViewController</span> { <span class="fn">App</span>() }</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// After:</span></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">MainViewController</span>(): <span class="tp">UIViewController</span> {</span>
+<span class="line">    <span class="fn">initKoin</span>()</span>
+<span class="line">    <span class="kw">return</span> <span class="fn">ComposeUIViewController</span> { <span class="fn">App</span>() }</span>
+<span class="line">}</span></code></pre>
+
+<h3>Error 6: Compose PlistSanityCheck — CADisableMinimumFrameDurationOnPhone</h3>
+<p><b>Symptom:</b> Console shows <code>IllegalStateException: Info.plist doesn't have a valid CADisableMinimumFrameDurationOnPhone entry</code></p>
+<p><b>Why:</b> Compose Multiplatform for iOS requires this key set to <code>true</code> for proper rendering on high-refresh-rate iPhones. The xcodegen-generated <code>Info.plist</code> didn't include it.</p>
+<p><b>Diagnosis:</b> <code>xcrun simctl launch --console</code> prints the exact error message including the fix instructions directly from Compose's PlistSanityCheck.</p>
+<p><b>Fix:</b> Add to <code>iosApp/project.yml</code> under <code>info.properties</code>:</p>
+<pre><code><span class="line"><span class="kw">info:</span></span>
+<span class="line">  <span class="kw">path:</span> Generated/Info.plist</span>
+<span class="line">  <span class="kw">properties:</span></span>
+<span class="line">    <span class="kw">CFBundleDisplayName:</span> BloqueaLlamadas</span>
+<span class="line">    <span class="kw">CADisableMinimumFrameDurationOnPhone:</span> true</span></code></pre>
+<p><b>Lesson:</b> Always check <code>--console</code> output before diving into crash reports. Compose Multiplatform diagnostics are excellent when you can see them.</p>
+
+<h3>Error 7: Metal GPU rendering hang on simulator</h3>
+<p><b>Symptom:</b> App process visible in <code>ps</code> but no UI appears. Crash report shows main thread blocked in <code>dispatch_mach_send_and_wait_for_reply</code> calling <code>GrMtlPipelineStateBuilder::finalize</code>.</p>
+<p><b>Why:</b> Compose Multiplatform renders via Skia's Metal backend. On some iOS simulators (especially newer iPhone models on recent macOS), the Metal shader compiler's XPC service hangs — the GPU driver wait never completes.</p>
+<p><b>Diagnosis:</b></p>
+<pre><code><span class="line"><span class="cm"># Check if process is alive but stuck</span></span>
+<span class="line">ps aux | grep BloqueaLlamadas</span>
+<span class="line"></span>
+<span class="line"><span class="cm"># Read crash report from ~/Library/Logs/DiagnosticReports/</span></span>
+<span class="line"><span class="cm"># Look for: GrMtlPipelineStateBuilder, mach_msg2_trap, Main thread blocked</span></span>
+<span class="line">grep -o <span class="str">'"symbol":"[^"]*"'</span> ~/Library/Logs/DiagnosticReports/BloqueaLlamadas-*.ips | head -30</span></code></pre>
+<p><b>Fix:</b> Three options — (1) Restart the simulator: <code>xcrun simctl shutdown all && xcrun simctl boot DEVICE_UUID</code>. (2) Use a different simulator model (iPhone SE worked while iPhone 16 Pro hung). (3) For production, use software rendering fallback (pending Compose Multiplatform API).</p>
+
+<div class="callout"><h3>Debugging Toolkit Summary</h3>
+<table style="width:100%;border-collapse:collapse;margin:12px 0">
+<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:6px">Tool</th><th style="text-align:left;padding:6px">Command</th><th style="text-align:left;padding:6px">Use When</th></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">iOS compilation</td><td style="padding:6px"><code>./gradlew :shared:compileKotlinIosSimulatorArm64</code></td><td style="padding:6px">Checking if code compiles for iOS</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Console launch</td><td style="padding:6px"><code>xcrun simctl launch --console DEVICE_UUID BUNDLE_ID</code></td><td style="padding:6px">Seeing Kotlin exception messages</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Crash reports</td><td style="padding:6px"><code>~/Library/Logs/DiagnosticReports/</code></td><td style="padding:6px">Post-mortem crash analysis (SIGABRT)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Crash symbols</td><td style="padding:6px"><code>grep -o '"symbol":"[^"]*"' *.ips</code></td><td style="padding:6px">Quick stack trace extraction</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Process check</td><td style="padding:6px"><code>ps aux | grep APP_NAME</code></td><td style="padding:6px">App alive but frozen? (GPU hang)</td></tr>
+<tr><td style="padding:6px">Simulator reset</td><td style="padding:6px"><code>xcrun simctl shutdown all && boot DEVICE</code></td><td style="padding:6px">Metal XPC hangs, stuck simulators</td></tr>
+</table></div>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>iOS Kotlin/Native is strict — anything <code>@InternalCoroutinesApi</code> or <code>android.*</code> won't compile</li><li>Always <code>grep</code> for leftover imports after <code>sed</code> replacements</li><li><code>--console</code> launch is your best friend — Kotlin exceptions are buried without it</li><li>Metal GPU hangs on iOS simulators are simulator bugs, not code bugs — restart or switch device</li><li>expect/actual is the escape hatch for any API that doesn't work uniformly across platforms</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. Why does <code>Dispatchers.IO</code> fail on iOS but not Android?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It's marked <code>@InternalCoroutinesApi</code> in the Kotlin/Native artifact. Android implements it as a dedicated thread pool, but Native and JS haven't stabilized it yet. <code>Dispatchers.Default</code> is public on all platforms.</div></div>
+<div class="quiz-item"><p>2. What's the fastest way to see Kotlin exception messages on iOS?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>xcrun simctl launch --console DEVICE_UUID BUNDLE_ID</code> — this streams Kotlin exception output (including Compose's PlistSanityCheck messages) directly to the terminal.</div></div>
+<div class="quiz-item"><p>3. How do you tell the difference between a code crash and a GPU hang?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><b>Code crash:</b> process exits immediately, <code>.ips</code> crash report generated within seconds. <b>GPU hang:</b> process stays alive (<code>ps</code> shows it) but main thread is stuck in <code>mach_msg2_trap</code> waiting for Metal shader compilation. No crash report until timeout.</div></div>
+<div class="quiz-item"><p>4. After running <code>sed</code> to replace imports, what should you always check?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>grep</code> for leftover bare imports that don't match the <code>sed</code> pattern (e.g., <code>import kotlinx.coroutines.IO</code> survived when only <code>Dispatchers.IO</code> was replaced). Also check for cascading errors where subsequent errors reference wrong line numbers.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>13 Modules, One Production App</h3>
-<p>You've walked through every layer of a real Kotlin Multiplatform Android app:</p></div>
+<div class="callout"><h3>14 Modules, One Production App</h3>
+<p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
 <tr style="border-bottom:2px solid var(--accent)"><th style="text-align:left;padding:8px">Layer</th><th style="text-align:left;padding:8px">Technology</th><th style="text-align:left;padding:8px">Module</th></tr>
@@ -1592,6 +1716,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">i18n</td><td style="padding:8px">Compose resources, 4 locales</td><td style="padding:8px">11</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Quality</td><td style="padding:8px">kotlin.test, fakes, Robolectric</td><td style="padding:8px">12</td></tr>
 <tr><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -1624,11 +1749,13 @@ function toggleTheme(){
 // ========== TOC GENERATION ==========
 (function(){
   var grid=document.getElementById('toc-grid'),html='';
-  var modules=document.querySelectorAll('.module');
-  modules.forEach(function(m,i){
+  var modules=document.querySelectorAll('.module[id^="m"]');
+  var count=0;
+  modules.forEach(function(m){
+    count++;
     var id=m.id,h=m.querySelector('h2');
-    var title=h?h.textContent.replace('Module '+(i+1)+': ','') : 'Module '+(i+1);
-    html+='<a href="#'+id+'" onclick="markVisited('+(i+1)+')">'+(i+1)+'. '+title+'</a>';
+    var title=h?h.textContent.replace('Module '+count+': ','') : 'Module '+count;
+    html+='<a href="#'+id+'" onclick="markVisited('+count+')">'+count+'. '+title+'</a>';
   });
   grid.innerHTML=html;
 })();
@@ -1642,7 +1769,7 @@ function markVisited(n){
 }
 function updateProgress(){
   var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  var total=13,pct=Math.round(visited.length/total*100);
+  var total=14,pct=Math.round(visited.length/total*100);
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
   var links=document.querySelectorAll('#toc-grid a');
