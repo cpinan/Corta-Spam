@@ -104,6 +104,12 @@ String resources are in `shared/src/commonMain/composeResources/`:
 
 Add new locales by creating a `values-<code>/strings.xml` file following the same key structure.
 
+## Learning
+
+A complete 13-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, and CI.
+
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 45 quiz questions included.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). Corta Spam is free and open source.

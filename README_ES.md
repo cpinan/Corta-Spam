@@ -104,6 +104,12 @@ Los recursos de texto están en `shared/src/commonMain/composeResources/`:
 
 Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la misma estructura de claves.
 
+## Aprendizaje
+
+Un curso completo de 13 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing y CI.
+
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 45 preguntas de evaluación.
+
 ## Licencia
 
 MIT — consulta [`LICENSE`](LICENSE). Corta Spam es software libre y de código abierto.
