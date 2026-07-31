@@ -69,8 +69,6 @@ class PassthroughInCallService :
 
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
-        // A second call (call waiting, dual-SIM) can arrive before the first is removed —
-        // release the prior call's resources instead of orphaning them.
         serviceScope?.cancel()
         autoResponderAudio?.release()
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -82,6 +80,12 @@ class PassthroughInCallService :
                 ?.handle
                 ?.schemeSpecificPart
                 .orEmpty()
+
+        InCallState.attach(call)
+        startActivity(
+            Intent(this@PassthroughInCallService, InCallActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
 
         serviceScope?.launch {
             try {
@@ -101,16 +105,11 @@ class PassthroughInCallService :
                     } else {
                         call.reject(false, null)
                     }
-                } else {
-                    attachCallUi(call)
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                // Fail open: a broken rule evaluation must never leave a call with no UI and no
-                // way to answer/decline, so treat it like an unblocked call.
-                Log.e(TAG, "Call evaluation failed for call, failing open", e)
-                attachCallUi(call)
+                Log.e(TAG, "Call evaluation failed, failing open", e)
             }
         }
     }

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.stats_blocked_count
+import bloqueallamadas.shared.generated.resources.stats_blocked_label
 import bloqueallamadas.shared.generated.resources.stats_empty
 import bloqueallamadas.shared.generated.resources.stats_loading
 import bloqueallamadas.shared.generated.resources.stats_title
@@ -83,7 +84,7 @@ private fun DayStatCard(day: DayStat) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = stringResource(Res.string.stats_blocked_count, day.count),
+                text = "${day.count} ${stringResource(Res.string.stats_blocked_label)}",
                 style = MaterialTheme.typography.titleMedium,
                 color =
                     if (day.count > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,

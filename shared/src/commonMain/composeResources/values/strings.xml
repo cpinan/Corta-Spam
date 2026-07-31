@@ -52,6 +52,8 @@
     <string name="stats_empty">No blocked calls in the last 7 days.</string>
     <string name="stats_loading">Loading…</string>
     <string name="stats_blocked_count">%d blocked</string>
+    <string name="stats_days_ago">%d days ago</string>
+    <string name="stats_blocked_label">blocked</string>
     <!-- Block list hub -->
     <string name="block_list_hub_title">Block Lists</string>
     <string name="block_list_manual_title">Blocked Numbers</string>

@@ -93,7 +93,9 @@ fun AppNavHost(
         selectedIndex = selectedSection,
         onNavigate = { index ->
             val destination = sectionRoutes.getOrElse(index) { Routes.HOME }
-            if (currentRoute == destination) return@AdaptiveScaffold
+            val isRootDestination =
+                currentRoute in sectionRoutes || (currentRoute?.startsWith("call_log") == true && destination.startsWith("call_log"))
+            if (index == selectedSection && isRootDestination) return@AdaptiveScaffold
             navController.navigate(destination) {
                 popUpTo(Routes.HOME)
                 launchSingleTop = true

@@ -60,6 +60,7 @@
     <string name="stats_empty">पिछले 7 दिनों में कोई कॉल ब्लॉक नहीं हुई।</string>
     <string name="stats_loading">लोड हो रहा है…</string>
     <string name="stats_blocked_count">%d ब्लॉक की गईं</string>
+    <string name="stats_blocked_label">ब्लॉक की गईं</string>
 
     <!-- ब्लॉक सूची हब -->
     <string name="block_list_hub_title">ब्लॉक सूचियाँ</string>

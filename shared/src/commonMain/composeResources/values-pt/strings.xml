@@ -60,6 +60,7 @@
     <string name="stats_empty">Nenhuma chamada bloqueada nos últimos 7 dias.</string>
     <string name="stats_loading">Carregando…</string>
     <string name="stats_blocked_count">%d bloqueadas</string>
+    <string name="stats_blocked_label">bloqueadas</string>
 
     <!-- Listas de bloqueio -->
     <string name="block_list_hub_title">Listas de Bloqueio</string>
