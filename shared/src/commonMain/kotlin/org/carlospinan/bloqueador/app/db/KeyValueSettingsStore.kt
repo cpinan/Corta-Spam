@@ -27,7 +27,7 @@ class KeyValueSettingsStore(
         key: String,
         value: String,
     ) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.appDatabaseQueries.upsertSetting(key, value)
         }
     }

@@ -18,33 +18,33 @@ class SqlCallLogRepository(
         queries
             .selectAllCallLogEntries()
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toData() } }
 
     override fun recentEntries(limit: Int): Flow<List<CallLogEntryData>> =
         queries
             .selectRecentCallLogEntries(limit.toLong())
             .asFlow()
-            .mapToList(Dispatchers.IO)
+            .mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toData() } }
 
     override suspend fun blockedCountToday(): Int =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             queries.countBlockedCallsToday().executeAsOne().toInt()
         }
 
     override suspend fun blockedCountThisWeek(): Int =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             queries.countBlockedCallsThisWeek().executeAsOne().toInt()
         }
 
     override suspend fun blockedCountThisMonth(): Int =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             queries.countBlockedCallsThisMonth().executeAsOne().toInt()
         }
 
     override suspend fun blockedStats(): BlockedStats =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             BlockedStats(
                 today = queries.countBlockedCallsToday().executeAsOne().toInt(),
                 thisWeek = queries.countBlockedCallsThisWeek().executeAsOne().toInt(),
@@ -57,7 +57,7 @@ class SqlCallLogRepository(
         timestamp: Long,
         decision: RuleDecision,
     ) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             queries
                 .insertCallLogEntry(
                     number = number,
@@ -71,13 +71,13 @@ class SqlCallLogRepository(
     }
 
     override suspend fun clearAll() {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             queries.clearCallLog().value
         }
     }
 
     override suspend fun blockedByDay(daysBack: Int): List<DayStat> =
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             val entries = queries.selectAllCallLogEntries().executeAsList()
             val now =
                 kotlinx.datetime.Clock.System
