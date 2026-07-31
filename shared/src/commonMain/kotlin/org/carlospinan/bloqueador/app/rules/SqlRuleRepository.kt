@@ -359,7 +359,10 @@ class SqlRuleRepository(
 
     override suspend fun exportAll(): String =
         withContext(Dispatchers.IO) {
-            val now = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            val now =
+                kotlinx.datetime.Clock.System
+                    .now()
+                    .toEpochMilliseconds()
             val data =
                 BackupData(
                     exportedAt = now,
@@ -492,6 +495,10 @@ class SqlRuleRepository(
         }
 
     companion object {
-        private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+        private val json =
+            Json {
+                prettyPrint = true
+                ignoreUnknownKeys = true
+            }
     }
 }

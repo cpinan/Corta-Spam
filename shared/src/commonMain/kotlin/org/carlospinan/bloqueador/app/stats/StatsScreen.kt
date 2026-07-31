@@ -1,6 +1,5 @@
 package org.carlospinan.bloqueador.app.stats
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
-import bloqueallamadas.shared.generated.resources.stats_blocked_count
 import bloqueallamadas.shared.generated.resources.stats_blocked_label
 import bloqueallamadas.shared.generated.resources.stats_empty
 import bloqueallamadas.shared.generated.resources.stats_loading

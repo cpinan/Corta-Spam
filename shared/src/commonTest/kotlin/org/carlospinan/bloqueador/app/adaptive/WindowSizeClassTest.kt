@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class WindowSizeClassTest {
-
     @Test
     fun `enum has three values in expected ordinal order`() {
         val values = WindowSizeClass.entries

@@ -6,7 +6,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ScheduleRuleTimeConversionTest {
-
     @Test
     fun `minuteOfDayToHHmm midnight`() {
         assertEquals("00:00", minuteOfDayToHHmm(0))

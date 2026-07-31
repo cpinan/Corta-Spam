@@ -3,7 +3,6 @@ package org.carlospinan.bloqueador.app.calllog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,21 +38,19 @@ import bloqueallamadas.shared.generated.resources.call_log_action_allowlist
 import bloqueallamadas.shared.generated.resources.call_log_action_block
 import bloqueallamadas.shared.generated.resources.call_log_action_callback
 import bloqueallamadas.shared.generated.resources.call_log_action_copy
+import bloqueallamadas.shared.generated.resources.call_log_action_label
+import bloqueallamadas.shared.generated.resources.call_log_allowed_label
+import bloqueallamadas.shared.generated.resources.call_log_blocked_label
+import bloqueallamadas.shared.generated.resources.call_log_detail_placeholder
 import bloqueallamadas.shared.generated.resources.call_log_empty_hint
+import bloqueallamadas.shared.generated.resources.call_log_rule_label
+import bloqueallamadas.shared.generated.resources.call_log_time_label
 import bloqueallamadas.shared.generated.resources.call_log_title
 import bloqueallamadas.shared.generated.resources.call_log_title_month
 import bloqueallamadas.shared.generated.resources.call_log_title_today
 import bloqueallamadas.shared.generated.resources.call_log_title_week
-import bloqueallamadas.shared.generated.resources.call_log_allowed_label
-import bloqueallamadas.shared.generated.resources.call_log_blocked_label
-import bloqueallamadas.shared.generated.resources.call_log_detail_placeholder
-import bloqueallamadas.shared.generated.resources.call_log_action_label
-import bloqueallamadas.shared.generated.resources.call_log_just_now
-import bloqueallamadas.shared.generated.resources.call_log_rule_label
-import bloqueallamadas.shared.generated.resources.call_log_time_label
 import bloqueallamadas.shared.generated.resources.ic_allowlist
 import bloqueallamadas.shared.generated.resources.ic_blocked_number
-import bloqueallamadas.shared.generated.resources.ic_unknown_call
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -236,14 +233,15 @@ private fun CallLogListPane(
                     CallLogEntryRow(
                         entry = entry,
                         onTap = { onEntryTap(entry) },
-                        modifier = if (isSelected) {
-                            Modifier.background(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                RoundedCornerShape(12.dp),
-                            )
-                        } else {
-                            Modifier
-                        },
+                        modifier =
+                            if (isSelected) {
+                                Modifier.background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                    RoundedCornerShape(12.dp),
+                                )
+                            } else {
+                                Modifier
+                            },
                     )
                 }
             }
@@ -280,12 +278,26 @@ private fun CallLogDetailPane(
             ) {
                 Icon(
                     painter = painterResource(statusIcon),
-                    contentDescription = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
+                    contentDescription =
+                        if (isBlocked) {
+                            stringResource(
+                                Res.string.call_log_blocked_label,
+                            )
+                        } else {
+                            stringResource(Res.string.call_log_allowed_label)
+                        },
                     tint = actionColor,
                     modifier = Modifier.size(20.dp),
                 )
                 Text(
-                    text = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
+                    text =
+                        if (isBlocked) {
+                            stringResource(
+                                Res.string.call_log_blocked_label,
+                            )
+                        } else {
+                            stringResource(Res.string.call_log_allowed_label)
+                        },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -371,10 +383,11 @@ private fun CallLogEntryRow(
         if (isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable(onClick = onTap),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .clickable(onClick = onTap),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -383,7 +396,14 @@ private fun CallLogEntryRow(
         ) {
             Icon(
                 painter = painterResource(statusIcon),
-                contentDescription = if (isBlocked) stringResource(Res.string.call_log_blocked_label) else stringResource(Res.string.call_log_allowed_label),
+                contentDescription =
+                    if (isBlocked) {
+                        stringResource(
+                            Res.string.call_log_blocked_label,
+                        )
+                    } else {
+                        stringResource(Res.string.call_log_allowed_label)
+                    },
                 tint = actionColor,
                 modifier = Modifier.size(20.dp),
             )
@@ -417,7 +437,11 @@ private fun formatTimestamp(epochMillis: Long): String {
     if (now - epochMillis < 60_000L) return "Now"
     val instant = Instant.fromEpochMilliseconds(epochMillis)
     val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val month = local.month.name.lowercase().replaceFirstChar { it.uppercase() }.take(3)
+    val month =
+        local.month.name
+            .lowercase()
+            .replaceFirstChar { it.uppercase() }
+            .take(3)
     val hour = local.hour.toString().padStart(2, '0')
     val minute = local.minute.toString().padStart(2, '0')
     return "$month ${local.dayOfMonth}, ${local.year} · $hour:$minute"

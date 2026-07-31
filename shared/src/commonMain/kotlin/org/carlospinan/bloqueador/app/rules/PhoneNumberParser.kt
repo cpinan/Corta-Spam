@@ -19,6 +19,5 @@ object PhoneNumberParser {
      * Strip all non-digit characters for fuzzy comparison across different
      * number formats (E.164, local, formatted, etc.).
      */
-    fun normalizeForComparison(number: String): String =
-        number.filter { it.isDigit() }
+    fun normalizeForComparison(number: String): String = number.filter { it.isDigit() }
 }

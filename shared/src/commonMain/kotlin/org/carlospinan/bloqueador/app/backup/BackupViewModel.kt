@@ -56,7 +56,8 @@ class BackupViewModel(
         viewModelScope.launch {
             try {
                 val numbers =
-                    csv.lines()
+                    csv
+                        .lines()
                         .map { it.trim() }
                         .filter { it.isNotBlank() && !it.startsWith("#") }
                 var count = 0

@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -39,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_add
-import bloqueallamadas.shared.generated.resources.action_android_only
 import bloqueallamadas.shared.generated.resources.action_cancel
 import bloqueallamadas.shared.generated.resources.action_ok
 import bloqueallamadas.shared.generated.resources.action_remove
@@ -82,10 +80,7 @@ import bloqueallamadas.shared.generated.resources.pattern_label_hint
 import bloqueallamadas.shared.generated.resources.pattern_title
 import bloqueallamadas.shared.generated.resources.schedule_empty_hint
 import bloqueallamadas.shared.generated.resources.schedule_end_hint
-import bloqueallamadas.shared.generated.resources.schedule_hour_hint
-import bloqueallamadas.shared.generated.resources.schedule_invalid_time
 import bloqueallamadas.shared.generated.resources.schedule_label_hint
-import bloqueallamadas.shared.generated.resources.schedule_minute_hint
 import bloqueallamadas.shared.generated.resources.schedule_preset_night
 import bloqueallamadas.shared.generated.resources.schedule_preset_siesta
 import bloqueallamadas.shared.generated.resources.schedule_preset_work
@@ -97,7 +92,6 @@ import bloqueallamadas.shared.generated.resources.schedule_start_hint
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
-import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.COUNTRIES
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
@@ -999,21 +993,30 @@ private fun AddScheduleRuleDialog(
                     androidx.compose.material3.FilterChip(
                         selected = false,
                         onClick = {
-                            startHour = 22; startMinute = 0; endHour = 7; endMinute = 0
+                            startHour = 22
+                            startMinute = 0
+                            endHour = 7
+                            endMinute = 0
                         },
                         label = { Text(stringResource(Res.string.schedule_preset_night)) },
                     )
                     androidx.compose.material3.FilterChip(
                         selected = false,
                         onClick = {
-                            startHour = 14; startMinute = 0; endHour = 16; endMinute = 0
+                            startHour = 14
+                            startMinute = 0
+                            endHour = 16
+                            endMinute = 0
                         },
                         label = { Text(stringResource(Res.string.schedule_preset_siesta)) },
                     )
                     androidx.compose.material3.FilterChip(
                         selected = false,
                         onClick = {
-                            startHour = 9; startMinute = 0; endHour = 18; endMinute = 0
+                            startHour = 9
+                            startMinute = 0
+                            endHour = 18
+                            endMinute = 0
                         },
                         label = { Text(stringResource(Res.string.schedule_preset_work)) },
                     )
@@ -1083,11 +1086,12 @@ private fun TimePickerDialog(
     onConfirm: (Int, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val state = rememberTimePickerState(
-        initialHour = initialHour,
-        initialMinute = initialMinute,
-        is24Hour = true,
-    )
+    val state =
+        rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = true,
+        )
 
     AlertDialog(
         onDismissRequest = onDismiss,

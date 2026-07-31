@@ -5,7 +5,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class DuplicateWarningTest {
-
     @Test
     fun `should warn when number is in allowlist`() {
         val allowlist = setOf("+34600123456", "+34900999999")
@@ -32,7 +31,6 @@ class DuplicateWarningTest {
         private fun shouldWarnOnAdd(
             number: String,
             allowlistedNumbers: Set<String>,
-        ): Boolean =
-            number.isNotBlank() && number in allowlistedNumbers
+        ): Boolean = number.isNotBlank() && number in allowlistedNumbers
     }
 }

@@ -5,7 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class WindowSizeClassBoundaryTest {
-
     @Test
     fun `ordinal order is Compact before Medium before Expanded`() {
         assertTrue(WindowSizeClass.Compact.ordinal < WindowSizeClass.Medium.ordinal)

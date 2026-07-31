@@ -45,7 +45,17 @@ object RulePrecedenceResolver {
         parseCountryCode: (String) -> String? = { PhoneNumberParser.parseCountryCode(it) },
     ): RuleDecision {
         val normalized = PhoneNumberParser.normalizeForComparison(number)
-        if (normalized.isEmpty()) return context.defaultAction.let { if (it == DefaultAction.BLOCK) RuleDecision.DefaultBlock else RuleDecision.DefaultAllow }
+        if (normalized.isEmpty()) {
+            return context.defaultAction.let {
+                if (it ==
+                    DefaultAction.BLOCK
+                ) {
+                    RuleDecision.DefaultBlock
+                } else {
+                    RuleDecision.DefaultAllow
+                }
+            }
+        }
 
         val normalizedAllowlist = context.allowlistedNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
         val normalizedContacts = context.contactNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
@@ -55,9 +65,11 @@ object RulePrecedenceResolver {
 
         // 1. Manual block check (highest priority — overrides allowlist and contacts)
         if (normalized in normalizedBlocked) {
-            val entry = context.blockedNumberDetails.entries.firstOrNull {
-                PhoneNumberParser.normalizeForComparison(it.key) == normalized
-            }?.value
+            val entry =
+                context.blockedNumberDetails.entries
+                    .firstOrNull {
+                        PhoneNumberParser.normalizeForComparison(it.key) == normalized
+                    }?.value
             return RuleDecision.ManualBlock(ruleId = entry?.id ?: -1, label = entry?.label)
         }
 

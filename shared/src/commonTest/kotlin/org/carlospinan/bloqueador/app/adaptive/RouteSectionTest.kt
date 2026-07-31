@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class RouteSectionTest {
-
     @Test
     fun `home route maps to index 0`() {
         assertEquals(0, routeSection(AdaptiveRoutes.HOME))

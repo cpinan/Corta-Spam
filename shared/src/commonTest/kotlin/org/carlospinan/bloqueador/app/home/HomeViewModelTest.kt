@@ -24,18 +24,29 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
-
     private class FakeCallLogRepository(
         var stats: BlockedStats = BlockedStats(0, 0, 0),
     ) : CallLogRepository {
         override fun allEntries() = MutableStateFlow(emptyList<CallLogEntryData>())
+
         override fun recentEntries(limit: Int) = MutableStateFlow(emptyList<CallLogEntryData>())
+
         override suspend fun blockedCountToday(): Int = stats.today
+
         override suspend fun blockedCountThisWeek(): Int = stats.thisWeek
+
         override suspend fun blockedCountThisMonth(): Int = stats.thisMonth
+
         override suspend fun blockedStats(): BlockedStats = stats
+
         override suspend fun blockedByDay(daysBack: Int): List<DayStat> = emptyList()
-        override suspend fun logCall(number: String, timestamp: Long, decision: RuleDecision) {}
+
+        override suspend fun logCall(
+            number: String,
+            timestamp: Long,
+            decision: RuleDecision,
+        ) {}
+
         override suspend fun clearAll() {}
     }
 
@@ -46,12 +57,17 @@ class HomeViewModelTest {
         override val blockingEnabled = blockingEnabledFlow
         override val autoAllowContacts = MutableStateFlow(false)
         override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
+
         override suspend fun setBlockingEnabled(enabled: Boolean) {
             blockingEnabledFlow.value = enabled
         }
+
         override suspend fun setAutoAllowContacts(enabled: Boolean) {}
+
         override suspend fun setDefaultAction(action: DefaultAction) {}
+
         override val welcomeShown: Boolean = true
+
         override suspend fun setWelcomeShown() {}
     }
 
@@ -61,69 +77,74 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `init loads blocked stats from repository`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository(stats = BlockedStats(5, 12, 30))
-        val settings = FakeSettingsRepository()
-        val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
-        advanceUntilIdle()
+    fun `init loads blocked stats from repository`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository(stats = BlockedStats(5, 12, 30))
+            val settings = FakeSettingsRepository()
+            val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+            advanceUntilIdle()
 
-        val state = vm.state.first { !it.isLoading }
-        assertEquals(5, state.blockedToday)
-        assertEquals(12, state.blockedThisWeek)
-        assertEquals(30, state.blockedThisMonth)
-    }
-
-    @Test
-    fun `refresh updates stats`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository(stats = BlockedStats(1, 2, 3))
-        val settings = FakeSettingsRepository()
-        val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
-        advanceUntilIdle()
-
-        repo.stats = BlockedStats(10, 20, 30)
-        vm.refresh()
-        advanceUntilIdle()
-
-        val state = vm.state.first { it.blockedToday == 10 }
-        assertEquals(10, state.blockedToday)
-        assertEquals(20, state.blockedThisWeek)
-        assertEquals(30, state.blockedThisMonth)
-    }
+            val state = vm.state.first { !it.isLoading }
+            assertEquals(5, state.blockedToday)
+            assertEquals(12, state.blockedThisWeek)
+            assertEquals(30, state.blockedThisMonth)
+        }
 
     @Test
-    fun `initial state is loading`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository()
-        val settings = FakeSettingsRepository()
-        val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+    fun `refresh updates stats`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository(stats = BlockedStats(1, 2, 3))
+            val settings = FakeSettingsRepository()
+            val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+            advanceUntilIdle()
 
-        val first = vm.state.value
-        assertTrue(first.isLoading)
-    }
+            repo.stats = BlockedStats(10, 20, 30)
+            vm.refresh()
+            advanceUntilIdle()
 
-    @Test
-    fun `toggle blocking updates repository`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository()
-        val settings = FakeSettingsRepository()
-        val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
-
-        vm.toggleBlocking(false)
-        advanceUntilIdle()
-        val enabled = settings.blockingEnabled.first()
-        assertFalse(enabled)
-    }
+            val state = vm.state.first { it.blockedToday == 10 }
+            assertEquals(10, state.blockedToday)
+            assertEquals(20, state.blockedThisWeek)
+            assertEquals(30, state.blockedThisMonth)
+        }
 
     @Test
-    fun `blocking enabled defaults to true`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository()
-        val settings = FakeSettingsRepository()
-        val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+    fun `initial state is loading`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository()
+            val settings = FakeSettingsRepository()
+            val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
 
-        val enabled = vm.blockingEnabled.first()
-        assertTrue(enabled)
-    }
+            val first = vm.state.value
+            assertTrue(first.isLoading)
+        }
+
+    @Test
+    fun `toggle blocking updates repository`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository()
+            val settings = FakeSettingsRepository()
+            val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+
+            vm.toggleBlocking(false)
+            advanceUntilIdle()
+            val enabled = settings.blockingEnabled.first()
+            assertFalse(enabled)
+        }
+
+    @Test
+    fun `blocking enabled defaults to true`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository()
+            val settings = FakeSettingsRepository()
+            val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+
+            val enabled = vm.blockingEnabled.first()
+            assertTrue(enabled)
+        }
 }

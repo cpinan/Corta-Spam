@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corta Spam — From Zero to Master: KMP Android App Development</title>
+<style>
+/* ========== THEME VARIABLES ========== */
+:root {
+  --bg: #FFF4E6;
+  --text: #17233C;
+  --accent: #EF6A5B;
+  --code-bg: #F0E8D8;
+  --card-bg: #FFFFFF;
+  --border: #E0D5C5;
+  --muted: #6B7280;
+  --green: #059669;
+  --amber: #D97706;
+  --shadow: 0 2px 8px rgba(23,35,60,0.08);
+  --radius: 8px;
+}
+[data-theme="dark"] {
+  --bg: #17233C;
+  --text: #FFF4E6;
+  --code-bg: #1E2D4A;
+  --card-bg: #1F3050;
+  --border: #2A3D5C;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:17px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.7;
+  transition:background .3s,color .3s
+}
+/* ========== LAYOUT ========== */
+.wrap{max-width:900px;margin:0 auto;padding:0 24px}
+/* ========== HEADER ========== */
+.header{
+  background:var(--card-bg);border-bottom:1px solid var(--border);
+  padding:32px 0;margin-bottom:40px;box-shadow:var(--shadow)
+}
+.header h1{font-size:2.2rem;color:var(--accent);margin-bottom:6px}
+.header p{color:var(--muted);font-size:1rem}
+.header-bar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.theme-btn{
+  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:8px 16px;cursor:pointer;font-size:.9rem;color:var(--text);
+  transition:background .2s
+}
+.theme-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* ========== PROGRESS ========== */
+.progress-wrap{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;margin-bottom:32px;box-shadow:var(--shadow)
+}
+.progress-bar{
+  height:10px;background:var(--code-bg);border-radius:5px;overflow:hidden;margin-top:8px
+}
+.progress-fill{
+  height:100%;background:var(--accent);border-radius:5px;transition:width .4s;width:0%
+}
+.progress-label{font-size:.85rem;color:var(--muted)}
+/* ========== TOC ========== */
+.toc{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin-bottom:40px;box-shadow:var(--shadow)
+}
+.toc h2{font-size:1.2rem;margin-bottom:16px;color:var(--accent)}
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.toc a{
+  display:block;padding:8px 12px;border-radius:var(--radius);text-decoration:none;
+  color:var(--text);font-size:.9rem;transition:background .2s;border:1px solid transparent
+}
+.toc a:hover{background:var(--code-bg);border-color:var(--border)}
+.toc a.visited{opacity:.5}
+/* ========== MODULES ========== */
+.module{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:40px;margin-bottom:40px;box-shadow:var(--shadow)
+}
+.module h2{font-size:1.7rem;color:var(--accent);margin-bottom:4px}
+.module h3{font-size:1.2rem;margin:28px 0 12px;color:var(--text)}
+.module h4{font-size:1rem;margin:20px 0 8px;color:var(--muted)}
+.module p{margin-bottom:14px}
+.module ul,.module ol{margin:0 0 14px 24px}
+.module li{margin-bottom:6px}
+/* ========== CALLOUTS ========== */
+.callout{
+  border-left:4px solid var(--accent);background:var(--code-bg);
+  padding:16px 20px;margin:20px 0;border-radius:0 var(--radius) var(--radius) 0
+}
+.callout h3{margin-top:0;color:var(--accent)}
+/* ========== BADGES ========== */
+.badge{
+  display:inline-block;padding:3px 10px;border-radius:12px;font-size:.75rem;
+  font-weight:600;margin-right:6px;text-transform:uppercase;letter-spacing:.5px
+}
+.badge-b{background:#D1FAE5;color:#065F46}
+.badge-i{background:#FEF3C7;color:#92400E}
+.badge-a{background:#FEE2E2;color:#991B1B}
+[data-theme="dark"] .badge-b{background:#064E3B;color:#A7F3D0}
+[data-theme="dark"] .badge-i{background:#78350F;color:#FDE68A}
+[data-theme="dark"] .badge-a{background:#7F1D1D;color:#FECACA}
+/* ========== CODE ========== */
+pre{
+  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;overflow-x:auto;margin:16px 0;font-size:.82rem;line-height:1.6;
+  position:relative;counter-reset:line
+}
+pre .line{display:block;padding-left:52px;position:relative;white-space:pre-wrap}
+pre .line::before{
+  counter-increment:line;content:counter(line);
+  position:absolute;left:0;width:40px;text-align:right;
+  color:var(--muted);font-size:.75rem;padding-right:8px;user-select:none
+}
+code{font-family:"JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace}
+pre .kw{color:#7C3AED;font-weight:600}
+pre .str{color:#059669}
+pre .cm{color:var(--muted);font-style:italic}
+pre .fn{color:#D97706}
+pre .tp{color:#2563EB}
+pre .num{color:#DC2626}
+pre .ann{color:#9333EA}
+[data-theme="dark"] pre .kw{color:#A78BFA}
+[data-theme="dark"] pre .str{color:#34D399}
+[data-theme="dark"] pre .fn{color:#FBBF24}
+[data-theme="dark"] pre .tp{color:#60A5FA}
+[data-theme="dark"] pre .num{color:#F87171}
+[data-theme="dark"] pre .ann{color:#C084FC}
+.file-label{
+  font-size:.75rem;color:var(--muted);margin-bottom:-12px;padding:4px 12px;
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;
+  display:inline-block;position:relative;top:1px;z-index:1
+}
+/* ========== DIAGRAMS ========== */
+figure.diagram{
+  margin:24px 0;text-align:center;background:var(--code-bg);
+  border:1px solid var(--border);border-radius:var(--radius);padding:24px;overflow-x:auto
+}
+figure.diagram svg{max-width:100%}
+figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
+/* ========== TAKEAWAYS ========== */
+.takeaways{
+  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;margin:24px 0
+}
+.takeaways h3{color:var(--accent);margin-top:0}
+/* ========== QUIZ ========== */
+.quiz{
+  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;margin:24px 0
+}
+.quiz summary{
+  cursor:pointer;font-weight:600;font-size:1rem;color:var(--accent);padding:8px 0
+}
+.quiz-item{margin:20px 0;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.quiz-item:last-child{border-bottom:none;padding-bottom:0}
+.quiz-item p{margin-bottom:8px;font-weight:600}
+.quiz-item button{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:6px 14px;cursor:pointer;font-size:.85rem;color:var(--text);margin-right:6px;transition:background .2s
+}
+.quiz-item button:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.quiz-item .answer{display:none;margin-top:8px;padding:8px 12px;background:var(--card-bg);border-radius:var(--radius);font-size:.9rem}
+.quiz-item .answer.show{display:block}
+/* ========== FOOTER ========== */
+.footer{
+  text-align:center;padding:40px 0;color:var(--muted);font-size:.85rem;
+  border-top:1px solid var(--border);margin-top:40px
+}
+.footer a{color:var(--accent)}
+/* ========== RESPONSIVE ========== */
+@media(max-width:768px){
+  .module{padding:24px}
+  pre{font-size:.75rem}
+  .toc-grid{grid-template-columns:1fr}
+  .header h1{font-size:1.6rem}
+}
+@media print{
+  .header,.toc,.footer,.theme-btn,.progress-wrap{display:none}
+  .module{box-shadow:none;border:none;page-break-inside:avoid}
+  body{font-size:12pt;color:#000;background:#fff}
+  pre{background:#f5f5f5;border:1px solid #ddd}
+  .quiz .answer{display:block!important}
+}
+</style>
+</head>
+<body>
+
+<div class="header"><div class="wrap"><div class="header-bar">
+<div>
+<h1>Corta Spam</h1>
+<p>From Zero to Master: Kotlin Multiplatform Android App Development</p>
+<p style="font-size:.85rem">A 13-module course walking through a real production app</p>
+</div>
+<button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙 Dark Mode</button>
+</div></div></div>
+
+<div class="wrap">
+
+<!-- Progress -->
+<div class="progress-wrap">
+  <div class="progress-label">Progress: <span id="progress-text">0 / 13 modules</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<!-- Table of Contents -->
+<nav class="toc" id="toc">
+  <h2>Course Modules</h2>
+  <p style="font-size:.85rem;margin-bottom:12px;color:var(--muted)"><b>Part 1:</b> Foundation (1-3) · <b>Part 2:</b> Navigation & Layout (4-5) · <b>Part 3:</b> Data Layer (6-7) · <b>Part 4:</b> Android Platform (8-9) · <b>Part 5:</b> Domain Logic (10-11) · <b>Part 6:</b> Quality (12-13)</p>
+  <div class="toc-grid" id="toc-grid"></div>
+</nav>
+
+<!-- ================================================================ -->
+<!-- MODULE 1 -->
+<!-- ================================================================ -->
+<section class="module" id="m1">
+<h2>Module 1: Gradle &amp; The Build System</h2>
+<p>Learn how the project compiles, links dependencies, and packages into an APK.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Understand Kotlin DSL build files vs Groovy</li><li>Read version catalogs and plugin declarations</li><li>Grasp multi-module Gradle projects</li><li>See how dependency resolution prevents version conflicts</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> What is a build system?</h3>
+<p>Think of a recipe. You have ingredients (source files, libraries) and steps (compile Kotlin, link resources, sign APK). Gradle orchestrates every step. Before Gradle, developers ran <code>javac</code>, <code>aapt</code>, <code>dx</code> manually. Gradle automates this so one command — <code>./gradlew :androidApp:assembleDebug</code> — produces a working APK.</p>
+
+<h3><span class="badge badge-b">Beginner</span> The four build files you need to know</h3>
+<p>Every KMP Android project has this structure:</p>
+<pre><code><span class="line">settings.gradle.kts    — "Here are my modules"</span>
+<span class="line">build.gradle.kts      — "Here are my shared plugins &amp; config"</span>
+<span class="line">shared/build.gradle.kts   — "The KMP shared module"</span>
+<span class="line">androidApp/build.gradle.kts — "The Android app shell"</span></code></pre>
+
+<h3><span class="badge badge-i">Intermediate</span> Version Catalogs — libs.versions.toml</h3>
+<p>Single source of truth for all dependency versions. Without it, you'd have version numbers scattered across multiple files — upgrade one, forget another, get cryptic runtime crashes.</p>
+<p class="file-label">gradle/libs.versions.toml</p>
+<pre><code><span class="line"><span class="kw">[versions]</span></span>
+<span class="line"><span class="kw">kotlin</span> = <span class="str">"2.2.20"</span></span>
+<span class="line"><span class="kw">agp</span> = <span class="str">"8.7.3"</span></span>
+<span class="line"><span class="kw">compose-multiplatform</span> = <span class="str">"1.11.1"</span></span>
+<span class="line"><span class="kw">sqldelight</span> = <span class="str">"2.3.2"</span></span>
+<span class="line"><span class="kw">koin</span> = <span class="str">"4.2.0"</span></span>
+<span class="line"></span>
+<span class="line"><span class="kw">[libraries]</span></span>
+<span class="line"><span class="kw">sqldelight-runtime</span> = { module = <span class="str">"app.cash.sqldelight:runtime"</span>, version.ref = <span class="str">"sqldelight"</span> }</span>
+<span class="line"><span class="kw">koin-core</span> = { module = <span class="str">"io.insert-koin:koin-core"</span>, version.ref = <span class="str">"koin"</span> }</span>
+<span class="line"></span>
+<span class="line"><span class="kw">[plugins]</span></span>
+<span class="line"><span class="kw">kotlin-multiplatform</span> = { id = <span class="str">"org.jetbrains.kotlin.multiplatform"</span>, version.ref = <span class="str">"kotlin"</span> }</span></code></pre>
+<p><b>Why this pattern:</b> Upgrade Kotlin from 2.2.20 to 2.3.0? Change one line. All 8 plugins and libraries that reference <code>kotlin</code> update automatically. No hunting through Gradle files.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Root build.gradle.kts — Plugin declarations</h3>
+<p class="file-label">build.gradle.kts</p>
+<pre><code><span class="line"><span class="kw">plugins</span> {</span>
+<span class="line">    <span class="fn">alias</span>(libs.plugins.kotlin.multiplatform) <span class="kw">apply false</span></span>
+<span class="line">    <span class="fn">alias</span>(libs.plugins.compose.multiplatform) <span class="kw">apply false</span></span>
+<span class="line">    <span class="fn">alias</span>(libs.plugins.android.application) <span class="kw">apply false</span></span>
+<span class="line">}</span></code></pre>
+<p><b>Why <code>apply false</code>?</b> These plugins are <em>declared</em> at the root level (so all subprojects know about them) but only <em>applied</em> in the modules that need them. The shared module applies <code>kotlin.multiplatform</code>; the Android app applies <code>android.application</code>. Without <code>apply false</code>, every subproject would get every plugin.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> settings.gradle.kts — Module registry</h3>
+<p class="file-label">settings.gradle.kts</p>
+<pre><code><span class="line"><span class="kw">rootProject.name</span> = <span class="str">"BloqueaLlamadas"</span></span>
+<span class="line"></span>
+<span class="line"><span class="fn">include</span>(<span class="str">":shared"</span>)</span>
+<span class="line"><span class="fn">include</span>(<span class="str">":androidApp"</span>)</span></code></pre>
+<p>Gradle needs to know which directories are subprojects. Each <code>include</code> points to a directory with its own <code>build.gradle.kts</code>. The root project can configure them all at once in <code>allprojects { }</code> or <code>subprojects { }</code> blocks.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Dependency resolution strategy</h3>
+<p>Sometimes libraries pull in incompatible transitive dependencies. Koin 4.2.0 pulls <code>androidx.activity-ktx 1.12.4</code> which needs AGP 8.9.1+. We're on 8.7.3 — crash.</p>
+<p class="file-label">build.gradle.kts (root)</p>
+<pre><code><span class="line"><span class="kw">allprojects</span> {</span>
+<span class="line">    <span class="kw">configurations.all</span> {</span>
+<span class="line">        <span class="kw">resolutionStrategy</span> {</span>
+<span class="line">            <span class="fn">force</span>(</span>
+<span class="line">                <span class="str">"androidx.activity:activity:1.9.3"</span>,</span>
+<span class="line">                <span class="str">"androidx.activity:activity-ktx:1.9.3"</span>,</span>
+<span class="line">            )</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Why:</b> <code>force()</code> overrides whatever version any library requests. We pin to 1.9.3 which works with AGP 8.7.3. Koin only touches baseline ComponentActivity APIs present since 1.9.3 — safe downgrade.</p>
+<div class="callout"><h3>Trade-off</h3><p>Forcing versions is a hammer — use sparingly. If Koin 4.3.0 removes the need, remove the force block. Document <em>why</em> each force exists (see the comment in the real build file) so future maintainers know when it can be dropped.</p></div>
+
+<figure class="diagram">
+<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+<rect x="40" y="20" width="140" height="40" rx="6" fill="#EF6A5B" opacity="0.2" stroke="#EF6A5B"/>
+<text x="110" y="45" text-anchor="middle" font-size="12" fill="var(--text)">libs.versions.toml</text>
+<line x1="180" y1="40" x2="240" y2="40" stroke="#EF6A5B" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="250" y="10" width="140" height="30" rx="6" fill="none" stroke="var(--border)"/>
+<text x="320" y="30" text-anchor="middle" font-size="11" fill="var(--text)">build.gradle.kts</text>
+<line x1="320" y1="40" x2="320" y2="70" stroke="#EF6A5B" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="200" y="78" width="120" height="30" rx="6" fill="none" stroke="var(--border)"/>
+<text x="260" y="98" text-anchor="middle" font-size="11" fill="var(--text)">shared/build.gradle.kts</text>
+<line x1="320" y1="40" x2="420" y2="70" stroke="#EF6A5B" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="420" y="78" width="140" height="30" rx="6" fill="none" stroke="var(--border)"/>
+<text x="490" y="98" text-anchor="middle" font-size="11" fill="var(--text)">androidApp/build.gradle.kts</text>
+<rect x="40" y="130" width="520" height="40" rx="6" fill="#17233C" opacity="0.08" stroke="var(--border)"/>
+<text x="300" y="155" text-anchor="middle" font-size="12" fill="var(--text)">settings.gradle.kts — ties modules together</text>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#EF6A5B"/></marker></defs>
+</svg>
+<figcaption>How the four Gradle files relate: version catalog → root config → modules</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Kotlin DSL (<code>.kts</code>) replaces Groovy — type-safe, IDE autocomplete</li><li>Version catalogs centralize dependency versions — one-line upgrades</li><li><code>apply false</code> declares plugin availability without forcing it on all modules</li><li><code>resolutionStrategy.force()</code> is a last resort for transitive dependency conflicts</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. What happens if you remove <code>apply false</code> from a plugin in the root build.gradle.kts?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Every subproject would apply that plugin, even the shared module which doesn't need <code>android.application</code>. The build would fail because the shared module isn't an Android app.</div></div>
+<div class="quiz-item"><p>2. Why use <code>version.ref</code> in the version catalog instead of hardcoding version numbers in <code>build.gradle.kts</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Single source of truth. Upgrade Kotlin from 2.2.20 to 2.3.0 and all 8+ dependencies that reference <code>kotlin</code> update automatically. Prevents version-mismatch bugs.</div></div>
+<div class="quiz-item"><p>3. What does <code>resolutionStrategy.force()</code> do, and when should you use it?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It overrides whatever version any transitive dependency requests. Use only as a last resort when a library demands a version incompatible with your build tools. Document the reason.</div></div>
+<div class="quiz-item"><p>4. How does <code>settings.gradle.kts</code> connect to the other build files?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>include(":shared")</code> tells Gradle to look for <code>shared/build.gradle.kts</code>. Without the include, Gradle doesn't know the directory is a subproject module.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 2 -->
+<!-- ================================================================ -->
+<section class="module" id="m2">
+<h2>Module 2: KMM Architecture</h2>
+<p>How Kotlin Multiplatform shares code between Android and iOS without sacrificing platform APIs.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Understand the source set hierarchy</li><li>Master the <code>expect</code>/<code>actual</code> pattern</li><li>See how platform modules inject platform-specific dependencies</li><li>Compare KMP to alternatives (Flutter, React Native)</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> What is Kotlin Multiplatform?</h3>
+<p>KMP lets you write <b>business logic once</b> in Kotlin and compile it to JVM (Android), Native (iOS), JS (web), and Wasm. The key insight: you <b>don't</b> share UI code between platforms — each platform renders its own UI. But with Compose Multiplatform, even the UI can be shared.</p>
+<p>In this project, <code>commonMain</code> holds <b>all</b> the logic: rule engine, repositories, ViewModels, Compose screens. <code>androidMain</code> and <code>iosMain</code> are thin layers (~4 files each) that provide platform-specific implementations.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Source set hierarchy</h3>
+<p class="file-label">shared/build.gradle.kts (source sets)</p>
+<pre><code><span class="line"><span class="kw">kotlin</span> {</span>
+<span class="line">    <span class="fn">androidTarget</span>()</span>
+<span class="line">    <span class="fn">iosArm64</span>()</span>
+<span class="line">    <span class="fn">iosSimulatorArm64</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">sourceSets</span> {</span>
+<span class="line">        <span class="kw">commonMain.dependencies</span> {</span>
+<span class="line">            <span class="fn">implementation</span>(compose.runtime)</span>
+<span class="line">            <span class="fn">implementation</span>(libs.sqldelight.runtime)</span>
+<span class="line">            <span class="fn">implementation</span>(libs.koin.core)</span>
+<span class="line">        }</span>
+<span class="line">        <span class="kw">androidMain.dependencies</span> {</span>
+<span class="line">            <span class="fn">implementation</span>(libs.sqldelight.android.driver)</span>
+<span class="line">        }</span>
+<span class="line">        <span class="kw">iosMain.dependencies</span> {</span>
+<span class="line">            <span class="fn">implementation</span>(libs.sqldelight.native.driver)</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Key insight:</b> <code>commonMain</code> depends on <code>sqldelight.runtime</code> (pure Kotlin). <code>androidMain</code> adds the Android-specific driver; <code>iosMain</code> adds the Native driver. The <code>expect</code>/<code>actual</code> pattern bridges these at compile time.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> The expect/actual pattern</h3>
+<p>Declare an interface (or <code>expect</code> declaration) in <code>commonMain</code>. Each platform provides an <code>actual</code> implementation:</p>
+<p class="file-label">commonMain — ContactsGateway.kt</p>
+<pre><code><span class="line"><span class="kw">interface</span> <span class="tp">ContactsGateway</span> {</span>
+<span class="line">    <span class="kw">suspend fun</span> <span class="fn">contactNumbers</span>(): <span class="tp">Set</span>&lt;<span class="tp">String</span>&gt;</span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">hasPermission</span>(): <span class="tp">Boolean</span></span>
+<span class="line">}</span></code></pre>
+<p class="file-label">androidMain — AndroidContactsGateway.kt</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">AndroidContactsGateway</span>(<span class="kw">private val</span> context: <span class="tp">Context</span>) : <span class="tp">ContactsGateway</span> {</span>
+<span class="line">    <span class="kw">override suspend fun</span> <span class="fn">contactNumbers</span>(): <span class="tp">Set</span>&lt;<span class="tp">String</span>&gt; =</span>
+<span class="line">        <span class="fn">withContext</span>(Dispatchers.IO) {</span>
+<span class="line">            <span class="cm">// Read from ContactsContract provider</span></span>
+<span class="line">            context.contentResolver<span class="fn">.query</span>(<span class="tp">ContactsContract.CommonDataKinds.Phone</span>.CONTENT_URI, ...)</span>
+<span class="line">        }</span>
+<span class="line">}</span></code></pre>
+<p><b>Why interfaces over <code>expect class</code>:</b> <code>expect class</code> has Beta compiler limitations and can't accept constructor parameters that differ by platform. A plain interface in <code>commonMain</code> with platform actual implementations is the idiomatic KMP pattern.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Platform modules — wiring DI per platform</h3>
+<p class="file-label">commonMain — KoinInit.kt</p>
+<pre><code><span class="line"><span class="kw">fun</span> <span class="fn">initKoin</span>(appDeclaration: <span class="tp">KoinAppDeclaration</span> = {}) {</span>
+<span class="line">    <span class="fn">startKoin</span> {</span>
+<span class="line">        <span class="fn">appDeclaration</span>()</span>
+<span class="line">        <span class="fn">modules</span>(<span class="fn">platformModule</span>(), sharedModule)</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><code>platformModule()</code> is an <code>expect fun</code> — each platform returns its module with platform-specific bindings (Android <code>Context</code>, iOS <code>NSApplication</code>). The <code>sharedModule</code> is pure Kotlin, identical on all platforms.</p>
+
+<div class="callout"><h3>KMP vs Alternatives</h3>
+<ul><li><b>Flutter:</b> Dart language (new skill), custom rendering engine (not native UI), no access to Telecom APIs without plugins</li><li><b>React Native:</b> JavaScript bridge (performance overhead), platform modules needed for native APIs</li><li><b>KMP:</b> Native Android APIs accessible with zero bridging. Same Kotlin skills as Android dev.</li></ul></div>
+
+<figure class="diagram">
+<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
+<rect x="200" y="10" width="200" height="50" rx="6" fill="#EF6A5B" opacity="0.15" stroke="#EF6A5B"/>
+<text x="300" y="32" text-anchor="middle" font-size="13" fill="var(--text)">commonMain</text>
+<text x="300" y="50" text-anchor="middle" font-size="10" fill="var(--muted)">Rules, Repos, ViewModels, Compose UI</text>
+<line x1="250" y1="60" x2="160" y2="100" stroke="var(--border)" stroke-width="1.5"/>
+<line x1="350" y1="60" x2="440" y2="100" stroke="var(--border)" stroke-width="1.5"/>
+<rect x="80" y="105" width="160" height="50" rx="6" fill="#059669" opacity="0.1" stroke="#059669"/>
+<text x="160" y="127" text-anchor="middle" font-size="13" fill="var(--text)">androidMain</text>
+<text x="160" y="145" text-anchor="middle" font-size="10" fill="var(--muted)">AndroidSqliteDriver, Context</text>
+<rect x="360" y="105" width="160" height="50" rx="6" fill="#2563EB" opacity="0.1" stroke="#2563EB"/>
+<text x="440" y="127" text-anchor="middle" font-size="13" fill="var(--text)">iosMain</text>
+<text x="440" y="145" text-anchor="middle" font-size="10" fill="var(--muted)">NativeSqliteDriver, NSApplication</text>
+<rect x="120" y="180" width="360" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="300" y="205" text-anchor="middle" font-size="11" fill="var(--text)">expect/actual bridges: DriverFactory, ContactsGateway, DI</text>
+</svg>
+<figcaption>commonMain is the heavy layer. Platform modules are thin adapters.</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Put business logic in <code>commonMain</code> — it compiles everywhere</li><li>Use interfaces (not <code>expect class</code>) for platform abstractions — avoids Beta compiler issues</li><li>Platform modules inject platform-specific types via Koin</li><li>KMP is the most "Android-native" cross-platform option — no new language, no bridge</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (3 questions)</summary>
+<div class="quiz-item"><p>1. Why use an interface in commonMain instead of <code>expect class</code> for DriverFactory?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>expect class</code> has Beta compiler limitations, can't have platform-specific constructor parameters, and triggers compiler warnings. A plain interface with platform <code>actual</code> implementations is the idiomatic and stable KMP pattern.</div></div>
+<div class="quiz-item"><p>2. Can <code>androidMain</code> code use iOS APIs?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">No. <code>androidMain</code> compiles only for the JVM/Android target. It can use Android SDK APIs (Context, ContactsContract). <code>iosMain</code> uses iOS frameworks. They never mix.</div></div>
+<div class="quiz-item"><p>3. What happens if you put an Android-specific API call in <code>commonMain</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Compilation fails for iOS. <code>commonMain</code> compiles for ALL targets simultaneously, so it can only use APIs available on all platforms (pure Kotlin, Compose Multiplatform, kotlinx libraries).</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 3 -->
+<!-- ================================================================ -->
+<section class="module" id="m3">
+<h2>Module 3: Jetpack Compose — Declarative UI</h2>
+<p>Build native Android UI with pure Kotlin — no XML, no findViewById, no View hierarchy.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Understand declarative vs imperative UI</li><li>Master <code>@Composable</code> functions and recomposition</li><li>Use StateFlow and ViewModel for reactive state</li><li>Apply Material3 theming and Modifier chains</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Imperative vs Declarative</h3>
+<p><b>Imperative (old XML way):</b> "Find the TextView with ID 'title'. Set its text to 'Hello'. When data changes, find it again and update."</p>
+<p><b>Declarative (Compose):</b> "Here's a Text composable showing <code>state.title</code>. When <code>state.title</code> changes, the UI automatically re-renders."</p>
+<p>No more <code>findViewById</code>, no more manual view updates, no more "my RecyclerView shows stale data" bugs. The UI is a function of state — <b>UI = f(state)</b>.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> The @Composable function</h3>
+<p class="file-label">CallScreen.kt (fragment)</p>
+<pre><code><span class="line"><span class="ann">@Composable</span></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">CallScreen</span>(</span>
+<span class="line">    number: <span class="tp">String</span>,</span>
+<span class="line">    phase: <span class="tp">CallUiPhase</span>,</span>
+<span class="line">    onAnswer: () -> <span class="tp">Unit</span>,</span>
+<span class="line">    onDecline: () -> <span class="tp">Unit</span>,</span>
+<span class="line">) {</span>
+<span class="line">    <span class="tp">MaterialTheme</span> {</span>
+<span class="line">        <span class="tp">Surface</span>(modifier = <span class="tp">Modifier</span>.<span class="fn">fillMaxSize</span>()) {</span>
+<span class="line">            <span class="tp">Column</span>(modifier = <span class="tp">Modifier</span>.<span class="fn">fillMaxSize</span>().<span class="fn">safeDrawingPadding</span>().<span class="fn">padding</span>(<span class="num">24</span>.dp)) {</span>
+<span class="line">                <span class="tp">Text</span>(</span>
+<span class="line">                    text = <span class="kw">when</span> (phase) {</span>
+<span class="line">                        <span class="tp">CallUiPhase</span>.RINGING -> <span class="str">"Incoming call"</span></span>
+<span class="line">                        <span class="tp">CallUiPhase</span>.ACTIVE -> <span class="str">"In call"</span></span>
+<span class="line">                        <span class="kw">else</span> -> <span class="str">""</span></span>
+<span class="line">                    }, style = <span class="tp">MaterialTheme</span>.typography.labelLarge)</span>
+<span class="line">                <span class="tp">Text</span>(text = number, style = <span class="tp">MaterialTheme</span>.typography.headlineMedium)</span>
+<span class="line">            }</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Every @Composable function:</b></p>
+<ul><li>Has no return value — it emits UI into the composition tree</li><li>Can call other @Composable functions</li><li>Re-executes ("recomposes") when its state inputs change</li><li>Runs on the main thread (unless explicitly shifted)</li></ul>
+
+<h3><span class="badge badge-i">Intermediate</span> State management — ViewModel + StateFlow</h3>
+<p class="file-label">HomeViewModel.kt (fragment)</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">HomeViewModel</span>(</span>
+<span class="line">    <span class="kw">private val</span> callLogRepository: <span class="tp">CallLogRepository</span>,</span>
+<span class="line">    <span class="kw">private val</span> settingsRepository: <span class="tp">SettingsRepository</span>,</span>
+<span class="line">) : <span class="tp">ViewModel</span>() {</span>
+<span class="line">    <span class="kw">private val</span> _state = <span class="fn">MutableStateFlow</span>(<span class="fn">HomeUiState</span>())</span>
+<span class="line">    <span class="kw">val</span> state: <span class="tp">StateFlow</span>&lt;<span class="tp">HomeUiState</span>&gt; = _state.<span class="fn">asStateFlow</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">val</span> blockingEnabled: <span class="tp">StateFlow</span>&lt;<span class="tp">Boolean</span>&gt; =</span>
+<span class="line">        settingsRepository.blockingEnabled</span>
+<span class="line">            .<span class="fn">stateIn</span>(viewModelScope, <span class="tp">SharingStarted</span>.<span class="fn">WhileSubscribed</span>(<span class="num">5000</span>), <span class="kw">true</span>)</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">init</span> { <span class="fn">refresh</span>() }</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">refresh</span>() {</span>
+<span class="line">        viewModelScope.<span class="fn">launch</span> {</span>
+<span class="line">            <span class="kw">val</span> stats = callLogRepository.<span class="fn">blockedStats</span>()</span>
+<span class="line">            _state.value = <span class="fn">HomeUiState</span>(blockedToday = stats.today)</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>In the Composable:</b></p>
+<pre><code><span class="line"><span class="kw">val</span> state <span class="kw">by</span> homeViewModel.state.<span class="fn">collectAsState</span>()</span>
+<span class="line"><span class="tp">Text</span>(text = <span class="str">"${state.blockedToday}"</span>)  <span class="cm">// auto-updates when StateFlow emits</span></span></code></pre>
+<p><b>Why StateFlow over LiveData:</b> LiveData is Android-only. StateFlow is pure Kotlin — works in KMP <code>commonMain</code>, works with Compose's <code>collectAsState()</code>, and integrates with coroutines naturally.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Modifier chains — order matters</h3>
+<pre><code><span class="line"><span class="cm">// Padding added OUTSIDE the clickable area</span></span>
+<span class="line"><span class="fn">Modifier</span>.<span class="fn">clickable</span> { ... }.<span class="fn">padding</span>(<span class="num">16</span>.dp)</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// Padding added INSIDE — clickable area extends to padded bounds</span></span>
+<span class="line"><span class="fn">Modifier</span>.<span class="fn">padding</span>(<span class="num">16</span>.dp).<span class="fn">clickable</span> { ... }</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// Chaining: fill → safe drawing padding → content padding</span></span>
+<span class="line"><span class="fn">Modifier</span>.<span class="fn">fillMaxSize</span>().<span class="fn">safeDrawingPadding</span>().<span class="fn">padding</span>(<span class="num">24</span>.dp)</span></code></pre>
+<p>Modifiers are applied <b>outside-in</b>: the leftmost modifier wraps everything to its right. <code>safeDrawingPadding()</code> must come before <code>padding()</code> to ensure the system bars inset is handled before the content padding is applied.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg">
+<rect x="30" y="10" width="120" height="50" rx="6" fill="#EF6A5B" opacity="0.15" stroke="#EF6A5B"/>
+<text x="90" y="32" text-anchor="middle" font-size="12" fill="var(--text)">ViewModel</text>
+<text x="90" y="50" text-anchor="middle" font-size="9" fill="var(--muted)">StateFlow&lt;UiState&gt;</text>
+<line x1="150" y1="35" x2="210" y2="35" stroke="#EF6A5B" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="180" y="28" text-anchor="middle" font-size="9" fill="var(--muted)">emit</text>
+<rect x="220" y="10" width="120" height="50" rx="6" fill="#D97706" opacity="0.1" stroke="#D97706"/>
+<text x="280" y="32" text-anchor="middle" font-size="12" fill="var(--text)">collectAsState()</text>
+<text x="280" y="50" text-anchor="middle" font-size="9" fill="var(--muted)">converts to Compose State</text>
+<line x1="340" y1="35" x2="400" y2="35" stroke="#D97706" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="370" y="28" text-anchor="middle" font-size="9" fill="var(--muted)">recompose</text>
+<rect x="410" y="10" width="140" height="50" rx="6" fill="#059669" opacity="0.1" stroke="#059669"/>
+<text x="480" y="32" text-anchor="middle" font-size="12" fill="var(--text)">@Composable UI</text>
+<text x="480" y="50" text-anchor="middle" font-size="9" fill="var(--muted)">Text, Button, Card...</text>
+<rect x="180" y="90" width="220" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="290" y="115" text-anchor="middle" font-size="10" fill="var(--text)">UI = f(state) — declarative, reactive</text>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#EF6A5B"/></marker></defs>
+</svg>
+<figcaption>Unidirectional data flow: ViewModel → StateFlow → collectAsState → UI</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Compose is declarative: describe what the UI <em>should be</em>, not how to update it</li><li>@Composable functions re-execute when State reads change — this is recomposition</li><li>StateFlow + collectAsState() is the idiomatic state bridge in KMP</li><li>Modifier order determines layout behavior — always test your chains</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. What triggers recomposition in Compose?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">When a <code>State</code> object read by a @Composable function changes value. The Compose runtime tracks which composables read which states and re-executes only those that need updating.</div></div>
+<div class="quiz-item"><p>2. Why use StateFlow instead of LiveData in KMP?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">LiveData is an Android-only API. StateFlow is pure Kotlin (kotlinx.coroutines) and works in commonMain, making it available on iOS, JVM, and JS targets.</div></div>
+<div class="quiz-item"><p>3. What happens if you call <code>.padding(16.dp)</code> before <code>.clickable {}</code> vs after?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><b>Padding first:</b> padding is INSIDE the clickable area — the entire padded region is tappable. <b>Clickable first:</b> only the inner (non-padded) area is tappable; the padding sits outside the clickable region.</div></div>
+<div class="quiz-item"><p>4. What does <code>stateIn(viewModelScope, WhileSubscribed(5000), true)</code> do?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Converts a cold Flow to a hot StateFlow. <code>WhileSubscribed(5000)</code> keeps the upstream active for 5 seconds after the last subscriber disappears (prevents restart on config changes). The last argument (<code>true</code>) is the initial value.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 4: Navigation -->
+<!-- ================================================================ -->
+<section class="module" id="m4">
+<h2>Module 4: Navigation Compose</h2>
+<p>Move between screens while keeping state, passing arguments, and managing the back stack.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Define routes with typed arguments</li><li>Build a NavHost with composable destinations</li><li>Use <code>launchSingleTop</code> and <code>popUpTo</code> for correct navigation</li><li>Handle section-based navigation for bottom bars</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Routes — String-based screen identifiers</h3>
+<pre><code><span class="line"><span class="kw">object</span> <span class="tp">Routes</span> {</span>
+<span class="line">    <span class="kw">const val</span> HOME = <span class="str">"home"</span></span>
+<span class="line">    <span class="kw">const val</span> CALL_LOG = <span class="str">"call_log/{filter}"</span></span>
+<span class="line">    <span class="kw">const val</span> STATS = <span class="str">"stats"</span></span>
+<span class="line">    <span class="kw">const val</span> SETTINGS = <span class="str">"settings"</span></span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">callLogRoute</span>(filter: <span class="tp">String</span> = <span class="str">"all"</span>) = <span class="str">"call_log/$filter"</span></span>
+<span class="line">}</span></code></pre>
+<p><code>{filter}</code> is a path parameter — it gets substituted at runtime. <code>call_log/today</code>, <code>call_log/week</code>, <code>call_log/all</code> all match the same route template.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> NavHost wiring</h3>
+<p class="file-label">AppNavHost.kt (core pattern)</p>
+<pre><code><span class="line"><span class="ann">@Composable</span></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">AppNavHost</span>(navController: <span class="tp">NavHostController</span>, ...) {</span>
+<span class="line">    <span class="tp">NavHost</span>(navController = navController, startDestination = <span class="tp">Routes</span>.HOME) {</span>
+<span class="line">        <span class="fn">composable</span>(<span class="tp">Routes</span>.HOME) {</span>
+<span class="line">            <span class="fn">HomeScreen</span>(onNavigateToCallLog = {</span>
+<span class="line">                navController.<span class="fn">navigate</span>(<span class="fn">Routes.callLogRoute</span>())</span>
+<span class="line">            })</span>
+<span class="line">        }</span>
+<span class="line">        <span class="fn">composable</span>(</span>
+<span class="line">            route = <span class="tp">Routes</span>.CALL_LOG,</span>
+<span class="line">            arguments = <span class="fn">listOf</span>(<span class="fn">navArgument</span>(<span class="str">"filter"</span>) { type = <span class="tp">NavType</span>.StringType })</span>
+<span class="line">        ) { backStackEntry -></span>
+<span class="line">            <span class="kw">val</span> filter = backStackEntry.arguments?.<span class="fn">getString</span>(<span class="str">"filter"</span>) ?: <span class="str">"all"</span></span>
+<span class="line">            <span class="fn">CallLogScreen</span>(filter = filter)</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p>Each <code>composable()</code> block registers a screen. When the navController navigates to that route, Compose creates (or reuses) the composable. The <code>backStackEntry.arguments</code> bundle contains the parsed route parameters.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Navigation options — preventing reload</h3>
+<p><b>The bug:</b> User taps "Call Log" in the bottom bar repeatedly. Each tap navigates <code>call_log/all</code> → <code>popUpTo(home)</code> → <code>navigate(call_log/all)</code>, which destroys and recreates the screen.</p>
+<p class="file-label">AppNavHost.kt — the fix</p>
+<pre><code><span class="line"><span class="kw">val</span> navBackStackEntry <span class="kw">by</span> navController.<span class="fn">currentBackStackEntryAsState</span>()</span>
+<span class="line"><span class="kw">val</span> currentRoute = navBackStackEntry?.destination?.route</span>
+<span class="line"><span class="kw">val</span> selectedSection = <span class="fn">routeSection</span>(currentRoute)</span>
+<span class="line"></span>
+<span class="line">onNavigate = { index -></span>
+<span class="line">    <span class="kw">val</span> destination = sectionRoutes.<span class="fn">getOrElse</span>(index) { <span class="tp">Routes</span>.HOME }</span>
+<span class="line">    <span class="kw">val</span> isRoot = currentRoute <span class="kw">in</span> sectionRoutes ||</span>
+<span class="line">        (currentRoute?.<span class="fn">startsWith</span>(<span class="str">"call_log"</span>) == <span class="kw">true</span> && destination.<span class="fn">startsWith</span>(<span class="str">"call_log"</span>))</span>
+<span class="line">    <span class="kw">if</span> (index == selectedSection && isRoot) <span class="kw">return</span>@AdaptiveScaffold <span class="cm">// already here, skip</span></span>
+<span class="line">    navController.<span class="fn">navigate</span>(destination) {</span>
+<span class="line">        <span class="fn">popUpTo</span>(<span class="tp">Routes</span>.HOME)</span>
+<span class="line">        launchSingleTop = <span class="kw">true</span></span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Why two checks:</b> <code>launchSingleTop</code> alone isn't enough — it prevents duplicate instances but <code>popUpTo</code> can still destroy the existing screen. The explicit <code>isRoot</code> check prevents any navigation when already on the section root. The <code>call_log</code> pattern check handles route templates where <code>"call_log/{filter}"</code> ≠ <code>"call_log/all"</code>.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+<rect x="180" y="10" width="140" height="40" rx="6" fill="#EF6A5B" opacity="0.2" stroke="#EF6A5B"/>
+<text x="250" y="35" text-anchor="middle" font-size="12" fill="var(--text)">Home</text>
+<line x1="250" y1="50" x2="80" y2="90" stroke="var(--border)" stroke-width="1.5"/>
+<line x1="250" y1="50" x2="420" y2="90" stroke="var(--border)" stroke-width="1.5"/>
+<line x1="250" y1="50" x2="250" y2="90" stroke="var(--border)" stroke-width="1.5"/>
+<rect x="15" y="95" width="130" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="80" y="120" text-anchor="middle" font-size="11" fill="var(--text)">CallLog/all</text>
+<rect x="180" y="95" width="140" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="250" y="120" text-anchor="middle" font-size="11" fill="var(--text)">BlockList</text>
+<rect x="355" y="95" width="130" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="420" y="120" text-anchor="middle" font-size="11" fill="var(--text)">Settings</text>
+<rect x="15" y="155" width="130" height="30" rx="4" fill="none" stroke="var(--muted)" stroke-dasharray="3"/>
+<text x="80" y="175" text-anchor="middle" font-size="9" fill="var(--muted)">CallLog/today</text>
+<rect x="355" y="155" width="130" height="30" rx="4" fill="none" stroke="var(--muted)" stroke-dasharray="3"/>
+<text x="420" y="175" text-anchor="middle" font-size="9" fill="var(--muted)">AutoResponder</text>
+</svg>
+<figcaption>Navigation graph: root destinations (solid) and sub-screens (dashed)</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li><code>navArgument()</code> with <code>NavType</code> enables type-safe argument passing</li><li><code>launchSingleTop = true</code> reuses existing screen instead of creating duplicates</li><li><code>popUpTo(ROOT)</code> clears the back stack when switching sections</li><li>Explicit route comparison prevents screen reload on same-tab taps</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (3 questions)</summary>
+<div class="quiz-item"><p>1. What does <code>launchSingleTop = true</code> do?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">If a destination matching the route already exists at the top of the back stack, it reuses it instead of creating a new instance. Prevents "screen stacking" when tapping the same nav item.</div></div>
+<div class="quiz-item"><p>2. Why use <code>popUpTo(Routes.HOME)</code> when switching bottom nav tabs?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Without it, tapping between tabs would stack screens: [Home, CallLog, Home, BlockList, Home]. The back stack would grow indefinitely. <code>popUpTo(HOME)</code> clears everything and makes each tab feel like a fresh start.</div></div>
+<div class="quiz-item"><p>3. How are route arguments like <code>{filter}</code> passed and retrieved?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">They're part of the route string: <code>"call_log/today"</code>. Navigation Compose parses them into the <code>arguments</code> bundle. The composable retrieves them via <code>backStackEntry.arguments?.getString("filter")</code>.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 5: Adaptive Form Factors -->
+<!-- ================================================================ -->
+<section class="module" id="m5">
+<h2>Module 5: Adaptive Form Factors</h2>
+<p>Make the app look great on phones (portrait/landscape), foldables, and tablets with zero platform-specific code.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Detect WindowSizeClass at runtime</li><li>Switch between BottomBar and NavigationRail</li><li>Cap content width and center on wide screens</li><li>Implement two-pane list-detail on Expanded</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Why adaptive?</h3>
+<p>Android apps run on everything from 4" phones to 14" tablets. A layout built for 360dp-wide phones looks absurdly stretched on 840dp+ tablets. The WindowSizeClass system gives three tiers so you can build <strong>one layout</strong> that works everywhere.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> WindowSizeClass detection</h3>
+<p class="file-label">WindowSizeClass.kt</p>
+<pre><code><span class="line"><span class="kw">enum class</span> <span class="tp">WindowSizeClass</span> { Compact, Medium, Expanded }</span>
+<span class="line"></span>
+<span class="line"><span class="ann">@Composable</span></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">rememberWindowSizeClass</span>(): <span class="tp">WindowSizeClass</span> {</span>
+<span class="line">    <span class="kw">val</span> widthDp = <span class="tp">LocalConfiguration</span>.current.screenWidthDp</span>
+<span class="line">    <span class="kw">return when</span> {</span>
+<span class="line">        widthDp &lt; <span class="num">600</span> -> <span class="tp">WindowSizeClass</span>.Compact   <span class="cm">// phone portrait</span></span>
+<span class="line">        widthDp &lt; <span class="num">840</span> -> <span class="tp">WindowSizeClass</span>.Medium    <span class="cm">// phone landscape, small tablet</span></span>
+<span class="line">        <span class="kw">else</span> -> <span class="tp">WindowSizeClass</span>.Expanded               <span class="cm">// tablet, desktop</span></span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>600dp</b> and <b>840dp</b> are Material Design canonical breakpoints. Respect them, don't invent your own — users recognize the pattern.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> AdaptiveScaffold — two scaffold modes</h3>
+<p class="file-label">AdaptiveScaffold.kt (structure, ~150 lines)</p>
+<pre><code><span class="line"><span class="kw">when</span> (windowSizeClass) {</span>
+<span class="line">    <span class="tp">WindowSizeClass</span>.Compact -> {</span>
+<span class="line">        <span class="tp">Column</span> {</span>
+<span class="line">            <span class="tp">Box</span>(modifier = Modifier.<span class="fn">weight</span>(1f)) { content() }</span>
+<span class="line">            <span class="tp">NavigationBar</span> {</span>
+<span class="line">                <span class="tp">NavigationBarItem</span>(selected = ..., onClick = { onNavigate(i) })</span>
+<span class="line">            }</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">    <span class="tp">WindowSizeClass</span>.Medium, <span class="tp">WindowSizeClass</span>.Expanded -> {</span>
+<span class="line">        <span class="tp">Row</span> {</span>
+<span class="line">            <span class="tp">NavigationRail</span> {</span>
+<span class="line">                <span class="tp">NavigationRailItem</span>(selected = ..., onClick = { onNavigate(i) })</span>
+<span class="line">            }</span>
+<span class="line">            <span class="tp">Box</span>(modifier = Modifier.<span class="fn">weight</span>(1f)) { content() }</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>NavigationBar</b> (bottom) for Compact and <b>NavigationRail</b> (side) for Medium/Expanded. The content area is identical — only the chrome changes.</p>
+
+<h3><span class="badge badge-a">Advanced</span> AdaptiveContent + two-pane layout</h3>
+<p>On wide screens, content looks best <strong>capped at 600dp and centered</strong>. Otherwise, a single-column form stretches across a 14" tablet looking absurd.</p>
+<pre><code><span class="line"><span class="cm">// CallLogScreen — one pane on phone, two panes on tablet</span></span>
+<span class="line"><span class="kw">if</span> (windowSizeClass == <span class="tp">WindowSizeClass</span>.Expanded) {</span>
+<span class="line">    <span class="tp">Row</span> {</span>
+<span class="line">        <span class="fn">CallLogListPane</span>(modifier = Modifier.<span class="fn">width</span>(<span class="num">340</span>.dp).<span class="fn">fillMaxHeight</span>())</span>
+<span class="line">        <span class="fn">CallLogDetailPane</span>(modifier = Modifier.<span class="fn">weight</span>(1f).<span class="fn">fillMaxHeight</span>())</span>
+<span class="line">    }</span>
+<span class="line">} <span class="kw">else</span> {</span>
+<span class="line">    <span class="fn">AdaptiveContent</span>(windowSizeClass = windowSizeClass) {</span>
+<span class="line">        <span class="cm">// single column, capped at 600dp</span></span>
+<span class="line">        <span class="tp">LazyColumn</span> { ... }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>340dp</b> for the list pane is a Goldilocks width: wide enough for readable text, narrow enough that the detail pane has room on an 840dp screen (840 - 340 = 500dp remaining). On larger screens the detail pane grows via <code>weight(1f)</code>.</p>
+<div class="callout"><h3>Edge-to-edge</h3><p>Android 15+ (targetSdk 36) enforces edge-to-edge — your content draws behind the status bar and navigation bar. <code>WindowInsets.safeDrawing.only(Top + Horizontal)</code> adds padding only where needed so content isn't hidden behind system chrome.</p></div>
+
+<figure class="diagram">
+<svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="90" y="40" text-anchor="middle" font-size="10" fill="var(--text)">Compact</text>
+<text x="90" y="55" text-anchor="middle" font-size="8" fill="var(--muted)">&lt;600dp</text>
+<rect x="35" y="65" width="110" height="12" rx="2" fill="var(--accent)" opacity="0.3"/>
+<text x="90" y="74" text-anchor="middle" font-size="7" fill="var(--text)">BottomBar</text>
+<rect x="35" y="82" width="110" height="45" rx="2" fill="#17233C" opacity="0.08"/>
+<text x="90" y="108" text-anchor="middle" font-size="7" fill="var(--text)">Single Column</text>
+<rect x="190" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="260" y="40" text-anchor="middle" font-size="10" fill="var(--text)">Medium</text>
+<text x="260" y="55" text-anchor="middle" font-size="8" fill="var(--muted)">600-839dp</text>
+<rect x="205" y="65" width="12" height="75" rx="2" fill="var(--accent)" opacity="0.3"/>
+<text x="211" y="140" text-anchor="middle" font-size="7" fill="var(--text)">NavRail</text>
+<rect x="222" y="70" width="93" height="60" rx="2" fill="#17233C" opacity="0.08"/>
+<text x="268" y="103" text-anchor="middle" font-size="7" fill="var(--text)">Capped 600dp</text>
+<rect x="360" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="430" y="40" text-anchor="middle" font-size="10" fill="var(--text)">Expanded</text>
+<text x="430" y="55" text-anchor="middle" font-size="8" fill="var(--muted)">≥840dp</text>
+<rect x="375" y="65" width="12" height="70" rx="2" fill="var(--accent)" opacity="0.3"/>
+<rect x="392" y="70" width="93" height="28" rx="2" fill="#17233C" opacity="0.08"/>
+<rect x="392" y="105" width="93" height="28" rx="2" fill="#17233C" opacity="0.08"/>
+<text x="438" y="88" text-anchor="middle" font-size="7" fill="var(--text)">Two Pane</text>
+</svg>
+<figcaption>Three tiers: Compact (phone) → Medium (phone landscape) → Expanded (tablet)</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>WindowSizeClass uses 600dp and 840dp Material Design breakpoints</li><li>NavigationBar (bottom) for Compact, NavigationRail (side) for larger</li><li>AdaptiveContent caps at 600dp — content looks silly stretched to 1400dp</li><li>Two-pane on Expanded: 340dp fixed list + weight(1f) detail — test on actual tablet</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (3 questions)</summary>
+<div class="quiz-item"><p>1. Why 600dp and 840dp specifically?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">These are Google's canonical Material Design breakpoints. 600dp is where a phone landscape or small tablet has room for a nav rail. 840dp is where a full-size tablet can support two-pane layouts.</div></div>
+<div class="quiz-item"><p>2. What happens if you use NavigationBar on an Expanded screen?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It would work but look wrong — a bottom bar stretches across the full tablet width while your eyes track a completely different focal point than on a phone. The nav rail keeps navigation near your thumb/pointer in landscape.</div></div>
+<div class="quiz-item"><p>3. Why <code>weight(1f)</code> on the detail pane instead of a fixed width?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">A fixed width would work on exactly one screen size. <code>weight(1f)</code> means "take all remaining space" — it grows/shrinks with the window, working on 840dp and 1200dp tablets alike.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 6: SQLDelight -->
+<!-- ================================================================ -->
+<section class="module" id="m6">
+<h2>Module 6: SQLDelight — Type-Safe SQL for KMP</h2>
+<p>Persist rules, call logs, and settings with a database that works identically on Android and iOS.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Write .sq files with valid SQL and named queries</li><li>Design schema with migrations (5 versions)</li><li>Implement the Repository pattern over SQLDelight</li><li>Handle platform-specific drivers via DriverFactory</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Why SQLDelight over Room?</h3>
+<p><b>Room</b> is Android-only (uses annotation processing, ties to Android lifecycle). <b>SQLDelight</b> generates Kotlin from .sq files — works on JVM, Native, JS. For KMP, it's the standard choice.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Schema design</h3>
+<p class="file-label">AppDatabase.sq (7 tables)</p>
+<pre><code><span class="line"><span class="kw">CREATE TABLE</span> BlockedNumber (</span>
+<span class="line">    id <span class="kw">INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT</span>,</span>
+<span class="line">    number <span class="kw">TEXT NOT NULL</span>,</span>
+<span class="line">    label <span class="kw">TEXT</span>,</span>
+<span class="line">    created_at <span class="kw">INTEGER NOT NULL DEFAULT</span> (CAST(strftime('%s','now') AS INTEGER)),</span>
+<span class="line">    <span class="kw">UNIQUE</span>(number)</span>
+<span class="line">);</span>
+<span class="line"></span>
+<span class="line"><span class="cm">-- Named query → generates Kotlin function</span></span>
+<span class="line"><span class="kw">selectAllBlockedNumbers</span>:</span>
+<span class="line"><span class="kw">SELECT</span> * <span class="kw">FROM</span> BlockedNumber <span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>;</span>
+<span class="line"></span>
+<span class="line"><span class="kw">insertBlockedNumber</span>:</span>
+<span class="line"><span class="kw">INSERT OR IGNORE INTO</span> BlockedNumber(number, label) <span class="kw">VALUES</span> (?, ?);</span></code></pre>
+<p><b>Pattern:</b> each table gets CRUD queries: <code>selectAll</code>, <code>insert</code>, <code>deleteById</code>, <code>toggle</code>. The <code>CallLogEntry</code> table uses <code>CHECK</code> constraints for type safety on the <code>action</code> column.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Migrations & timestamp portability</h3>
+<p>The app has 5 migration files (<code>1.sqm</code> through <code>5.sqm</code>). Each adds columns or tables without breaking existing data:</p>
+<pre><code><span class="line"><span class="cm">-- 1.sqm: initial schema</span></span>
+<span class="line"><span class="kw">ALTER TABLE</span> BlockedNumber <span class="kw">ADD COLUMN</span> label <span class="kw">TEXT</span>;</span></code></pre>
+<p><b>Critical decision:</b> timestamps use <code>strftime('%s', 'now')</code> instead of <code>unixepoch()</code>. Why? <code>unixepoch()</code> needs SQLite 3.38+ — not available on older Android devices (confirmed crash on API 33 emulator). <code>strftime()</code> has been available since SQLite 3.0.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Repository pattern — interface + SQL impl</h3>
+<p class="file-label">RuleRepository (interface in commonMain)</p>
+<pre><code><span class="line"><span class="kw">interface</span> <span class="tp">RuleRepository</span> {</span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">blockedNumbers</span>(): <span class="tp">Flow</span>&lt;<span class="tp">List</span>&lt;<span class="tp">BlockedNumberEntry</span>&gt;&gt;</span>
+<span class="line">    <span class="kw">suspend fun</span> <span class="fn">addBlockedNumber</span>(number: <span class="tp">String</span>)</span>
+<span class="line">    <span class="kw">suspend fun</span> <span class="fn">removeBlockedNumber</span>(id: <span class="tp">Long</span>)</span>
+<span class="line">}</span></code></pre>
+<p class="file-label">SqlRuleRepository (SQLDelight implementation)</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">SqlRuleRepository</span>(<span class="kw">private val</span> db: <span class="tp">AppDatabase</span>) : <span class="tp">RuleRepository</span> {</span>
+<span class="line">    <span class="kw">override fun</span> <span class="fn">blockedNumbers</span>() = db.appDatabaseQueries</span>
+<span class="line">        .<span class="fn">selectAllBlockedNumbers</span>()</span>
+<span class="line">        .<span class="fn">asFlow</span>().<span class="fn">mapToList</span>()</span>
+<span class="line">}</span></code></pre>
+<p><b>Why Flow:</b> SQLDelight's <code>asFlow()</code> emits on every database change. ViewModels collect these flows and the UI auto-updates — no polling, no manual refresh.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 550 180" xmlns="http://www.w3.org/2000/svg">
+<rect x="30" y="10" width="110" height="45" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="85" y="28" text-anchor="middle" font-size="11" fill="var(--text)">.sq files</text>
+<text x="85" y="44" text-anchor="middle" font-size="9" fill="var(--muted)">schema + queries</text>
+<line x1="140" y1="32" x2="190" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a2)"/>
+<rect x="200" y="10" width="120" height="45" rx="6" fill="var(--accent)" opacity="0.15" stroke="var(--accent)"/>
+<text x="260" y="28" text-anchor="middle" font-size="11" fill="var(--text)">Code Gen</text>
+<text x="260" y="44" text-anchor="middle" font-size="9" fill="var(--muted)">type-safe Kotlin</text>
+<line x1="320" y1="32" x2="370" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a2)"/>
+<rect x="380" y="10" width="140" height="45" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="450" y="28" text-anchor="middle" font-size="11" fill="var(--text)">Repository</text>
+<text x="450" y="44" text-anchor="middle" font-size="9" fill="var(--muted)">Flow-based API</text>
+<rect x="170" y="80" width="210" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="275" y="98" text-anchor="middle" font-size="10" fill="var(--text)">DriverFactory (expect/actual)</text>
+<text x="275" y="114" text-anchor="middle" font-size="8" fill="var(--muted)">AndroidSqliteDriver | NativeSqliteDriver</text>
+<line x1="275" y1="80" x2="275" y2="65" stroke="var(--border)" stroke-width="1" stroke-dasharray="3"/>
+<rect x="170" y="138" width="210" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<text x="275" y="158" text-anchor="middle" font-size="10" fill="var(--text)">SQLite (platform-provided)</text>
+<defs><marker id="a2" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker></defs>
+</svg>
+<figcaption>SQLDelight pipeline: .sq → codegen → Repository → DriverFactory → SQLite</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>SQLDelight is the KMP-standard database — Room is Android-only</li><li>Named queries in .sq files generate type-safe Kotlin functions</li><li><code>asFlow().mapToList()</code> gives reactive query results — UI auto-updates on writes</li><li>Use <code>strftime()</code> not <code>unixepoch()</code> for portable timestamp handling</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. How does a named query like <code>selectAllBlockedNumbers</code> become a Kotlin function?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">SQLDelight's Gradle plugin reads the .sq file at compile time and generates a Kotlin function with the same name, typed parameters for <code>WHERE</code> clauses, and typed return values.</div></div>
+<div class="quiz-item"><p>2. Why <code>Flow</code> as the return type for list queries?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>asFlow()</code> triggers a re-emission whenever the underlying table changes. A ViewModel collecting this Flow automatically gets fresh data after any insert/delete — no manual refresh calls needed.</div></div>
+<div class="quiz-item"><p>3. Why not use <code>unixepoch()</code> for timestamps?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>unixepoch()</code> requires SQLite 3.38+ which isn't bundled on older Android versions (confirmed crash on API 33). <code>strftime('%s', 'now')</code> works on all SQLite versions since 3.0.</div></div>
+<div class="quiz-item"><p>4. What does <code>INSERT OR IGNORE</code> do?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">If a row with the same UNIQUE constraint already exists, the insert is silently skipped (no error). Used here for <code>number</code> which has a UNIQUE constraint — prevents duplicate entries.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 7: Koin DI -->
+<!-- ================================================================ -->
+<section class="module" id="m7">
+<h2>Module 7: Koin — Dependency Injection</h2>
+<p>Wire up repositories, ViewModels, and platform services without annotation processing or code generation.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Define modules with <code>single</code>, <code>factory</code>, <code>get()</code></li><li>Inject dependencies in Activity, Service, and ViewModel</li><li>Split modules into shared and platform-specific</li><li>Compare Koin to Dagger/Hilt</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Why DI matters</h3>
+<p>Without DI, every class creates its own dependencies:</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">HomeViewModel</span>() {</span>
+<span class="line">    <span class="kw">private val</span> repo = <span class="fn">SqlRuleRepository</span>(<span class="fn">createDatabase</span>(<span class="fn">AndroidDriverFactory</span>(context)))</span>
+<span class="line">    <span class="cm">// hard to test — can't swap the database for a fake</span></span>
+<span class="line">}</span></code></pre>
+<p>With DI, dependencies are <strong>passed in</strong>:</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">HomeViewModel</span>(</span>
+<span class="line">    <span class="kw">private val</span> callLogRepository: <span class="tp">CallLogRepository</span>, <span class="cm">// interface!</span></span>
+<span class="line">) : <span class="tp">ViewModel</span>()</span></code></pre>
+<p>Tests pass a fake CallLogRepository. Production passes the SQL one. Koin decides which at startup.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Module definitions</h3>
+<p class="file-label">SharedModule.kt</p>
+<pre><code><span class="line"><span class="kw">val</span> sharedModule = <span class="fn">module</span> {</span>
+<span class="line">    <span class="fn">single</span> { <span class="fn">createDatabase</span>(<span class="fn">get</span>()) }                <span class="cm">// one DB instance for app lifetime</span></span>
+<span class="line">    <span class="fn">single</span>&lt;<span class="tp">RuleRepository</span>&gt; { <span class="fn">SqlRuleRepository</span>(<span class="fn">get</span>()) }   <span class="cm">// bound to interface</span></span>
+<span class="line">    <span class="fn">single</span>&lt;<span class="tp">CallLogRepository</span>&gt; { <span class="fn">SqlCallLogRepository</span>(<span class="fn">get</span>()) }</span>
+<span class="line">    <span class="fn">factory</span> { <span class="fn">HomeViewModel</span>(<span class="fn">get</span>(), <span class="fn">get</span>()) }            <span class="cm">// new VM each time</span></span>
+<span class="line">    <span class="fn">factory</span> { <span class="fn">CallLogViewModel</span>(<span class="fn">get</span>()) }</span>
+<span class="line">}</span></code></pre>
+<p><b><code>single</code></b> = one instance for the application lifetime (database, repositories). <b><code>factory</code></b> = new instance each time requested (ViewModels — they're scoped by the platform).</p>
+
+<h3><span class="badge badge-a">Advanced</span> Platform module composition</h3>
+<p class="file-label">KoinInit.kt (commonMain)</p>
+<pre><code><span class="line"><span class="kw">fun</span> <span class="fn">initKoin</span>(appDeclaration: <span class="tp">KoinAppDeclaration</span> = {}) {</span>
+<span class="line">    <span class="fn">startKoin</span> {</span>
+<span class="line">        <span class="fn">appDeclaration</span>()</span>
+<span class="line">        <span class="fn">modules</span>(<span class="fn">platformModule</span>(), sharedModule)   <span class="cm">// platform first!</span></span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p class="file-label">PlatformModule.android.kt (androidMain)</p>
+<pre><code><span class="line"><span class="kw">actual fun</span> <span class="fn">platformModule</span>(): <span class="tp">Module</span> = <span class="fn">module</span> {</span>
+<span class="line">    <span class="fn">single</span>&lt;<span class="tp">DriverFactory</span>&gt; { <span class="fn">AndroidDriverFactory</span>(<span class="fn">androidContext</span>()) }</span>
+<span class="line">    <span class="fn">single</span>&lt;<span class="tp">DefaultDialerGateway</span>&gt; { <span class="fn">AndroidDefaultDialerGateway</span>(<span class="fn">androidContext</span>()) }</span>
+<span class="line">    <span class="fn">factory</span> { <span class="fn">DialerOnboardingViewModel</span>(<span class="fn">get</span>()) }</span>
+<span class="line">}</span></code></pre>
+<p><b>Why platform first:</b> <code>sharedModule</code> needs <code>DriverFactory</code> (from <code>platformModule</code>) to create the database. Platform module registers the concrete implementation; shared module uses it via <code>get()</code>.</p>
+<div class="callout"><h3>Koin vs Dagger/Hilt</h3><ul><li><b>Dagger/Hilt:</b> Compile-time DI with annotation processing. Faster at runtime, catches mistakes at build time. But generates code (longer builds), Java-only patterns, Android-specific Hilt.</li><li><b>Koin:</b> Runtime DI with a DSL. No code generation, works in KMP, simpler mental model. Trade-off: misconfigurations crash at runtime instead of compile time.</li><li><b>Why Koin here:</b> KMP compatibility. Dagger/Hilt don't work in Kotlin/Native (iOS). Koin's pure-Kotlin approach works everywhere.</li></ul></div>
+
+<figure class="diagram">
+<svg viewBox="0 0 520 190" xmlns="http://www.w3.org/2000/svg">
+<rect x="180" y="5" width="160" height="35" rx="6" fill="var(--accent)" opacity="0.15" stroke="var(--accent)"/>
+<text x="260" y="27" text-anchor="middle" font-size="12" fill="var(--text)">Koin Container</text>
+<rect x="20" y="60" width="140" height="35" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="90" y="82" text-anchor="middle" font-size="10" fill="var(--text)">platformModule</text>
+<rect x="180" y="60" width="160" height="35" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="260" y="82" text-anchor="middle" font-size="10" fill="var(--text)">sharedModule</text>
+<rect x="360" y="60" width="140" height="35" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="430" y="82" text-anchor="middle" font-size="10" fill="var(--text)">ViewModels</text>
+<line x1="90" y1="95" x2="90" y2="115" stroke="var(--border)" stroke-width="1"/>
+<line x1="260" y1="95" x2="260" y2="115" stroke="var(--border)" stroke-width="1"/>
+<line x1="430" y1="95" x2="430" y2="115" stroke="var(--border)" stroke-width="1"/>
+<rect x="20" y="120" width="140" height="55" rx="4" fill="none" stroke="var(--border)"/>
+<text x="90" y="140" text-anchor="middle" font-size="9" fill="var(--muted)">DriverFactory</text>
+<text x="90" y="155" text-anchor="middle" font-size="9" fill="var(--muted)">DefaultDialerGateway</text>
+<text x="90" y="170" text-anchor="middle" font-size="9" fill="var(--muted)">ContactsGateway</text>
+<rect x="180" y="120" width="160" height="55" rx="4" fill="none" stroke="var(--border)"/>
+<text x="260" y="140" text-anchor="middle" font-size="9" fill="var(--muted)">AppDatabase</text>
+<text x="260" y="155" text-anchor="middle" font-size="9" fill="var(--muted)">Repositories</text>
+<text x="260" y="170" text-anchor="middle" font-size="9" fill="var(--muted)">SpamProviderClient</text>
+<rect x="360" y="120" width="140" height="55" rx="4" fill="none" stroke="var(--border)"/>
+<text x="430" y="140" text-anchor="middle" font-size="9" fill="var(--muted)">HomeViewModel</text>
+<text x="430" y="155" text-anchor="middle" font-size="9" fill="var(--muted)">CallLogViewModel</text>
+<text x="430" y="170" text-anchor="middle" font-size="9" fill="var(--muted)">SettingsViewModel</text>
+</svg>
+<figcaption>Koin module composition: platform deps feed shared deps feed ViewModels</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li><code>single</code> = app lifetime (DB, repos). <code>factory</code> = new per request (ViewModels)</li><li>Platform module provides platform-specific types (DriverFactory with Android Context)</li><li>Shared module consumes them via <code>get()</code> — always binds to interfaces, never concrete types</li><li>Koin is the KMP-compatible DI choice — Dagger/Hilt don't work on iOS</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (3 questions)</summary>
+<div class="quiz-item"><p>1. What's the difference between <code>single</code> and <code>factory</code> in Koin?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>single</code> creates one instance and reuses it for the app lifetime (like a singleton). <code>factory</code> creates a new instance every time it's requested — appropriate for ViewModels which have their own scoping.</div></div>
+<div class="quiz-item"><p>2. Why must platformModule be registered before sharedModule?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>sharedModule</code> uses <code>get()</code> to resolve <code>DriverFactory</code>, which is registered in <code>platformModule</code>. If sharedModule tried to resolve it before platformModule registered it, Koin would throw a definition-not-found error at startup.</div></div>
+<div class="quiz-item"><p>3. Why bind to interfaces (<code>single&lt;RuleRepository&gt;</code>) instead of concrete types?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Testing. Tests can provide a fake <code>RuleRepository</code> implementation that returns predictable data. If code depended on <code>SqlRuleRepository</code> directly, you'd need a real SQLite database for every test — slow and fragile.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 8: Permissions -->
+<!-- ================================================================ -->
+<section class="module" id="m8">
+<h2>Module 8: Android Permissions &amp; System Roles</h2>
+<p>Request dangerous permissions at runtime, become the default phone app, and handle permission denial gracefully.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Understand normal vs dangerous permissions</li><li>Use Activity Result API for runtime requests</li><li>Request ROLE_DIALER to become the default phone app</li><li>Build an onboarding flow for unusual permission asks</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Permission types</h3>
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Type</th><th style="text-align:left;padding:8px">How granted</th><th style="text-align:left;padding:8px">Example</th></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Normal</td><td style="padding:8px">Automatically at install</td><td style="padding:8px">INTERNET, ACCESS_NETWORK_STATE</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Dangerous</td><td style="padding:8px">Runtime dialog (user taps Allow/Deny)</td><td style="padding:8px">READ_CONTACTS, CALL_PHONE</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Signature</td><td style="padding:8px">Only if signed with same cert</td><td style="padding:8px">BIND_INCALL_SERVICE</td></tr>
+<tr><td style="padding:8px">Role</td><td style="padding:8px">System role dialog</td><td style="padding:8px">ROLE_DIALER, ROLE_SMS</td></tr>
+</table>
+<p>Corta Spam needs three permissions: <b>READ_PHONE_STATE</b> (detect calls), <b>CALL_PHONE</b> (dial back), <b>READ_CONTACTS</b> (auto-allow). Plus <b>ROLE_DIALER</b> to become the default phone app.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Activity Result API</h3>
+<p class="file-label">MainActivity.kt (fragment)</p>
+<pre><code><span class="line"><span class="kw">private val</span> contactsPermissionLauncher =</span>
+<span class="line">    <span class="fn">registerForActivityResult</span>(<span class="tp">ActivityResultContracts</span>.<span class="fn">RequestPermission</span>()) { _ -> }</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// Usage: request when user toggles auto-allow contacts</span></span>
+<span class="line">contactsPermissionLauncher.<span class="fn">launch</span>(android.Manifest.permission.READ_CONTACTS)</span></code></pre>
+<p><b>Why Activity Result API over <code>onRequestPermissionsResult</code>:</b> The old callback-based API was error-prone (missed callbacks on config changes). The new contract-based API is lifecycle-safe and type-safe.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Role Manager — becoming the default dialer</h3>
+<p class="file-label">MainActivity.kt</p>
+<pre><code><span class="line"><span class="kw">private fun</span> <span class="fn">launchDefaultDialerRequest</span>() {</span>
+<span class="line">    <span class="kw">val</span> intent = <span class="kw">if</span> (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {</span>
+<span class="line">        <span class="fn">getSystemService</span>(<span class="tp">RoleManager</span>::<span class="kw">class</span>.java)</span>
+<span class="line">            .<span class="fn">createRequestRoleIntent</span>(<span class="tp">RoleManager</span>.ROLE_DIALER)</span>
+<span class="line">    } <span class="kw">else</span> {</span>
+<span class="line">        <span class="tp">Intent</span>(<span class="tp">TelecomManager</span>.ACTION_CHANGE_DEFAULT_DIALER)</span>
+<span class="line">    }</span>
+<span class="line">    roleRequestLauncher.<span class="fn">launch</span>(intent)</span>
+<span class="line">}</span></code></pre>
+<p><b>ROLE_DIALER is the highest-privilege phone role.</b> It grants automatic CALL_SCREENING capabilities and allows the InCallService to handle incoming/outgoing call UI. Without it, none of the call-blocking features work.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Onboarding state machine</h3>
+<p>Users get scared when an app asks to become their phone app. Corta Spam uses a dedicated onboarding flow with explainer screens before launching the system dialog:</p>
+<p class="file-label">DialerOnboardingViewModel.kt</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">DialerOnboardingViewModel</span>(<span class="kw">private val</span> gateway: <span class="tp">DefaultDialerGateway</span>) : <span class="tp">ViewModel</span>() {</span>
+<span class="line">    <span class="kw">private val</span> _state = <span class="fn">MutableStateFlow</span>(</span>
+<span class="line">        <span class="kw">if</span> (gateway.<span class="fn">isDefaultDialer</span>()) <span class="tp">DialerOnboardingState</span>.ALREADY_DEFAULT</span>
+<span class="line">        <span class="kw">else</span> <span class="tp">DialerOnboardingState</span>.NOT_REQUESTED</span>
+<span class="line">    )</span>
+<span class="line">    <span class="kw">val</span> state: <span class="tp">StateFlow</span>&lt;<span class="tp">DialerOnboardingState</span>&gt; = _state.<span class="fn">asStateFlow</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">onRequestResult</span>(granted: <span class="tp">Boolean</span>) {</span>
+<span class="line">        _state.value = <span class="kw">if</span> (granted) GRANTED <span class="kw">else</span> DENIED</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Key insight:</b> On <code>onResume()</code>, the ViewModel re-checks <code>isDefaultDialer()</code>. If the user changed the default dialer from system Settings directly, the app detects it without requiring a restart.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 500 180" xmlns="http://www.w3.org/2000/svg">
+<rect x="30" y="60" width="110" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="85" y="85" text-anchor="middle" font-size="11" fill="var(--text)">NOT_REQUESTED</text>
+<line x1="140" y1="80" x2="190" y2="50" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
+<text x="165" y="42" text-anchor="middle" font-size="8" fill="#059669">request</text>
+<rect x="200" y="30" width="110" height="40" rx="6" fill="#FEF3C7" stroke="#D97706"/>
+<text x="255" y="55" text-anchor="middle" font-size="11" fill="var(--text)">REQUESTING</text>
+<line x1="310" y1="50" x2="360" y2="30" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
+<text x="335" y="25" text-anchor="middle" font-size="8" fill="#059669">granted</text>
+<rect x="370" y="15" width="110" height="40" rx="6" fill="#D1FAE5" stroke="#059669"/>
+<text x="425" y="40" text-anchor="middle" font-size="11" fill="var(--text)">GRANTED</text>
+<line x1="310" y1="65" x2="360" y2="95" stroke="#DC2626" stroke-width="1.5" marker-end="url(#a3r)"/>
+<text x="335" y="115" text-anchor="middle" font-size="8" fill="#DC2626">denied</text>
+<rect x="370" y="85" width="110" height="40" rx="6" fill="#FEE2E2" stroke="#DC2626"/>
+<text x="425" y="110" text-anchor="middle" font-size="11" fill="var(--text)">DENIED</text>
+<line x1="255" y1="110" x2="195" y2="140" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4"/>
+<text x="225" y="165" text-anchor="middle" font-size="8" fill="var(--muted)">user skips / "Not now"</text>
+<defs>
+<marker id="a3" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#059669"/></marker>
+<marker id="a3r" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#DC2626"/></marker>
+</defs>
+</svg>
+<figcaption>Onboarding state machine: NOT_REQUESTED → REQUESTING → GRANTED | DENIED</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>ActivityResultContracts replaces the deprecated onRequestPermissionsResult</li><li>ROLE_DIALER is mandatory for call screening — without it, the app can't function</li><li>Always explain WHY before requesting a scary permission — onboarding flow builds trust</li><li>Re-check permission state in onResume() — users can revoke from system Settings</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. What's the difference between a dangerous permission and a system role?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Dangerous permissions (READ_CONTACTS) show a simple Allow/Deny dialog. System roles (ROLE_DIALER) launch a full-system dialog that makes the app the default handler for that capability. Roles are higher-privilege and more intrusive to the user.</div></div>
+<div class="quiz-item"><p>2. Why use ActivityResultContracts instead of onRequestPermissionsResult?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The old API could miss callbacks on configuration changes (rotation). The new contract-based API registers before the Activity starts, surviving configuration changes. It's also type-safe — each contract has typed inputs/outputs.</div></div>
+<div class="quiz-item"><p>3. What happens if the user denies READ_CONTACTS but auto-allow contacts is enabled?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The contacts list is never populated (hasPermission() returns false). Calls from contacts won't be auto-allowed. The app still works — it just can't use that feature. This is graceful degradation, not a crash.</div></div>
+<div class="quiz-item"><p>4. Why re-check isDefaultDialer() in onResume()?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The user can change the default dialer from Android Settings at any time while the app is in the background. onResume detects this change and updates the onboarding screen accordingly.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 9: Telecom -->
+<!-- ================================================================ -->
+<section class="module" id="m9">
+<h2>Module 9: Telecom &amp; InCallService</h2>
+<p>Intercept incoming calls, evaluate them against rules, and show custom ring/reject UI — all in real time.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Implement <code>InCallService</code> as the default dialer's call handler</li><li>Evaluate calls synchronously but show UI instantly</li><li>Handle lock screen and keyguard for incoming call UI</li><li>Implement auto-responder with TTS and custom audio</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> What is InCallService?</h3>
+<p>Android's Telecom framework manages the phone stack. When your app is the default dialer, <code>InCallService</code> is the callback that fires on every incoming and outgoing call. You get a <code>Call</code> object with the phone number, state (ringing/active/disconnected), and methods to <code>answer()</code> or <code>reject()</code>.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Service manifest + lifecycle</h3>
+<p class="file-label">AndroidManifest.xml (service declaration)</p>
+<pre><code><span class="line">&lt;<span class="kw">service</span></span>
+<span class="line">    android:name=<span class="str">".telecom.PassthroughInCallService"</span></span>
+<span class="line">    android:permission=<span class="str">"android.permission.BIND_INCALL_SERVICE"</span></span>
+<span class="line">    android:exported=<span class="str">"true"</span>&gt;</span>
+<span class="line">    &lt;<span class="kw">meta-data</span> android:name=<span class="str">"android.telecom.IN_CALL_SERVICE_UI"</span> android:value=<span class="str">"true"</span> /&gt;</span>
+<span class="line">    &lt;<span class="kw">meta-data</span> android:name=<span class="str">"android.telecom.IN_CALL_SERVICE_RINGING"</span> android:value=<span class="str">"true"</span> /&gt;</span>
+<span class="line">    &lt;<span class="kw">intent-filter</span>&gt;</span>
+<span class="line">        &lt;<span class="kw">action</span> android:name=<span class="str">"android.telecom.InCallService"</span> /&gt;</span>
+<span class="line">    &lt;/<span class="kw">intent-filter</span>&gt;</span>
+<span class="line">&lt;/<span class="kw">service</span>&gt;</span></code></pre>
+<p><b>IN_CALL_SERVICE_UI = true:</b> "I will show the call UI myself — don't show the system UI." <b>IN_CALL_SERVICE_RINGING = true:</b> "I handle ringing calls." Without these metadata flags, Android shows its own incoming call screen on top of yours.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Show UI instantly — the race condition</h3>
+<p class="file-label">PassthroughInCallService.kt (critical flow)</p>
+<pre><code><span class="line"><span class="kw">override fun</span> <span class="fn">onCallAdded</span>(call: <span class="tp">Call</span>) {</span>
+<span class="line">    <span class="kw">val</span> number = call.details?.handle?.schemeSpecificPart.<span class="fn">orEmpty</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="cm">// STEP 1: Show UI IMMEDIATELY — don't wait for rule evaluation</span></span>
+<span class="line">    InCallState.<span class="fn">attach</span>(call)   <span class="cm">// sets ringing state for InCallActivity to read</span></span>
+<span class="line">    <span class="fn">startActivity</span>(<span class="tp">Intent</span>(<span class="kw">this</span>, <span class="tp">InCallActivity</span>::<span class="kw">class</span>.java)</span>
+<span class="line">        .<span class="fn">addFlags</span>(<span class="tp">Intent</span>.FLAG_ACTIVITY_NEW_TASK))</span>
+<span class="line"></span>
+<span class="line">    <span class="cm">// STEP 2: Evaluate rules asynchronously</span></span>
+<span class="line">    serviceScope?.<span class="fn">launch</span> {</span>
+<span class="line">        <span class="kw">val</span> decision = <span class="fn">evaluateCall</span>(number)</span>
+<span class="line">        <span class="kw">if</span> (decision.isBlocked) {</span>
+<span class="line">            <span class="kw">val</span> autoConfig = autoResponderRepository.config.<span class="fn">first</span>()</span>
+<span class="line">            <span class="kw">if</span> (autoConfig.enabled) {</span>
+<span class="line">                call.<span class="fn">registerCallback</span>(callCallback)</span>
+<span class="line">                call.<span class="fn">answer</span>(<span class="tp">VideoProfile</span>.STATE_AUDIO_ONLY)  <span class="cm">// answer for auto-responder</span></span>
+<span class="line">            } <span class="kw">else</span> {</span>
+<span class="line">                call.<span class="fn">reject</span>(<span class="kw">false</span>, <span class="kw">null</span>)           <span class="cm">// silent reject</span></span>
+<span class="line">            }</span>
+<span class="line">        }</span>
+<span class="line">        <span class="cm">// If allowed: InCallActivity already showing — user decides answer/decline</span></span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Why show UI first, evaluate later:</b> If you evaluate before showing UI and the evaluation takes 500ms (DB queries, contact lookup), Android shows its own system incoming-call UI because it thinks you're not responding. By showing <code>InCallActivity</code> immediately, the system sees your UI and stays out of the way. If the call turns out to be blocked, <code>call.reject()</code> dismisses it.</p>
+
+<h3><span class="badge badge-a">Advanced</span> InCallState — the singleton bridge</h3>
+<p class="file-label">InCallState.kt</p>
+<pre><code><span class="line"><span class="kw">object</span> <span class="tp">InCallState</span> {</span>
+<span class="line">    <span class="kw">private val</span> _state = <span class="fn">MutableStateFlow</span>&lt;<span class="tp">UiState</span>?&gt;(<span class="kw">null</span>)</span>
+<span class="line">    <span class="kw">val</span> state: <span class="tp">StateFlow</span>&lt;<span class="tp">UiState</span>?&gt; = _state.<span class="fn">asStateFlow</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">attach</span>(call: <span class="tp">Call</span>) {</span>
+<span class="line">        _state.value = <span class="fn">UiState</span>(number = ..., phase = call.state.<span class="fn">toPhase</span>())</span>
+<span class="line">        call.<span class="fn">registerCallback</span>(callback)  <span class="cm">// track state changes</span></span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">answer</span>() = call?.<span class="fn">answer</span>(0)</span>
+<span class="line">    <span class="kw">fun</span> <span class="fn">decline</span>() = call?.<span class="fn">reject</span>(<span class="kw">false</span>, <span class="kw">null</span>)</span>
+<span class="line">}</span></code></pre>
+<p>Uses <code>object</code> (Kotlin singleton) because there's only ever one active call at a time (by design). The <code>StateFlow</code> bridges the Service (where the Call object lives) to the Activity (where the UI runs) — they're in separate processes/contexts.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Lock screen &amp; keyguard</h3>
+<p class="file-label">InCallActivity.kt</p>
+<pre><code><span class="line"><span class="kw">override fun</span> <span class="fn">onCreate</span>(savedInstanceState: <span class="tp">Bundle</span>?) {</span>
+<span class="line">    <span class="kw">super</span>.<span class="fn">onCreate</span>(savedInstanceState)</span>
+<span class="line">    <span class="fn">setShowWhenLocked</span>(<span class="kw">true</span>)           <span class="cm">// show even if device is locked</span></span>
+<span class="line">    <span class="fn">setTurnScreenOn</span>(<span class="kw">true</span>)              <span class="cm">// wake screen if off</span></span>
+<span class="line"></span>
+<span class="line">    <span class="kw">val</span> kgm = <span class="fn">getSystemService</span>(<span class="tp">Context</span>.KEYGUARD_SERVICE) <span class="kw">as</span>? <span class="tp">KeyguardManager</span></span>
+<span class="line">    kgm?.<span class="fn">requestDismissKeyguard</span>(<span class="kw">this</span>, <span class="kw">null</span>)  <span class="cm">// dismiss lock screen</span></span>
+<span class="line">}</span></code></pre>
+<p>Without <code>setShowWhenLocked(true)</code>, the incoming call UI would be hidden behind the lock screen — you'd hear ringing but see nothing. <code>requestDismissKeyguard</code> lets the user answer without unlocking first.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 580 190" xmlns="http://www.w3.org/2000/svg">
+<rect x="30" y="10" width="130" height="35" rx="6" fill="#EF6A5B" opacity="0.15" stroke="#EF6A5B"/>
+<text x="95" y="32" text-anchor="middle" font-size="11" fill="var(--text)">onCallAdded(call)</text>
+<line x1="160" y1="27" x2="210" y2="27" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a4)"/>
+<rect x="220" y="5" width="140" height="45" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="290" y="22" text-anchor="middle" font-size="10" fill="var(--text)">Show InCallActivity</text>
+<text x="290" y="38" text-anchor="middle" font-size="8" fill="var(--muted)">(immediately, lock screen)</text>
+<line x1="160" y1="45" x2="210" y2="80" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a4)"/>
+<rect x="220" y="55" width="140" height="55" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="290" y="72" text-anchor="middle" font-size="10" fill="var(--text)">evaluateCall(number)</text>
+<text x="290" y="88" text-anchor="middle" font-size="8" fill="var(--muted)">(async, coroutine)</text>
+<text x="290" y="104" text-anchor="middle" font-size="8" fill="var(--muted)">rule engine → decision</text>
+<line x1="360" y1="82" x2="420" y2="55" stroke="#059669" stroke-width="1.5" marker-end="url(#a4g)"/>
+<rect x="430" y="38" width="130" height="35" rx="6" fill="#D1FAE5" stroke="#059669"/>
+<text x="495" y="60" text-anchor="middle" font-size="10" fill="var(--text)">Allowed → show UI</text>
+<line x1="360" y1="100" x2="420" y2="135" stroke="#DC2626" stroke-width="1.5" marker-end="url(#a4r)"/>
+<rect x="430" y="118" width="130" height="35" rx="6" fill="#FEE2E2" stroke="#DC2626"/>
+<text x="495" y="140" text-anchor="middle" font-size="10" fill="var(--text)">Blocked → reject</text>
+<rect x="160" y="145" width="260" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<text x="290" y="165" text-anchor="middle" font-size="9" fill="var(--muted)">call.reject(false, null) or call.answer() + auto-responder</text>
+<defs>
+<marker id="a4" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker>
+<marker id="a4g" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#059669"/></marker>
+<marker id="a4r" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#DC2626"/></marker>
+</defs>
+</svg>
+<figcaption>Call screening flow: show UI instantly, evaluate asynchronously, then act</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li><code>IN_CALL_SERVICE_UI</code> and <code>IN_CALL_SERVICE_RINGING</code> metadata tells Android to use your UI</li><li>Show the InCallActivity FIRST, evaluate rules SECOND — wins the race against system UI</li><li>InCallState as a singleton bridges the Service (has Call object) to the Activity (shows UI)</li><li><code>setShowWhenLocked</code> + <code>requestDismissKeyguard</code> are mandatory for incoming call UX</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. Why start InCallActivity before rule evaluation?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">If you delay while evaluating rules, the system sees your InCallService as unresponsive and shows its own incoming call UI instead. Starting the activity first preempts this race condition.</div></div>
+<div class="quiz-item"><p>2. What does <code>IN_CALL_SERVICE_RINGING = true</code> do?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It tells Android that your InCallService handles the ringing state. Without it, the system shows its own ringing notification alongside your UI — the user sees two overlapping call screens.</div></div>
+<div class="quiz-item"><p>3. Why use a singleton object for InCallState instead of a regular class?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">There's only one active call at a time by design. A singleton provides simplicity — the Service writes to it, the Activity reads from it. Both access the same StateFlow without needing to coordinate instances.</div></div>
+<div class="quiz-item"><p>4. What's the difference between <code>call.reject(false, null)</code> and calling <code>finish()</code> on the Activity?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>call.reject()</code> tells Telecom to reject the call — the caller gets a busy signal. <code>finish()</code> only closes your Activity; the call would continue ringing in the background. You must use Telecom APIs to actually control the call.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 10: Rule Engine -->
+<!-- ================================================================ -->
+<section class="module" id="m10">
+<h2>Module 10: Rule Precedence Engine</h2>
+<p>Design a decision system that evaluates every incoming call against 7 rule types in strict order — pure, testable, fast.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Design a stateless ResolveContext pattern</li><li>Implement strict precedence ordering</li><li>Normalize phone numbers for cross-format matching</li><li>Build glob-style pattern matching</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> What does a call blocker decide?</h3>
+<p>Every incoming call needs one of three outcomes: <b>BLOCK</b> (reject), <b>ALLOW</b> (let through), or <b>AUTO_RESPOND</b> (answer with greeting). The rule engine checks 7 rule types in fixed order and returns the first match. If nothing matches, the "default action" setting takes over.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> ResolveContext — stateless input</h3>
+<p class="file-label">RulePrecedenceResolver.kt</p>
+<pre><code><span class="line"><span class="kw">data class</span> <span class="tp">ResolveContext</span>(</span>
+<span class="line">    <span class="kw">val</span> allowlistedNumbers: <span class="tp">Set</span>&lt;<span class="tp">String</span>&gt;,</span>
+<span class="line">    <span class="kw">val</span> contactNumbers: <span class="tp">Set</span>&lt;<span class="tp">String</span>&gt; = <span class="fn">emptySet</span>(),</span>
+<span class="line">    <span class="kw">val</span> blockedNumbers: <span class="tp">Set</span>&lt;<span class="tp">String</span>&gt;,</span>
+<span class="line">    <span class="kw">val</span> enabledPatterns: <span class="tp">List</span>&lt;<span class="tp">PatternRule</span>&gt;,</span>
+<span class="line">    <span class="kw">val</span> enabledCountryCodes: <span class="tp">Set</span>&lt;<span class="tp">String</span>&gt;,</span>
+<span class="line">    <span class="kw">val</span> defaultAction: <span class="tp">DefaultAction</span> = <span class="tp">DefaultAction</span>.ALLOW,</span>
+<span class="line">    <span class="cm">// ... plus spam provider, action rules, schedule rules</span></span>
+<span class="line">)</span></code></pre>
+<p><b>Why a data class, not global state:</b> The resolver is a pure function: <code>evaluate(number, context) → Decision</code>. All inputs are in the data class. No mutable state. This makes it <b>trivially testable</b> — create a context, check the output. No mock servers, no database setup, no race conditions.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Precedence order (7 levels)</h3>
+<p>The order is deliberate and tested at each step:</p>
+<pre><code><span class="line"><span class="cm">// 1. MANUAL BLOCK — user explicitly chose to block this exact number</span></span>
+<span class="line"><span class="kw">if</span> (normalized <span class="kw">in</span> context.blockedNumbers) <span class="kw">return</span> <span class="tp">RuleDecision</span>.ManualBlock</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// 2. ALLOWLIST — contacts + manual allowlist override everything below</span></span>
+<span class="line"><span class="kw">if</span> (normalized <span class="kw">in</span> mergedAllowlist) <span class="kw">return</span> <span class="tp">RuleDecision</span>.Allowlist</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// 3. PATTERN — glob match (prefix, suffix, contains)</span></span>
+<span class="line"><span class="kw">for</span> (pattern <span class="kw">in</span> context.enabledPatterns) { ... }</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// 4. COUNTRY — country code from libphonenumber-style parsing</span></span>
+<span class="line"><span class="kw">val</span> countryCode = <span class="fn">parseCountryCode</span>(number)</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// 5. SPAM → 6. ACTION → 7. SCHEDULE</span></span>
+<span class="line"></span>
+<span class="line"><span class="cm">// 8. DEFAULT — allow, block, or ask (based on user settings)</span></span></code></pre>
+<p><b>Why manual block overrides contacts:</b> If a user explicitly added mom's number to the block list, they have a reason. Respecting that explicit choice is more important than the auto-allow-contacts convenience feature.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Phone number normalization</h3>
+<p><b>The problem:</b> A contact is stored as <code>"(555) 123-4567"</code>. The incoming call arrives as <code>"+15551234567"</code>. Direct string comparison fails — contacts aren't auto-allowed.</p>
+<p class="file-label">PhoneNumberParser.kt — the fix</p>
+<pre><code><span class="line"><span class="kw">fun</span> <span class="fn">normalizeForComparison</span>(number: <span class="tp">String</span>): <span class="tp">String</span> =</span>
+<span class="line">    number.<span class="fn">filter</span> { it.<span class="fn">isDigit</span>() }</span></code></pre>
+<p>Applied everywhere: incoming call number, contact numbers, blocked/allowlist numbers, pattern cores. All comparisons now use digit-only strings. <code>"+1 (555) 123-4567"</code> → <code>"15551234567"</code> matches <code>"+15551234567"</code> → <code>"15551234567"</code>.</p>
+<p><b>Where normalization happens:</b></p>
+<ul><li><b>AndroidContactsGateway</b> — normalizes contact numbers when reading from ContactsContract</li><li><b>RulePrecedenceResolver.evaluate()</b> — normalizes the incoming number AND all stored numbers from context before comparison</li><li><b>matchesPattern()</b> — normalizes both the pattern core and the target number</li></ul>
+
+<h3><span class="badge badge-a">Advanced</span> Pattern matching</h3>
+<p class="file-label">RulePrecedenceResolver.matchesPattern()</p>
+<pre><code><span class="line"><span class="kw">internal fun</span> <span class="fn">matchesPattern</span>(number: <span class="tp">String</span>, pattern: <span class="tp">String</span>): <span class="tp">Boolean</span> {</span>
+<span class="line">    <span class="kw">val</span> normalizedCore = <span class="fn">normalizeForComparison</span>(core)</span>
+<span class="line">    <span class="kw">val</span> normalizedNumber = <span class="fn">normalizeForComparison</span>(number)</span>
+<span class="line">    <span class="kw">return when</span> {</span>
+<span class="line">        startsWithStar && endsWithStar -> normalizedNumber.<span class="fn">contains</span>(normalizedCore)</span>
+<span class="line">        startsWithStar -> normalizedNumber.<span class="fn">endsWith</span>(normalizedCore)</span>
+<span class="line">        endsWithStar -> normalizedNumber.<span class="fn">startsWith</span>(normalizedCore)</span>
+<span class="line">        <span class="kw">else</span> -> normalizedNumber == normalizedCore</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Simple glob, not full regex:</b> Full regex would be impossible to expand into concrete numbers for iOS's CallDirectory extension. Simple prefix/suffix/contains globs can be pre-computed into static lists that iOS can consume.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 550 200" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="10" width="100" height="30" rx="4" fill="#DC2626" opacity="0.15" stroke="#DC2626"/>
+<text x="70" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Manual Block</text>
+<text x="70" y="50" text-anchor="middle" font-size="14" fill="#DC2626" font-weight="bold">1</text>
+<rect x="130" y="10" width="100" height="30" rx="4" fill="#059669" opacity="0.1" stroke="#059669"/>
+<text x="180" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Allowlist</text>
+<text x="180" y="50" text-anchor="middle" font-size="14" fill="#059669" font-weight="bold">2</text>
+<rect x="240" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="285" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Pattern</text>
+<text x="285" y="50" text-anchor="middle" font-size="14" fill="var(--text)" font-weight="bold">3</text>
+<rect x="340" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="385" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Country</text>
+<text x="385" y="50" text-anchor="middle" font-size="14" fill="var(--text)" font-weight="bold">4</text>
+<rect x="440" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="485" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Spam</text>
+<text x="485" y="50" text-anchor="middle" font-size="14" fill="var(--text)" font-weight="bold">5</text>
+<rect x="75" y="75" width="400" height="25" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="275" y="92" text-anchor="middle" font-size="9" fill="var(--text)">Action (6) → Schedule (7) → Default (8)</text>
+<rect x="80" y="120" width="390" height="55" rx="4" fill="none" stroke="var(--accent)"/>
+<text x="275" y="140" text-anchor="middle" font-size="11" fill="var(--text)">normalizeForComparison()</text>
+<text x="275" y="160" text-anchor="middle" font-size="9" fill="var(--muted)">Strips all non-digits from both sides before ANY comparison</text>
+</svg>
+<figcaption>8-level precedence order + normalization layer beneath every comparison</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>ResolveContext is a pure data class — no mutable state, no side effects, fully testable</li><li>Manual block overrides contacts — user's explicit choice beats convenience</li><li>Normalize ALL numbers to digits-only before comparison — cross-format matching</li><li>Glob patterns (not regex) keep the engine simple and iOS-compatible</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (5 questions)</summary>
+<div class="quiz-item"><p>1. Why does manual block (step 1) override allowlist (step 2)?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The user explicitly chose to block this number. If the allowlist overrode manual blocks, adding your ex to the block list would be pointless — they'd just get through because they're also in your contacts.</div></div>
+<div class="quiz-item"><p>2. What problem does normalizeForComparison() solve?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Phone numbers arrive in different formats: contacts store "(555) 123-4567", incoming calls arrive as "+15551234567". Direct string comparison would say these are different numbers. Normalization strips everything except digits so they match.</div></div>
+<div class="quiz-item"><p>3. Why pass all data in a ResolveContext instead of having the resolver access the database directly?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Pure functions are testable. You can create any ResolveContext in a test and verify the output — no database, no mocks. If the resolver accessed the database, tests would need a running SQLite instance.</div></div>
+<div class="quiz-item"><p>4. What happens if no rule matches and defaultAction is BLOCK?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The call is blocked via DefaultBlock. But only AFTER all 7 rule levels failed to match. If any rule (including allowlist) matched, it would have short-circuited earlier — the default only activates when nothing else applies.</div></div>
+<div class="quiz-item"><p>5. Why not use full regex for pattern matching?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">iOS's CallDirectory extension takes a static list of concrete numbers — it can't evaluate regex at runtime. Simple prefix/suffix/contains patterns can be expanded into concrete number lists that iOS can consume. Regex patterns would be Android-only.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 11: i18n -->
+<!-- ================================================================ -->
+<section class="module" id="m11">
+<h2>Module 11: Internationalization &amp; Localization</h2>
+<p>Support 4 languages with zero code changes — just add an XML file per locale.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Structure Compose Multiplatform string resources</li><li>Add new locales by creating values-XX directories</li><li>Avoid common pitfalls with format strings</li><li>Design string keys for translator-friendliness</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> How Compose resources work</h3>
+<p>String resources live in <code>composeResources/</code> with locale-qualified directories. At build time, a Gradle plugin generates type-safe Kotlin accessors:</p>
+<pre><code><span class="line"><span class="cm">// You write:</span></span>
+<span class="line">&lt;<span class="kw">string</span> name=<span class="str">"call_log_action_block"</span>&gt;Block this number&lt;/<span class="kw">string</span>&gt;</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// The plugin generates:</span></span>
+<span class="line"><span class="kw">val</span> Res.string.call_log_action_block: <span class="tp">StringResource</span></span>
+<span class="line"></span>
+<span class="line"><span class="cm">// In your @Composable:</span></span>
+<span class="line"><span class="fn">stringResource</span>(Res.string.call_log_action_block)  <span class="cm">// → "Block this number" (or locale equivalent)</span></span></code></pre>
+<p>Your IDE autocompletes <code>Res.string.</code> — you can never misspell a resource key.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Locale directory structure</h3>
+<p>The app supports 4 locales:</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Directory</th><th style="text-align:left;padding:8px">Language</th><th style="text-align:left;padding:8px">Speaker Base</th></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>values/</code></td><td style="padding:8px">English (default)</td><td style="padding:8px">~1.5B speakers</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>values-es/</code></td><td style="padding:8px">Spanish (LATAM)</td><td style="padding:8px">~500M speakers</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>values-pt/</code></td><td style="padding:8px">Portuguese (Brazil)</td><td style="padding:8px">~260M speakers</td></tr>
+<tr><td style="padding:8px"><code>values-hi/</code></td><td style="padding:8px">Hindi</td><td style="padding:8px">~600M speakers</td></tr>
+</table>
+<p>When a user's device is set to <code>es-PE</code> (Spanish Peru), the system falls back: <b>es-PE → es → en</b>. Since <code>values-es/</code> exists, Spanish strings are used. If we only had <code>values-es-rMX/</code> (Mexico), a Peruvian user would see English.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Format string pitfalls</h3>
+<p><b>The bug:</b> We wrote <code>&lt;string name="stats_blocked_count"&gt;%d blocked&lt;/string&gt;</code> and called <code>stringResource(Res.string.stats_blocked_count, day.count)</code>. The screen showed <b>"%d blocked"</b> literally.</p>
+<p><b>The fix:</b> Compose Multiplatform's <code>stringResource()</code> vararg format doesn't always work as expected. Solution: use string interpolation with a separate translatable label:</p>
+<pre><code><span class="line"><span class="cm">// Instead of: "%d blocked" with format arg</span></span>
+<span class="line"><span class="cm">// Use: $count + translatable "blocked" label</span></span>
+<span class="line"><span class="tp">Text</span>(text = <span class="str">"</span>${day.count}<span class="str"> </span>${<span class="fn">stringResource</span>(Res.string.stats_blocked_label)}<span class="str">"</span>)</span></code></pre>
+<p><b>Lesson:</b> Always test format strings on device. What works in the IDE preview doesn't always work at runtime, especially with Compose Multiplatform resources.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 500 170" xmlns="http://www.w3.org/2000/svg">
+<rect x="30" y="20" width="440" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="250" y="36" text-anchor="middle" font-size="11" fill="var(--text)">Device locale: es-PE (Spanish, Peru)</text>
+<text x="250" y="52" text-anchor="middle" font-size="9" fill="var(--muted)">Android resource system fallback chain</text>
+<line x1="250" y1="60" x2="250" y2="80" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a5)"/>
+<rect x="160" y="85" width="180" height="30" rx="4" fill="#059669" opacity="0.1" stroke="#059669"/>
+<text x="250" y="105" text-anchor="middle" font-size="11" fill="var(--text)">✅ values-es/ (Spanish match!)</text>
+<line x1="340" y1="100" x2="380" y2="100" stroke="var(--border)" stroke-width="1" stroke-dasharray="3"/>
+<line x1="160" y1="100" x2="120" y2="100" stroke="var(--border)" stroke-width="1" stroke-dasharray="3"/>
+<rect x="40" y="85" width="110" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<text x="95" y="105" text-anchor="middle" font-size="9" fill="var(--muted)">values-es-rMX (no)</text>
+<rect x="390" y="85" width="80" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<text x="430" y="105" text-anchor="middle" font-size="9" fill="var(--muted)">values/ (EN)</text>
+<defs><marker id="a5" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker></defs>
+</svg>
+<figcaption>Locale fallback: es-PE → es → en. Adding values-es/ covers all Spanish variants.</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Use locale-qualified directories — no code changes needed for new languages</li><li>Resource keys are type-safe via generated Kotlin — no misspellings at runtime</li><li>Format strings can be unreliable in Compose Multiplatform — test on device</li><li>Broad locale codes (es, pt) cover regional variants (es-PE, pt-BR) via fallback</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (3 questions)</summary>
+<div class="quiz-item"><p>1. How do you add a new language (e.g., French) to the app?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Create <code>values-fr/strings.xml</code>, copy all string keys from <code>values/strings.xml</code>, translate the values. The Compose plugin auto-generates the Kotlin accessors — no code changes.</div></div>
+<div class="quiz-item"><p>2. What happens if a key exists in <code>values/</code> but not in <code>values-es/</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The system falls back to the default locale (<code>values/</code>). The user sees the English string for that key. This is why it's important to keep all locale files in sync — missing keys mean mixed-language UI.</div></div>
+<div class="quiz-item"><p>3. Why avoid <code>%d</code> format strings in Compose Multiplatform?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>stringResource()</code> format args don't always work reliably in Compose Multiplatform (the literal <code>%d</code> text may appear). Use string interpolation with separate translatable label strings instead.</div></div>
+</details>
+</section>
+<!-- ================================================================ -->
+<!-- MODULE 12: Testing -->
+<!-- ================================================================ -->
+<section class="module" id="m12">
+<h2>Module 12: Testing in KMP</h2>
+<p>Write unit tests with kotlin.test, test ViewModels with fakes, and run Compose UI tests on JVM via Robolectric.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Write unit tests for pure logic in commonTest</li><li>Test ViewModels with fake repositories</li><li>Run Compose UI tests without an emulator (Robolectric)</li><li>Apply the test doubles pattern (fakes over mocks)</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> The test pyramid</h3>
+<pre><code><span class="line"><span class="cm">     /‾‾‾‾‾‾‾‾‾‾‾‾\         Manual QA (human, 1-2)</span></span>
+<span class="line"><span class="cm">    /   UI Tests    \        Compose + Robolectric (JVM, ~10)</span></span>
+<span class="line"><span class="cm">   /  ViewModel Tests \      Fake repos + runTest (~20)</span></span>
+<span class="line"><span class="cm">  /   Unit Tests       \     Pure logic, kotlin.test (~120+)</span></span>
+<span class="line"><span class="cm"> /_______________________\   Fast, reliable, runs on every push</span></span></code></pre>
+<p>The bottom is where you want most of your tests: fast, deterministic, no device needed. Corta Spam has <b>158+ unit tests</b> running in under 10 seconds on CI.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Rule engine unit tests</h3>
+<p class="file-label">RulePrecedenceResolverTest.kt (fragment)</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">RulePrecedenceResolverTest</span> {</span>
+<span class="line">    <span class="kw">@Test</span></span>
+<span class="line">    <span class="kw">fun</span> `<span class="fn">manual block overrides contacts</span>`() = <span class="fn">runTest</span> {</span>
+<span class="line">        <span class="kw">val</span> context = <span class="fn">ResolveContext</span>(</span>
+<span class="line">            blockedNumbers = <span class="fn">setOf</span>(<span class="str">"15551234567"</span>),</span>
+<span class="line">            contactNumbers = <span class="fn">setOf</span>(<span class="str">"15551234567"</span>),  <span class="cm">// same number</span></span>
+<span class="line">            defaultAction = <span class="tp">DefaultAction</span>.ALLOW,</span>
+<span class="line">            <span class="cm">// ... other fields with defaults</span></span>
+<span class="line">        )</span>
+<span class="line">        <span class="kw">val</span> result = <span class="tp">RulePrecedenceResolver</span>.<span class="fn">evaluate</span>(<span class="str">"+1 555-123-4567"</span>, context)</span>
+<span class="line">        <span class="fn">assertTrue</span>(result.isBlocked, <span class="str">"Manual block must override contact allow"</span>)</span>
+<span class="line">        <span class="fn">assertTrue</span>(result <span class="kw">is</span> <span class="tp">RuleDecision</span>.ManualBlock)</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Key pattern:</b> <code>runTest { }</code> from <code>kotlinx-coroutines-test</code> provides a test dispatcher that skips delays and runs coroutines synchronously. The resolver function is a <code>suspend fun</code> — <code>runTest</code> handles that without real threading.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> ViewModel tests with fakes</h3>
+<p class="file-label">HomeViewModelTest.kt (fragment)</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">FakeCallLogRepository</span> : <span class="tp">CallLogRepository</span> {</span>
+<span class="line">    <span class="kw">var</span> stats = <span class="fn">BlockedStats</span>(<span class="num">3</span>, <span class="num">15</span>, <span class="num">42</span>)  <span class="cm">// predictable test data</span></span>
+<span class="line">    <span class="kw">override suspend fun</span> <span class="fn">blockedStats</span>() = stats</span>
+<span class="line">    <span class="cm">// ... other methods return predictable values</span></span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line"><span class="kw">@Test</span></span>
+<span class="line"><span class="kw">fun</span> `<span class="fn">refresh populates state from repository</span>`() = <span class="fn">runTest</span> {</span>
+<span class="line">    <span class="kw">val</span> callLogRepo = <span class="fn">FakeCallLogRepository</span>()</span>
+<span class="line">    <span class="kw">val</span> settingsRepo = <span class="fn">FakeSettingsRepository</span>()</span>
+<span class="line">    <span class="kw">val</span> vm = <span class="fn">HomeViewModel</span>(callLogRepo, settingsRepo)</span>
+<span class="line">    vm.<span class="fn">refresh</span>()</span>
+<span class="line">    <span class="fn">assertEquals</span>(<span class="num">3</span>, vm.state.value.blockedToday)</span>
+<span class="line">}</span></code></pre>
+<p><b>Why fakes over MockK:</b> MockK is a mocking library that generates fake implementations at runtime — but it's JVM-only. Fakes are plain Kotlin classes implementing the interface — they work in <code>commonTest</code> (Kotlin/Native for iOS tests too). Write once, test everywhere.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Compose UI tests with Robolectric</h3>
+<p class="file-label">CallLogScreenUiTest.kt (fragment, androidUnitTest)</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">CallLogScreenUiTest</span> {</span>
+<span class="line">    <span class="kw">@get:Rule</span></span>
+<span class="line">    <span class="kw">val</span> composeTestRule = <span class="fn">createComposeRule</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="kw">@Test</span></span>
+<span class="line">    <span class="kw">fun</span> `<span class="fn">shows empty hint when no entries</span>`() {</span>
+<span class="line">        composeTestRule.<span class="fn">setContent</span> {</span>
+<span class="line">            <span class="fn">CallLogScreen</span>(entries = <span class="fn">emptyList</span>(), onBack = {})</span>
+<span class="line">        }</span>
+<span class="line">        composeTestRule</span>
+<span class="line">            .<span class="fn">onNodeWithText</span>(<span class="str">"No calls logged yet"</span>)</span>
+<span class="line">            .<span class="fn">assertIsDisplayed</span>()</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Robolectric</b> runs Android code on a JVM — no emulator needed. It provides a fake Android framework (Context, Resources, etc.). Compose UI tests use <code>createComposeRule</code> to set up the composition and <code>onNodeWithText</code> to find and assert on content.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 500 170" xmlns="http://www.w3.org/2000/svg">
+<rect x="30" y="10" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="250" y="30" text-anchor="middle" font-size="10" fill="var(--text)">commonTest (kotlin.test) — 18 files, ~120 tests</text>
+<rect x="30" y="50" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="250" y="70" text-anchor="middle" font-size="10" fill="var(--text)">androidUnitTest (Robolectric + Compose UI) — ~10 tests</text>
+<rect x="30" y="90" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="250" y="110" text-anchor="middle" font-size="10" fill="var(--text)">Run both with: ./gradlew :shared:testDebugUnitTest</text>
+<line x1="250" y1="130" x2="250" y2="145" stroke="var(--accent)" stroke-width="1.5"/>
+<rect x="150" y="145" width="200" height="20" rx="4" fill="var(--accent)" opacity="0.15" stroke="var(--accent)"/>
+<text x="250" y="160" text-anchor="middle" font-size="10" fill="var(--text)">All 158+ tests pass in under 10s</text>
+</svg>
+<figcaption>Two test source sets, one command, zero devices needed</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li><code>runTest { }</code> provides a synchronous coroutine scope — no real delays, no flakiness</li><li>Use fakes (plain Kotlin implementing interfaces) over mocks — they work in Kotlin/Native</li><li>Robolectric runs Android code on JVM — test Compose UI without an emulator</li><li>Test pure logic most heavily (fast, reliable), UI tests sparingly (slow, fragile)</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. Why use fakes instead of MockK for testing repositories?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">MockK is JVM-only — it can't run in Kotlin/Native (iOS tests). Fakes are plain Kotlin classes implementing the interface — they work in commonTest, androidUnitTest, and iOS tests without any mocking framework.</div></div>
+<div class="quiz-item"><p>2. What does <code>runTest { }</code> do?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It provides a coroutine scope with a test dispatcher that runs coroutines synchronously (no real delays) and auto-advances virtual time. Suspend functions execute immediately without actual multithreading.</div></div>
+<div class="quiz-item"><p>3. How does Robolectric test Compose UI without a device?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Robolectric provides a fake Android runtime on the JVM — it intercepts Android framework calls and returns realistic responses. Compose's rendering is simulated. No emulator process, no device needed.</div></div>
+<div class="quiz-item"><p>4. Where should you put a test that calls <code>ContactsContract.Phone.CONTENT_URI</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">In <code>androidUnitTest</code> with Robolectric. <code>commonTest</code> can't access Android APIs. Robolectric's shadow framework provides a fake ContentResolver that returns test contact data.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- MODULE 13: CI & Tooling -->
+<!-- ================================================================ -->
+<section class="module" id="m13">
+<h2>Module 13: CI &amp; Tooling</h2>
+<p>Automate builds, enforce code style, generate icons, and install directly on a connected device.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Set up GitHub Actions for lint + test + build</li><li>Enforce code style with ktlint and EditorConfig</li><li>Generate icons from SVG via a Node.js script</li><li>Use adb for one-command install and launch</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> What does CI do?</h3>
+<p>Every <code>git push</code> triggers a workflow that runs <b>lint → test → build</b>. If any step fails, the push is rejected (via branch protection) or flagged. This catches bugs before they reach production — and before they waste a reviewer's time.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> GitHub Actions workflow</h3>
+<p class="file-label">.github/workflows/ci.yml (fragment)</p>
+<pre><code><span class="line"><span class="kw">name</span>: CI</span>
+<span class="line"><span class="kw">on</span>: [push, pull_request]</span>
+<span class="line"><span class="kw">jobs</span>:</span>
+<span class="line">  <span class="kw">android</span>:</span>
+<span class="line">    runs-on: ubuntu-latest</span>
+<span class="line">    <span class="kw">steps</span>:</span>
+<span class="line">      - <span class="kw">uses</span>: actions/checkout@v4</span>
+<span class="line">      - <span class="kw">uses</span>: actions/setup-java@v4</span>
+<span class="line">        <span class="kw">with</span>: { java-version: 17 }</span>
+<span class="line">      - <span class="kw">run</span>: ./gradlew ktlintCheck           <span class="cm"># style first — fail fast</span></span>
+<span class="line">      - <span class="kw">run</span>: ./gradlew :shared:testDebugUnitTest  <span class="cm"># 158+ tests</span></span>
+<span class="line">      - <span class="kw">run</span>: ./gradlew :androidApp:assembleDebug    <span class="cm"># build APK</span></span></code></pre>
+<p><b>Order matters:</b> Run lint first — style errors are the fastest to detect and fix. If lint fails, don't waste time running tests. Then tests (correctness), then build (integration). Fast feedback loop.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> ktlint — code style enforcement</h3>
+<p class="file-label">.editorconfig (root)</p>
+<pre><code><span class="line"><span class="kw">[*.{kt,kts}]</span></span>
+<span class="line">indent_size = 4</span>
+<span class="line">max_line_length = 140</span>
+<span class="line">ij_kotlin_allow_trailing_comma = true</span></code></pre>
+<p>ktlint reads <code>.editorconfig</code> and enforces the rules on every <code>ktlintCheck</code> run. Generated code (SQLDelight, Compose resources) is excluded via <code>.editorconfig</code> exclusions, not Gradle exclusions — this avoids timing issues between plugins.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Icon pipeline and build script</h3>
+<p class="file-label">install_android.sh (core logic)</p>
+<pre><code><span class="line"><span class="kw">APK</span>=$(find androidApp/build/outputs/apk -name <span class="str">"androidApp-${VARIANT_LOWER}.apk"</span>)</span>
+<span class="line"><span class="kw">if</span> [ -z <span class="str">"$APK"</span> ] || [ ./gradlew -nt <span class="str">"$APK"</span> ]; <span class="kw">then</span></span>
+<span class="line">    ./gradlew :androidApp:assemble${VARIANT}</span>
+<span class="line"><span class="kw">fi</span></span>
+<span class="line">adb -s <span class="str">"$DEVICE"</span> install -r <span class="str">"$APK"</span></span>
+<span class="line">adb -s <span class="str">"$DEVICE"</span> shell am start -n org.carlospinan.bloqueador.app/.MainActivity</span></code></pre>
+<p><b>Icon generation:</b> 21 SVG source icons → Sharp (Node.js) renders them to 96×96 RGBA PNGs. Shell script <code>render_ui_icons.mjs</code> validates all 21 icons are produced correctly. Why Sharp: reproducible output (no manual export), batch processing, consistent stroke rendering.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Debugging on device</h3>
+<p>When the InCallActivity doesn't show on incoming calls:</p>
+<pre><code><span class="line"><span class="cm"># 1. Check if the service is being called</span></span>
+<span class="line">adb logcat -s PassthroughInCallService</span>
+<span class="line"></span>
+<span class="line"><span class="cm"># 2. Check if the activity starts</span></span>
+<span class="line">adb logcat -s InCallActivity</span>
+<span class="line"></span>
+<span class="line"><span class="cm"># 3. Toast debugging — quick visual feedback</span></span>
+<span class="line"><span class="tp">Toast</span>.<span class="fn">makeText</span>(<span class="kw">this</span>, <span class="str">"Callback fired"</span>, <span class="tp">Toast</span>.SHORT).<span class="fn">show</span>()</span></code></pre>
+<p><b>Lesson from this project:</b> 3 rounds of Toast debugging were needed to trace the callback chain. Sometimes <code>Log.d</code> is filtered; Toast is always visible.</p>
+
+<figure class="diagram">
+<svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="10" width="140" height="45" rx="6" fill="#DC2626" opacity="0.1" stroke="#DC2626"/>
+<text x="90" y="28" text-anchor="middle" font-size="10" fill="var(--text)">ktlint</text>
+<text x="90" y="44" text-anchor="middle" font-size="8" fill="var(--muted)">code style</text>
+<line x1="160" y1="32" x2="195" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a6)"/>
+<rect x="205" y="10" width="140" height="45" rx="6" fill="#D97706" opacity="0.1" stroke="#D97706"/>
+<text x="275" y="28" text-anchor="middle" font-size="10" fill="var(--text)">Tests</text>
+<text x="275" y="44" text-anchor="middle" font-size="8" fill="var(--muted)">158+ unit tests</text>
+<line x1="345" y1="32" x2="380" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a6)"/>
+<rect x="390" y="10" width="110" height="45" rx="6" fill="#059669" opacity="0.1" stroke="#059669"/>
+<text x="445" y="28" text-anchor="middle" font-size="10" fill="var(--text)">Build</text>
+<text x="445" y="44" text-anchor="middle" font-size="8" fill="var(--muted)">assemble APK</text>
+<rect x="130" y="75" width="260" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<text x="260" y="95" text-anchor="middle" font-size="10" fill="var(--text)">Fail fast: stop at first error, don't cascade</text>
+<defs><marker id="a6" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker></defs>
+</svg>
+<figcaption>CI pipeline: lint → test → build. Fail early, fail fast.</figcaption>
+</figure>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>CI catches bugs before review — lint, test, build on every push</li><li>ktlint + EditorConfig keeps code style consistent across contributors</li><li>Shell scripts make one-command install/launch on any connected device</li><li>Toast debugging is sometimes more reliable than Log.d — always visible</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (3 questions)</summary>
+<div class="quiz-item"><p>1. Why run lint before tests in CI?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Lint detects style violations in seconds. Running it first means you fail fast on trivial issues without wasting 5+ minutes running tests. More importantly: failing lint means you haven't even verified your code is well-formed.</div></div>
+<div class="quiz-item"><p>2. What does ktlint use for configuration?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer"><code>.editorconfig</code> — a cross-editor configuration file. ktlint reads it, but so do IntelliJ, VS Code, and other editors. This means format rules are enforced both in the IDE and in CI, with one source of truth.</div></div>
+<div class="quiz-item"><p>3. Why generate icons via script instead of manual export?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Reproducibility. If the SVG source changes, running one command regenerates all 21 PNGs identically. Manual export would mean 21 separate Figma/Illustrator exports — error-prone and inconsistent stroke rendering across sessions.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
+<!-- CONCLUSION -->
+<!-- ================================================================ -->
+<section class="module" id="conclusion">
+<h2>What You've Learned</h2>
+<div class="callout"><h3>13 Modules, One Production App</h3>
+<p>You've walked through every layer of a real Kotlin Multiplatform Android app:</p></div>
+
+<table style="width:100%;border-collapse:collapse;margin:24px 0">
+<tr style="border-bottom:2px solid var(--accent)"><th style="text-align:left;padding:8px">Layer</th><th style="text-align:left;padding:8px">Technology</th><th style="text-align:left;padding:8px">Module</th></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Build</td><td style="padding:8px">Gradle KTS, version catalogs</td><td style="padding:8px">1</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Architecture</td><td style="padding:8px">KMP, expect/actual, source sets</td><td style="padding:8px">2</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">UI</td><td style="padding:8px">Compose Multiplatform, StateFlow</td><td style="padding:8px">3</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Navigation</td><td style="padding:8px">Navigation Compose, routes</td><td style="padding:8px">4</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Layout</td><td style="padding:8px">WindowSizeClass, adaptive scaffold</td><td style="padding:8px">5</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Data</td><td style="padding:8px">SQLDelight, repositories, migrations</td><td style="padding:8px">6</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">DI</td><td style="padding:8px">Koin, platform modules</td><td style="padding:8px">7</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Platform</td><td style="padding:8px">Permissions, RoleManager, onboarding</td><td style="padding:8px">8</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Telecom</td><td style="padding:8px">InCallService, call screening, lock screen</td><td style="padding:8px">9</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Domain</td><td style="padding:8px">Rule engine, normalization, patterns</td><td style="padding:8px">10</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">i18n</td><td style="padding:8px">Compose resources, 4 locales</td><td style="padding:8px">11</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Quality</td><td style="padding:8px">kotlin.test, fakes, Robolectric</td><td style="padding:8px">12</td></tr>
+<tr><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
+</table>
+
+<div class="callout"><h3>Design Decisions Recap</h3>
+<ul><li><b>KMP over Flutter:</b> Native Android APIs (Telecom) accessible without plugins</li><li><b>Koin over Dagger:</b> Works in Kotlin/Native — essential for iOS compatibility</li><li><b>StateFlow over LiveData:</b> Pure Kotlin — works in commonMain, not Android-only</li><li><b>Fakes over MockK:</b> Works in Kotlin/Native — same test runs on Android and iOS</li><li><b>Pure ResolveContext:</b> Stateless rule engine — trivially testable, no side effects</li><li><b>Instant UI in InCallService:</b> Wins the race against system incoming-call UI</li><li><b>Phone normalization:</b> Strips formatting — matches contact numbers to raw incoming calls</li><li><b>Glob patterns over regex:</b> Simple enough for iOS CallDirectory expansion</li></ul></div>
+</section>
+
+</div><!-- .wrap -->
+
+<div class="footer"><div class="wrap">
+<p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
+<p>158+ automated tests · 4-language i18n · Adaptive for phone/tablet · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+</div></div>
+
+<script>
+// ========== THEME TOGGLE ==========
+function toggleTheme(){
+  var h=document.documentElement,t=h.getAttribute('data-theme');
+  h.setAttribute('data-theme',t==='dark'?'light':'dark');
+  var b=document.querySelector('.theme-btn');
+  b.innerHTML=t==='dark'?'☀️ Light Mode':'🌙 Dark Mode';
+  localStorage.setItem('theme',t==='dark'?'light':'dark');
+}
+(function(){
+  var s=localStorage.getItem('theme');
+  if(s){document.documentElement.setAttribute('data-theme',s);
+  document.querySelector('.theme-btn').innerHTML=s==='dark'?'☀️ Light Mode':'🌙 Dark Mode';}
+})();
+
+// ========== TOC GENERATION ==========
+(function(){
+  var grid=document.getElementById('toc-grid'),html='';
+  var modules=document.querySelectorAll('.module');
+  modules.forEach(function(m,i){
+    var id=m.id,h=m.querySelector('h2');
+    var title=h?h.textContent.replace('Module '+(i+1)+': ','') : 'Module '+(i+1);
+    html+='<a href="#'+id+'" onclick="markVisited('+(i+1)+')">'+(i+1)+'. '+title+'</a>';
+  });
+  grid.innerHTML=html;
+})();
+
+// ========== PROGRESS TRACKING ==========
+function markVisited(n){
+  var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
+  if(visited.indexOf(n)===-1){visited.push(n);}
+  localStorage.setItem('course_progress',JSON.stringify(visited));
+  updateProgress();
+}
+function updateProgress(){
+  var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
+  var total=13,pct=Math.round(visited.length/total*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
+  var links=document.querySelectorAll('#toc-grid a');
+  links.forEach(function(a,i){
+    if(visited.indexOf(i+1)>-1)a.classList.add('visited');
+  });
+}
+updateProgress();
+</script>
+
+</body>
+</html>

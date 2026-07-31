@@ -22,18 +22,29 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StatsViewModelTest {
-
     private class FakeCallLogRepository(
         var dailyStats: List<DayStat> = emptyList(),
     ) : CallLogRepository {
         override fun allEntries() = MutableStateFlow(emptyList<CallLogEntryData>())
+
         override fun recentEntries(limit: Int) = MutableStateFlow(emptyList<CallLogEntryData>())
+
         override suspend fun blockedCountToday(): Int = 0
+
         override suspend fun blockedCountThisWeek(): Int = 0
+
         override suspend fun blockedCountThisMonth(): Int = 0
+
         override suspend fun blockedStats(): BlockedStats = BlockedStats(0, 0, 0)
+
         override suspend fun blockedByDay(daysBack: Int): List<DayStat> = dailyStats
-        override suspend fun logCall(number: String, timestamp: Long, decision: RuleDecision) {}
+
+        override suspend fun logCall(
+            number: String,
+            timestamp: Long,
+            decision: RuleDecision,
+        ) {}
+
         override suspend fun clearAll() {}
     }
 
@@ -43,40 +54,46 @@ class StatsViewModelTest {
     }
 
     @Test
-    fun `init loads stats and sets isLoading false`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo =
-            FakeCallLogRepository(
-                dailyStats =
-                    listOf(
-                        DayStat("Mon", 5, 1000L),
-                        DayStat("Tue", 3, 2000L),
-                    ),
+    fun `init loads stats and sets isLoading false`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo =
+                FakeCallLogRepository(
+                    dailyStats =
+                        listOf(
+                            DayStat("Mon", 5, 1000L),
+                            DayStat("Tue", 3, 2000L),
+                        ),
                 )
-        val vm = StatsViewModel(repo)
-        advanceUntilIdle()
+            val vm = StatsViewModel(repo)
+            advanceUntilIdle()
 
-        val state = vm.state.first { !it.isLoading }
-        assertEquals(2, state.dailyStats.size)
-        assertEquals("Mon", state.dailyStats[0].dateLabel)
-        assertEquals(5, state.dailyStats[0].count)
-    }
-
-    @Test
-    fun `initial state is loading`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository()
-        val vm = StatsViewModel(repo)
-        assertTrue(vm.state.value.isLoading)
-    }
+            val state = vm.state.first { !it.isLoading }
+            assertEquals(2, state.dailyStats.size)
+            assertEquals("Mon", state.dailyStats[0].dateLabel)
+            assertEquals(5, state.dailyStats[0].count)
+        }
 
     @Test
-    fun `empty daily stats not loading`() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        val repo = FakeCallLogRepository()
-        val vm = StatsViewModel(repo)
-        advanceUntilIdle()
-        assertFalse(vm.state.value.isLoading)
-        assertTrue(vm.state.value.dailyStats.isEmpty())
-    }
+    fun `initial state is loading`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository()
+            val vm = StatsViewModel(repo)
+            assertTrue(vm.state.value.isLoading)
+        }
+
+    @Test
+    fun `empty daily stats not loading`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository()
+            val vm = StatsViewModel(repo)
+            advanceUntilIdle()
+            assertFalse(vm.state.value.isLoading)
+            assertTrue(
+                vm.state.value.dailyStats
+                    .isEmpty(),
+            )
+        }
 }

@@ -1,10 +1,10 @@
 package org.carlospinan.bloqueador.app.rules
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.db.AppDatabase
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class BackupRoundTripTest {
     private fun createDatabase(): AppDatabase {

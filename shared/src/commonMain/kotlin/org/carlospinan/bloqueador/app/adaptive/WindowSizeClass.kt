@@ -18,11 +18,12 @@ enum class WindowSizeClass {
 fun rememberWindowSizeClass(): WindowSizeClass {
     var sizeClass by remember { mutableStateOf(WindowSizeClass.Compact) }
     BoxWithConstraints {
-        sizeClass = when {
-            maxWidth >= 840.dp -> WindowSizeClass.Expanded
-            maxWidth >= 600.dp -> WindowSizeClass.Medium
-            else -> WindowSizeClass.Compact
-        }
+        sizeClass =
+            when {
+                maxWidth >= 840.dp -> WindowSizeClass.Expanded
+                maxWidth >= 600.dp -> WindowSizeClass.Medium
+                else -> WindowSizeClass.Compact
+            }
     }
     return sizeClass
 }

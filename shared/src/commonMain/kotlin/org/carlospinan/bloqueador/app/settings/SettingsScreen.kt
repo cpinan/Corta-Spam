@@ -32,14 +32,13 @@ import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_cancel
 import bloqueallamadas.shared.generated.resources.action_view
+import bloqueallamadas.shared.generated.resources.autoresponder_experimental_badge
 import bloqueallamadas.shared.generated.resources.ic_autoresponder
 import bloqueallamadas.shared.generated.resources.ic_backup
 import bloqueallamadas.shared.generated.resources.ic_blocking
 import bloqueallamadas.shared.generated.resources.ic_contacts
 import bloqueallamadas.shared.generated.resources.ic_default_action
 import bloqueallamadas.shared.generated.resources.ic_privacy
-import bloqueallamadas.shared.generated.resources.ic_spam_provider
-import bloqueallamadas.shared.generated.resources.autoresponder_experimental_badge
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
 import bloqueallamadas.shared.generated.resources.settings_autoresponder
@@ -56,8 +55,6 @@ import bloqueallamadas.shared.generated.resources.settings_default_action_desc
 import bloqueallamadas.shared.generated.resources.settings_grant_contacts
 import bloqueallamadas.shared.generated.resources.settings_privacy_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_title
-import bloqueallamadas.shared.generated.resources.settings_spam_provider
-import bloqueallamadas.shared.generated.resources.settings_spam_provider_desc
 import bloqueallamadas.shared.generated.resources.settings_terms_desc
 import bloqueallamadas.shared.generated.resources.settings_terms_title
 import bloqueallamadas.shared.generated.resources.settings_title

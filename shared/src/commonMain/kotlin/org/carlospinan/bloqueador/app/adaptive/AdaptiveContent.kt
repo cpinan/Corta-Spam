@@ -26,17 +26,19 @@ fun AdaptiveContent(
             )
         }
         WindowSizeClass.Medium,
-        WindowSizeClass.Expanded -> {
+        WindowSizeClass.Expanded,
+        -> {
             Box(
                 modifier = modifier.fillMaxWidth(),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 600.dp)
-                        .padding(24.dp)
-                        .then(contentModifier),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 600.dp)
+                            .padding(24.dp)
+                            .then(contentModifier),
                     content = content,
                 )
             }
