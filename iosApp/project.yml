@@ -23,6 +23,7 @@ targets:
       path: Generated/Info.plist
       properties:
         CFBundleDisplayName: BloqueaLlamadas
+        CADisableMinimumFrameDurationOnPhone: true
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
