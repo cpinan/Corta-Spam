@@ -12,6 +12,7 @@ import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 import org.carlospinan.bloqueador.app.rules.SqlCallLogRepository
 import org.carlospinan.bloqueador.app.rules.SqlRuleRepository
+import org.carlospinan.bloqueador.app.rules.domain.EvaluateIncomingCallUseCase
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.settings.SqlSettingsRepository
@@ -33,6 +34,7 @@ val sharedModule =
         single<SpamProviderRepository> { SqlSpamProviderRepository(get()) }
         single<SpamProviderClient> { BundledSpamProvider() }
         single<AutoResponderRepository> { SqlAutoResponderRepository(get()) }
+        single { EvaluateIncomingCallUseCase(get(), get(), get(), get(), get()) }
 
         factory { HomeViewModel(get(), get()) }
         factory { BlockListViewModel(get()) }

@@ -44,7 +44,7 @@ class BlockListViewModelTest {
 
         override suspend fun blockedNumberEntries() = blockedNumbersFlow.value
 
-        override suspend fun allowlistedNumberSet(): Set<String> = emptySet()
+        override suspend fun allowlistedNumberEntries() = allowlistedNumbersFlow.value
 
         override suspend fun enabledPatterns() = emptyList<org.carlospinan.bloqueador.app.rules.PatternRule>()
 

@@ -18,6 +18,8 @@ import org.carlospinan.bloqueador.app.spam.SpamProviderClient
  */
 data class ResolveContext(
     val allowlistedNumbers: Set<String>,
+    /** Full entries for numbers in [allowlistedNumbers], keyed by number — supplies real id/label when known. */
+    val allowlistedNumberDetails: Map<String, AllowlistedNumberEntry> = emptyMap(),
     val contactNumbers: Set<String> = emptySet(),
     val blockedNumbers: Set<String>,
     /** Full entries for numbers in [blockedNumbers], keyed by number — supplies real id/label when known. */
@@ -77,7 +79,12 @@ object RulePrecedenceResolver {
 
         // 2. Allowlist check (contacts + manual allowlist)
         if (normalized in mergedAllowlist) {
-            return RuleDecision.Allowlist
+            val entry =
+                context.allowlistedNumberDetails.entries
+                    .firstOrNull {
+                        PhoneNumberParser.normalizeForComparison(it.key) == normalized
+                    }?.value
+            return RuleDecision.Allowlist(ruleId = entry?.id ?: -1, label = entry?.label)
         }
 
         // 3. Pattern match

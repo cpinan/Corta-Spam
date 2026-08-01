@@ -131,13 +131,16 @@ class SqlRuleRepository(
             }
         }
 
-    override suspend fun allowlistedNumberSet(): Set<String> =
+    override suspend fun allowlistedNumberEntries(): List<AllowlistedNumberEntry> =
         withContext(Dispatchers.Default) {
-            queries
-                .selectAllAllowlistedNumbers()
-                .executeAsList()
-                .map { it.number }
-                .toSet()
+            queries.selectAllAllowlistedNumbers().executeAsList().map {
+                AllowlistedNumberEntry(
+                    id = it.id,
+                    number = it.number,
+                    label = it.label,
+                    createdAt = it.created_at,
+                )
+            }
         }
 
     override suspend fun enabledPatterns(): List<PatternRule> =

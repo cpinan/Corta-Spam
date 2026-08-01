@@ -28,8 +28,8 @@ interface RuleRepository {
     /** Snapshot of current blocked numbers with full metadata (for resolver). */
     suspend fun blockedNumberEntries(): List<BlockedNumberEntry>
 
-    /** Snapshot of current allowlisted numbers as a set (for resolver). */
-    suspend fun allowlistedNumberSet(): Set<String>
+    /** Snapshot of current allowlisted numbers with full metadata (for resolver). */
+    suspend fun allowlistedNumberEntries(): List<AllowlistedNumberEntry>
 
     /** Snapshot of enabled pattern rules (for resolver). */
     suspend fun enabledPatterns(): List<PatternRule>

@@ -5,8 +5,15 @@ package org.carlospinan.bloqueador.app.rules
  * Precedence order: MANUAL_BLOCK > ALLOWLIST > PATTERN > COUNTRY > SPAM > ACTION > SCHEDULE > DEFAULT_ALLOW.
  */
 sealed class RuleDecision {
-    /** Number is on the contacts or manual allowlist — bypass all block rules. */
-    data object Allowlist : RuleDecision()
+    /**
+     * Number is on the contacts or manual allowlist — bypass all block rules.
+     * [ruleId]/[label] are only populated for an explicit allowlist-entry match (-1/null when
+     * the match came from a contact instead, since contacts don't have a rule row).
+     */
+    data class Allowlist(
+        val ruleId: Long,
+        val label: String?,
+    ) : RuleDecision()
 
     /** Number matches a manual block entry. */
     data class ManualBlock(
@@ -69,7 +76,7 @@ sealed class RuleDecision {
     val blockReason: String?
         get() =
             when (this) {
-                is Allowlist -> null
+                is Allowlist -> label
                 is ManualBlock -> label ?: "Manually blocked"
                 is PatternBlock -> label ?: "Pattern match: $pattern"
                 is CountryBlock -> "Country: $countryName ($countryCode)"
@@ -85,12 +92,13 @@ sealed class RuleDecision {
     val loggedRuleId: Long?
         get() =
             when (this) {
+                is Allowlist -> ruleId.takeIf { it != -1L }
                 is ManualBlock -> ruleId
                 is PatternBlock -> ruleId
                 is CountryBlock -> ruleId
                 is ActionBlock -> ruleId
                 is ScheduleBlock -> ruleId
-                is Allowlist, is SpamHit, is DefaultAllow, is DefaultBlock, is PendingReview -> null
+                is SpamHit, is DefaultAllow, is DefaultBlock, is PendingReview -> null
             }
 
     /** Rule type tag for persistence in the call log. */
