@@ -19,27 +19,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
-import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DialerOnboardingViewModel by inject()
-    private val settingsRepository: SettingsRepository by inject()
-    private val autoResponderViewModel: AutoResponderViewModel by inject()
 
     private val roleRequestLauncher =
         registerForActivityResult(
@@ -48,13 +39,13 @@ class MainActivity : ComponentActivity() {
             viewModel.onRequestResult(granted = result.resultCode == RESULT_OK)
         }
 
+    private var audioPickResultCallback: ((String) -> Unit)? = null
+
     private val audioPickerLauncher =
         registerForActivityResult(
             ActivityResultContracts.GetContent(),
         ) { uri ->
-            uri?.toString()?.let {
-                scope.launch { autoResponderViewModel.setAudioUri(it) }
-            }
+            uri?.toString()?.let { audioPickResultCallback?.invoke(it) }
         }
 
     private val contactsPermissionLauncher =
@@ -95,8 +86,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
     private var notificationsPermissionGranted by mutableStateOf(true)
     private var fullScreenIntentAllowed by mutableStateOf(true)
     private var callPhonePermissionGranted by mutableStateOf(true)
@@ -125,18 +114,12 @@ class MainActivity : ComponentActivity() {
             notificationsPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-        val showWelcome = !settingsRepository.welcomeShown
-
         setContent {
-            var welcomeDone by remember { mutableStateOf(!showWelcome) }
-            val scopeCompose = rememberCoroutineScope()
+            val welcomeShown by viewModel.welcomeShown.collectAsState()
 
-            if (!welcomeDone) {
+            if (!welcomeShown) {
                 WelcomeScreen(
-                    onGetStarted = {
-                        scopeCompose.launch { settingsRepository.setWelcomeShown() }
-                        welcomeDone = true
-                    },
+                    onGetStarted = viewModel::setWelcomeShown,
                 )
             } else {
                 DialerOnboardingScreen(
@@ -144,7 +127,10 @@ class MainActivity : ComponentActivity() {
                     onRequestRole = ::launchDefaultDialerRequest,
                     content = {
                         App(
-                            onPickAudio = { audioPickerLauncher.launch("audio/*") },
+                            onPickAudio = { onResult ->
+                                audioPickResultCallback = onResult
+                                audioPickerLauncher.launch("audio/*")
+                            },
                             onRequestContactsPermission = {
                                 contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
                             },

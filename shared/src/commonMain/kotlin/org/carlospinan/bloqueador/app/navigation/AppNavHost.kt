@@ -69,7 +69,7 @@ object Routes {
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    onPickAudio: (() -> Unit)? = null,
+    onPickAudio: (((String) -> Unit) -> Unit)? = null,
     onRequestContactsPermission: (() -> Unit)? = null,
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
@@ -287,7 +287,9 @@ fun AppNavHost(
                     onSetEnabled = autoResponderViewModel::setEnabled,
                     onSetScript = autoResponderViewModel::setScript,
                     onSetRecordingEnabled = autoResponderViewModel::setRecordingEnabled,
-                    onPickAudio = onPickAudio ?: {},
+                    onPickAudio = {
+                        onPickAudio?.invoke { uri -> autoResponderViewModel.setAudioUri(uri) }
+                    },
                     onClearAudio = autoResponderViewModel::clearAudioUri,
                     onBack = { navController.popBackStack() },
                 )

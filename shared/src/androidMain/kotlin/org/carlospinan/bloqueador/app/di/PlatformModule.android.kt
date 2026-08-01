@@ -16,5 +16,5 @@ actual fun platformModule(): Module =
         single<DriverFactory> { AndroidDriverFactory(androidContext()) }
         single<DefaultDialerGateway> { AndroidDefaultDialerGateway(androidContext()) }
         single<ContactsGateway> { AndroidContactsGateway(androidContext()) }
-        factory { DialerOnboardingViewModel(get()) }
+        factory { DialerOnboardingViewModel(get(), get()) }
     }

@@ -38,7 +38,7 @@ val sharedModule =
         factory { BlockListViewModel(get()) }
         factory { CallLogViewModel(get()) }
         factory { SettingsViewModel(get(), get()) }
-        single { AutoResponderViewModel(get()) }
+        factory { AutoResponderViewModel(get()) }
         factory { StatsViewModel(get()) }
         factory { BackupViewModel(get()) }
     }
