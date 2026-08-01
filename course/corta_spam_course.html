@@ -194,7 +194,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div>
 <h1>Corta Spam</h1>
 <p>From Zero to Master: Kotlin Multiplatform Android App Development</p>
-<p style="font-size:.85rem">A 14-module course walking through a real production app</p>
+<p style="font-size:.85rem">A 15-module course walking through a real production app</p>
 </div>
 <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙 Dark Mode</button>
 </div></div></div>
@@ -1227,6 +1227,18 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line"><span class="cm">// 8. DEFAULT — allow, block, or ask (based on user settings)</span></span></code></pre>
 <p><b>Why manual block overrides contacts:</b> If a user explicitly added mom's number to the block list, they have a reason. Respecting that explicit choice is more important than the auto-allow-contacts convenience feature.</p>
 
+<h3><span class="badge badge-i">Intermediate</span> Making "Ask" mean something</h3>
+<p>The default action has three settings: Allow, Block, Ask. For a long time, <code>Ask</code> silently behaved exactly like <code>Allow</code> — there was no way to build a real-time "should I let this through?" prompt, because by the time the resolver runs, the call is already ringing. Rather than ship a setting that lies about what it does, the fix makes <code>Ask</code> a genuinely distinct outcome:</p>
+<p class="file-label">RulePrecedenceResolver.kt — the default step</p>
+<pre><code><span class="line"><span class="cm">// 8. Default: honor the user's chosen default action.</span></span>
+<span class="line"><span class="kw">return when</span> (context.defaultAction) {</span>
+<span class="line">    <span class="tp">DefaultAction</span>.BLOCK -> <span class="tp">RuleDecision</span>.DefaultBlock</span>
+<span class="line">    <span class="tp">DefaultAction</span>.ASK -> <span class="tp">RuleDecision</span>.PendingReview</span>
+<span class="line">    <span class="tp">DefaultAction</span>.ALLOW -> <span class="tp">RuleDecision</span>.DefaultAllow</span>
+<span class="line">}</span></code></pre>
+<p><b>The call still goes through</b> — you can't interrupt a live ring to ask the user anything — but <code>PendingReview</code> is logged with its own <code>rule_type = 'REVIEW'</code> tag instead of blending into ordinary allowed calls. Home shows a "Pending review" count; Call Log gets a matching filter and a distinct amber "Needs review" state.</p>
+<p><b>An honest limitation, not a bug:</b> the call log is an immutable, append-only history (Module 6) — there's no "resolved" flag. If the user later blocks a number that generated a REVIEW entry, that old entry stays tagged REVIEW forever. This is a <i>filter over history</i>, not a stateful inbox with read/unread state. Don't oversell it in the UI as more than it is.</p>
+
 <h3><span class="badge badge-a">Advanced</span> Phone number normalization</h3>
 <p><b>The problem:</b> A contact is stored as <code>"(555) 123-4567"</code>. The incoming call arrives as <code>"+15551234567"</code>. Direct string comparison fails — contacts aren't auto-allowed.</p>
 <p class="file-label">PhoneNumberParser.kt — the fix</p>
@@ -1277,9 +1289,9 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </figure>
 
 <div class="takeaways"><h3>Key Takeaways</h3>
-<ul><li>ResolveContext is a pure data class — no mutable state, no side effects, fully testable</li><li>Manual block overrides contacts — user's explicit choice beats convenience</li><li>Normalize ALL numbers to digits-only before comparison — cross-format matching</li><li>Glob patterns (not regex) keep the engine simple and iOS-compatible</li></ul></div>
+<ul><li>ResolveContext is a pure data class — no mutable state, no side effects, fully testable</li><li>Manual block overrides contacts — user's explicit choice beats convenience</li><li>Normalize ALL numbers to digits-only before comparison — cross-format matching</li><li>Glob patterns (not regex) keep the engine simple and iOS-compatible</li><li>Don't let a setting silently do something other than what it claims — Ask now produces a distinct, taggable decision instead of quietly aliasing Allow</li></ul></div>
 
-<details class="quiz"><summary>Check your understanding (5 questions)</summary>
+<details class="quiz"><summary>Check your understanding (6 questions)</summary>
 <div class="quiz-item"><p>1. Why does manual block (step 1) override allowlist (step 2)?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
 <div class="answer">The user explicitly chose to block this number. If the allowlist overrode manual blocks, adding your ex to the block list would be pointless — they'd just get through because they're also in your contacts.</div></div>
@@ -1295,6 +1307,9 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div class="quiz-item"><p>5. Why not use full regex for pattern matching?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
 <div class="answer">iOS's CallDirectory extension takes a static list of concrete numbers — it can't evaluate regex at runtime. Simple prefix/suffix/contains patterns can be expanded into concrete number lists that iOS can consume. Regex patterns would be Android-only.</div></div>
+<div class="quiz-item"><p>6. Why does <code>RuleDecision.PendingReview</code> still let the call through instead of holding it?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">There's no way to pause a live ring and wait for the user to decide — the call is already happening. PendingReview is a logging distinction, not a hold: the call proceeds like DefaultAllow, but gets tagged rule_type='REVIEW' so the user can look at it later in Call Log instead of it disappearing into ordinary allowed calls.</div></div>
 </details>
 </section>
 
@@ -1694,11 +1709,96 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </section>
 
 <!-- ================================================================ -->
+<!-- MODULE 15: Call Notifications & Permission UX -->
+<!-- ================================================================ -->
+<section class="module" id="m15">
+<h2>Module 15: Call Notifications &amp; Permission UX</h2>
+<p>A default-dialer app has to show its own incoming-call UI — Android doesn't do it for you. Here's why the obvious approach silently fails on a locked phone, the notification design that actually works, and a real case study in a platform limitation no amount of app code can fix.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Understand background-activity-launch restrictions and why full-screen-intent notifications exist</li><li>Design notification channels by importance, not by feature</li><li>Use <code>NotificationCompat.CallStyle</code> — the same API real dialers use</li><li>Wire notification button actions back into app state via <code>PendingIntent.getBroadcast</code></li><li>Detect and deep-link broken permission state instead of asking once and going silent</li><li>Recognize when a limitation is the platform's, not the app's</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Why <code>startActivity()</code> alone isn't enough</h3>
+<p>The obvious way to show incoming-call UI is <code>PassthroughInCallService.onCallAdded()</code> calling <code>startActivity(InCallActivity)</code>. That works — right up until the screen is off or locked. Since Android 10, apps can't launch activities from the background without an active user-interaction token, and a ringing call arriving while the phone is asleep is exactly the background case. The call silently never shows anything.</p>
+<p><b>The fix isn't more permissions — it's a different mechanism.</b> A notification with <code>setFullScreenIntent()</code> is the one OS-sanctioned way to launch UI over the lock screen from the background. Real dialers, alarm apps, and video-call apps all use this same escape hatch.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Three channels, three importances</h3>
+<p class="file-label">IncomingCallNotifier.kt — createChannel()</p>
+<pre><code><span class="line"><span class="tp">NotificationChannel</span>(<span class="str">"incoming_calls"</span>, ..., <span class="tp">NotificationManager</span>.IMPORTANCE_HIGH).<span class="fn">apply</span> {</span>
+<span class="line">    setBypassDnd(<span class="kw">true</span>)</span>
+<span class="line">    lockscreenVisibility = <span class="tp">Notification</span>.VISIBILITY_PUBLIC</span>
+<span class="line">}</span>
+<span class="line"><span class="tp">NotificationChannel</span>(<span class="str">"ongoing_call"</span>, ..., <span class="tp">NotificationManager</span>.IMPORTANCE_LOW)</span>
+<span class="line"><span class="tp">NotificationChannel</span>(<span class="str">"call_history"</span>, ..., <span class="tp">NotificationManager</span>.IMPORTANCE_DEFAULT)</span></code></pre>
+<p><b>One notification, one job each:</b> the ringing alert needs <code>HIGH</code> + <code>setBypassDnd</code> + full-screen intent, because it's time-critical and has to interrupt. The "return to call" notification shown while active is deliberately <code>LOW</code> — silent, no heads-up, just a status-bar affordance, because the call is already answered and doesn't need to demand attention again. The post-call missed/blocked notification is <code>DEFAULT</code> — visible, but not urgent enough to bypass Do Not Disturb. Picking one importance for all three would either make the ringing alert too quiet or the post-call summary too loud.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> CallStyle — the API real dialers use</h3>
+<p class="file-label">IncomingCallNotifier.kt</p>
+<pre><code><span class="line"><span class="tp">NotificationCompat</span>.Builder(context, CHANNEL_ID)</span>
+<span class="line">    .setFullScreenIntent(fullScreenPendingIntent, <span class="kw">true</span>)</span>
+<span class="line">    .setStyle(</span>
+<span class="line">        <span class="tp">NotificationCompat</span>.CallStyle.forIncomingCall(caller, declinePendingIntent, answerPendingIntent),</span>
+<span class="line">    )</span>
+<span class="line">    .build()</span></code></pre>
+<p><code>CallStyle</code> (androidx.core 1.10+) gives you the system's own big Answer/Decline layout — the same chrome the Phone app itself uses — instead of hand-rolling notification actions that look like a generic app alert. <code>forOngoingCall()</code> is the equivalent for the active-call notification, with a single Hang Up action.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Wiring notification buttons back into the call</h3>
+<p>Tapping Answer/Decline/Hang Up on a notification doesn't run inside an Activity — there's no UI to hold a click listener. The action has to travel through a <code>PendingIntent</code> to something that can run headless:</p>
+<p class="file-label">CallActionReceiver.kt</p>
+<pre><code><span class="line"><span class="kw">class</span> <span class="tp">CallActionReceiver</span> : <span class="tp">BroadcastReceiver</span>() {</span>
+<span class="line">    <span class="kw">override fun</span> <span class="fn">onReceive</span>(context: <span class="tp">Context</span>, intent: <span class="tp">Intent</span>) {</span>
+<span class="line">        <span class="kw">when</span> (intent.action) {</span>
+<span class="line">            ACTION_ANSWER -> <span class="tp">InCallState</span>.<span class="fn">answer</span>()</span>
+<span class="line">            ACTION_DECLINE -> <span class="tp">InCallState</span>.<span class="fn">decline</span>()</span>
+<span class="line">            ACTION_HANG_UP -> <span class="tp">InCallState</span>.<span class="fn">hangUp</span>()</span>
+<span class="line">        }</span>
+<span class="line">        <span class="tp">IncomingCallNotifier</span>.<span class="fn">cancel</span>(context)</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><b>Why this works without an Activity:</b> <code>InCallState</code> is a plain Kotlin singleton holding the live <code>android.telecom.Call</code> reference — same process, same object, regardless of whether the caller is <code>InCallActivity</code>'s buttons or this receiver. The <code>BroadcastReceiver</code> is just a second entry point into the same state.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Permission UX: detect and deep-link, don't ask once and go quiet</h3>
+<p>A single <code>requestPermission()</code> call handles the happy path. It says nothing about what happens when the user taps Deny, or later revokes the permission from system Settings — both cases where the feature just silently stops working with zero signal. The fix tracks real state and surfaces it:</p>
+<p class="file-label">MainActivity.kt — refreshed on launch and on every resume</p>
+<pre><code><span class="line"><span class="kw">private fun</span> <span class="fn">refreshPermissionStatus</span>() {</span>
+<span class="line">    notificationsPermissionGranted = <span class="tp">ContextCompat</span>.<span class="fn">checkSelfPermission</span>(...) == GRANTED</span>
+<span class="line">    fullScreenIntentAllowed = <span class="tp">Build</span>.VERSION.SDK_INT &lt; <span class="tp">UPSIDE_DOWN_CAKE</span> ||</span>
+<span class="line">        <span class="fn">getSystemService</span>(<span class="tp">NotificationManager</span>::class.java).<span class="fn">canUseFullScreenIntent</span>()</span>
+<span class="line">    callPhonePermissionGranted = <span class="tp">ContextCompat</span>.<span class="fn">checkSelfPermission</span>(...) == GRANTED</span>
+<span class="line">}</span></code></pre>
+<p>Settings then shows a warning card per broken permission, each with a button to the <i>specific</i> system screen that fixes it — <code>ACTION_APP_NOTIFICATION_SETTINGS</code>, <code>ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT</code> (API 34+, since users can revoke this independently of notifications), or <code>ACTION_APPLICATION_DETAILS_SETTINGS</code> — instead of one generic "open Settings" link.</p>
+
+<div class="callout"><h3>Case Study: The Auto-Responder Audio Ceiling</h3>
+<p>The auto-responder plays TTS/MediaPlayer audio with <code>AudioAttributes.USAGE_VOICE_COMMUNICATION</code>, hoping Android mixes it into the live call's uplink so the caller hears it. This is the exact same technique call-recorder and IVR/auto-attendant apps have used for years — and exactly what Google and OEMs have been hardening against at the audio-HAL level on newer Android versions, as an anti-wiretapping measure. Verified live on a Motorola razr running Android 16: this is a real, current-generation device where that hardening plausibly applies.</p>
+<p><b>Why no code fix exists:</b> there is no public Android API that grants a non-privileged third-party app guaranteed injection into a live cellular call's uplink. Forcing <code>AudioManager.mode</code>/routing calls during a Telecom-managed call is explicitly discouraged and risks breaking the user's <i>actual</i> call audio — a far worse failure than a silent auto-responder.</p>
+<p><b>The right fix was honest UI, not more code:</b> sharpen the existing experimental-badge string to explain <i>why</i> ("depends on your phone letting call audio through; many newer Android versions block it") instead of chasing a workaround that either doesn't exist or actively risks the live call. Recognizing a platform ceiling — and saying so in the UI — is sometimes the correct engineering deliverable.</p>
+</div>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Background-activity-launch restrictions mean a ringing call needs a full-screen-intent notification, not just startActivity()</li><li>Match notification importance to urgency per channel — HIGH only for what truly needs to interrupt</li><li>CallStyle gives you the system's own call UI chrome for free</li><li>Notification button actions need a BroadcastReceiver + PendingIntent — there's no Activity to hold the click</li><li>Track real permission state and deep-link to the specific fix — "ask once, go silent forever" is a UX bug</li><li>Some limitations are the platform's, not yours — recognize the ceiling instead of writing risky code to route around it</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. Why does <code>startActivity()</code> from <code>onCallAdded()</code> fail to show UI when the phone is locked?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Since Android 10, apps can't launch activities from the background without an active user-interaction token. A call ringing while the screen is off/locked is exactly the background case Android restricts — the launch is silently dropped, not delayed.</div></div>
+<div class="quiz-item"><p>2. Why are the three notification channels (incoming, ongoing, history) given different importance levels instead of all HIGH?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Only the ringing alert is time-critical enough to justify HIGH + bypassing Do Not Disturb. The ongoing-call notification is just a status affordance for an already-answered call (LOW, silent), and the post-call summary is informational (DEFAULT). Making them all HIGH would make routine notifications as disruptive as an actual ring.</div></div>
+<div class="quiz-item"><p>3. Why does a notification button (Answer/Decline/Hang Up) need a BroadcastReceiver instead of just calling a function directly?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">A notification isn't hosted by your Activity — there's no live UI to attach a click listener to. The action has to be a PendingIntent the system can fire independently, and a BroadcastReceiver is the headless entry point that receives it and mutates the same in-process InCallState the Activity's own buttons would.</div></div>
+<div class="quiz-item"><p>4. Why wasn't the auto-responder's call-audio problem fixed with code?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Injecting audio into a live cellular call's uplink from a third-party app is an OEM-dependent trick, not a supported public API, and is increasingly blocked at the audio-HAL level as anti-wiretapping hardening. The alternative — forcing AudioManager routing during a Telecom-managed call — risks breaking the user's real call audio, a worse outcome than a silent auto-responder. The honest fix was clearer in-app messaging about the limitation, not a workaround.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>14 Modules, One Production App</h3>
+<div class="callout"><h3>15 Modules, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -1715,8 +1815,9 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Domain</td><td style="padding:8px">Rule engine, normalization, patterns</td><td style="padding:8px">10</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">i18n</td><td style="padding:8px">Compose resources, 4 locales</td><td style="padding:8px">11</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Quality</td><td style="padding:8px">kotlin.test, fakes, Robolectric</td><td style="padding:8px">12</td></tr>
-<tr><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
+<tr><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -1728,7 +1829,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
 <p>158+ automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-07-30 — includes iOS Kotlin/Native compilation fixes (Dispatchers.IO → Default, Clock.System → currentTimeMillis expect/actual, Navigation args Map cast).</p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-07-31 — added Module 15 (call notifications, CallStyle, full-screen intent, permission UX, the auto-responder audio-ceiling case study) and a PendingReview addendum to Module 10 (DefaultAction.ASK made real).</p>
 </div></div>
 
 <script>
@@ -1769,7 +1870,7 @@ function markVisited(n){
 }
 function updateProgress(){
   var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  var total=14,pct=Math.round(visited.length/total*100);
+  var total=15,pct=Math.round(visited.length/total*100);
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
   var links=document.querySelectorAll('#toc-grid a');

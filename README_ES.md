@@ -106,9 +106,9 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 13 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing y CI.
+Un curso completo de 15 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, y notificaciones de llamadas/UX de permisos.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 45 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 56 preguntas de evaluación.
 
 ## Cambios recientes
 

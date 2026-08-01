@@ -106,9 +106,9 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 13-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, and CI.
+A complete 15-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, and call notifications/permission UX.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 45 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 56 quiz questions included.
 
 ## Recent Fixes
 
