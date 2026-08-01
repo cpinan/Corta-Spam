@@ -43,8 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AutoResponderScreen(
-    config: AutoResponderConfig,
-    validationError: AutoResponderConfig.ErrorCode?,
+    state: AutoResponderUiState,
     onSetEnabled: (Boolean) -> Unit,
     onSetScript: (String) -> Unit,
     onSetRecordingEnabled: (Boolean) -> Unit,
@@ -92,7 +91,7 @@ fun AutoResponderScreen(
                                 )
                             }
                             Switch(
-                                checked = config.enabled,
+                                checked = state.config.enabled,
                                 onCheckedChange = onSetEnabled,
                             )
                         }
@@ -101,18 +100,18 @@ fun AutoResponderScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedTextField(
-                        value = config.script,
+                        value = state.config.script,
                         onValueChange = onSetScript,
                         label = { Text(stringResource(Res.string.autoresponder_script_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         maxLines = 8,
-                        isError = validationError != null,
+                        isError = state.validationError != null,
                         supportingText = {
-                            if (validationError != null) {
+                            if (state.validationError != null) {
                                 Text(
                                     text =
-                                        when (validationError) {
+                                        when (state.validationError) {
                                             AutoResponderConfig.ErrorCode.EMPTY_SCRIPT ->
                                                 stringResource(Res.string.autoresponder_error_empty)
                                             AutoResponderConfig.ErrorCode.SCRIPT_TOO_LONG ->
@@ -136,21 +135,21 @@ fun AutoResponderScreen(
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 RadioButton(
-                                    selected = config.usesTts,
+                                    selected = state.config.usesTts,
                                     onClick = onClearAudio,
                                 )
                                 Text(stringResource(Res.string.autoresponder_audio_tts))
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 RadioButton(
-                                    selected = !config.usesTts,
+                                    selected = !state.config.usesTts,
                                     onClick = onPickAudio,
                                 )
                                 Text(stringResource(Res.string.autoresponder_audio_custom))
                             }
-                            if (!config.usesTts) {
+                            if (!state.config.usesTts) {
                                 Text(
-                                    text = config.audioUri,
+                                    text = state.config.audioUri,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -182,7 +181,7 @@ fun AutoResponderScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                if (config.recordingEnabled) {
+                                if (state.config.recordingEnabled) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = stringResource(Res.string.autoresponder_consent_hint),
@@ -192,7 +191,7 @@ fun AutoResponderScreen(
                                 }
                             }
                             Switch(
-                                checked = config.recordingEnabled,
+                                checked = state.config.recordingEnabled,
                                 onCheckedChange = onSetRecordingEnabled,
                             )
                         }

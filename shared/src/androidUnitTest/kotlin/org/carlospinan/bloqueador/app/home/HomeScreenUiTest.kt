@@ -20,8 +20,7 @@ class HomeScreenUiTest {
     fun `blocked today count displayed`() {
         composeTestRule.setContent {
             HomeScreen(
-                state = HomeUiState(blockedToday = 12, blockedThisWeek = 25, blockedThisMonth = 45),
-                blockingEnabled = true,
+                state = HomeUiState(blockedToday = 12, blockedThisWeek = 25, blockedThisMonth = 45, blockingEnabled = true),
                 onNavigateToCallLog = {},
                 onNavigateToCallLogToday = {},
                 onNavigateToCallLogThisWeek = {},
@@ -40,8 +39,7 @@ class HomeScreenUiTest {
     fun `quick grid items visible`() {
         composeTestRule.setContent {
             HomeScreen(
-                state = HomeUiState(),
-                blockingEnabled = true,
+                state = HomeUiState(blockingEnabled = true),
                 onNavigateToCallLog = {},
                 onNavigateToCallLogToday = {},
                 onNavigateToCallLogThisWeek = {},
@@ -63,8 +61,7 @@ class HomeScreenUiTest {
     fun `title shows Corta Spam`() {
         composeTestRule.setContent {
             HomeScreen(
-                state = HomeUiState(),
-                blockingEnabled = true,
+                state = HomeUiState(blockingEnabled = true),
                 onNavigateToCallLog = {},
                 onNavigateToCallLogToday = {},
                 onNavigateToCallLogThisWeek = {},

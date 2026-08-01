@@ -53,7 +53,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun HomeScreen(
     state: HomeUiState,
-    blockingEnabled: Boolean,
     onNavigateToCallLog: () -> Unit,
     onNavigateToCallLogToday: () -> Unit,
     onNavigateToCallLogThisWeek: () -> Unit,
@@ -82,7 +81,6 @@ fun HomeScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             HomeStatsSection(
                                 state = state,
-                                blockingEnabled = blockingEnabled,
                                 onToggleBlocking = onToggleBlocking,
                                 onNavigateToCallLogToday = onNavigateToCallLogToday,
                                 onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
@@ -100,7 +98,6 @@ fun HomeScreen(
                 } else {
                     HomeStatsSection(
                         state = state,
-                        blockingEnabled = blockingEnabled,
                         onToggleBlocking = onToggleBlocking,
                         onNavigateToCallLogToday = onNavigateToCallLogToday,
                         onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
@@ -132,7 +129,6 @@ fun HomeScreen(
 @Composable
 private fun HomeStatsSection(
     state: HomeUiState,
-    blockingEnabled: Boolean,
     onToggleBlocking: (Boolean) -> Unit,
     onNavigateToCallLogToday: () -> Unit,
     onNavigateToCallLogThisWeek: () -> Unit,
@@ -149,7 +145,7 @@ private fun HomeStatsSection(
             style = MaterialTheme.typography.headlineMedium,
         )
         Switch(
-            checked = blockingEnabled,
+            checked = state.blockingEnabled,
             onCheckedChange = onToggleBlocking,
         )
     }
@@ -157,7 +153,7 @@ private fun HomeStatsSection(
     Text(
         text =
             stringResource(
-                if (blockingEnabled) Res.string.home_blocking_enabled else Res.string.home_blocking_disabled,
+                if (state.blockingEnabled) Res.string.home_blocking_enabled else Res.string.home_blocking_disabled,
             ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,

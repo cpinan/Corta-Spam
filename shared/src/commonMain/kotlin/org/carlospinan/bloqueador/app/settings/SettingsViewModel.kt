@@ -4,33 +4,39 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.spam.SpamProviderRepository
+
+data class SettingsUiState(
+    val blockingEnabled: Boolean = true,
+    val autoAllowContacts: Boolean = true,
+    val defaultAction: DefaultAction = DefaultAction.ALLOW,
+    val spamEnabled: Boolean = false,
+    val notificationsEnabled: Boolean = true,
+)
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val spamProviderRepository: SpamProviderRepository,
 ) : ViewModel() {
-    val blockingEnabled: StateFlow<Boolean> =
-        settingsRepository.blockingEnabled
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
-
-    val autoAllowContacts: StateFlow<Boolean> =
-        settingsRepository.autoAllowContacts
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
-
-    val defaultAction: StateFlow<DefaultAction> =
-        settingsRepository.defaultAction
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DefaultAction.ALLOW)
-
-    val spamEnabled: StateFlow<Boolean> =
-        spamProviderRepository.enabled
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    val notificationsEnabled: StateFlow<Boolean> =
-        settingsRepository.notificationsEnabled
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val state: StateFlow<SettingsUiState> =
+        combine(
+            settingsRepository.blockingEnabled,
+            settingsRepository.autoAllowContacts,
+            settingsRepository.defaultAction,
+            spamProviderRepository.enabled,
+            settingsRepository.notificationsEnabled,
+        ) { blockingEnabled, autoAllowContacts, defaultAction, spamEnabled, notificationsEnabled ->
+            SettingsUiState(
+                blockingEnabled = blockingEnabled,
+                autoAllowContacts = autoAllowContacts,
+                defaultAction = defaultAction,
+                spamEnabled = spamEnabled,
+                notificationsEnabled = notificationsEnabled,
+            )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun setBlockingEnabled(enabled: Boolean) {
         viewModelScope.launch {

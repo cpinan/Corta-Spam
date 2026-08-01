@@ -20,10 +20,7 @@ class SettingsScreenUiTest {
     fun `all items render`() {
         composeTestRule.setContent {
             SettingsScreen(
-                blockingEnabled = true,
-                autoAllowContacts = false,
-                defaultAction = DefaultAction.ALLOW,
-                spamEnabled = false,
+                state = SettingsUiState(blockingEnabled = true, autoAllowContacts = false),
                 showGrantContacts = false,
                 onSetBlockingEnabled = {},
                 onSetAutoAllowContacts = {},
@@ -44,10 +41,7 @@ class SettingsScreenUiTest {
     fun `privacy and terms items have correct labels`() {
         composeTestRule.setContent {
             SettingsScreen(
-                blockingEnabled = true,
-                autoAllowContacts = false,
-                defaultAction = DefaultAction.ALLOW,
-                spamEnabled = false,
+                state = SettingsUiState(blockingEnabled = true, autoAllowContacts = false),
                 showGrantContacts = false,
                 onSetBlockingEnabled = {},
                 onSetAutoAllowContacts = {},

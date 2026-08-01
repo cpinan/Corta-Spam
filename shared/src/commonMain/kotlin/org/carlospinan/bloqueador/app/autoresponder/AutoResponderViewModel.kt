@@ -8,21 +8,24 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+data class AutoResponderUiState(
+    val config: AutoResponderConfig = AutoResponderConfig(),
+    val validationError: AutoResponderConfig.ErrorCode? = null,
+)
+
 class AutoResponderViewModel(
     private val repository: AutoResponderRepository,
 ) : ViewModel() {
-    val config: StateFlow<AutoResponderConfig> =
+    val state: StateFlow<AutoResponderUiState> =
         repository.config
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AutoResponderConfig())
-
-    val validationError: StateFlow<AutoResponderConfig.ErrorCode?> =
-        repository.config
-            .map { cfg ->
-                when (val result = cfg.validate()) {
-                    is AutoResponderConfig.ValidationResult.Ok -> null
-                    is AutoResponderConfig.ValidationResult.Error -> result.code
-                }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+            .map { config ->
+                val validationError =
+                    when (val result = config.validate()) {
+                        is AutoResponderConfig.ValidationResult.Ok -> null
+                        is AutoResponderConfig.ValidationResult.Error -> result.code
+                    }
+                AutoResponderUiState(config = config, validationError = validationError)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AutoResponderUiState())
 
     fun setEnabled(enabled: Boolean) {
         viewModelScope.launch { repository.setEnabled(enabled) }

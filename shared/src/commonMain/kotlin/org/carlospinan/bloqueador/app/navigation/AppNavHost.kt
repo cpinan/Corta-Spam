@@ -109,13 +109,11 @@ fun AppNavHost(
             composable(Routes.HOME) {
                 val homeViewModel = koinViewModel<HomeViewModel>()
                 val state by homeViewModel.state.collectAsState()
-                val blockingEnabled by homeViewModel.blockingEnabled.collectAsState()
                 LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
                     homeViewModel.refresh()
                 }
                 HomeScreen(
                     state = state,
-                    blockingEnabled = blockingEnabled,
                     onNavigateToCallLog = { navController.navigate(Routes.callLogRoute()) { launchSingleTop = true } },
                     onNavigateToCallLogToday = { navController.navigate(Routes.callLogRoute("today")) { launchSingleTop = true } },
                     onNavigateToCallLogThisWeek = { navController.navigate(Routes.callLogRoute("week")) { launchSingleTop = true } },
@@ -245,18 +243,10 @@ fun AppNavHost(
 
             composable(Routes.SETTINGS) {
                 val settingsViewModel = koinViewModel<SettingsViewModel>()
-                val blockingEnabled by settingsViewModel.blockingEnabled.collectAsState()
-                val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
-                val defaultAction by settingsViewModel.defaultAction.collectAsState()
-                val spamEnabled by settingsViewModel.spamEnabled.collectAsState()
-                val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
+                val settingsUiState by settingsViewModel.state.collectAsState()
                 SettingsScreen(
-                    blockingEnabled = blockingEnabled,
-                    autoAllowContacts = autoAllowContacts,
-                    defaultAction = defaultAction,
-                    spamEnabled = spamEnabled,
+                    state = settingsUiState,
                     showGrantContacts = onRequestContactsPermission != null && !contactsPermissionGranted,
-                    notificationsEnabled = notificationsEnabled,
                     notificationsPermissionGranted = notificationsPermissionGranted,
                     fullScreenIntentAllowed = fullScreenIntentAllowed,
                     callPhonePermissionGranted = callPhonePermissionGranted,
@@ -279,11 +269,9 @@ fun AppNavHost(
 
             composable(Routes.AUTO_RESPONDER) {
                 val autoResponderViewModel = koinViewModel<AutoResponderViewModel>()
-                val config by autoResponderViewModel.config.collectAsState()
-                val validationError by autoResponderViewModel.validationError.collectAsState()
+                val autoResponderUiState by autoResponderViewModel.state.collectAsState()
                 AutoResponderScreen(
-                    config = config,
-                    validationError = validationError,
+                    state = autoResponderUiState,
                     onSetEnabled = autoResponderViewModel::setEnabled,
                     onSetScript = autoResponderViewModel::setScript,
                     onSetRecordingEnabled = autoResponderViewModel::setRecordingEnabled,

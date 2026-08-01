@@ -77,12 +77,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsScreen(
-    blockingEnabled: Boolean,
-    autoAllowContacts: Boolean,
-    defaultAction: DefaultAction,
-    spamEnabled: Boolean,
+    state: SettingsUiState,
     showGrantContacts: Boolean,
-    notificationsEnabled: Boolean = true,
     notificationsPermissionGranted: Boolean = true,
     fullScreenIntentAllowed: Boolean = true,
     callPhonePermissionGranted: Boolean = true,
@@ -148,7 +144,7 @@ fun SettingsScreen(
                     title = stringResource(Res.string.settings_blocking_enabled),
                     description = stringResource(Res.string.settings_blocking_enabled_desc),
                     icon = Res.drawable.ic_blocking,
-                    checked = blockingEnabled,
+                    checked = state.blockingEnabled,
                     onCheckedChange = onSetBlockingEnabled,
                 )
 
@@ -158,7 +154,7 @@ fun SettingsScreen(
                     title = stringResource(Res.string.settings_show_notifications),
                     description = stringResource(Res.string.settings_show_notifications_desc),
                     icon = Res.drawable.ic_settings,
-                    checked = notificationsEnabled,
+                    checked = state.notificationsEnabled,
                     onCheckedChange = onSetNotificationsEnabled,
                 )
 
@@ -168,11 +164,11 @@ fun SettingsScreen(
                     title = stringResource(Res.string.settings_auto_allow_contacts),
                     description = stringResource(Res.string.settings_auto_allow_contacts_desc),
                     icon = Res.drawable.ic_contacts,
-                    checked = autoAllowContacts,
+                    checked = state.autoAllowContacts,
                     onCheckedChange = onSetAutoAllowContacts,
                 )
 
-                if (showGrantContacts && autoAllowContacts) {
+                if (showGrantContacts && state.autoAllowContacts) {
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onRequestContactsPermission) {
                         Text(stringResource(Res.string.settings_grant_contacts))
@@ -186,7 +182,7 @@ fun SettingsScreen(
                     description = stringResource(Res.string.settings_default_action_desc),
                     icon = Res.drawable.ic_default_action,
                     value =
-                        when (defaultAction) {
+                        when (state.defaultAction) {
                             DefaultAction.ALLOW -> stringResource(Res.string.settings_default_action_allow)
                             DefaultAction.BLOCK -> stringResource(Res.string.settings_default_action_block)
                             DefaultAction.ASK -> stringResource(Res.string.settings_default_action_ask)
@@ -239,7 +235,7 @@ fun SettingsScreen(
 
     if (showDefaultActionDialog) {
         DefaultActionDialog(
-            current = defaultAction,
+            current = state.defaultAction,
             onSelect = { action ->
                 onSetDefaultAction(action)
                 showDefaultActionDialog = false

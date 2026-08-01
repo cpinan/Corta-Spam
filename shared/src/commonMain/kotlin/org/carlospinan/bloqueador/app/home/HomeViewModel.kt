@@ -3,10 +3,8 @@ package org.carlospinan.bloqueador.app.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
@@ -17,6 +15,7 @@ data class HomeUiState(
     val blockedThisMonth: Int = 0,
     val pendingReview: Int = 0,
     val isLoading: Boolean = true,
+    val blockingEnabled: Boolean = true,
 )
 
 class HomeViewModel(
@@ -26,19 +25,20 @@ class HomeViewModel(
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
-    val blockingEnabled: StateFlow<Boolean> =
-        settingsRepository.blockingEnabled
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
-
     init {
         refresh()
+        viewModelScope.launch {
+            settingsRepository.blockingEnabled.collect { enabled ->
+                _state.value = _state.value.copy(blockingEnabled = enabled)
+            }
+        }
     }
 
     fun refresh() {
         viewModelScope.launch {
             val stats = callLogRepository.blockedStats()
             _state.value =
-                HomeUiState(
+                _state.value.copy(
                     blockedToday = stats.today,
                     blockedThisWeek = stats.thisWeek,
                     blockedThisMonth = stats.thisMonth,

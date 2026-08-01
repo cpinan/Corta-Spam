@@ -148,8 +148,8 @@ class HomeViewModelTest {
             val repo = FakeCallLogRepository()
             val settings = FakeSettingsRepository()
             val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
+            advanceUntilIdle()
 
-            val enabled = vm.blockingEnabled.first()
-            assertTrue(enabled)
+            assertTrue(vm.state.value.blockingEnabled)
         }
 }
