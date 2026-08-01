@@ -182,6 +182,7 @@ fun CallLogScreen(
                                 onCallBack(number)
                                 selectedNumber = null
                             },
+                            enabled = number.isNotBlank(),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(stringResource(Res.string.call_log_action_callback))
@@ -333,6 +334,7 @@ private fun CallLogDetailPane(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 androidx.compose.material3.OutlinedButton(
                     onClick = { onCallBack(entry.number) },
+                    enabled = entry.number.isNotBlank(),
                 ) {
                     Text(stringResource(Res.string.call_log_action_callback))
                 }

@@ -3,6 +3,7 @@ package org.carlospinan.bloqueador.app
 import android.Manifest
 import android.app.NotificationManager
 import android.app.role.RoleManager
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -13,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.telecom.TelecomManager
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -210,9 +212,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun placeCall(number: String) {
+        if (number.isBlank()) return
         val callIntent = Intent(Intent.ACTION_CALL)
         callIntent.data = Uri.parse("tel:${number.trim()}")
-        startActivity(callIntent)
+        try {
+            startActivity(callIntent)
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "No activity to handle call intent for number", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "CALL_PHONE permission denied at call time", e)
+        }
     }
 
     private fun launchDefaultDialerRequest() {
@@ -224,5 +233,9 @@ class MainActivity : ComponentActivity() {
                     .putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
             }
         roleRequestLauncher.launch(intent)
+    }
+
+    private companion object {
+        const val TAG = "MainActivity"
     }
 }
