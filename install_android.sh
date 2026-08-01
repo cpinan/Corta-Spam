@@ -96,20 +96,18 @@ fi
 
 VARIANT_LOWER=$(echo "$VARIANT" | tr '[:upper:]' '[:lower:]')
 
-# — Find APK path —
+# — Build —
+# Always invoke Gradle rather than hand-rolling a staleness check: Gradle's own
+# incremental build already no-ops (near-instant, near-silent with -q) when
+# nothing changed, and correctly rebuilds when any source/resource/build file
+# did — a mtime comparison against ./gradlew (which itself never changes)
+# cannot detect that and would silently install stale code.
+echo -e "${YELLOW}Building $VARIANT APK...${NC}"
+./gradlew :androidApp:assemble${VARIANT} -q
 APK=$(find androidApp/build/outputs/apk -name "androidApp-${VARIANT_LOWER}.apk" 2>/dev/null | head -1)
-
-# — Build if needed —
-if [ -z "$APK" ] || [ "./gradlew" -nt "$APK" ]; then
-    echo -e "${YELLOW}Building $VARIANT APK...${NC}"
-    ./gradlew :androidApp:assemble${VARIANT} -q
-    APK=$(find androidApp/build/outputs/apk -name "androidApp-${VARIANT_LOWER}.apk" 2>/dev/null | head -1)
-    if [ -z "$APK" ]; then
-        echo -e "${RED}Error: APK not found after build.${NC}"
-        exit 1
-    fi
-else
-    echo -e "${GREEN}Using existing APK${NC}"
+if [ -z "$APK" ]; then
+    echo -e "${RED}Error: APK not found after build.${NC}"
+    exit 1
 fi
 
 # — Install —

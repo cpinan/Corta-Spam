@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 159+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 166+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -111,6 +111,19 @@ Un curso completo de 15 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 56 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-01:**
+- Se agregó un ajuste "Mostrar notificaciones" que silencia toda notificación que publique la app, incluida la alerta de llamada entrante — desactivado significa que las llamadas quedan totalmente silenciosas salvo que la app ya esté en primer plano. También se centró el logo de la app en el espacio vacío de la pantalla de llamada en todas sus fases (timbrando/marcando/activa).
+- Se corrigió un cierre inesperado: tocar "Llamar de vuelta" en una entrada del registro con número privado/restringido (número vacío, un caso legítimo para llamadas ocultas) generaba un intent `tel:` sin nada que resolver y lanzaba una `ActivityNotFoundException` sin capturar. La acción ahora está deshabilitada para números vacíos, y el código que realiza la llamada es defensivo ante cualquier otro caso de intent no resoluble.
+- Limpieza de arquitectura, a partir de una revisión completa contra las convenciones de clean architecture/MVVM:
+  - Los 7 ViewModels ahora están limitados a su ruta de navegación en vez de vivir durante toda la sesión de la app.
+  - El mensaje de resultado de la pantalla de respaldo era estado persistente que nadie limpiaba, así que reaparecía obsoleto al volver a visitarla — se reemplazó por un efecto de un solo uso más un Snackbar.
+  - `MainActivity` ya no inyecta repositorios ni ViewModels directamente; el resultado del selector de audio y la bandera `welcomeShown` de primer uso ahora fluyen a través de los ViewModels que realmente los poseen.
+  - Ajustes/Auto-respondedor/Inicio ahora exponen cada uno un único `UiState` en vez de varios flujos de estado independientes.
+  - Se extrajo la lógica de evaluación de reglas de llamadas entrantes fuera del servicio Telecom de Android hacia un caso de uso compartido y probado — antes era la pieza de lógica sin pruebas más grande de la app.
+- **Nuevo**: las etiquetas opcionales en números bloqueados/permitidos ahora también aparecen en las filas del registro de llamadas para coincidencias de la lista de permitidos (los bloqueos manuales ya mostraban la suya).
+- **Nuevo**: las filas del registro de llamadas, lista de bloqueo y lista de permitidos muestran el nombre del contacto coincidente en vez del número sin formato (solo Android — el acceso a contactos en iOS sigue siendo un stub).
+- Se corrigió la verificación de reconstrucción de `install_android.sh`: comparaba la fecha del APK contra `./gradlew` (que nunca cambia) en vez de contra el código fuente real, así que seguía instalando una build obsoleta en silencio después de la primera ejecución.
 
 **2026-07-31:**
 - Se agregó el flujo completo de notificaciones de llamadas entrantes — antes no existía ninguno, así que las llamadas entrantes solo aparecían mediante un `startActivity()` desde un servicio en segundo plano, algo que Android descarta silenciosamente cuando la pantalla está apagada o bloqueada. Ahora: una alerta a pantalla completa con acciones de Contestar/Rechazar, una notificación persistente de "volver a la llamada" mientras está activa, y notificaciones posteriores de llamadas perdidas o bloqueadas que muestran el nombre del contacto (vía `ContactsContract.PhoneLookup`) y el motivo del bloqueo. Tres canales de notificación; todos los textos localizados (en/es/hi/pt) mediante recursos nativos de Android.

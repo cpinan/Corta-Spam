@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 159+ automated tests pass. Android APK builds. iOS deferred.
+M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 166+ automated tests pass. Android APK builds. iOS deferred.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -111,6 +111,19 @@ A complete 15-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 56 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-01:**
+- Added a "Show notifications" setting that mutes every notification the app posts, including the incoming-call alert — off means calls stay fully silent unless the app is already foregrounded. Also centered the app logo in the empty middle of the in-call screen for all phases (ringing/dialing/active).
+- Fixed a crash: tapping "Call back" on a private/restricted call-log entry (blank number, a legitimate case for withheld callers) built an unresolvable `tel:` intent and threw an uncaught `ActivityNotFoundException`. The action is now disabled for blank numbers, and the call-placing code is defensive against any other unresolvable-intent case.
+- Architecture cleanup, driven by a full review against clean-architecture/MVVM conventions:
+  - All 7 ViewModels are now scoped to their nav route instead of living for the whole app session.
+  - The Backup screen's result message was persistent state with nothing ever clearing it, so it re-appeared stale on revisit — replaced with a proper one-shot effect + Snackbar.
+  - `MainActivity` no longer injects repositories/ViewModels directly; the audio-picker result and first-run `welcomeShown` flag now flow through the ViewModels that actually own them.
+  - Settings/Auto-responder/Home now each expose a single `UiState` instead of several independent state flows.
+  - Extracted the incoming-call rule-evaluation logic out of the Android Telecom service into a shared, unit-tested use case — previously the single largest piece of untested logic in the app.
+- **New**: optional labels on blocked/allowlisted numbers now also surface in Call Log rows for allowlist matches (manual blocks already showed theirs).
+- **New**: Call Log, Block List, and Allowlist rows show the matching phone contact's name instead of the raw number (Android only — iOS contacts access is still a stub).
+- Fixed `install_android.sh`'s rebuild check: it compared the APK's timestamp against `./gradlew` (which never changes) instead of the actual sources, so it silently kept installing a stale build after the first run.
 
 **2026-07-31:**
 - Added the full incoming-call notification pipeline — previously none existed, so incoming calls only surfaced via a plain `startActivity()` from a background service, which Android silently drops when the screen is off/locked. Now: a full-screen ringing alert with Answer/Decline actions, a persistent "return to call" notification while a call is active, and post-call missed/blocked notifications showing the caller's contact name (via `ContactsContract.PhoneLookup`) and block reason. Three notification channels; all strings localized (en/es/hi/pt) via native Android resources.
