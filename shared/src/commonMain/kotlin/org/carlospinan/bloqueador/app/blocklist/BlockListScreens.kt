@@ -97,6 +97,7 @@ import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.COUNTRIES
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
+import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -106,6 +107,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ManualBlockListScreen(
     numbers: List<org.carlospinan.bloqueador.app.rules.BlockedNumberEntry>,
     allowlistedNumbers: Set<String> = emptySet(),
+    contactNames: Map<String, String> = emptyMap(),
     onAdd: (String, String?) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
@@ -151,7 +153,7 @@ fun ManualBlockListScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = entry.number,
+                                            text = displayName(entry.number, contactNames),
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
                                         if (entry.label != null) {
@@ -229,6 +231,7 @@ fun ManualBlockListScreen(
 fun AllowlistScreen(
     numbers: List<org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry>,
     blockedNumbers: Set<String> = emptySet(),
+    contactNames: Map<String, String> = emptyMap(),
     onAdd: (String, String?) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
@@ -274,7 +277,7 @@ fun AllowlistScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = entry.number,
+                                            text = displayName(entry.number, contactNames),
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
                                         if (entry.label != null) {
@@ -932,6 +935,11 @@ fun ScheduleRuleScreen(
         )
     }
 }
+
+private fun displayName(
+    number: String,
+    contactNames: Map<String, String>,
+): String = contactNames[PhoneNumberParser.normalizeForComparison(number)] ?: number
 
 private fun minuteOfDayToHHmm(minute: Int): String {
     val hour = (minute / 60).toString().padStart(2, '0')

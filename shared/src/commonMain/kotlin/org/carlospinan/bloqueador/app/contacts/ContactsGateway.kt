@@ -8,6 +8,9 @@ interface ContactsGateway {
     /** Returns phone numbers from the user's local contacts, normalized. */
     suspend fun contactNumbers(): Set<String>
 
+    /** Normalized number -> contact display name, for showing names instead of raw numbers in UI. */
+    suspend fun contactNames(): Map<String, String>
+
     /** Whether the platform has the required permission granted. */
     fun hasPermission(): Boolean
 }

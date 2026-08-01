@@ -143,6 +143,8 @@ private class FakeContactsGateway(
 ) : ContactsGateway {
     override suspend fun contactNumbers(): Set<String> = numbers
 
+    override suspend fun contactNames(): Map<String, String> = emptyMap()
+
     override fun hasPermission(): Boolean = granted
 }
 

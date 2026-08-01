@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
@@ -17,6 +18,7 @@ import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 
 class BlockListViewModel(
     private val ruleRepository: RuleRepository,
+    private val contactsGateway: ContactsGateway,
 ) : ViewModel() {
     val blockedNumbers: StateFlow<List<BlockedNumberEntry>> =
         ruleRepository
@@ -58,7 +60,15 @@ class BlockListViewModel(
     private val _scheduleCount = MutableStateFlow(0)
     val scheduleCount: StateFlow<Int> = _scheduleCount.asStateFlow()
 
+    private val _contactNames = MutableStateFlow<Map<String, String>>(emptyMap())
+    val contactNames: StateFlow<Map<String, String>> = _contactNames.asStateFlow()
+
     init {
+        if (contactsGateway.hasPermission()) {
+            viewModelScope.launch {
+                _contactNames.value = contactsGateway.contactNames()
+            }
+        }
         viewModelScope.launch {
             blockedNumbers.collect { _blockedCount.value = it.size }
         }

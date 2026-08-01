@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.BlockedStats
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
@@ -15,6 +16,14 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CallLogViewModelTest {
+    private class FakeContactsGateway : ContactsGateway {
+        override suspend fun contactNumbers(): Set<String> = emptySet()
+
+        override suspend fun contactNames(): Map<String, String> = emptyMap()
+
+        override fun hasPermission(): Boolean = false
+    }
+
     private class FakeCallLogRepository(
         private val entriesFlow: MutableStateFlow<List<CallLogEntryData>> =
             MutableStateFlow(emptyList()),
@@ -57,7 +66,7 @@ class CallLogViewModelTest {
                 )
             val flow = MutableStateFlow(listOf(entry))
             val repo = FakeCallLogRepository(entriesFlow = flow)
-            val vm = CallLogViewModel(callLogRepository = repo)
+            val vm = CallLogViewModel(callLogRepository = repo, contactsGateway = FakeContactsGateway())
 
             val entries = vm.entries.first { it.isNotEmpty() }
             assertEquals(1, entries.size)
@@ -70,7 +79,7 @@ class CallLogViewModelTest {
     fun `entries starts empty`() =
         runTest {
             val repo = FakeCallLogRepository()
-            val vm = CallLogViewModel(callLogRepository = repo)
+            val vm = CallLogViewModel(callLogRepository = repo, contactsGateway = FakeContactsGateway())
 
             val entries = vm.entries.first()
             assertTrue(entries.isEmpty())

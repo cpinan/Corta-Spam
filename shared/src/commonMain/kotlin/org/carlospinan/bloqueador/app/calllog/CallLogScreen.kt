@@ -61,6 +61,7 @@ import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
+import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -69,6 +70,7 @@ import org.jetbrains.compose.resources.stringResource
 fun CallLogScreen(
     entries: List<CallLogEntryData>,
     filter: String = "all",
+    contactNames: Map<String, String> = emptyMap(),
     onBlockNumber: (String) -> Unit = {},
     onAllowlistNumber: (String) -> Unit = {},
     onCopyNumber: (String) -> Unit = {},
@@ -97,12 +99,14 @@ fun CallLogScreen(
                     CallLogListPane(
                         entries = entries,
                         title = title,
+                        contactNames = contactNames,
                         selectedEntry = selected,
                         onEntryTap = { selectedEntry = it },
                         modifier = Modifier.width(340.dp).fillMaxHeight(),
                     )
                     CallLogDetailPane(
                         entry = selected,
+                        contactNames = contactNames,
                         onBlockNumber = { number ->
                             onBlockNumber(number)
                             selectedEntry = null
@@ -142,6 +146,7 @@ fun CallLogScreen(
                             items(entries, key = { it.id }) { entry ->
                                 CallLogEntryRow(
                                     entry = entry,
+                                    contactNames = contactNames,
                                     onTap = { selectedNumber = entry.number },
                                 )
                             }
@@ -156,7 +161,7 @@ fun CallLogScreen(
         selectedNumber?.let { number ->
             AlertDialog(
                 onDismissRequest = { selectedNumber = null },
-                title = { Text(number) },
+                title = { Text(displayName(number, contactNames)) },
                 text = {
                     Column {
                         TextButton(
@@ -213,6 +218,7 @@ fun CallLogScreen(
 private fun CallLogListPane(
     entries: List<CallLogEntryData>,
     title: String,
+    contactNames: Map<String, String>,
     selectedEntry: CallLogEntryData?,
     onEntryTap: (CallLogEntryData) -> Unit,
     modifier: Modifier = Modifier,
@@ -237,6 +243,7 @@ private fun CallLogListPane(
                     val isSelected = selectedEntry?.id == entry.id
                     CallLogEntryRow(
                         entry = entry,
+                        contactNames = contactNames,
                         onTap = { onEntryTap(entry) },
                         modifier =
                             if (isSelected) {
@@ -257,6 +264,7 @@ private fun CallLogListPane(
 @Composable
 private fun CallLogDetailPane(
     entry: CallLogEntryData?,
+    contactNames: Map<String, String>,
     onBlockNumber: (String) -> Unit,
     onAllowlistNumber: (String) -> Unit,
     onCopyNumber: (String) -> Unit,
@@ -314,7 +322,7 @@ private fun CallLogDetailPane(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = entry.number,
+                text = displayName(entry.number, contactNames),
                 style = MaterialTheme.typography.headlineMedium,
             )
 
@@ -383,6 +391,7 @@ private fun CallLogDetailRow(
 @Composable
 private fun CallLogEntryRow(
     entry: CallLogEntryData,
+    contactNames: Map<String, String>,
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -427,7 +436,7 @@ private fun CallLogEntryRow(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = entry.number,
+                    text = displayName(entry.number, contactNames),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
@@ -449,6 +458,11 @@ private fun CallLogEntryRow(
         }
     }
 }
+
+private fun displayName(
+    number: String,
+    contactNames: Map<String, String>,
+): String = contactNames[PhoneNumberParser.normalizeForComparison(number)] ?: number
 
 private fun formatTimestamp(epochMillis: Long): String {
     val now = currentTimeMillis()

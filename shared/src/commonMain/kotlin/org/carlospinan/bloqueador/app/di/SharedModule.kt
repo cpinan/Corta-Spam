@@ -37,8 +37,8 @@ val sharedModule =
         single { EvaluateIncomingCallUseCase(get(), get(), get(), get(), get()) }
 
         factory { HomeViewModel(get(), get()) }
-        factory { BlockListViewModel(get()) }
-        factory { CallLogViewModel(get()) }
+        factory { BlockListViewModel(get(), get()) }
+        factory { CallLogViewModel(get(), get()) }
         factory { SettingsViewModel(get(), get()) }
         factory { AutoResponderViewModel(get()) }
         factory { StatsViewModel(get()) }

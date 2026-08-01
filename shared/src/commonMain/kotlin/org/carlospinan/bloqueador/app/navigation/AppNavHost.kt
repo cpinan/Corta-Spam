@@ -137,9 +137,11 @@ fun AppNavHost(
                 val filter = (backStackEntry.arguments as? Map<String, *>)?.get("filter") as? String ?: "all"
                 val allEntries by callLogViewModel.entries.collectAsState()
                 val filtered = filterEntries(allEntries, filter)
+                val contactNames by callLogViewModel.contactNames.collectAsState()
                 CallLogScreen(
                     entries = filtered,
                     filter = filter,
+                    contactNames = contactNames,
                     onBlockNumber = { number -> blockListViewModel.addBlockedNumber(number) },
                     onAllowlistNumber = { number -> blockListViewModel.addAllowlistedNumber(number) },
                     onCopyNumber = onCopyNumber ?: {},
@@ -183,9 +185,11 @@ fun AppNavHost(
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val blocked by blockListViewModel.blockedNumbers.collectAsState()
                 val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
+                val contactNames by blockListViewModel.contactNames.collectAsState()
                 ManualBlockListScreen(
                     numbers = blocked,
                     allowlistedNumbers = allowlisted.map { it.number }.toSet(),
+                    contactNames = contactNames,
                     onAdd = blockListViewModel::addBlockedNumber,
                     onRemove = blockListViewModel::removeBlockedNumber,
                     onBack = { navController.popBackStack() },
@@ -196,9 +200,11 @@ fun AppNavHost(
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
                 val blocked by blockListViewModel.blockedNumbers.collectAsState()
+                val contactNames by blockListViewModel.contactNames.collectAsState()
                 AllowlistScreen(
                     numbers = allowlisted,
                     blockedNumbers = blocked.map { it.number }.toSet(),
+                    contactNames = contactNames,
                     onAdd = blockListViewModel::addAllowlistedNumber,
                     onRemove = blockListViewModel::removeAllowlistedNumber,
                     onBack = { navController.popBackStack() },

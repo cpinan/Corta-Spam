@@ -136,6 +136,14 @@ class BlockListViewModelTest {
         override suspend fun importAll(json: String): ImportResult = ImportResult()
     }
 
+    private class FakeContactsGateway : org.carlospinan.bloqueador.app.contacts.ContactsGateway {
+        override suspend fun contactNumbers(): Set<String> = emptySet()
+
+        override suspend fun contactNames(): Map<String, String> = emptyMap()
+
+        override fun hasPermission(): Boolean = false
+    }
+
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
@@ -148,7 +156,7 @@ class BlockListViewModelTest {
             val repo = FakeRuleRepository()
             repo.blockedNumbersFlow.value =
                 listOf(BlockedNumberEntry(id = 1, number = "+34", label = null, createdAt = 0L))
-            val vm = BlockListViewModel(repo)
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
             assertEquals(1, vm.blockedNumbers.first().size)
         }
@@ -160,7 +168,7 @@ class BlockListViewModelTest {
             val repo = FakeRuleRepository()
             repo.allowlistedNumbersFlow.value =
                 listOf(AllowlistedNumberEntry(id = 1, number = "+34", label = null, createdAt = 0L))
-            val vm = BlockListViewModel(repo)
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
             assertEquals(1, vm.allowlistedNumbers.first().size)
         }
@@ -172,7 +180,7 @@ class BlockListViewModelTest {
             val repo = FakeRuleRepository()
             repo.patternRulesFlow.value =
                 listOf(PatternRuleEntry(id = 1, pattern = "*900*", label = null, enabled = true, createdAt = 0L))
-            val vm = BlockListViewModel(repo)
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
             assertEquals(1, vm.patternRules.first().size)
         }
@@ -184,7 +192,7 @@ class BlockListViewModelTest {
             val repo = FakeRuleRepository()
             repo.countryRulesFlow.value =
                 listOf(CountryRuleEntry(id = 1, countryCode = "34", countryName = "Spain", enabled = true, createdAt = 0L))
-            val vm = BlockListViewModel(repo)
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
             assertEquals(1, vm.countryRules.first().size)
         }
@@ -194,7 +202,7 @@ class BlockListViewModelTest {
         runTest {
             Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val repo = FakeRuleRepository()
-            val vm = BlockListViewModel(repo)
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
             assertEquals(0, vm.blockedCount.first())
 
