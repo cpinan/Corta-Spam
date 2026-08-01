@@ -295,9 +295,8 @@ fun AppNavHost(
 
             composable(Routes.BACKUP) {
                 val backupViewModel = koinViewModel<BackupViewModel>()
-                val state by backupViewModel.state.collectAsState()
                 BackupScreen(
-                    state = state,
+                    effect = backupViewModel.effect,
                     onExport = {
                         backupViewModel.exportJson { json ->
                             onShareFile?.invoke(json)
