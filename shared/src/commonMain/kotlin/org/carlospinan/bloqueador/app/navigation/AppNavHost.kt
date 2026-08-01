@@ -140,8 +140,8 @@ fun AppNavHost(
                 CallLogScreen(
                     entries = filtered,
                     filter = filter,
-                    onBlockNumber = blockListViewModel::addBlockedNumber,
-                    onAllowlistNumber = blockListViewModel::addAllowlistedNumber,
+                    onBlockNumber = { number -> blockListViewModel.addBlockedNumber(number) },
+                    onAllowlistNumber = { number -> blockListViewModel.addAllowlistedNumber(number) },
                     onCopyNumber = onCopyNumber ?: {},
                     onCallBack = onCallBack ?: {},
                     onBack = { navController.popBackStack() },

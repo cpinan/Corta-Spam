@@ -76,9 +76,13 @@ class BlockListViewModel(
         }
     }
 
-    fun addBlockedNumber(number: String) {
+    fun addBlockedNumber(
+        number: String,
+        label: String? = null,
+    ) {
+        if (number.isBlank()) return
         viewModelScope.launch {
-            ruleRepository.addBlockedNumber(number)
+            ruleRepository.addBlockedNumber(number, label)
         }
     }
 
@@ -88,9 +92,13 @@ class BlockListViewModel(
         }
     }
 
-    fun addAllowlistedNumber(number: String) {
+    fun addAllowlistedNumber(
+        number: String,
+        label: String? = null,
+    ) {
+        if (number.isBlank()) return
         viewModelScope.launch {
-            ruleRepository.addAllowlistedNumber(number)
+            ruleRepository.addAllowlistedNumber(number, label)
         }
     }
 

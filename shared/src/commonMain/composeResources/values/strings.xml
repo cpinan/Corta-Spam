@@ -64,11 +64,13 @@
     <string name="block_list_empty_hint">No numbers blocked yet. Add a number to start blocking calls.</string>
     <string name="block_list_add_title">Block a number</string>
     <string name="block_list_add_hint">Phone number</string>
+    <string name="block_list_label_hint">Label (optional)</string>
     <!-- Allowlist -->
     <string name="allowlist_title">Allowlist</string>
     <string name="allowlist_empty_hint">No numbers allowlisted. Numbers on your contacts bypass all block rules.</string>
     <string name="allowlist_add_title">Allow a number</string>
     <string name="allowlist_add_hint">Phone number</string>
+    <string name="allowlist_label_hint">Label (optional)</string>
     <!-- Patterns -->
     <string name="pattern_title">Pattern Rules</string>
     <string name="pattern_empty_hint">No patterns added. Use wildcards like +34900* to block number ranges.</string>

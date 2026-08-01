@@ -45,11 +45,13 @@ import bloqueallamadas.shared.generated.resources.action_skip
 import bloqueallamadas.shared.generated.resources.allowlist_add_hint
 import bloqueallamadas.shared.generated.resources.allowlist_add_title
 import bloqueallamadas.shared.generated.resources.allowlist_empty_hint
+import bloqueallamadas.shared.generated.resources.allowlist_label_hint
 import bloqueallamadas.shared.generated.resources.allowlist_title
 import bloqueallamadas.shared.generated.resources.block_list_add_hint
 import bloqueallamadas.shared.generated.resources.block_list_add_title
 import bloqueallamadas.shared.generated.resources.block_list_empty_hint
 import bloqueallamadas.shared.generated.resources.block_list_hub_title
+import bloqueallamadas.shared.generated.resources.block_list_label_hint
 import bloqueallamadas.shared.generated.resources.block_list_manual_title
 import bloqueallamadas.shared.generated.resources.block_list_title
 import bloqueallamadas.shared.generated.resources.blocklist_add_allowlist
@@ -104,12 +106,13 @@ import org.jetbrains.compose.resources.stringResource
 fun ManualBlockListScreen(
     numbers: List<org.carlospinan.bloqueador.app.rules.BlockedNumberEntry>,
     allowlistedNumbers: Set<String> = emptySet(),
-    onAdd: (String) -> Unit,
+    onAdd: (String, String?) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var pendingNumber by remember { mutableStateOf("") }
+    var pendingLabel by remember { mutableStateOf<String?>(null) }
     var showDuplicateWarning by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
@@ -180,13 +183,15 @@ fun ManualBlockListScreen(
         AddNumberDialog(
             title = stringResource(Res.string.block_list_add_title),
             hint = stringResource(Res.string.block_list_add_hint),
-            onConfirm = { number ->
+            labelHint = stringResource(Res.string.block_list_label_hint),
+            onConfirm = { number, label ->
                 if (number in allowlistedNumbers) {
                     pendingNumber = number
+                    pendingLabel = label
                     showAddDialog = false
                     showDuplicateWarning = true
                 } else {
-                    onAdd(number)
+                    onAdd(number, label)
                     showAddDialog = false
                 }
             },
@@ -204,7 +209,7 @@ fun ManualBlockListScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onAdd(pendingNumber)
+                        onAdd(pendingNumber, pendingLabel)
                         showDuplicateWarning = false
                     },
                 ) {
@@ -224,12 +229,13 @@ fun ManualBlockListScreen(
 fun AllowlistScreen(
     numbers: List<org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry>,
     blockedNumbers: Set<String> = emptySet(),
-    onAdd: (String) -> Unit,
+    onAdd: (String, String?) -> Unit,
     onRemove: (Long) -> Unit,
     onBack: () -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var pendingNumber by remember { mutableStateOf("") }
+    var pendingLabel by remember { mutableStateOf<String?>(null) }
     var showDuplicateWarning by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
@@ -300,13 +306,15 @@ fun AllowlistScreen(
         AddNumberDialog(
             title = stringResource(Res.string.allowlist_add_title),
             hint = stringResource(Res.string.allowlist_add_hint),
-            onConfirm = { number ->
+            labelHint = stringResource(Res.string.allowlist_label_hint),
+            onConfirm = { number, label ->
                 if (number in blockedNumbers) {
                     pendingNumber = number
+                    pendingLabel = label
                     showAddDialog = false
                     showDuplicateWarning = true
                 } else {
-                    onAdd(number)
+                    onAdd(number, label)
                     showAddDialog = false
                 }
             },
@@ -324,7 +332,7 @@ fun AllowlistScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onAdd(pendingNumber)
+                        onAdd(pendingNumber, pendingLabel)
                         showDuplicateWarning = false
                     },
                 ) {
@@ -669,25 +677,38 @@ private fun HubRow(
 private fun AddNumberDialog(
     title: String,
     hint: String,
-    onConfirm: (String) -> Unit,
+    labelHint: String,
+    onConfirm: (String, String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var number by remember { mutableStateOf("") }
+    var label by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            OutlinedTextField(
-                value = number,
-                onValueChange = { number = it },
-                label = { Text(hint) },
-                singleLine = true,
-            )
+            Column {
+                OutlinedTextField(
+                    value = number,
+                    onValueChange = { number = it },
+                    label = { Text(hint) },
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text(labelHint) },
+                    singleLine = true,
+                )
+            }
         },
         confirmButton = {
             TextButton(
-                onClick = { if (number.isNotBlank()) onConfirm(number.trim()) },
+                onClick = {
+                    if (number.isNotBlank()) onConfirm(number.trim(), label.trim().ifBlank { null })
+                },
                 enabled = number.isNotBlank(),
             ) {
                 Text(stringResource(Res.string.action_add))

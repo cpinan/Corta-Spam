@@ -71,12 +71,14 @@
     <string name="block_list_empty_hint">अभी तक कोई नंबर ब्लॉक नहीं किया गया। कॉल ब्लॉक करना शुरू करने के लिए एक नंबर जोड़ें।</string>
     <string name="block_list_add_title">नंबर ब्लॉक करें</string>
     <string name="block_list_add_hint">फ़ोन नंबर</string>
+    <string name="block_list_label_hint">लेबल (वैकल्पिक)</string>
 
     <!-- अनुमति सूची -->
     <string name="allowlist_title">अनुमति सूची</string>
     <string name="allowlist_empty_hint">कोई नंबर अनुमति सूची में नहीं। संपर्क सभी ब्लॉक नियमों को बायपास करते हैं।</string>
     <string name="allowlist_add_title">नंबर को अनुमति दें</string>
     <string name="allowlist_add_hint">फ़ोन नंबर</string>
+    <string name="allowlist_label_hint">लेबल (वैकल्पिक)</string>
 
     <!-- पैटर्न -->
     <string name="pattern_title">पैटर्न नियम</string>

@@ -71,12 +71,14 @@
     <string name="block_list_empty_hint">Nenhum número bloqueado. Adicione um para começar a filtrar.</string>
     <string name="block_list_add_title">Bloquear número</string>
     <string name="block_list_add_hint">Número de telefone</string>
+    <string name="block_list_label_hint">Etiqueta (opcional)</string>
 
     <!-- Permitidos -->
     <string name="allowlist_title">Lista de Permitidos</string>
     <string name="allowlist_empty_hint">Nenhum número permitido. Contatos ignoram todas as regras de bloqueio.</string>
     <string name="allowlist_add_title">Permitir número</string>
     <string name="allowlist_add_hint">Número de telefone</string>
+    <string name="allowlist_label_hint">Etiqueta (opcional)</string>
 
     <!-- Padrões -->
     <string name="pattern_title">Regras de Padrão</string>
