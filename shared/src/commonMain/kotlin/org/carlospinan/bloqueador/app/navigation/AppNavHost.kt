@@ -88,14 +88,6 @@ fun AppNavHost(
     val currentRoute = navBackStackEntry?.destination?.route
     val selectedSection = routeSection(currentRoute)
 
-    val homeViewModel = koinViewModel<HomeViewModel>()
-    val callLogViewModel = koinViewModel<CallLogViewModel>()
-    val blockListViewModel = koinViewModel<BlockListViewModel>()
-    val settingsViewModel = koinViewModel<SettingsViewModel>()
-    val autoResponderViewModel = koinViewModel<AutoResponderViewModel>()
-    val statsViewModel = koinViewModel<StatsViewModel>()
-    val backupViewModel = koinViewModel<BackupViewModel>()
-
     AdaptiveScaffold(
         windowSizeClass = windowSizeClass,
         selectedIndex = selectedSection,
@@ -115,6 +107,7 @@ fun AppNavHost(
             startDestination = Routes.HOME,
         ) {
             composable(Routes.HOME) {
+                val homeViewModel = koinViewModel<HomeViewModel>()
                 val state by homeViewModel.state.collectAsState()
                 val blockingEnabled by homeViewModel.blockingEnabled.collectAsState()
                 LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -139,6 +132,9 @@ fun AppNavHost(
                 route = Routes.CALL_LOG,
                 arguments = listOf(navArgument("filter") { type = NavType.StringType }),
             ) { backStackEntry ->
+                val callLogViewModel = koinViewModel<CallLogViewModel>()
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
+
                 @Suppress("UNCHECKED_CAST")
                 val filter = (backStackEntry.arguments as? Map<String, *>)?.get("filter") as? String ?: "all"
                 val allEntries by callLogViewModel.entries.collectAsState()
@@ -155,6 +151,7 @@ fun AppNavHost(
             }
 
             composable(Routes.STATS) {
+                val statsViewModel = koinViewModel<StatsViewModel>()
                 val state by statsViewModel.state.collectAsState()
                 StatsScreen(
                     state = state,
@@ -163,6 +160,7 @@ fun AppNavHost(
             }
 
             composable(Routes.BLOCK_LIST) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val blockedCount by blockListViewModel.blockedCount.collectAsState()
                 val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
                 val patternCount by blockListViewModel.patternCount.collectAsState()
@@ -184,6 +182,7 @@ fun AppNavHost(
             }
 
             composable(Routes.MANUAL_BLOCK_LIST) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val blocked by blockListViewModel.blockedNumbers.collectAsState()
                 val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
                 ManualBlockListScreen(
@@ -196,6 +195,7 @@ fun AppNavHost(
             }
 
             composable(Routes.ALLOWLIST) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
                 val blocked by blockListViewModel.blockedNumbers.collectAsState()
                 AllowlistScreen(
@@ -208,6 +208,7 @@ fun AppNavHost(
             }
 
             composable(Routes.PATTERNS) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val patterns by blockListViewModel.patternRules.collectAsState()
                 PatternRuleScreen(
                     patterns = patterns,
@@ -219,6 +220,7 @@ fun AppNavHost(
             }
 
             composable(Routes.COUNTRIES) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val countries by blockListViewModel.countryRules.collectAsState()
                 CountryRuleScreen(
                     countries = countries,
@@ -230,6 +232,7 @@ fun AppNavHost(
             }
 
             composable(Routes.SCHEDULES) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val schedules by blockListViewModel.scheduleRules.collectAsState()
                 ScheduleRuleScreen(
                     rules = schedules,
@@ -241,6 +244,7 @@ fun AppNavHost(
             }
 
             composable(Routes.SETTINGS) {
+                val settingsViewModel = koinViewModel<SettingsViewModel>()
                 val blockingEnabled by settingsViewModel.blockingEnabled.collectAsState()
                 val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
                 val defaultAction by settingsViewModel.defaultAction.collectAsState()
@@ -274,6 +278,7 @@ fun AppNavHost(
             }
 
             composable(Routes.AUTO_RESPONDER) {
+                val autoResponderViewModel = koinViewModel<AutoResponderViewModel>()
                 val config by autoResponderViewModel.config.collectAsState()
                 val validationError by autoResponderViewModel.validationError.collectAsState()
                 AutoResponderScreen(
@@ -289,6 +294,7 @@ fun AppNavHost(
             }
 
             composable(Routes.BACKUP) {
+                val backupViewModel = koinViewModel<BackupViewModel>()
                 val state by backupViewModel.state.collectAsState()
                 BackupScreen(
                     state = state,
