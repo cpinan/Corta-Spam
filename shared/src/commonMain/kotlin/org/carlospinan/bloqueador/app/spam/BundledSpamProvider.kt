@@ -2,8 +2,8 @@ package org.carlospinan.bloqueador.app.spam
 
 /**
  * Bundled local spam heuristics — a small on-device list of known spam prefixes
- * and patterns shipped with the app. Checked before the external [NoOpSpamProvider]
- * (or future pluggable providers). No network — all local.
+ * and patterns shipped with the app. The only [SpamProviderClient] implementation
+ * bound today. No network — all local.
  *
  * SPAM_PREFIXES covers known high-spam country/area codes and common scam prefixes.
  * SPAM_PATTERNS are glob-style patterns checked via the same [matchesPattern] logic

@@ -6,7 +6,6 @@ import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SpamProviderClientTest {
@@ -17,13 +16,6 @@ class SpamProviderClientTest {
             enabledPatterns = emptyList(),
             enabledCountryCodes = emptySet(),
         )
-
-    @Test
-    fun noOpProvider_returnsNull() =
-        runTest {
-            val provider = NoOpSpamProvider()
-            assertNull(provider.lookup("+34600123456"))
-        }
 
     @Test
     fun fakeSpamProvider_returnsSpamResult() =

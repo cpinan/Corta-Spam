@@ -100,7 +100,7 @@ class MainActivity : ComponentActivity() {
     private var notificationsPermissionGranted by mutableStateOf(true)
     private var fullScreenIntentAllowed by mutableStateOf(true)
     private var callPhonePermissionGranted by mutableStateOf(true)
-    private var contactsPermissionGranted by mutableStateOf(false)
+    private var contactsPermissionGranted by mutableStateOf(true)
 
     private fun refreshPermissionStatus() {
         contactsPermissionGranted =

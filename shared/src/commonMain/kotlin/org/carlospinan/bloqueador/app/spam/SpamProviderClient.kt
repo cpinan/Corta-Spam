@@ -8,17 +8,12 @@ data class SpamResult(
 )
 
 /**
- * Pluggable spam-provider interface. Implementations query external
- * databases to check if a number is known spam.
- *
- * The no-op default always returns null (unknown) — no data leaves
- * the device unless the user configures a real provider.
+ * Pluggable spam-provider interface. The only bound implementation
+ * ([org.carlospinan.bloqueador.app.spam.BundledSpamProvider]) is a fully
+ * offline, local heuristic — no data leaves the device today, but the
+ * interface exists so a future implementation could query an external
+ * database without touching call sites.
  */
 interface SpamProviderClient {
     suspend fun lookup(number: String): SpamResult?
-}
-
-/** No-op default: always returns null (unknown). */
-class NoOpSpamProvider : SpamProviderClient {
-    override suspend fun lookup(number: String): SpamResult? = null
 }
