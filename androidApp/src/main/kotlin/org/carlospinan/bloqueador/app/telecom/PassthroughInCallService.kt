@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.telecom
 
 import android.content.Intent
 import android.telecom.Call
+import android.telecom.DisconnectCause
 import android.telecom.InCallService
 import android.telecom.VideoProfile
 import android.util.Log
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
@@ -45,6 +47,7 @@ class PassthroughInCallService :
     private var serviceScope: CoroutineScope? = null
     private var autoResponderAudio: AutoResponderAudio? = null
     private var activeCall: Call? = null
+    private var callWasBlockedByRules = false
 
     private val callCallback =
         object : Call.Callback() {
@@ -67,6 +70,33 @@ class PassthroughInCallService :
             }
         }
 
+    // Clears the full-screen ringing notification the moment the call stops ringing --
+    // answered, declined, or hung up by the other side -- regardless of which UI (in-app,
+    // notification action, or the system) drove the state change. Also drives the
+    // "return to call" notification while active, since InCallActivity leaves nothing behind
+    // once dismissed (excludeFromRecents=true).
+    private val notificationCallback =
+        object : Call.Callback() {
+            override fun onStateChanged(
+                call: Call,
+                state: Int,
+            ) {
+                if (state != Call.STATE_RINGING) {
+                    IncomingCallNotifier.cancel(this@PassthroughInCallService)
+                }
+                if (state == Call.STATE_ACTIVE) {
+                    val number =
+                        call.details
+                            ?.handle
+                            ?.schemeSpecificPart
+                            .orEmpty()
+                    IncomingCallNotifier.notifyOngoingCall(this@PassthroughInCallService, number)
+                } else {
+                    IncomingCallNotifier.cancelOngoing(this@PassthroughInCallService)
+                }
+            }
+        }
+
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
         serviceScope?.cancel()
@@ -74,6 +104,7 @@ class PassthroughInCallService :
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         autoResponderAudio = AutoResponderAudio(this).also { it.prepare() }
         activeCall = call
+        callWasBlockedByRules = false
 
         val number =
             call.details
@@ -87,6 +118,11 @@ class PassthroughInCallService :
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
 
+        call.registerCallback(notificationCallback)
+        if (call.state == Call.STATE_RINGING) {
+            IncomingCallNotifier.notifyIncomingCall(this, number)
+        }
+
         serviceScope?.launch {
             try {
                 val decision = evaluateCall(number)
@@ -96,6 +132,13 @@ class PassthroughInCallService :
                     decision = decision,
                 )
                 if (decision.isBlocked) {
+                    callWasBlockedByRules = true
+                    IncomingCallNotifier.notifyCallResult(
+                        this@PassthroughInCallService,
+                        number,
+                        R.string.notification_blocked_call_title,
+                        decision.blockReason,
+                    )
                     val autoConfig = autoResponderRepository.config.first()
                     if (autoConfig.enabled &&
                         autoConfig.validate() is org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig.ValidationResult.Ok
@@ -114,17 +157,20 @@ class PassthroughInCallService :
         }
     }
 
-    private fun attachCallUi(call: Call) {
-        InCallState.attach(call)
-        startActivity(
-            Intent(this@PassthroughInCallService, InCallActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-    }
-
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
         call.unregisterCallback(callCallback)
+        call.unregisterCallback(notificationCallback)
+        IncomingCallNotifier.cancel(this)
+        IncomingCallNotifier.cancelOngoing(this)
+        if (!callWasBlockedByRules && call.details?.disconnectCause?.code == DisconnectCause.MISSED) {
+            val number =
+                call.details
+                    ?.handle
+                    ?.schemeSpecificPart
+                    .orEmpty()
+            IncomingCallNotifier.notifyCallResult(this, number, R.string.notification_missed_call_title, reason = null)
+        }
         InCallState.detach(call)
         if (activeCall == call) {
             activeCall = null

@@ -46,10 +46,12 @@
 
     <!-- Inicio -->
     <string name="home_title">Corta Spam</string>
-    <string name="home_blocking_enabled">Bloqueo activado</string>
+    <string name="home_blocking_enabled">Bloqueo activado — se filtran las llamadas de spam y bloqueadas</string>
+    <string name="home_blocking_disabled">Bloqueo desactivado — se permiten todas las llamadas</string>
     <string name="home_blocked_today">Bloqueadas hoy</string>
     <string name="home_blocked_this_week">Esta semana</string>
     <string name="home_blocked_this_month">Este mes</string>
+    <string name="home_pending_review">Pendiente de revisión</string>
     <string name="home_view_call_log">Ver registro</string>
     <string name="home_view_stats">Ver estadísticas</string>
     <string name="home_manage_block_list">Gestionar listas</string>
@@ -98,6 +100,7 @@
     <string name="call_log_title_today">Registro — Hoy</string>
     <string name="call_log_title_week">Registro — Esta Semana</string>
     <string name="call_log_title_month">Registro — Este Mes</string>
+    <string name="call_log_title_review">Registro — Pendientes de Revisión</string>
     <string name="call_log_empty_hint">Aún no hay llamadas registradas. Aparecerán cuando comience el filtrado.</string>
     <string name="call_log_action_block">Bloquear este número</string>
     <string name="call_log_action_allowlist">Agregar a permitidos</string>
@@ -105,6 +108,7 @@
     <string name="call_log_action_copy">Copiar número</string>
     <string name="call_log_detail_placeholder">Selecciona una llamada para ver detalles</string>
     <string name="call_log_blocked_label">Llamada bloqueada</string>
+    <string name="call_log_review_label">Necesita revisión</string>
     <string name="call_log_allowed_label">Llamada permitida</string>
     <string name="call_log_time_label">Hora</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
@@ -123,7 +127,14 @@
     <string name="settings_default_action_desc">Qué hacer con números que no coinciden con ninguna regla.</string>
     <string name="settings_default_action_allow">Permitir</string>
     <string name="settings_default_action_block">Bloquear</string>
-    <string name="settings_default_action_ask">Preguntar (igual que Permitir — sin flujo de revisión aún)</string>
+    <string name="settings_default_action_ask">Preguntar (la llamada pasa, marcada para revisión en el registro)</string>
+    <string name="settings_notifications_disabled">Las notificaciones están desactivadas</string>
+    <string name="settings_notifications_disabled_desc">Activa las notificaciones para ver alertas de llamadas entrantes.</string>
+    <string name="settings_fullscreen_disabled">Las alertas a pantalla completa están desactivadas</string>
+    <string name="settings_fullscreen_disabled_desc">Activa las alertas a pantalla completa para que las llamadas entrantes se muestren sobre la pantalla de bloqueo.</string>
+    <string name="settings_call_permission_disabled">Se necesita permiso de teléfono</string>
+    <string name="settings_call_permission_disabled_desc">Concede el permiso de teléfono para devolver llamadas desde el registro.</string>
+    <string name="action_open_settings">Abrir ajustes</string>
 
     <!-- Spam -->
     <string name="settings_spam_provider">Proveedor de spam</string>
@@ -146,7 +157,7 @@
     <string name="settings_autoresponder">Auto-respondedor (Experimental)</string>
     <string name="settings_autoresponder_desc">Responde llamadas bloqueadas con un saludo.</string>
     <string name="autoresponder_title">Auto-respondedor</string>
-    <string name="autoresponder_experimental_badge">Experimental — puede no funcionar en todos los dispositivos</string>
+    <string name="autoresponder_experimental_badge">Experimental — depende de que tu teléfono permita el audio de la llamada; muchas versiones nuevas de Android lo bloquean</string>
     <string name="autoresponder_enabled">Activado</string>
     <string name="autoresponder_enabled_desc">Cuando está activo, las llamadas bloqueadas se contestan con un saludo en vez de rechazarse.</string>
     <string name="autoresponder_script_hint">Guion de saludo</string>

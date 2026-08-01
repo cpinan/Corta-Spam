@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_unknown_caller">Desconocido</string>
+    <string name="notification_incoming_call">Llamada entrante</string>
+    <string name="notification_blocked_call_title">Llamada bloqueada</string>
+    <string name="notification_missed_call_title">Llamada perdida</string>
+    <string name="notification_call_result_with_reason">%1$s — %2$s</string>
+    <string name="notification_channel_incoming_calls_name">Llamadas entrantes</string>
+    <string name="notification_channel_incoming_calls_desc">Alerta a pantalla completa mostrada mientras suena una llamada</string>
+    <string name="notification_channel_ongoing_call_name">Llamada en curso</string>
+    <string name="notification_channel_ongoing_call_desc">Notificación para volver a la llamada mientras está activa</string>
+    <string name="notification_channel_history_name">Llamadas perdidas y bloqueadas</string>
+    <string name="notification_channel_history_desc">Se publica cuando termina una llamada: perdida, o bloqueada con el motivo</string>
+</resources>

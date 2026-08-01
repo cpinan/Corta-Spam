@@ -40,10 +40,12 @@
     <string name="action_hang_up">Hang up</string>
     <!-- Home -->
     <string name="home_title">Corta Spam</string>
-    <string name="home_blocking_enabled">Blocking is on</string>
+    <string name="home_blocking_enabled">Blocking is on — spam and blocked calls are filtered</string>
+    <string name="home_blocking_disabled">Blocking is off — all calls are allowed through</string>
     <string name="home_blocked_today">Blocked today</string>
     <string name="home_blocked_this_week">This week</string>
     <string name="home_blocked_this_month">This month</string>
+    <string name="home_pending_review">Pending review</string>
     <string name="home_view_call_log">View call log</string>
     <string name="home_view_stats">View stats</string>
     <string name="home_manage_block_list">Manage block lists</string>
@@ -87,6 +89,7 @@
     <string name="call_log_title_today">Call Log — Today</string>
     <string name="call_log_title_week">Call Log — This Week</string>
     <string name="call_log_title_month">Call Log — This Month</string>
+    <string name="call_log_title_review">Call Log — Pending Review</string>
     <string name="call_log_empty_hint">No calls logged yet. Calls will appear here once screening begins.</string>
     <string name="call_log_action_block">Block this number</string>
     <string name="call_log_action_allowlist">Add to allowlist</string>
@@ -104,7 +107,15 @@
     <string name="settings_default_action_desc">What to do with numbers that match no rule.</string>
     <string name="settings_default_action_allow">Allow</string>
     <string name="settings_default_action_block">Block</string>
-    <string name="settings_default_action_ask">Ask (currently same as Allow — no review flow yet)</string>
+    <string name="settings_default_action_ask">Ask (call goes through, flagged for review in Call Log)</string>
+    <!-- Permission warnings -->
+    <string name="settings_notifications_disabled">Notifications are off</string>
+    <string name="settings_notifications_disabled_desc">Enable notifications to see incoming-call alerts.</string>
+    <string name="settings_fullscreen_disabled">Full-screen alerts are off</string>
+    <string name="settings_fullscreen_disabled_desc">Enable full-screen alerts so ringing calls show over the lock screen.</string>
+    <string name="settings_call_permission_disabled">Phone permission needed</string>
+    <string name="settings_call_permission_disabled_desc">Grant Phone permission to call back numbers from the call log.</string>
+    <string name="action_open_settings">Open settings</string>
     <!-- Spam provider -->
     <string name="settings_spam_provider">Spam provider</string>
     <string name="settings_spam_provider_desc">Check numbers against an external spam database. No data leaves your device unless you configure a provider.</string>
@@ -139,7 +150,7 @@
     <string name="settings_autoresponder">Auto-responder (Experimental)</string>
     <string name="settings_autoresponder_desc">Answer blocked calls with a greeting.</string>
     <string name="autoresponder_title">Auto-responder</string>
-    <string name="autoresponder_experimental_badge">Experimental — may not work reliably on all devices</string>
+    <string name="autoresponder_experimental_badge">Experimental — depends on your phone letting call audio through; many newer Android versions block it</string>
     <string name="autoresponder_enabled">Enabled</string>
     <string name="autoresponder_enabled_desc">When on, blocked calls are answered and greeted instead of rejected silently.</string>
     <string name="autoresponder_script_hint">Greeting script</string>
@@ -175,6 +186,7 @@
     <string name="call_log_detail_placeholder">Select a call to see details</string>
     <string name="call_log_blocked_label">Blocked call</string>
     <string name="call_log_allowed_label">Allowed call</string>
+    <string name="call_log_review_label">Needs review</string>
     <string name="call_log_time_label">Time</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">Just now</string>

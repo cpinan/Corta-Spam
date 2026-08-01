@@ -15,6 +15,7 @@ data class HomeUiState(
     val blockedToday: Int = 0,
     val blockedThisWeek: Int = 0,
     val blockedThisMonth: Int = 0,
+    val pendingReview: Int = 0,
     val isLoading: Boolean = true,
 )
 
@@ -41,6 +42,7 @@ class HomeViewModel(
                     blockedToday = stats.today,
                     blockedThisWeek = stats.thisWeek,
                     blockedThisMonth = stats.thisMonth,
+                    pendingReview = stats.pendingReview,
                     isLoading = false,
                 )
         }

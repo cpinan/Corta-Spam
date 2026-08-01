@@ -112,6 +112,15 @@ Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any bro
 
 ## Recent Fixes
 
+**2026-07-31:**
+- Added the full incoming-call notification pipeline — previously none existed, so incoming calls only surfaced via a plain `startActivity()` from a background service, which Android silently drops when the screen is off/locked. Now: a full-screen ringing alert with Answer/Decline actions, a persistent "return to call" notification while a call is active, and post-call missed/blocked notifications showing the caller's contact name (via `ContactsContract.PhoneLookup`) and block reason. Three notification channels; all strings localized (en/es/hi/pt) via native Android resources.
+- Settings now shows real permission-status warnings — notifications denied, full-screen-intent revoked (Android 14+), Phone permission denied — each with a one-tap link to the right system settings screen. These used to fail silently with no signal to the user.
+- `DefaultAction.ASK` is now a real behavior instead of a silent alias for Allow: unmatched calls are let through and tagged "Needs review" in the call log. Home shows a "Pending review" count card; Call Log has a matching filter and a distinct visual state.
+- "Call back" in Call Log now actually places the call (`ACTION_CALL` + runtime `CALL_PHONE` permission) instead of just opening the dialer with the number pre-filled.
+- Home's blocking toggle now has a caption explaining what it does.
+- Auto-responder's experimental warning now explains *why* it may not work — newer Android/OEM audio-routing restrictions (the same anti-wiretapping hardening that affects call-recorder apps) — instead of a vague "may not work on all devices."
+- Fixed: Home stats going stale after backgrounding (a resume-refresh had regressed), the contacts-permission prompt nagging forever even after granting (it was checking whether a callback existed, not the actual permission), a dead import that broke `ktlintCheck`, and a dead unused method in `PassthroughInCallService`.
+
 **iOS (2026-07-30):**
 - Fixed Koin initialization — `initKoin()` now called in `MainViewController.kt` before Compose UI launches (was only initialized on Android via `BloqueaLlamadasApp.onCreate`)
 - Added `CADisableMinimumFrameDurationOnPhone: true` to Info.plist via `project.yml` (required by Compose Multiplatform for high-refresh-rate iPhones)

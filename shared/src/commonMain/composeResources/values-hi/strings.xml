@@ -46,10 +46,12 @@
 
     <!-- होम -->
     <string name="home_title">Corta Spam</string>
-    <string name="home_blocking_enabled">ब्लॉकिंग चालू है</string>
+    <string name="home_blocking_enabled">ब्लॉकिंग चालू है — स्पैम और ब्लॉक की गई कॉल फ़िल्टर होती हैं</string>
+    <string name="home_blocking_disabled">ब्लॉकिंग बंद है — सभी कॉल की अनुमति है</string>
     <string name="home_blocked_today">आज ब्लॉक की गई</string>
     <string name="home_blocked_this_week">इस सप्ताह</string>
     <string name="home_blocked_this_month">इस महीने</string>
+    <string name="home_pending_review">समीक्षा लंबित</string>
     <string name="home_view_call_log">कॉल लॉग देखें</string>
     <string name="home_view_stats">आँकड़े देखें</string>
     <string name="home_manage_block_list">ब्लॉक सूचियाँ प्रबंधित करें</string>
@@ -98,6 +100,7 @@
     <string name="call_log_title_today">कॉल लॉग — आज</string>
     <string name="call_log_title_week">कॉल लॉग — इस सप्ताह</string>
     <string name="call_log_title_month">कॉल लॉग — इस महीने</string>
+    <string name="call_log_title_review">कॉल लॉग — समीक्षा लंबित</string>
     <string name="call_log_empty_hint">अभी तक कोई कॉल लॉग नहीं। स्क्रीनिंग शुरू होने पर कॉल यहाँ दिखाई देंगी।</string>
     <string name="call_log_action_block">इस नंबर को ब्लॉक करें</string>
     <string name="call_log_action_allowlist">अनुमति सूची में जोड़ें</string>
@@ -115,7 +118,14 @@
     <string name="settings_default_action_desc">बिना किसी नियम से मेल खाने वाले नंबरों के साथ क्या करें।</string>
     <string name="settings_default_action_allow">अनुमति दें</string>
     <string name="settings_default_action_block">ब्लॉक करें</string>
-    <string name="settings_default_action_ask">पूछें (अभी अनुमति के समान — समीक्षा प्रवाह अभी नहीं है)</string>
+    <string name="settings_default_action_ask">पूछें (कॉल जाने दी जाती है, कॉल लॉग में समीक्षा हेतु चिह्नित)</string>
+    <string name="settings_notifications_disabled">सूचनाएं बंद हैं</string>
+    <string name="settings_notifications_disabled_desc">आने वाली कॉल अलर्ट देखने के लिए सूचनाएं चालू करें।</string>
+    <string name="settings_fullscreen_disabled">फ़ुल-स्क्रीन अलर्ट बंद हैं</string>
+    <string name="settings_fullscreen_disabled_desc">लॉक स्क्रीन पर कॉल दिखाने के लिए फ़ुल-स्क्रीन अलर्ट चालू करें।</string>
+    <string name="settings_call_permission_disabled">फ़ोन अनुमति आवश्यक है</string>
+    <string name="settings_call_permission_disabled_desc">कॉल लॉग से वापस कॉल करने के लिए फ़ोन अनुमति दें।</string>
+    <string name="action_open_settings">सेटिंग्स खोलें</string>
 
     <!-- स्पैम -->
     <string name="settings_spam_provider">स्पैम प्रदाता</string>
@@ -138,7 +148,7 @@
     <string name="settings_autoresponder">ऑटो-रिस्पॉन्डर (प्रायोगिक)</string>
     <string name="settings_autoresponder_desc">ब्लॉक की गई कॉल का ग्रीटिंग के साथ उत्तर दें।</string>
     <string name="autoresponder_title">ऑटो-रिस्पॉन्डर</string>
-    <string name="autoresponder_experimental_badge">प्रायोगिक — सभी डिवाइस पर विश्वसनीय रूप से काम नहीं कर सकता</string>
+    <string name="autoresponder_experimental_badge">प्रायोगिक — यह इस पर निर्भर करता है कि आपका फ़ोन कॉल ऑडियो को जाने देता है या नहीं; कई नए Android वर्शन इसे ब्लॉक कर देते हैं</string>
     <string name="autoresponder_enabled">सक्षम</string>
     <string name="autoresponder_enabled_desc">चालू होने पर, ब्लॉक की गई कॉल चुपचाप अस्वीकार करने के बजाय ग्रीटिंग के साथ उत्तर दी जाती हैं।</string>
     <string name="autoresponder_script_hint">ग्रीटिंग स्क्रिप्ट</string>
@@ -187,6 +197,7 @@
     <!-- कॉल लॉग विवरण -->
     <string name="call_log_detail_placeholder">विवरण देखने के लिए कॉल चुनें</string>
     <string name="call_log_blocked_label">ब्लॉक की गई कॉल</string>
+    <string name="call_log_review_label">समीक्षा आवश्यक</string>
     <string name="call_log_allowed_label">अनुमत कॉल</string>
     <string name="call_log_time_label">समय</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>

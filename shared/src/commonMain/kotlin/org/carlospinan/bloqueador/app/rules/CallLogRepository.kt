@@ -53,6 +53,8 @@ data class BlockedStats(
     val today: Int,
     val thisWeek: Int,
     val thisMonth: Int,
+    /** Total entries logged with no matching rule while defaultAction=ASK; see [RuleDecision.PendingReview]. */
+    val pendingReview: Int = 0,
 )
 
 data class DayStat(

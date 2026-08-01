@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_unknown_caller">अज्ञात</string>
+    <string name="notification_incoming_call">आने वाली कॉल</string>
+    <string name="notification_blocked_call_title">ब्लॉक की गई कॉल</string>
+    <string name="notification_missed_call_title">मिस्ड कॉल</string>
+    <string name="notification_call_result_with_reason">%1$s — %2$s</string>
+    <string name="notification_channel_incoming_calls_name">आने वाली कॉलें</string>
+    <string name="notification_channel_incoming_calls_desc">कॉल आने पर दिखाया जाने वाला फ़ुल-स्क्रीन अलर्ट</string>
+    <string name="notification_channel_ongoing_call_name">चल रही कॉल</string>
+    <string name="notification_channel_ongoing_call_desc">कॉल सक्रिय होने पर वापस लौटने की सूचना</string>
+    <string name="notification_channel_history_name">मिस्ड और ब्लॉक की गई कॉलें</string>
+    <string name="notification_channel_history_desc">कॉल समाप्त होने के बाद भेजी जाती है: मिस्ड, या कारण सहित ब्लॉक की गई</string>
+</resources>

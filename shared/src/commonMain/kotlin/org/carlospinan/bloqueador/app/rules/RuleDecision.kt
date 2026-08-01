@@ -48,15 +48,22 @@ sealed class RuleDecision {
         val label: String?,
     ) : RuleDecision()
 
-    /** No blocking rule matched — call is allowed through (settings default action ALLOW/ASK). */
+    /** No blocking rule matched — call is allowed through (settings default action ALLOW). */
     data object DefaultAllow : RuleDecision()
 
     /** No blocking rule matched, but settings default action is BLOCK. */
     data object DefaultBlock : RuleDecision()
 
+    /**
+     * No blocking rule matched, settings default action is ASK. The call can't be interrupted
+     * mid-ring to literally ask the user, so it's let through like [DefaultAllow] but tagged
+     * distinctly in the call log as a "needs review" entry the user can revisit later.
+     */
+    data object PendingReview : RuleDecision()
+
     /** Whether this decision results in the call being blocked. */
     val isBlocked: Boolean
-        get() = this !is Allowlist && this !is DefaultAllow
+        get() = this !is Allowlist && this !is DefaultAllow && this !is PendingReview
 
     /** Human-readable reason for the decision, or null if allowed. */
     val blockReason: String?
@@ -71,6 +78,7 @@ sealed class RuleDecision {
                 is ScheduleBlock -> label ?: "Quiet hours"
                 is DefaultAllow -> null
                 is DefaultBlock -> "No matching rule (default: block)"
+                is PendingReview -> null
             }
 
     /** Id of the rule that fired, for persistence in the call log, or null when not applicable. */
@@ -82,7 +90,7 @@ sealed class RuleDecision {
                 is CountryBlock -> ruleId
                 is ActionBlock -> ruleId
                 is ScheduleBlock -> ruleId
-                is Allowlist, is SpamHit, is DefaultAllow, is DefaultBlock -> null
+                is Allowlist, is SpamHit, is DefaultAllow, is DefaultBlock, is PendingReview -> null
             }
 
     /** Rule type tag for persistence in the call log. */
@@ -98,5 +106,6 @@ sealed class RuleDecision {
                 is ScheduleBlock -> "SCHEDULE"
                 is DefaultAllow -> null
                 is DefaultBlock -> null
+                is PendingReview -> "REVIEW"
             }
 }

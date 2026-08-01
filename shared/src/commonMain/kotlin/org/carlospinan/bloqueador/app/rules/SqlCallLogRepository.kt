@@ -48,6 +48,7 @@ class SqlCallLogRepository(
                 today = queries.countBlockedCallsToday().executeAsOne().toInt(),
                 thisWeek = queries.countBlockedCallsThisWeek().executeAsOne().toInt(),
                 thisMonth = queries.countBlockedCallsThisMonth().executeAsOne().toInt(),
+                pendingReview = queries.countPendingReview().executeAsOne().toInt(),
             )
         }
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_cancel
+import bloqueallamadas.shared.generated.resources.action_open_settings
 import bloqueallamadas.shared.generated.resources.action_view
 import bloqueallamadas.shared.generated.resources.autoresponder_experimental_badge
 import bloqueallamadas.shared.generated.resources.ic_autoresponder
@@ -47,12 +49,18 @@ import bloqueallamadas.shared.generated.resources.settings_backup
 import bloqueallamadas.shared.generated.resources.settings_backup_desc
 import bloqueallamadas.shared.generated.resources.settings_blocking_enabled
 import bloqueallamadas.shared.generated.resources.settings_blocking_enabled_desc
+import bloqueallamadas.shared.generated.resources.settings_call_permission_disabled
+import bloqueallamadas.shared.generated.resources.settings_call_permission_disabled_desc
 import bloqueallamadas.shared.generated.resources.settings_default_action
 import bloqueallamadas.shared.generated.resources.settings_default_action_allow
 import bloqueallamadas.shared.generated.resources.settings_default_action_ask
 import bloqueallamadas.shared.generated.resources.settings_default_action_block
 import bloqueallamadas.shared.generated.resources.settings_default_action_desc
+import bloqueallamadas.shared.generated.resources.settings_fullscreen_disabled
+import bloqueallamadas.shared.generated.resources.settings_fullscreen_disabled_desc
 import bloqueallamadas.shared.generated.resources.settings_grant_contacts
+import bloqueallamadas.shared.generated.resources.settings_notifications_disabled
+import bloqueallamadas.shared.generated.resources.settings_notifications_disabled_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_title
 import bloqueallamadas.shared.generated.resources.settings_terms_desc
@@ -71,11 +79,17 @@ fun SettingsScreen(
     defaultAction: DefaultAction,
     spamEnabled: Boolean,
     showGrantContacts: Boolean,
+    notificationsPermissionGranted: Boolean = true,
+    fullScreenIntentAllowed: Boolean = true,
+    callPhonePermissionGranted: Boolean = true,
     onSetBlockingEnabled: (Boolean) -> Unit,
     onSetAutoAllowContacts: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
     onRequestContactsPermission: () -> Unit,
+    onOpenNotificationSettings: () -> Unit = {},
+    onOpenFullScreenIntentSettings: () -> Unit = {},
+    onOpenAppSettings: () -> Unit = {},
     onNavigateToAutoResponder: () -> Unit,
     onNavigateToBackup: () -> Unit,
     onNavigateToPrivacy: () -> Unit = {},
@@ -97,6 +111,33 @@ fun SettingsScreen(
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
+
+                if (!notificationsPermissionGranted) {
+                    PermissionWarningCard(
+                        title = stringResource(Res.string.settings_notifications_disabled),
+                        description = stringResource(Res.string.settings_notifications_disabled_desc),
+                        onFix = onOpenNotificationSettings,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                if (!fullScreenIntentAllowed) {
+                    PermissionWarningCard(
+                        title = stringResource(Res.string.settings_fullscreen_disabled),
+                        description = stringResource(Res.string.settings_fullscreen_disabled_desc),
+                        onFix = onOpenFullScreenIntentSettings,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                if (!callPhonePermissionGranted) {
+                    PermissionWarningCard(
+                        title = stringResource(Res.string.settings_call_permission_disabled),
+                        description = stringResource(Res.string.settings_call_permission_disabled_desc),
+                        onFix = onOpenAppSettings,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
                 SettingToggle(
                     title = stringResource(Res.string.settings_blocking_enabled),
@@ -273,6 +314,35 @@ private fun SettingDropdown(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionWarningCard(
+    title: String,
+    description: String,
+    onFix: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextButton(onClick = onFix) {
+                Text(stringResource(Res.string.action_open_settings))
             }
         }
     }

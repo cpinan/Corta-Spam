@@ -46,6 +46,8 @@ object RulePrecedenceResolver {
     ): RuleDecision {
         val normalized = PhoneNumberParser.normalizeForComparison(number)
         if (normalized.isEmpty()) {
+            // No PendingReview here even when defaultAction is ASK: there's no number to
+            // resurface in a review queue for a blank/private caller.
             return context.defaultAction.let {
                 if (it ==
                     DefaultAction.BLOCK
@@ -139,10 +141,10 @@ object RulePrecedenceResolver {
         }
 
         // 8. Default: honor the user's chosen default action.
-        return if (context.defaultAction == DefaultAction.BLOCK) {
-            RuleDecision.DefaultBlock
-        } else {
-            RuleDecision.DefaultAllow
+        return when (context.defaultAction) {
+            DefaultAction.BLOCK -> RuleDecision.DefaultBlock
+            DefaultAction.ASK -> RuleDecision.PendingReview
+            DefaultAction.ALLOW -> RuleDecision.DefaultAllow
         }
     }
 

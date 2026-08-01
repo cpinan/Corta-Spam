@@ -46,10 +46,12 @@
 
     <!-- Início -->
     <string name="home_title">Corta Spam</string>
-    <string name="home_blocking_enabled">Bloqueio ativado</string>
+    <string name="home_blocking_enabled">Bloqueio ativado — chamadas de spam e bloqueadas são filtradas</string>
+    <string name="home_blocking_disabled">Bloqueio desativado — todas as chamadas são permitidas</string>
     <string name="home_blocked_today">Bloqueadas hoje</string>
     <string name="home_blocked_this_week">Esta semana</string>
     <string name="home_blocked_this_month">Este mês</string>
+    <string name="home_pending_review">Pendente de revisão</string>
     <string name="home_view_call_log">Ver registro</string>
     <string name="home_view_stats">Ver estatísticas</string>
     <string name="home_manage_block_list">Gerenciar listas</string>
@@ -98,6 +100,7 @@
     <string name="call_log_title_today">Registro — Hoje</string>
     <string name="call_log_title_week">Registro — Esta Semana</string>
     <string name="call_log_title_month">Registro — Este Mês</string>
+    <string name="call_log_title_review">Registro — Pendentes de Revisão</string>
     <string name="call_log_empty_hint">Nenhuma chamada registrada. Aparecerão quando o filtro começar.</string>
     <string name="call_log_action_block">Bloquear este número</string>
     <string name="call_log_action_allowlist">Adicionar aos permitidos</string>
@@ -115,7 +118,14 @@
     <string name="settings_default_action_desc">O que fazer com números que não correspondem a nenhuma regra.</string>
     <string name="settings_default_action_allow">Permitir</string>
     <string name="settings_default_action_block">Bloquear</string>
-    <string name="settings_default_action_ask">Perguntar (igual a Permitir — sem fluxo de revisão ainda)</string>
+    <string name="settings_default_action_ask">Perguntar (a chamada passa, marcada para revisão no registro)</string>
+    <string name="settings_notifications_disabled">As notificações estão desativadas</string>
+    <string name="settings_notifications_disabled_desc">Ative as notificações para ver alertas de chamadas recebidas.</string>
+    <string name="settings_fullscreen_disabled">Os alertas em tela cheia estão desativados</string>
+    <string name="settings_fullscreen_disabled_desc">Ative os alertas em tela cheia para que as chamadas recebidas apareçam sobre a tela de bloqueio.</string>
+    <string name="settings_call_permission_disabled">Permissão de telefone necessária</string>
+    <string name="settings_call_permission_disabled_desc">Conceda a permissão de telefone para retornar chamadas do registro.</string>
+    <string name="action_open_settings">Abrir configurações</string>
 
     <!-- Spam -->
     <string name="settings_spam_provider">Provedor de spam</string>
@@ -138,7 +148,7 @@
     <string name="settings_autoresponder">Auto-respondedor (Experimental)</string>
     <string name="settings_autoresponder_desc">Responde chamadas bloqueadas com uma saudação.</string>
     <string name="autoresponder_title">Auto-respondedor</string>
-    <string name="autoresponder_experimental_badge">Experimental — pode não funcionar em todos os dispositivos</string>
+    <string name="autoresponder_experimental_badge">Experimental — depende do seu telefone permitir o áudio da chamada; muitas versões recentes do Android bloqueiam isso</string>
     <string name="autoresponder_enabled">Ativado</string>
     <string name="autoresponder_enabled_desc">Quando ativo, chamadas bloqueadas são atendidas com saudação em vez de rejeitadas.</string>
     <string name="autoresponder_script_hint">Roteiro de saudação</string>
@@ -187,6 +197,7 @@
     <!-- Registro de chamadas - detalhes -->
     <string name="call_log_detail_placeholder">Selecione uma chamada para ver detalhes</string>
     <string name="call_log_blocked_label">Chamada bloqueada</string>
+    <string name="call_log_review_label">Precisa de revisão</string>
     <string name="call_log_allowed_label">Chamada permitida</string>
     <string name="call_log_time_label">Horário</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>

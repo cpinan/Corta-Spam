@@ -30,7 +30,10 @@ import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.home_blocked_this_month
 import bloqueallamadas.shared.generated.resources.home_blocked_this_week
 import bloqueallamadas.shared.generated.resources.home_blocked_today
+import bloqueallamadas.shared.generated.resources.home_blocking_disabled
+import bloqueallamadas.shared.generated.resources.home_blocking_enabled
 import bloqueallamadas.shared.generated.resources.home_manage_block_list
+import bloqueallamadas.shared.generated.resources.home_pending_review
 import bloqueallamadas.shared.generated.resources.home_settings
 import bloqueallamadas.shared.generated.resources.home_title
 import bloqueallamadas.shared.generated.resources.home_view_call_log
@@ -55,6 +58,7 @@ fun HomeScreen(
     onNavigateToCallLogToday: () -> Unit,
     onNavigateToCallLogThisWeek: () -> Unit,
     onNavigateToCallLogThisMonth: () -> Unit,
+    onNavigateToCallLogReview: () -> Unit,
     onNavigateToBlockList: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToStats: () -> Unit,
@@ -83,6 +87,7 @@ fun HomeScreen(
                                 onNavigateToCallLogToday = onNavigateToCallLogToday,
                                 onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
                                 onNavigateToCallLogThisMonth = onNavigateToCallLogThisMonth,
+                                onNavigateToCallLogReview = onNavigateToCallLogReview,
                             )
                         }
                         HomeQuickGrid(
@@ -100,6 +105,7 @@ fun HomeScreen(
                         onNavigateToCallLogToday = onNavigateToCallLogToday,
                         onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
                         onNavigateToCallLogThisMonth = onNavigateToCallLogThisMonth,
+                        onNavigateToCallLogReview = onNavigateToCallLogReview,
                     )
                     Spacer(modifier = Modifier.height(32.dp))
                     androidx.compose.material3.TextButton(onClick = onNavigateToCallLog) {
@@ -131,6 +137,7 @@ private fun HomeStatsSection(
     onNavigateToCallLogToday: () -> Unit,
     onNavigateToCallLogThisWeek: () -> Unit,
     onNavigateToCallLogThisMonth: () -> Unit,
+    onNavigateToCallLogReview: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -146,6 +153,15 @@ private fun HomeStatsSection(
             onCheckedChange = onToggleBlocking,
         )
     }
+
+    Text(
+        text =
+            stringResource(
+                if (blockingEnabled) Res.string.home_blocking_enabled else Res.string.home_blocking_disabled,
+            ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 
     Spacer(modifier = Modifier.height(32.dp))
 
@@ -196,6 +212,29 @@ private fun HomeStatsSection(
                 )
                 Text(
                     text = "${state.blockedThisMonth}",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
+        }
+    }
+
+    if (state.pendingReview > 0) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onNavigateToCallLogReview),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.home_pending_review),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = "${state.pendingReview}",
                     style = MaterialTheme.typography.titleLarge,
                 )
             }

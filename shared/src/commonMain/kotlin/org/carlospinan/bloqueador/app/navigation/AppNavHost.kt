@@ -3,6 +3,8 @@ package org.carlospinan.bloqueador.app.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -73,6 +75,13 @@ fun AppNavHost(
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
     onCallBack: ((String) -> Unit)? = null,
     onCopyNumber: ((String) -> Unit)? = null,
+    contactsPermissionGranted: Boolean = false,
+    notificationsPermissionGranted: Boolean = true,
+    fullScreenIntentAllowed: Boolean = true,
+    callPhonePermissionGranted: Boolean = true,
+    onOpenNotificationSettings: (() -> Unit)? = null,
+    onOpenFullScreenIntentSettings: (() -> Unit)? = null,
+    onOpenAppSettings: (() -> Unit)? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -108,6 +117,9 @@ fun AppNavHost(
             composable(Routes.HOME) {
                 val state by homeViewModel.state.collectAsState()
                 val blockingEnabled by homeViewModel.blockingEnabled.collectAsState()
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    homeViewModel.refresh()
+                }
                 HomeScreen(
                     state = state,
                     blockingEnabled = blockingEnabled,
@@ -115,6 +127,7 @@ fun AppNavHost(
                     onNavigateToCallLogToday = { navController.navigate(Routes.callLogRoute("today")) { launchSingleTop = true } },
                     onNavigateToCallLogThisWeek = { navController.navigate(Routes.callLogRoute("week")) { launchSingleTop = true } },
                     onNavigateToCallLogThisMonth = { navController.navigate(Routes.callLogRoute("month")) { launchSingleTop = true } },
+                    onNavigateToCallLogReview = { navController.navigate(Routes.callLogRoute("review")) { launchSingleTop = true } },
                     onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) { launchSingleTop = true } },
                     onNavigateToSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
                     onNavigateToStats = { navController.navigate(Routes.STATS) { launchSingleTop = true } },
@@ -237,12 +250,18 @@ fun AppNavHost(
                     autoAllowContacts = autoAllowContacts,
                     defaultAction = defaultAction,
                     spamEnabled = spamEnabled,
-                    showGrantContacts = onRequestContactsPermission != null,
+                    showGrantContacts = onRequestContactsPermission != null && !contactsPermissionGranted,
+                    notificationsPermissionGranted = notificationsPermissionGranted,
+                    fullScreenIntentAllowed = fullScreenIntentAllowed,
+                    callPhonePermissionGranted = callPhonePermissionGranted,
                     onSetBlockingEnabled = settingsViewModel::setBlockingEnabled,
                     onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
                     onSetDefaultAction = settingsViewModel::setDefaultAction,
                     onSetSpamEnabled = settingsViewModel::setSpamEnabled,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
+                    onOpenNotificationSettings = onOpenNotificationSettings ?: {},
+                    onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},
+                    onOpenAppSettings = onOpenAppSettings ?: {},
                     onNavigateToAutoResponder = { navController.navigate(Routes.AUTO_RESPONDER) { launchSingleTop = true } },
                     onNavigateToBackup = { navController.navigate(Routes.BACKUP) { launchSingleTop = true } },
                     onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) { launchSingleTop = true } },
@@ -334,6 +353,7 @@ private fun filterEntries(
     filter: String,
 ): List<CallLogEntryData> {
     if (filter == "all") return entries
+    if (filter == "review") return entries.filter { it.ruleType == "REVIEW" }
     val now =
         Instant
             .fromEpochMilliseconds(currentTimeMillis())

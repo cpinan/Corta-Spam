@@ -39,7 +39,7 @@ CREATE TABLE CallLogEntry (
     number TEXT NOT NULL,
     timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
-    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', NULL)),
+    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', 'REVIEW', NULL)),
     rule_id INTEGER,
     rule_detail TEXT
 );
@@ -132,6 +132,12 @@ WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of m
 
 clearCallLog:
 DELETE FROM CallLogEntry;
+
+-- Total entries logged with no matching rule while defaultAction=ASK (RuleDecision.PendingReview).
+-- Not time-windowed like the stats above: it's a durable "needs a look" tag on historical
+-- entries, not a live inbox with a resolved/unresolved state.
+countPendingReview:
+SELECT count(*) AS count FROM CallLogEntry WHERE rule_type = 'REVIEW';
 
 -- AppSettings (key-value store for app preferences)
 CREATE TABLE AppSettings (

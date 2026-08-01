@@ -110,6 +110,39 @@ Un curso completo de 13 módulos en HTML recorre cada capa de la app — Gradle,
 
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 45 preguntas de evaluación.
 
+## Cambios recientes
+
+**2026-07-31:**
+- Se agregó el flujo completo de notificaciones de llamadas entrantes — antes no existía ninguno, así que las llamadas entrantes solo aparecían mediante un `startActivity()` desde un servicio en segundo plano, algo que Android descarta silenciosamente cuando la pantalla está apagada o bloqueada. Ahora: una alerta a pantalla completa con acciones de Contestar/Rechazar, una notificación persistente de "volver a la llamada" mientras está activa, y notificaciones posteriores de llamadas perdidas o bloqueadas que muestran el nombre del contacto (vía `ContactsContract.PhoneLookup`) y el motivo del bloqueo. Tres canales de notificación; todos los textos localizados (en/es/hi/pt) mediante recursos nativos de Android.
+- Ajustes ahora muestra advertencias reales sobre el estado de los permisos — notificaciones denegadas, alerta a pantalla completa revocada (Android 14+), permiso de teléfono denegado — cada una con un enlace directo a la pantalla de ajustes del sistema correspondiente. Antes estos casos fallaban en silencio, sin ninguna señal para el usuario.
+- La acción "Preguntar" (`DefaultAction.ASK`) ahora tiene un comportamiento real en vez de ser un alias silencioso de Permitir: las llamadas sin regla coincidente se dejan pasar y se marcan como "Necesita revisión" en el registro de llamadas. Inicio muestra una tarjeta con el conteo de "Pendiente de revisión"; el Registro de llamadas tiene un filtro y un estado visual propios.
+- "Llamar de vuelta" en el registro de llamadas ahora realiza la llamada directamente (`ACTION_CALL` + permiso `CALL_PHONE` en tiempo de ejecución) en vez de solo abrir el marcador con el número prellenado.
+- El interruptor de bloqueo en Inicio ahora tiene un subtítulo que explica qué hace.
+- La advertencia experimental del contestador automático ahora explica *por qué* puede no funcionar — restricciones de enrutamiento de audio en versiones nuevas de Android/fabricantes (el mismo endurecimiento anti-espionaje que afecta a las apps de grabación de llamadas) — en vez de un genérico "puede no funcionar en todos los dispositivos".
+- Corregido: las estadísticas de Inicio se quedaban desactualizadas tras poner la app en segundo plano (una actualización al reanudar se había perdido), el aviso de permiso de contactos insistía para siempre incluso después de concederlo (verificaba si existía un callback, no el permiso real), un import muerto que rompía `ktlintCheck`, y un método muerto sin usar en `PassthroughInCallService`.
+
+**iOS (2026-07-30):**
+- Se corrigió la inicialización de Koin — `initKoin()` ahora se llama en `MainViewController.kt` antes de que arranque la interfaz de Compose (antes solo se inicializaba en Android vía `BloqueaLlamadasApp.onCreate`)
+- Se agregó `CADisableMinimumFrameDurationOnPhone: true` al Info.plist vía `project.yml` (requerido por Compose Multiplatform en iPhones de alta tasa de refresco)
+- Se reemplazó `Dispatchers.IO` por `Dispatchers.Default` en todo el módulo compartido (API interna en Kotlin/Native)
+- Se reemplazó `Clock.System` por un `expect/actual currentTimeMillis()` de plataforma para compatibilidad con iOS
+- Se agregó `databaseDispatcher` a la interfaz `DriverFactory` (Android: `IO`, iOS: `Default`)
+- Se corrigió `arguments?.getString()` de Navigation Compose → cast a `Map` para compatibilidad con KMP
+- Se eliminó un `import kotlinx.coroutines.IO` residual (interno en Native)
+- **Conocido**: el renderizado por GPU Metal puede colgarse en ciertos simuladores de iOS (p. ej. iPhone 16 Pro en macOS 26). Usa iPhone SE o un dispositivo físico. Pendiente una alternativa de renderizado por software.
+
+**Android (2026-07-30):**
+- Se agregó la acción de devolver llamada en el registro (intent `ACTION_DIAL`)
+- Se agregaron marcas de tiempo locales a las entradas del registro vía `currentTimeMillis()` expect/actual
+- Se corrigió la recarga de pantalla por doble toque en la barra inferior con comparación consciente de la sección
+- InCallActivity ahora aparece instantáneamente al recibir una llamada (gana la carrera contra la UI del sistema)
+- Se agregó descarte de KeyguardManager para la toma de pantalla completa en llamadas entrantes
+- Se ocultó el interruptor del proveedor de spam en ajustes (backend preservado)
+- El contestador automático se marcó como Experimental
+- La pantalla de estadísticas se de-hardcodeó (Cargando, conteo de bloqueadas)
+- "Copiar número" ahora está conectado al portapapeles (`ClipboardManager`)
+- Normalización de números telefónicos para comparar contactos entre formatos (`normalizeForComparison`)
+
 ## Licencia
 
 MIT — consulta [`LICENSE`](LICENSE). Corta Spam es software libre y de código abierto.

@@ -43,14 +43,17 @@ import bloqueallamadas.shared.generated.resources.call_log_allowed_label
 import bloqueallamadas.shared.generated.resources.call_log_blocked_label
 import bloqueallamadas.shared.generated.resources.call_log_detail_placeholder
 import bloqueallamadas.shared.generated.resources.call_log_empty_hint
+import bloqueallamadas.shared.generated.resources.call_log_review_label
 import bloqueallamadas.shared.generated.resources.call_log_rule_label
 import bloqueallamadas.shared.generated.resources.call_log_time_label
 import bloqueallamadas.shared.generated.resources.call_log_title
 import bloqueallamadas.shared.generated.resources.call_log_title_month
+import bloqueallamadas.shared.generated.resources.call_log_title_review
 import bloqueallamadas.shared.generated.resources.call_log_title_today
 import bloqueallamadas.shared.generated.resources.call_log_title_week
 import bloqueallamadas.shared.generated.resources.ic_allowlist
 import bloqueallamadas.shared.generated.resources.ic_blocked_number
+import bloqueallamadas.shared.generated.resources.ic_unknown_call
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -81,6 +84,7 @@ fun CallLogScreen(
             "today" -> stringResource(Res.string.call_log_title_today)
             "week" -> stringResource(Res.string.call_log_title_week)
             "month" -> stringResource(Res.string.call_log_title_month)
+            "review" -> stringResource(Res.string.call_log_title_review)
             else -> stringResource(Res.string.call_log_title)
         }
 
@@ -269,8 +273,25 @@ private fun CallLogDetailPane(
             )
         } else {
             val isBlocked = entry.action == "BLOCKED"
-            val actionColor = if (isBlocked) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
-            val statusIcon = if (isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
+            val isReview = entry.ruleType == "REVIEW"
+            val actionColor =
+                when {
+                    isBlocked -> MaterialTheme.colorScheme.error
+                    isReview -> MaterialTheme.colorScheme.tertiary
+                    else -> Color(0xFF4CAF50)
+                }
+            val statusIcon =
+                when {
+                    isBlocked -> Res.drawable.ic_blocked_number
+                    isReview -> Res.drawable.ic_unknown_call
+                    else -> Res.drawable.ic_allowlist
+                }
+            val statusLabel =
+                when {
+                    isBlocked -> stringResource(Res.string.call_log_blocked_label)
+                    isReview -> stringResource(Res.string.call_log_review_label)
+                    else -> stringResource(Res.string.call_log_allowed_label)
+                }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -278,26 +299,12 @@ private fun CallLogDetailPane(
             ) {
                 Icon(
                     painter = painterResource(statusIcon),
-                    contentDescription =
-                        if (isBlocked) {
-                            stringResource(
-                                Res.string.call_log_blocked_label,
-                            )
-                        } else {
-                            stringResource(Res.string.call_log_allowed_label)
-                        },
+                    contentDescription = statusLabel,
                     tint = actionColor,
                     modifier = Modifier.size(20.dp),
                 )
                 Text(
-                    text =
-                        if (isBlocked) {
-                            stringResource(
-                                Res.string.call_log_blocked_label,
-                            )
-                        } else {
-                            stringResource(Res.string.call_log_allowed_label)
-                        },
+                    text = statusLabel,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -378,9 +385,25 @@ private fun CallLogEntryRow(
     modifier: Modifier = Modifier,
 ) {
     val isBlocked = entry.action == "BLOCKED"
-    val actionColor = if (isBlocked) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
+    val isReview = entry.ruleType == "REVIEW"
+    val actionColor =
+        when {
+            isBlocked -> MaterialTheme.colorScheme.error
+            isReview -> MaterialTheme.colorScheme.tertiary
+            else -> Color(0xFF4CAF50)
+        }
     val statusIcon =
-        if (isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
+        when {
+            isBlocked -> Res.drawable.ic_blocked_number
+            isReview -> Res.drawable.ic_unknown_call
+            else -> Res.drawable.ic_allowlist
+        }
+    val statusLabel =
+        when {
+            isBlocked -> stringResource(Res.string.call_log_blocked_label)
+            isReview -> stringResource(Res.string.call_log_review_label)
+            else -> stringResource(Res.string.call_log_allowed_label)
+        }
 
     Card(
         modifier =
@@ -396,14 +419,7 @@ private fun CallLogEntryRow(
         ) {
             Icon(
                 painter = painterResource(statusIcon),
-                contentDescription =
-                    if (isBlocked) {
-                        stringResource(
-                            Res.string.call_log_blocked_label,
-                        )
-                    } else {
-                        stringResource(Res.string.call_log_allowed_label)
-                    },
+                contentDescription = statusLabel,
                 tint = actionColor,
                 modifier = Modifier.size(20.dp),
             )
@@ -413,7 +429,7 @@ private fun CallLogEntryRow(
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    text = entry.ruleDetail ?: entry.action,
+                    text = entry.ruleDetail ?: statusLabel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -424,7 +440,7 @@ private fun CallLogEntryRow(
                 )
             }
             Text(
-                text = entry.action,
+                text = if (isReview) statusLabel else entry.action,
                 style = MaterialTheme.typography.labelMedium,
                 color = actionColor,
             )

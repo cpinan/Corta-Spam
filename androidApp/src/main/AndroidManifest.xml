@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Required to post the ringing-call notification (API 33+) and to have Telecom's
+         default-dialer full-screen-intent launch actually reach the lock screen. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:name=".BloqueaLlamadasApp"
@@ -68,6 +72,11 @@
                 <action android:name="android.telecom.InCallService" />
             </intent-filter>
         </service>
+
+        <!-- Answer/Decline actions from the full-screen ringing notification. -->
+        <receiver
+            android:name=".telecom.CallActionReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>
