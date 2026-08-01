@@ -28,6 +28,10 @@ class SettingsViewModel(
         spamProviderRepository.enabled
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val notificationsEnabled: StateFlow<Boolean> =
+        settingsRepository.notificationsEnabled
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
     fun setBlockingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setBlockingEnabled(enabled)
@@ -49,6 +53,12 @@ class SettingsViewModel(
     fun setSpamEnabled(enabled: Boolean) {
         viewModelScope.launch {
             spamProviderRepository.setEnabled(enabled)
+        }
+    }
+
+    fun setNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setNotificationsEnabled(enabled)
         }
     }
 }

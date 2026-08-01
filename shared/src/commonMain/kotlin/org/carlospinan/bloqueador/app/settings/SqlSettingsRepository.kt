@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.settings
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.carlospinan.bloqueador.app.db.AppDatabase
 import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
@@ -20,6 +21,9 @@ class SqlSettingsRepository(
     private val _defaultAction = MutableStateFlow(DefaultAction.ALLOW)
     override val defaultAction: Flow<DefaultAction> = _defaultAction.asStateFlow()
 
+    private val _notificationsEnabled = MutableStateFlow(true)
+    override val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
+
     init {
         _blockingEnabled.value = store.readBool("blocking_enabled", true)
         _autoAllowContacts.value = store.readBool("auto_allow_contacts", true)
@@ -27,6 +31,7 @@ class SqlSettingsRepository(
             store.readString("default_action", DefaultAction.ALLOW.key).let { key ->
                 DefaultAction.entries.find { it.key == key } ?: DefaultAction.ALLOW
             }
+        _notificationsEnabled.value = store.readBool("notifications_enabled", true)
     }
 
     override suspend fun setBlockingEnabled(enabled: Boolean) {
@@ -42,6 +47,11 @@ class SqlSettingsRepository(
     override suspend fun setDefaultAction(action: DefaultAction) {
         store.write("default_action", action.key)
         _defaultAction.value = action
+    }
+
+    override suspend fun setNotificationsEnabled(enabled: Boolean) {
+        store.writeBool("notifications_enabled", enabled)
+        _notificationsEnabled.value = enabled
     }
 
     private var _welcomeShown: Boolean = false

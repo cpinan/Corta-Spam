@@ -90,7 +90,9 @@ class PassthroughInCallService :
                             ?.handle
                             ?.schemeSpecificPart
                             .orEmpty()
-                    IncomingCallNotifier.notifyOngoingCall(this@PassthroughInCallService, number)
+                    if (settingsRepository.notificationsEnabled.value) {
+                        IncomingCallNotifier.notifyOngoingCall(this@PassthroughInCallService, number)
+                    }
                 } else {
                     IncomingCallNotifier.cancelOngoing(this@PassthroughInCallService)
                 }
@@ -119,7 +121,7 @@ class PassthroughInCallService :
         )
 
         call.registerCallback(notificationCallback)
-        if (call.state == Call.STATE_RINGING) {
+        if (call.state == Call.STATE_RINGING && settingsRepository.notificationsEnabled.value) {
             IncomingCallNotifier.notifyIncomingCall(this, number)
         }
 
@@ -133,12 +135,14 @@ class PassthroughInCallService :
                 )
                 if (decision.isBlocked) {
                     callWasBlockedByRules = true
-                    IncomingCallNotifier.notifyCallResult(
-                        this@PassthroughInCallService,
-                        number,
-                        R.string.notification_blocked_call_title,
-                        decision.blockReason,
-                    )
+                    if (settingsRepository.notificationsEnabled.value) {
+                        IncomingCallNotifier.notifyCallResult(
+                            this@PassthroughInCallService,
+                            number,
+                            R.string.notification_blocked_call_title,
+                            decision.blockReason,
+                        )
+                    }
                     val autoConfig = autoResponderRepository.config.first()
                     if (autoConfig.enabled &&
                         autoConfig.validate() is org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig.ValidationResult.Ok
@@ -163,7 +167,10 @@ class PassthroughInCallService :
         call.unregisterCallback(notificationCallback)
         IncomingCallNotifier.cancel(this)
         IncomingCallNotifier.cancelOngoing(this)
-        if (!callWasBlockedByRules && call.details?.disconnectCause?.code == DisconnectCause.MISSED) {
+        if (!callWasBlockedByRules &&
+            call.details?.disconnectCause?.code == DisconnectCause.MISSED &&
+            settingsRepository.notificationsEnabled.value
+        ) {
             val number =
                 call.details
                     ?.handle

@@ -41,6 +41,7 @@ import bloqueallamadas.shared.generated.resources.ic_blocking
 import bloqueallamadas.shared.generated.resources.ic_contacts
 import bloqueallamadas.shared.generated.resources.ic_default_action
 import bloqueallamadas.shared.generated.resources.ic_privacy
+import bloqueallamadas.shared.generated.resources.ic_settings
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
 import bloqueallamadas.shared.generated.resources.settings_autoresponder
@@ -63,6 +64,8 @@ import bloqueallamadas.shared.generated.resources.settings_notifications_disable
 import bloqueallamadas.shared.generated.resources.settings_notifications_disabled_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_title
+import bloqueallamadas.shared.generated.resources.settings_show_notifications
+import bloqueallamadas.shared.generated.resources.settings_show_notifications_desc
 import bloqueallamadas.shared.generated.resources.settings_terms_desc
 import bloqueallamadas.shared.generated.resources.settings_terms_title
 import bloqueallamadas.shared.generated.resources.settings_title
@@ -79,6 +82,7 @@ fun SettingsScreen(
     defaultAction: DefaultAction,
     spamEnabled: Boolean,
     showGrantContacts: Boolean,
+    notificationsEnabled: Boolean = true,
     notificationsPermissionGranted: Boolean = true,
     fullScreenIntentAllowed: Boolean = true,
     callPhonePermissionGranted: Boolean = true,
@@ -86,6 +90,7 @@ fun SettingsScreen(
     onSetAutoAllowContacts: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
+    onSetNotificationsEnabled: (Boolean) -> Unit = {},
     onRequestContactsPermission: () -> Unit,
     onOpenNotificationSettings: () -> Unit = {},
     onOpenFullScreenIntentSettings: () -> Unit = {},
@@ -145,6 +150,16 @@ fun SettingsScreen(
                     icon = Res.drawable.ic_blocking,
                     checked = blockingEnabled,
                     onCheckedChange = onSetBlockingEnabled,
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingToggle(
+                    title = stringResource(Res.string.settings_show_notifications),
+                    description = stringResource(Res.string.settings_show_notifications_desc),
+                    icon = Res.drawable.ic_settings,
+                    checked = notificationsEnabled,
+                    onCheckedChange = onSetNotificationsEnabled,
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

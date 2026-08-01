@@ -57,6 +57,7 @@ class HomeViewModelTest {
         override val blockingEnabled = blockingEnabledFlow
         override val autoAllowContacts = MutableStateFlow(false)
         override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
+        override val notificationsEnabled = MutableStateFlow(true)
 
         override suspend fun setBlockingEnabled(enabled: Boolean) {
             blockingEnabledFlow.value = enabled
@@ -65,6 +66,10 @@ class HomeViewModelTest {
         override suspend fun setAutoAllowContacts(enabled: Boolean) {}
 
         override suspend fun setDefaultAction(action: DefaultAction) {}
+
+        override suspend fun setNotificationsEnabled(enabled: Boolean) {
+            notificationsEnabled.value = enabled
+        }
 
         override val welcomeShown: Boolean = true
 

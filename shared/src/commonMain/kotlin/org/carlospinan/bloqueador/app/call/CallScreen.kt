@@ -1,6 +1,8 @@
 package org.carlospinan.bloqueador.app.call
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +29,8 @@ import bloqueallamadas.shared.generated.resources.call_status_active
 import bloqueallamadas.shared.generated.resources.call_status_dialing
 import bloqueallamadas.shared.generated.resources.call_status_ringing
 import bloqueallamadas.shared.generated.resources.call_unknown_number
+import bloqueallamadas.shared.generated.resources.ic_brand_app
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 // M1: answer/decline/hang up only; no custom dialer chrome yet.
@@ -64,6 +69,17 @@ fun CallScreen(
                     Text(
                         text = number.ifBlank { stringResource(Res.string.call_unknown_number) },
                         style = MaterialTheme.typography.headlineMedium,
+                    )
+                }
+
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.ic_brand_app),
+                        contentDescription = null,
+                        modifier = Modifier.size(96.dp),
                     )
                 }
 

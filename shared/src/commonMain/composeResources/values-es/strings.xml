@@ -120,6 +120,8 @@
     <string name="settings_title">Ajustes</string>
     <string name="settings_blocking_enabled">Bloqueo activado</string>
     <string name="settings_blocking_enabled_desc">Cuando está desactivado, todas las llamadas pasan.</string>
+    <string name="settings_show_notifications">Mostrar notificaciones</string>
+    <string name="settings_show_notifications_desc">Cuando está desactivado, la app no publica ninguna notificación, incluida la alerta de llamada entrante.</string>
     <string name="settings_auto_allow_contacts">Auto-permitir contactos</string>
     <string name="settings_auto_allow_contacts_desc">Los contactos evitan todas las reglas de bloqueo.</string>
     <string name="settings_grant_contacts">Conceder permiso de contactos</string>

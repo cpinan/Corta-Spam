@@ -111,6 +111,8 @@
     <string name="settings_title">सेटिंग्स</string>
     <string name="settings_blocking_enabled">ब्लॉकिंग सक्षम</string>
     <string name="settings_blocking_enabled_desc">बंद होने पर, सभी कॉल अनुमत हैं।</string>
+    <string name="settings_show_notifications">सूचनाएं दिखाएं</string>
+    <string name="settings_show_notifications_desc">बंद होने पर, ऐप कोई सूचना नहीं भेजेगा, आने वाली कॉल का अलर्ट भी नहीं।</string>
     <string name="settings_auto_allow_contacts">संपर्कों को स्वतः अनुमति दें</string>
     <string name="settings_auto_allow_contacts_desc">संपर्क सभी ब्लॉक नियमों को बायपास करते हैं।</string>
     <string name="settings_grant_contacts">संपर्क अनुमति दें</string>

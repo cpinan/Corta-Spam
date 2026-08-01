@@ -245,12 +245,14 @@ fun AppNavHost(
                 val autoAllowContacts by settingsViewModel.autoAllowContacts.collectAsState()
                 val defaultAction by settingsViewModel.defaultAction.collectAsState()
                 val spamEnabled by settingsViewModel.spamEnabled.collectAsState()
+                val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
                 SettingsScreen(
                     blockingEnabled = blockingEnabled,
                     autoAllowContacts = autoAllowContacts,
                     defaultAction = defaultAction,
                     spamEnabled = spamEnabled,
                     showGrantContacts = onRequestContactsPermission != null && !contactsPermissionGranted,
+                    notificationsEnabled = notificationsEnabled,
                     notificationsPermissionGranted = notificationsPermissionGranted,
                     fullScreenIntentAllowed = fullScreenIntentAllowed,
                     callPhonePermissionGranted = callPhonePermissionGranted,
@@ -258,6 +260,7 @@ fun AppNavHost(
                     onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
                     onSetDefaultAction = settingsViewModel::setDefaultAction,
                     onSetSpamEnabled = settingsViewModel::setSpamEnabled,
+                    onSetNotificationsEnabled = settingsViewModel::setNotificationsEnabled,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onOpenNotificationSettings = onOpenNotificationSettings ?: {},
                     onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},

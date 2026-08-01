@@ -14,6 +14,7 @@ class SettingsRepositoryTest {
         override val blockingEnabled = blockingEnabledFlow
         override val autoAllowContacts = MutableStateFlow(false)
         override val defaultAction = defaultActionFlow
+        override val notificationsEnabled = MutableStateFlow(true)
 
         override suspend fun setBlockingEnabled(enabled: Boolean) {
             blockingEnabledFlow.value = enabled
@@ -23,6 +24,10 @@ class SettingsRepositoryTest {
 
         override suspend fun setDefaultAction(action: DefaultAction) {
             defaultActionFlow.value = action
+        }
+
+        override suspend fun setNotificationsEnabled(enabled: Boolean) {
+            notificationsEnabled.value = enabled
         }
 
         override val welcomeShown: Boolean = true
