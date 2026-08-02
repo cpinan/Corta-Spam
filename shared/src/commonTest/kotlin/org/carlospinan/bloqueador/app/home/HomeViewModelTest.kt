@@ -58,6 +58,7 @@ class HomeViewModelTest {
         override val autoAllowContacts = MutableStateFlow(false)
         override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
         override val notificationsEnabled = MutableStateFlow(true)
+        override val repeatedCallerBypassCount = MutableStateFlow(0)
 
         override suspend fun setBlockingEnabled(enabled: Boolean) {
             blockingEnabledFlow.value = enabled
@@ -69,6 +70,10 @@ class HomeViewModelTest {
 
         override suspend fun setNotificationsEnabled(enabled: Boolean) {
             notificationsEnabled.value = enabled
+        }
+
+        override suspend fun setRepeatedCallerBypassCount(count: Int) {
+            repeatedCallerBypassCount.value = count
         }
 
         override val welcomeShown: Boolean = true

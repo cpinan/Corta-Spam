@@ -23,6 +23,14 @@ class KeyValueSettingsStore(
         return raw.ifBlank { default }
     }
 
+    fun readInt(
+        key: String,
+        default: Int,
+    ): Int {
+        val raw = db.appDatabaseQueries.selectSetting(key).executeAsOneOrNull() ?: return default
+        return raw.toIntOrNull() ?: default
+    }
+
     suspend fun write(
         key: String,
         value: String,
@@ -35,5 +43,10 @@ class KeyValueSettingsStore(
     suspend fun writeBool(
         key: String,
         value: Boolean,
+    ) = write(key, value.toString())
+
+    suspend fun writeInt(
+        key: String,
+        value: Int,
     ) = write(key, value.toString())
 }

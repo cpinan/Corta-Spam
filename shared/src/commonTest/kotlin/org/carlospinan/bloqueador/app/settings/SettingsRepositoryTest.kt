@@ -15,6 +15,7 @@ class SettingsRepositoryTest {
         override val autoAllowContacts = MutableStateFlow(false)
         override val defaultAction = defaultActionFlow
         override val notificationsEnabled = MutableStateFlow(true)
+        override val repeatedCallerBypassCount = MutableStateFlow(0)
 
         override suspend fun setBlockingEnabled(enabled: Boolean) {
             blockingEnabledFlow.value = enabled
@@ -28,6 +29,10 @@ class SettingsRepositoryTest {
 
         override suspend fun setNotificationsEnabled(enabled: Boolean) {
             notificationsEnabled.value = enabled
+        }
+
+        override suspend fun setRepeatedCallerBypassCount(count: Int) {
+            repeatedCallerBypassCount.value = count
         }
 
         override val welcomeShown: Boolean = true
@@ -55,5 +60,18 @@ class SettingsRepositoryTest {
     fun `autoAllowContacts defaults to false`() {
         val repo = FakeSettingsRepository()
         assertEquals(false, repo.autoAllowContacts.value)
+    }
+
+    @Test
+    fun `repeatedCallerBypassCount defaults to disabled`() {
+        val repo = FakeSettingsRepository()
+        assertEquals(0, repo.repeatedCallerBypassCount.value)
+    }
+
+    @Test
+    fun `repeatedCallerBypassCount round trip`() {
+        val repo = FakeSettingsRepository()
+        repo.repeatedCallerBypassCount.value = 3
+        assertEquals(3, repo.repeatedCallerBypassCount.value)
     }
 }

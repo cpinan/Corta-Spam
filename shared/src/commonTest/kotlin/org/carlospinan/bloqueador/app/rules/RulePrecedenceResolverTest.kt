@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.rules
 
 import kotlinx.coroutines.test.runTest
+import org.carlospinan.bloqueador.app.settings.DefaultAction
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -311,5 +312,62 @@ class RulePrecedenceResolverTest {
             assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.Allowlist)
             assertTrue(RulePrecedenceResolver.evaluate("+34900999999", ctx) is RuleDecision.Allowlist)
             assertFalse(RulePrecedenceResolver.evaluate("+34900111111", ctx).isBlocked)
+        }
+
+    @Test
+    fun repeatedCallerBypass_triggersAtThreshold() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    defaultAction = DefaultAction.BLOCK,
+                    repeatedAttemptsBypassCount = 3,
+                    recentAttemptsForNumber = 3,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.AllowedAfterRepeatedAttempts)
+            assertFalse(decision.isBlocked)
+            assertEquals(3, (decision as RuleDecision.AllowedAfterRepeatedAttempts).attempts)
+        }
+
+    @Test
+    fun repeatedCallerBypass_belowThreshold_staysDefaultBlock() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    defaultAction = DefaultAction.BLOCK,
+                    repeatedAttemptsBypassCount = 3,
+                    recentAttemptsForNumber = 2,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.DefaultBlock)
+            assertTrue(decision.isBlocked)
+        }
+
+    @Test
+    fun repeatedCallerBypass_disabled_staysDefaultBlockRegardlessOfAttempts() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    defaultAction = DefaultAction.BLOCK,
+                    repeatedAttemptsBypassCount = 0,
+                    recentAttemptsForNumber = 100,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.DefaultBlock)
+        }
+
+    @Test
+    fun repeatedCallerBypass_doesNotApplyToManualBlock() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    defaultAction = DefaultAction.BLOCK,
+                    blockedNumbers = setOf("+34600123456"),
+                    repeatedAttemptsBypassCount = 1,
+                    recentAttemptsForNumber = 100,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.ManualBlock)
+            assertTrue(decision.isBlocked)
         }
 }

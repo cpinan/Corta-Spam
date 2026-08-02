@@ -27,6 +27,7 @@ import kotlin.test.assertTrue
 private class FakeRuleRepository : RuleRepository {
     var blockedEntries = emptyList<BlockedNumberEntry>()
     var allowlistedEntries = emptyList<AllowlistedNumberEntry>()
+    var recentAttemptsForNumber = 0
     val recordedAttempts = mutableListOf<String>()
 
     override fun blockedNumbers() = MutableStateFlow(blockedEntries)
@@ -63,7 +64,7 @@ private class FakeRuleRepository : RuleRepository {
     override suspend fun countRecentAttempts(
         number: String,
         sinceTimestampMillis: Long,
-    ) = 0
+    ) = recentAttemptsForNumber
 
     override suspend fun deleteExpiredAttempts(beforeTimestampMillis: Long) {}
 
@@ -153,6 +154,7 @@ private class FakeSettingsRepository(
     override val autoAllowContacts: MutableStateFlow<Boolean> = MutableStateFlow(false),
     override val defaultAction: MutableStateFlow<DefaultAction> = MutableStateFlow(DefaultAction.ALLOW),
     override val notificationsEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
+    override val repeatedCallerBypassCount: MutableStateFlow<Int> = MutableStateFlow(0),
 ) : SettingsRepository {
     override val welcomeShown = true
 
@@ -163,6 +165,8 @@ private class FakeSettingsRepository(
     override suspend fun setDefaultAction(action: DefaultAction) {}
 
     override suspend fun setNotificationsEnabled(enabled: Boolean) {}
+
+    override suspend fun setRepeatedCallerBypassCount(count: Int) {}
 
     override suspend fun setWelcomeShown() {}
 }
@@ -318,5 +322,27 @@ class EvaluateIncomingCallUseCaseTest {
             val decision = useCase.evaluate("+34600123456")
 
             assertTrue(decision is RuleDecision.DefaultBlock)
+        }
+
+    @Test
+    fun repeatedUnknownCaller_allowedAfterBypassThreshold() =
+        runTest {
+            val ruleRepository = FakeRuleRepository().apply { recentAttemptsForNumber = 3 }
+            val useCase =
+                EvaluateIncomingCallUseCase(
+                    ruleRepository,
+                    FakeContactsGateway(),
+                    FakeSettingsRepository(
+                        defaultAction = MutableStateFlow(DefaultAction.BLOCK),
+                        repeatedCallerBypassCount = MutableStateFlow(3),
+                    ),
+                    FakeSpamProviderRepository(),
+                    NoOpSpamClient,
+                )
+
+            val decision = useCase.evaluate("+34600123456")
+
+            assertTrue(decision is RuleDecision.AllowedAfterRepeatedAttempts)
+            assertEquals(3, (decision as RuleDecision.AllowedAfterRepeatedAttempts).attempts)
         }
 }

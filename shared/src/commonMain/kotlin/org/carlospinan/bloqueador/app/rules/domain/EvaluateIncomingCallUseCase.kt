@@ -49,6 +49,17 @@ class EvaluateIncomingCallUseCase(
         }
         ruleRepository.deleteExpiredAttempts(now - 24L * 60L * 60L * 1000L)
 
+        val repeatedAttemptsBypassCount = settingsRepository.repeatedCallerBypassCount.first()
+        // Reuses the same 24h retention deleteExpiredAttempts already enforces above -- no
+        // separate window setting needed. Includes the attempt just recorded, so the Nth call
+        // is the one that gets through, matching "if this number calls me N times" literally.
+        val recentAttemptsForNumber =
+            if (number.isBlank()) {
+                0
+            } else {
+                ruleRepository.countRecentAttempts(number, now - 24L * 60L * 60L * 1000L)
+            }
+
         val attemptCountsByWindow =
             if (number.isBlank()) {
                 emptyMap()
@@ -82,6 +93,8 @@ class EvaluateIncomingCallUseCase(
                 enabledScheduleRules = ruleRepository.enabledScheduleRules(),
                 currentLocalMinuteOfDay = currentLocalMinuteOfDay(now),
                 defaultAction = defaultAction,
+                repeatedAttemptsBypassCount = repeatedAttemptsBypassCount,
+                recentAttemptsForNumber = recentAttemptsForNumber,
             )
         return RulePrecedenceResolver.evaluate(number, context)
     }

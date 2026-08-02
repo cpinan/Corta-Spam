@@ -38,6 +38,10 @@ data class ResolveContext(
     val currentLocalMinuteOfDay: Int? = null,
     /** What to do when no rule matches — settings-controlled (ALLOW/BLOCK/ASK). */
     val defaultAction: DefaultAction = DefaultAction.ALLOW,
+    /** 0 = disabled. Otherwise, [recentAttemptsForNumber] >= this lets a default-blocked number through. */
+    val repeatedAttemptsBypassCount: Int = 0,
+    /** This number's attempt count within the retention window (only meaningful on the default-block path). */
+    val recentAttemptsForNumber: Int = 0,
 )
 
 object RulePrecedenceResolver {
@@ -147,9 +151,18 @@ object RulePrecedenceResolver {
             }
         }
 
-        // 8. Default: honor the user's chosen default action.
+        // 8. Default: honor the user's chosen default action. BLOCK gets one more check first —
+        // a number that's simply unrecognized (not flagged spam/pattern/manually blocked) but has
+        // retried enough times gets let through instead, per the repeated-caller bypass setting.
         return when (context.defaultAction) {
-            DefaultAction.BLOCK -> RuleDecision.DefaultBlock
+            DefaultAction.BLOCK ->
+                if (context.repeatedAttemptsBypassCount > 0 &&
+                    context.recentAttemptsForNumber >= context.repeatedAttemptsBypassCount
+                ) {
+                    RuleDecision.AllowedAfterRepeatedAttempts(attempts = context.recentAttemptsForNumber)
+                } else {
+                    RuleDecision.DefaultBlock
+                }
             DefaultAction.ASK -> RuleDecision.PendingReview
             DefaultAction.ALLOW -> RuleDecision.DefaultAllow
         }

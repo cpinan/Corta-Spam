@@ -39,7 +39,7 @@ CREATE TABLE CallLogEntry (
     number TEXT NOT NULL,
     timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
     action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
-    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', 'REVIEW', NULL)),
+    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', 'REVIEW', 'REPEATED_ALLOWED', NULL)),
     rule_id INTEGER,
     rule_detail TEXT
 );

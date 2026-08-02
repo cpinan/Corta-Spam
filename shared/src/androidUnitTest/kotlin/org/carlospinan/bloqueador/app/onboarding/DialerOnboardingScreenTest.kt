@@ -24,6 +24,7 @@ private class FakeScreenTestSettingsRepository : SettingsRepository {
     override val autoAllowContacts = MutableStateFlow(true)
     override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
     override val notificationsEnabled = MutableStateFlow(true)
+    override val repeatedCallerBypassCount = MutableStateFlow(0)
     override val welcomeShown = false
 
     override suspend fun setBlockingEnabled(enabled: Boolean) {}
@@ -33,6 +34,8 @@ private class FakeScreenTestSettingsRepository : SettingsRepository {
     override suspend fun setDefaultAction(action: DefaultAction) {}
 
     override suspend fun setNotificationsEnabled(enabled: Boolean) {}
+
+    override suspend fun setRepeatedCallerBypassCount(count: Int) {}
 
     override suspend fun setWelcomeShown() {}
 }

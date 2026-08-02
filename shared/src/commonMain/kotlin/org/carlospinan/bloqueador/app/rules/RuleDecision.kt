@@ -68,9 +68,23 @@ sealed class RuleDecision {
      */
     data object PendingReview : RuleDecision()
 
+    /**
+     * No rule matched and default action is BLOCK, but the number has retried at least
+     * [attempts] times within the retention window — let it through instead, per the
+     * "repeated caller bypass" setting. Only reachable from the default-block path; a manual
+     * block/pattern/country/spam/action/schedule match always takes precedence over this.
+     */
+    data class AllowedAfterRepeatedAttempts(
+        val attempts: Int,
+    ) : RuleDecision()
+
     /** Whether this decision results in the call being blocked. */
     val isBlocked: Boolean
-        get() = this !is Allowlist && this !is DefaultAllow && this !is PendingReview
+        get() =
+            this !is Allowlist &&
+                this !is DefaultAllow &&
+                this !is PendingReview &&
+                this !is AllowedAfterRepeatedAttempts
 
     /** Human-readable reason for the decision, or null if allowed. */
     val blockReason: String?
@@ -86,6 +100,7 @@ sealed class RuleDecision {
                 is DefaultAllow -> null
                 is DefaultBlock -> "No matching rule (default: block)"
                 is PendingReview -> null
+                is AllowedAfterRepeatedAttempts -> "Called $attempts times — allowed"
             }
 
     /** Id of the rule that fired, for persistence in the call log, or null when not applicable. */
@@ -98,7 +113,7 @@ sealed class RuleDecision {
                 is CountryBlock -> ruleId
                 is ActionBlock -> ruleId
                 is ScheduleBlock -> ruleId
-                is SpamHit, is DefaultAllow, is DefaultBlock, is PendingReview -> null
+                is SpamHit, is DefaultAllow, is DefaultBlock, is PendingReview, is AllowedAfterRepeatedAttempts -> null
             }
 
     /** Rule type tag for persistence in the call log. */
@@ -115,5 +130,6 @@ sealed class RuleDecision {
                 is DefaultAllow -> null
                 is DefaultBlock -> null
                 is PendingReview -> "REVIEW"
+                is AllowedAfterRepeatedAttempts -> "REPEATED_ALLOWED"
             }
 }
