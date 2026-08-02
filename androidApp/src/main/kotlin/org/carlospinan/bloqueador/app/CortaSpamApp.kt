@@ -6,12 +6,12 @@ import org.carlospinan.bloqueador.app.telecom.IncomingCallNotifier
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 
-class BloqueaLlamadasApp : Application() {
+class CortaSpamApp : Application() {
     override fun onCreate() {
         super.onCreate()
         initKoin {
             androidLogger()
-            androidContext(this@BloqueaLlamadasApp)
+            androidContext(this@CortaSpamApp)
         }
         IncomingCallNotifier.createChannel(this)
     }

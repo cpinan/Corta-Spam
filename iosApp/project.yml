@@ -22,7 +22,7 @@ targets:
     info:
       path: Generated/Info.plist
       properties:
-        CFBundleDisplayName: BloqueaLlamadas
+        CFBundleDisplayName: "Corta Spam"
         CADisableMinimumFrameDurationOnPhone: true
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -30,7 +30,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.carlospinan.bloqueador.app
-        PRODUCT_NAME: BloqueaLlamadas
+        PRODUCT_NAME: CortaSpam
     preBuildScripts:
       - name: Compile Kotlin Framework (shared)
         script: |

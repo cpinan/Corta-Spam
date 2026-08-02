@@ -1,4 +1,4 @@
-# BloqueaLlamadas iconography
+# Corta Spam iconography
 
 The icon system uses a clear telephone metaphor without entering WhatsApp's
 green, circular, or chat-bubble visual territory. The production identity is

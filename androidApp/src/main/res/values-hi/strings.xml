@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Corta Spam</string>
     <string name="notification_unknown_caller">अज्ञात</string>
     <string name="notification_incoming_call">आने वाली कॉल</string>
     <string name="notification_blocked_call_title">ब्लॉक की गई कॉल</string>

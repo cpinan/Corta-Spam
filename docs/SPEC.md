@@ -1,4 +1,4 @@
-# BloqueaLlamadas — Product & Technical Spec
+# Corta Spam — Product & Technical Spec
 
 Open-source call blocking app (TrueCaller-style capability, zero social graph, zero ads). Android + iOS via Kotlin Multiplatform Mobile (KMM) with Compose Multiplatform UI.
 
@@ -167,13 +167,13 @@ Note iOS's module only binds `DriverFactory` — default-dialer onboarding (`Def
 **Android entry point:**
 
 ```kotlin
-// androidApp/src/main/kotlin/.../BloqueaLlamadasApp.kt
-class BloqueaLlamadasApp : Application() {
+// androidApp/src/main/kotlin/.../CortaSpamApp.kt
+class CortaSpamApp : Application() {
   override fun onCreate() {
     super.onCreate()
     initKoin {
       androidLogger()
-      androidContext(this@BloqueaLlamadasApp)
+      androidContext(this@CortaSpamApp)
     }
   }
 }

@@ -36,7 +36,7 @@ adb shell am start -n org.carlospinan.bloqueador.app/.MainActivity
 ### 1b. Home screen
 | Step | Expect |
 |---|---|
-| Title "BloqueaLlamadas" + blocking toggle | Visible at top |
+| Title "Corta Spam" + blocking toggle | Visible at top |
 | Stats card "Blocked today" with count | Full width, primary container color |
 | Week + Month stats cards | Side by side, equal widths |
 | Quick access: Call Log, Stats, Block List, Settings | 4 TextButtons stacked vertically |
@@ -161,7 +161,7 @@ adb shell am start -n org.carlospinan.bloqueador.app/.MainActivity
 
 | Step | Check |
 |---|---|
-| Status bar: content title not obscured | "BloqueaLlamadas" title fully visible below status bar |
+| Status bar: content title not obscured | "Corta Spam" title fully visible below status bar |
 | Navigation bar (3-button devices): bottom content not cut off | Nav bar items fully visible above OS nav buttons |
 | Gesture nav: bottom content has safe insets | No overlap with gesture bar area |
 | Notch/cutout: horizontal content not obscured | Row content clear of display cutouts |

@@ -73,7 +73,7 @@ flowchart TD
 Paste the block below into a fresh Claude conversation (or `/artifact-design` context) once you're ready to turn this into actual screen mockups. It's self-contained — it doesn't assume the model has seen this conversation.
 
 ```
-You are designing screens for BloqueaLlamadas, an open-source call-blocking
+You are designing screens for Corta Spam, an open-source call-blocking
 app (Android + iOS via Kotlin Multiplatform + Compose Multiplatform).
 Produce high-fidelity mockups (as an HTML/CSS artifact, one scrollable page
 per screen or a tabbed set) for the following screens, in this priority

@@ -6,6 +6,6 @@ import kotlin.test.assertTrue
 class GreetingTest {
     @Test
     fun greetingMentionsTheApp() {
-        assertTrue(greeting().contains("BloqueaLlamadas"))
+        assertTrue(greeting().contains("Corta Spam"))
     }
 }

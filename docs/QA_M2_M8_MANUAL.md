@@ -153,7 +153,7 @@ hours (M8) on top of the M1 default-dialer foundation.
     doesn't inherit test data expectations — this is just local device
     state, not committed anywhere, but keep it tidy for the next test pass.
 56. Restore the previous default dialer if needed (Settings → Apps →
-    Default apps → Phone app), unless keeping BloqueaLlamadas as default
+    Default apps → Phone app), unless keeping Corta Spam as default
     intentionally.
 
 ## Known gaps (expected, not bugs)

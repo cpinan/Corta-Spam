@@ -28,7 +28,7 @@ dialer."*
    `skipped` flag).
 4. Force-stop and relaunch. Tap **Continue**.
 5. **Expect:** the OS dialog appears —
-   - API 29+: RoleManager's "Allow BloqueaLlamadas to be your default
+   - API 29+: RoleManager's "Allow Corta Spam to be your default
      phone app?" dialog.
    - API 26–28: the legacy "Change default phone app?" dialog
      (`TelecomManager.ACTION_CHANGE_DEFAULT_DIALER`).
@@ -36,7 +36,7 @@ dialer."*
    phone app" screen with Try again / Continue without it.
 7. Tap **Try again**, then accept the OS dialog this time.
 8. **Expect:** app proceeds past onboarding (state → GRANTED). Confirm via
-   Settings → Apps → Default apps → Phone app that BloqueaLlamadas is now
+   Settings → Apps → Default apps → Phone app that Corta Spam is now
    selected.
 9. Force-stop and relaunch. **Expect:** onboarding is skipped entirely —
    goes straight past the explainer (state → ALREADY_DEFAULT on init).

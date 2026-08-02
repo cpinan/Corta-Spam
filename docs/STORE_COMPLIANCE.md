@@ -4,7 +4,7 @@
 
 ### Default Phone App (Android 10+)
 
-BloqueaLlamadas requests `ROLE_DIALER` (default phone app) to screen incoming calls before the phone rings. This is the only way Android lets a third-party app see the caller's number and decide whether to allow, block, or answer the call.
+Corta Spam requests `ROLE_DIALER` (default phone app) to screen incoming calls before the phone rings. This is the only way Android lets a third-party app see the caller's number and decide whether to allow, block, or answer the call.
 
 **Core purpose justification:** Call screening and blocking. The app checks every incoming call's number against user-configured rules (manual blocklists, pattern matching, country blocking, schedule rules) plus an optional community spam provider, and either silences the call, plays an auto-responder greeting, or allows it through normally.
 
@@ -24,7 +24,7 @@ The app declares itself eligible for the default dialer role via the standard `a
 
 ### Data collection
 
-BloqueaLlamadas does **not** collect, transmit, or share any personal data. Specifically:
+Corta Spam does **not** collect, transmit, or share any personal data. Specifically:
 
 - **No analytics or telemetry.** The app includes no analytics SDKs, no crash reporters, and no usage tracking of any kind.
 - **No phone-home behavior.** The app never contacts any server except when the user explicitly enables the optional spam provider (see below). Even then, only the dialed/ringing number is sent to check against a public spam database — no contact data, no device identifiers, no call audio.
