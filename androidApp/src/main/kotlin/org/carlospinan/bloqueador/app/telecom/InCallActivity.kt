@@ -38,6 +38,7 @@ class InCallActivity : ComponentActivity() {
                     onAnswer = InCallState::answer,
                     onDecline = InCallState::decline,
                     onHangUp = InCallState::hangUp,
+                    repeatedCallAttempts = current.repeatedCallAttempts,
                 )
             } else {
                 LaunchedEffect(Unit) {

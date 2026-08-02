@@ -262,6 +262,7 @@ fun AppNavHost(
                     onSetDefaultAction = settingsViewModel::setDefaultAction,
                     onSetSpamEnabled = settingsViewModel::setSpamEnabled,
                     onSetNotificationsEnabled = settingsViewModel::setNotificationsEnabled,
+                    onSetRepeatedCallerBypassCount = settingsViewModel::setRepeatedCallerBypassCount,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onOpenNotificationSettings = onOpenNotificationSettings ?: {},
                     onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},

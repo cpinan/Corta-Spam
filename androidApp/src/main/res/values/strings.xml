@@ -5,6 +5,7 @@
     <string name="notification_incoming_call">Incoming call</string>
     <string name="notification_blocked_call_title">Blocked call</string>
     <string name="notification_missed_call_title">Missed call</string>
+    <string name="notification_repeated_caller_title">Repeated caller</string>
     <string name="notification_call_result_with_reason">%1$s — %2$s</string>
     <string name="notification_channel_incoming_calls_name">Incoming calls</string>
     <string name="notification_channel_incoming_calls_desc">Full-screen alert shown while a call is ringing</string>

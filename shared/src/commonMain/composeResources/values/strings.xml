@@ -35,6 +35,7 @@
     <string name="call_status_dialing">Calling…</string>
     <string name="call_status_active">In call</string>
     <string name="call_unknown_number">Unknown number</string>
+    <string name="call_repeated_caller_hint">This number has called %d times</string>
     <string name="action_decline">Decline</string>
     <string name="action_answer">Answer</string>
     <string name="action_hang_up">Hang up</string>
@@ -104,6 +105,9 @@
     <string name="settings_blocking_enabled_desc">When off, all calls are allowed through.</string>
     <string name="settings_show_notifications">Show notifications</string>
     <string name="settings_show_notifications_desc">When off, this app posts no notifications at all, including the incoming-call alert.</string>
+    <string name="settings_repeated_caller_bypass">Answer repeated unknown callers</string>
+    <string name="settings_repeated_caller_bypass_desc">If an unknown number retries enough times, let it ring through instead of blocking it. Only applies when Default action below is set to Block.</string>
+    <string name="settings_repeated_caller_bypass_count_label">Attempts before answering</string>
     <string name="settings_auto_allow_contacts">Auto-allow contacts</string>
     <string name="settings_auto_allow_contacts_desc">Contacts bypass all block rules.</string>
     <string name="settings_grant_contacts">Grant contacts permission</string>

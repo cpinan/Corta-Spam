@@ -40,6 +40,7 @@
     <string name="call_status_dialing">Chamando…</string>
     <string name="call_status_active">Em chamada</string>
     <string name="call_unknown_number">Número desconhecido</string>
+    <string name="call_repeated_caller_hint">Este número ligou %d vezes</string>
     <string name="action_decline">Recusar</string>
     <string name="action_answer">Atender</string>
     <string name="action_hang_up">Desligar</string>
@@ -115,6 +116,9 @@
     <string name="settings_blocking_enabled_desc">Quando desativado, todas as chamadas passam.</string>
     <string name="settings_show_notifications">Mostrar notificações</string>
     <string name="settings_show_notifications_desc">Quando desativado, o app não publica nenhuma notificação, incluindo o alerta de chamada recebida.</string>
+    <string name="settings_repeated_caller_bypass">Atender chamadores desconhecidos repetidos</string>
+    <string name="settings_repeated_caller_bypass_desc">Se um número desconhecido insistir o suficiente, deixe tocar em vez de bloquear. Só se aplica quando a ação padrão está definida como Bloquear.</string>
+    <string name="settings_repeated_caller_bypass_count_label">Tentativas antes de atender</string>
     <string name="settings_auto_allow_contacts">Auto-permitir contatos</string>
     <string name="settings_auto_allow_contacts_desc">Contatos ignoram todas as regras de bloqueio.</string>
     <string name="settings_grant_contacts">Conceder permissão de contatos</string>

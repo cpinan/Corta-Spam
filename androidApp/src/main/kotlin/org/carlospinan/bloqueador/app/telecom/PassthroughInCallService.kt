@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
+import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.domain.EvaluateIncomingCallUseCase
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.koin.core.component.KoinComponent
@@ -140,6 +141,18 @@ class PassthroughInCallService :
                         call.answer(VideoProfile.STATE_AUDIO_ONLY)
                     } else {
                         call.reject(false, null)
+                    }
+                } else if (decision is RuleDecision.AllowedAfterRepeatedAttempts) {
+                    // Not blocked -- the call just keeps ringing normally. Only extra step is
+                    // telling the user why an unrecognized number is getting through.
+                    InCallState.setRepeatedCallAttempts(decision.attempts)
+                    if (settingsRepository.notificationsEnabled.value) {
+                        IncomingCallNotifier.notifyCallResult(
+                            this@PassthroughInCallService,
+                            number,
+                            R.string.notification_repeated_caller_title,
+                            decision.blockReason,
+                        )
                     }
                 }
             } catch (e: CancellationException) {

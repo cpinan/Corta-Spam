@@ -42,6 +42,7 @@ import bloqueallamadas.shared.generated.resources.ic_contacts
 import bloqueallamadas.shared.generated.resources.ic_default_action
 import bloqueallamadas.shared.generated.resources.ic_privacy
 import bloqueallamadas.shared.generated.resources.ic_settings
+import bloqueallamadas.shared.generated.resources.ic_unknown_call
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts
 import bloqueallamadas.shared.generated.resources.settings_auto_allow_contacts_desc
 import bloqueallamadas.shared.generated.resources.settings_autoresponder
@@ -64,6 +65,9 @@ import bloqueallamadas.shared.generated.resources.settings_notifications_disable
 import bloqueallamadas.shared.generated.resources.settings_notifications_disabled_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_desc
 import bloqueallamadas.shared.generated.resources.settings_privacy_title
+import bloqueallamadas.shared.generated.resources.settings_repeated_caller_bypass
+import bloqueallamadas.shared.generated.resources.settings_repeated_caller_bypass_count_label
+import bloqueallamadas.shared.generated.resources.settings_repeated_caller_bypass_desc
 import bloqueallamadas.shared.generated.resources.settings_show_notifications
 import bloqueallamadas.shared.generated.resources.settings_show_notifications_desc
 import bloqueallamadas.shared.generated.resources.settings_terms_desc
@@ -74,6 +78,10 @@ import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+private const val MIN_REPEATED_CALLER_BYPASS_COUNT = 2
+private const val MAX_REPEATED_CALLER_BYPASS_COUNT = 10
+private const val DEFAULT_REPEATED_CALLER_BYPASS_COUNT = 3
 
 @Composable
 fun SettingsScreen(
@@ -87,6 +95,7 @@ fun SettingsScreen(
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
     onSetNotificationsEnabled: (Boolean) -> Unit = {},
+    onSetRepeatedCallerBypassCount: (Int) -> Unit = {},
     onRequestContactsPermission: () -> Unit,
     onOpenNotificationSettings: () -> Unit = {},
     onOpenFullScreenIntentSettings: () -> Unit = {},
@@ -172,6 +181,49 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = onRequestContactsPermission) {
                         Text(stringResource(Res.string.settings_grant_contacts))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SettingToggle(
+                    title = stringResource(Res.string.settings_repeated_caller_bypass),
+                    description = stringResource(Res.string.settings_repeated_caller_bypass_desc),
+                    icon = Res.drawable.ic_unknown_call,
+                    checked = state.repeatedCallerBypassCount > 0,
+                    onCheckedChange = { checked ->
+                        onSetRepeatedCallerBypassCount(if (checked) DEFAULT_REPEATED_CALLER_BYPASS_COUNT else 0)
+                    },
+                )
+
+                if (state.repeatedCallerBypassCount > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.settings_repeated_caller_bypass_count_label),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        TextButton(
+                            onClick = {
+                                onSetRepeatedCallerBypassCount(
+                                    (state.repeatedCallerBypassCount - 1).coerceAtLeast(MIN_REPEATED_CALLER_BYPASS_COUNT),
+                                )
+                            },
+                        ) { Text("−") }
+                        Text(
+                            text = "${state.repeatedCallerBypassCount}",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        TextButton(
+                            onClick = {
+                                onSetRepeatedCallerBypassCount(
+                                    (state.repeatedCallerBypassCount + 1).coerceAtMost(MAX_REPEATED_CALLER_BYPASS_COUNT),
+                                )
+                            },
+                        ) { Text("+") }
                     }
                 }
 

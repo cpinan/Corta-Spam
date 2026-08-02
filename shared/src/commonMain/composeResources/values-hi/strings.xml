@@ -40,6 +40,7 @@
     <string name="call_status_dialing">कॉल कर रहे हैं…</string>
     <string name="call_status_active">कॉल जारी है</string>
     <string name="call_unknown_number">अज्ञात नंबर</string>
+    <string name="call_repeated_caller_hint">इस नंबर ने %d बार कॉल किया है</string>
     <string name="action_decline">अस्वीकार करें</string>
     <string name="action_answer">उत्तर दें</string>
     <string name="action_hang_up">कॉल काटें</string>
@@ -115,6 +116,9 @@
     <string name="settings_blocking_enabled_desc">बंद होने पर, सभी कॉल अनुमत हैं।</string>
     <string name="settings_show_notifications">सूचनाएं दिखाएं</string>
     <string name="settings_show_notifications_desc">बंद होने पर, ऐप कोई सूचना नहीं भेजेगा, आने वाली कॉल का अलर्ट भी नहीं।</string>
+    <string name="settings_repeated_caller_bypass">बार-बार कॉल करने वाले अज्ञात नंबरों का जवाब दें</string>
+    <string name="settings_repeated_caller_bypass_desc">अगर कोई अज्ञात नंबर पर्याप्त बार कोशिश करे, तो उसे ब्लॉक करने के बजाय रिंग होने दें। यह तभी लागू होता है जब डिफ़ॉल्ट कार्रवाई ब्लॉक पर सेट हो।</string>
+    <string name="settings_repeated_caller_bypass_count_label">जवाब देने से पहले प्रयास</string>
     <string name="settings_auto_allow_contacts">संपर्कों को स्वतः अनुमति दें</string>
     <string name="settings_auto_allow_contacts_desc">संपर्क सभी ब्लॉक नियमों को बायपास करते हैं।</string>
     <string name="settings_grant_contacts">संपर्क अनुमति दें</string>

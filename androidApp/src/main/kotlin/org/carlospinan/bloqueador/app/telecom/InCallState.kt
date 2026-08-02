@@ -15,6 +15,7 @@ object InCallState {
     data class UiState(
         val number: String,
         val phase: CallUiPhase,
+        val repeatedCallAttempts: Int? = null,
     )
 
     private var call: Call? = null
@@ -52,6 +53,10 @@ object InCallState {
             this.call = null
             _state.value = null
         }
+    }
+
+    fun setRepeatedCallAttempts(attempts: Int) {
+        _state.value = _state.value?.copy(repeatedCallAttempts = attempts)
     }
 
     fun answer() = call?.answer(0)

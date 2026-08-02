@@ -4,6 +4,7 @@
     <string name="notification_incoming_call">Llamada entrante</string>
     <string name="notification_blocked_call_title">Llamada bloqueada</string>
     <string name="notification_missed_call_title">Llamada perdida</string>
+    <string name="notification_repeated_caller_title">Llamada repetida</string>
     <string name="notification_call_result_with_reason">%1$s — %2$s</string>
     <string name="notification_channel_incoming_calls_name">Llamadas entrantes</string>
     <string name="notification_channel_incoming_calls_desc">Alerta a pantalla completa mostrada mientras suena una llamada</string>

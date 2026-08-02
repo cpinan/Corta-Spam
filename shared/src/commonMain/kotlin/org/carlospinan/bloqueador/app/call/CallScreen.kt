@@ -25,6 +25,7 @@ import bloqueallamadas.shared.generated.resources.Res
 import bloqueallamadas.shared.generated.resources.action_answer
 import bloqueallamadas.shared.generated.resources.action_decline
 import bloqueallamadas.shared.generated.resources.action_hang_up
+import bloqueallamadas.shared.generated.resources.call_repeated_caller_hint
 import bloqueallamadas.shared.generated.resources.call_status_active
 import bloqueallamadas.shared.generated.resources.call_status_dialing
 import bloqueallamadas.shared.generated.resources.call_status_ringing
@@ -43,6 +44,7 @@ fun CallScreen(
     onAnswer: () -> Unit,
     onDecline: () -> Unit,
     onHangUp: () -> Unit,
+    repeatedCallAttempts: Int? = null,
 ) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -70,6 +72,14 @@ fun CallScreen(
                         text = number.ifBlank { stringResource(Res.string.call_unknown_number) },
                         style = MaterialTheme.typography.headlineMedium,
                     )
+                    if (repeatedCallAttempts != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(Res.string.call_repeated_caller_hint, repeatedCallAttempts),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
 
                 Box(
