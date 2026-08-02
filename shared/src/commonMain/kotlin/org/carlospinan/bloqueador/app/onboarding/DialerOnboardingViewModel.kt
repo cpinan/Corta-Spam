@@ -8,15 +8,32 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 
+data class DialerOnboardingUiState(
+    val dialerState: DialerOnboardingState = DialerOnboardingState.NOT_REQUESTED,
+    val welcomeShown: Boolean = false,
+)
+
+sealed interface DialerOnboardingIntent {
+    data object WelcomeShown : DialerOnboardingIntent
+
+    data object RequestStarted : DialerOnboardingIntent
+
+    data class RequestResult(
+        val granted: Boolean,
+    ) : DialerOnboardingIntent
+
+    data object Refresh : DialerOnboardingIntent
+}
+
 /**
  * Pure state machine driving the default-dialer permission onboarding screen.
  * The actual OS role/dialer-change intent is launched by the Android UI layer;
  * this class only tracks state transitions so they're unit-testable without
  * touching android.app.role.RoleManager (see docs/MILESTONES.md M1).
  *
- * Also owns [welcomeShown] -- MainActivity is the only Android component that
- * needs it (to decide whether to show the welcome screen before onboarding),
- * and this is the one ViewModel it legitimately owns at the root.
+ * Also owns [DialerOnboardingUiState.welcomeShown] -- MainActivity is the only
+ * Android component that needs it (to decide whether to show the welcome screen
+ * before onboarding), and this is the one ViewModel it legitimately owns at the root.
  */
 class DialerOnboardingViewModel(
     private val gateway: DefaultDialerGateway,
@@ -24,24 +41,33 @@ class DialerOnboardingViewModel(
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
-            if (gateway.isDefaultDialer()) DialerOnboardingState.ALREADY_DEFAULT else DialerOnboardingState.NOT_REQUESTED,
+            DialerOnboardingUiState(
+                dialerState = if (gateway.isDefaultDialer()) DialerOnboardingState.ALREADY_DEFAULT else DialerOnboardingState.NOT_REQUESTED,
+                welcomeShown = settingsRepository.welcomeShown,
+            ),
         )
-    val state: StateFlow<DialerOnboardingState> = _state.asStateFlow()
+    val state: StateFlow<DialerOnboardingUiState> = _state.asStateFlow()
 
-    private val _welcomeShown = MutableStateFlow(settingsRepository.welcomeShown)
-    val welcomeShown: StateFlow<Boolean> = _welcomeShown.asStateFlow()
-
-    fun setWelcomeShown() {
-        viewModelScope.launch {
-            settingsRepository.setWelcomeShown()
-            _welcomeShown.value = true
+    fun onIntent(intent: DialerOnboardingIntent) {
+        when (intent) {
+            DialerOnboardingIntent.WelcomeShown -> setWelcomeShown()
+            DialerOnboardingIntent.RequestStarted -> onRequestStarted()
+            is DialerOnboardingIntent.RequestResult -> onRequestResult(intent.granted)
+            DialerOnboardingIntent.Refresh -> refresh()
         }
     }
 
-    fun onRequestStarted() {
-        when (_state.value) {
+    private fun setWelcomeShown() {
+        viewModelScope.launch {
+            settingsRepository.setWelcomeShown()
+            _state.value = _state.value.copy(welcomeShown = true)
+        }
+    }
+
+    private fun onRequestStarted() {
+        when (_state.value.dialerState) {
             DialerOnboardingState.NOT_REQUESTED, DialerOnboardingState.DENIED ->
-                _state.value = DialerOnboardingState.REQUESTING
+                _state.value = _state.value.copy(dialerState = DialerOnboardingState.REQUESTING)
             DialerOnboardingState.REQUESTING,
             DialerOnboardingState.GRANTED,
             DialerOnboardingState.ALREADY_DEFAULT,
@@ -49,17 +75,20 @@ class DialerOnboardingViewModel(
         }
     }
 
-    fun onRequestResult(granted: Boolean) {
-        check(_state.value == DialerOnboardingState.REQUESTING) {
-            "onRequestResult received outside REQUESTING (was ${_state.value})"
+    private fun onRequestResult(granted: Boolean) {
+        check(_state.value.dialerState == DialerOnboardingState.REQUESTING) {
+            "onRequestResult received outside REQUESTING (was ${_state.value.dialerState})"
         }
-        _state.value = if (granted) DialerOnboardingState.GRANTED else DialerOnboardingState.DENIED
+        _state.value =
+            _state.value.copy(
+                dialerState = if (granted) DialerOnboardingState.GRANTED else DialerOnboardingState.DENIED,
+            )
     }
 
     /** Re-check on resume, in case the user changed the default dialer from system Settings directly. */
-    fun refresh() {
+    private fun refresh() {
         if (gateway.isDefaultDialer()) {
-            _state.value = DialerOnboardingState.ALREADY_DEFAULT
+            _state.value = _state.value.copy(dialerState = DialerOnboardingState.ALREADY_DEFAULT)
         }
     }
 }

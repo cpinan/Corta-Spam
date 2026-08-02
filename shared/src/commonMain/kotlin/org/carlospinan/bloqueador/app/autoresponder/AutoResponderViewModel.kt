@@ -13,6 +13,26 @@ data class AutoResponderUiState(
     val validationError: AutoResponderConfig.ErrorCode? = null,
 )
 
+sealed interface AutoResponderIntent {
+    data class SetEnabled(
+        val enabled: Boolean,
+    ) : AutoResponderIntent
+
+    data class SetScript(
+        val script: String,
+    ) : AutoResponderIntent
+
+    data class SetAudioUri(
+        val uri: String,
+    ) : AutoResponderIntent
+
+    data class SetRecordingEnabled(
+        val enabled: Boolean,
+    ) : AutoResponderIntent
+
+    data object ClearAudioUri : AutoResponderIntent
+}
+
 class AutoResponderViewModel(
     private val repository: AutoResponderRepository,
 ) : ViewModel() {
@@ -27,23 +47,33 @@ class AutoResponderViewModel(
                 AutoResponderUiState(config = config, validationError = validationError)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AutoResponderUiState())
 
-    fun setEnabled(enabled: Boolean) {
+    fun onIntent(intent: AutoResponderIntent) {
+        when (intent) {
+            is AutoResponderIntent.SetEnabled -> setEnabled(intent.enabled)
+            is AutoResponderIntent.SetScript -> setScript(intent.script)
+            is AutoResponderIntent.SetAudioUri -> setAudioUri(intent.uri)
+            is AutoResponderIntent.SetRecordingEnabled -> setRecordingEnabled(intent.enabled)
+            AutoResponderIntent.ClearAudioUri -> clearAudioUri()
+        }
+    }
+
+    private fun setEnabled(enabled: Boolean) {
         viewModelScope.launch { repository.setEnabled(enabled) }
     }
 
-    fun setScript(script: String) {
+    private fun setScript(script: String) {
         viewModelScope.launch { repository.setScript(script) }
     }
 
-    fun setAudioUri(uri: String) {
+    private fun setAudioUri(uri: String) {
         viewModelScope.launch { repository.setAudioUri(uri) }
     }
 
-    fun setRecordingEnabled(enabled: Boolean) {
+    private fun setRecordingEnabled(enabled: Boolean) {
         viewModelScope.launch { repository.setRecordingEnabled(enabled) }
     }
 
-    fun clearAudioUri() {
+    private fun clearAudioUri() {
         viewModelScope.launch { repository.setAudioUri("") }
     }
 }

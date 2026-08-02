@@ -9,6 +9,10 @@ import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 
 sealed interface BackupEffect {
+    data class Exported(
+        val json: String,
+    ) : BackupEffect
+
     data class Success(
         val message: String,
     ) : BackupEffect
@@ -18,17 +22,32 @@ sealed interface BackupEffect {
     ) : BackupEffect
 }
 
+sealed interface BackupIntent {
+    data object Export : BackupIntent
+
+    data class Import(
+        val json: String,
+    ) : BackupIntent
+}
+
 class BackupViewModel(
     private val ruleRepository: RuleRepository,
 ) : ViewModel() {
     private val _effect = Channel<BackupEffect>()
     val effect: Flow<BackupEffect> = _effect.receiveAsFlow()
 
-    fun exportJson(onResult: (String) -> Unit) {
+    fun onIntent(intent: BackupIntent) {
+        when (intent) {
+            BackupIntent.Export -> exportJson()
+            is BackupIntent.Import -> importJson(intent.json)
+        }
+    }
+
+    private fun exportJson() {
         viewModelScope.launch {
             try {
                 val json = ruleRepository.exportAll()
-                onResult(json)
+                _effect.send(BackupEffect.Exported(json))
                 _effect.send(BackupEffect.Success("Exported successfully."))
             } catch (e: Exception) {
                 _effect.send(BackupEffect.Failure("Export failed: ${e.message}"))
@@ -36,7 +55,7 @@ class BackupViewModel(
         }
     }
 
-    fun importJson(json: String) {
+    private fun importJson(json: String) {
         viewModelScope.launch {
             try {
                 val result = ruleRepository.importAll(json)

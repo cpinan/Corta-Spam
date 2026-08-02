@@ -39,45 +39,47 @@ class DialerOnboardingViewModelTest {
     @Test
     fun startsNotRequestedWhenNotDefault() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository())
-        assertEquals(DialerOnboardingState.NOT_REQUESTED, viewModel.state.value)
+        assertEquals(DialerOnboardingState.NOT_REQUESTED, viewModel.state.value.dialerState)
     }
 
     @Test
     fun startsAlreadyDefaultWhenAlreadyDefault() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = true), FakeSettingsRepository())
-        assertEquals(DialerOnboardingState.ALREADY_DEFAULT, viewModel.state.value)
+        assertEquals(DialerOnboardingState.ALREADY_DEFAULT, viewModel.state.value.dialerState)
     }
 
     @Test
     fun continueMovesToRequesting() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository())
-        viewModel.onRequestStarted()
-        assertEquals(DialerOnboardingState.REQUESTING, viewModel.state.value)
+        viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
+        assertEquals(DialerOnboardingState.REQUESTING, viewModel.state.value.dialerState)
     }
 
     @Test
     fun grantedResultMovesToGranted() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository())
-        viewModel.onRequestStarted()
-        viewModel.onRequestResult(granted = true)
-        assertEquals(DialerOnboardingState.GRANTED, viewModel.state.value)
+        viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
+        viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = true))
+        assertEquals(DialerOnboardingState.GRANTED, viewModel.state.value.dialerState)
     }
 
     @Test
     fun deniedResultAllowsRetry() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository())
-        viewModel.onRequestStarted()
-        viewModel.onRequestResult(granted = false)
-        assertEquals(DialerOnboardingState.DENIED, viewModel.state.value)
+        viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
+        viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = false))
+        assertEquals(DialerOnboardingState.DENIED, viewModel.state.value.dialerState)
 
-        viewModel.onRequestStarted()
-        assertEquals(DialerOnboardingState.REQUESTING, viewModel.state.value)
+        viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
+        assertEquals(DialerOnboardingState.REQUESTING, viewModel.state.value.dialerState)
     }
 
     @Test
     fun resultOutsideRequestingThrows() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository())
-        assertFailsWith<IllegalStateException> { viewModel.onRequestResult(granted = true) }
+        assertFailsWith<IllegalStateException> {
+            viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = true))
+        }
     }
 
     @Test
@@ -86,26 +88,26 @@ class DialerOnboardingViewModelTest {
         val viewModel = DialerOnboardingViewModel(gateway, FakeSettingsRepository())
 
         gateway.isDefault = true
-        viewModel.refresh()
+        viewModel.onIntent(DialerOnboardingIntent.Refresh)
 
-        assertEquals(DialerOnboardingState.ALREADY_DEFAULT, viewModel.state.value)
+        assertEquals(DialerOnboardingState.ALREADY_DEFAULT, viewModel.state.value.dialerState)
     }
 
     @Test
     fun refreshIsNoOpWhileRequesting() {
         val gateway = FakeGateway(isDefault = false)
         val viewModel = DialerOnboardingViewModel(gateway, FakeSettingsRepository())
-        viewModel.onRequestStarted()
+        viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
 
         gateway.isDefault = false
-        viewModel.refresh()
+        viewModel.onIntent(DialerOnboardingIntent.Refresh)
 
-        assertEquals(DialerOnboardingState.REQUESTING, viewModel.state.value)
+        assertEquals(DialerOnboardingState.REQUESTING, viewModel.state.value.dialerState)
     }
 
     @Test
     fun welcomeShownReflectsRepositoryInitialValue() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository(welcomeShown = true))
-        assertEquals(true, viewModel.welcomeShown.value)
+        assertEquals(true, viewModel.state.value.welcomeShown)
     }
 }

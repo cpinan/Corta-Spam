@@ -62,6 +62,7 @@ fun BackupScreen(
     effect: Flow<BackupEffect>,
     onExport: () -> Unit,
     onImport: () -> Unit,
+    onExportReady: (String) -> Unit = {},
     onBack: () -> Unit,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
@@ -70,12 +71,11 @@ fun BackupScreen(
 
     LaunchedEffect(effect) {
         effect.collect { result ->
-            val message =
-                when (result) {
-                    is BackupEffect.Success -> result.message
-                    is BackupEffect.Failure -> result.message
-                }
-            snackbarHostState.showSnackbar(message)
+            when (result) {
+                is BackupEffect.Exported -> onExportReady(result.json)
+                is BackupEffect.Success -> snackbarHostState.showSnackbar(result.message)
+                is BackupEffect.Failure -> snackbarHostState.showSnackbar(result.message)
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
@@ -12,34 +13,36 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import bloqueallamadas.shared.generated.resources.Res
+import bloqueallamadas.shared.generated.resources.privacy_policy_body
 import bloqueallamadas.shared.generated.resources.settings_privacy_title
 import bloqueallamadas.shared.generated.resources.settings_terms_title
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
+import bloqueallamadas.shared.generated.resources.terms_conditions_body
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.routeSection
 import org.carlospinan.bloqueador.app.adaptive.sectionRoutes
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderIntent
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderScreen
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
+import org.carlospinan.bloqueador.app.backup.BackupIntent
 import org.carlospinan.bloqueador.app.backup.BackupScreen
 import org.carlospinan.bloqueador.app.backup.BackupViewModel
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
+import org.carlospinan.bloqueador.app.blocklist.BlockListIntent
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
 import org.carlospinan.bloqueador.app.blocklist.CountryRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.ManualBlockListScreen
 import org.carlospinan.bloqueador.app.blocklist.PatternRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.ScheduleRuleScreen
+import org.carlospinan.bloqueador.app.calllog.CallLogIntent
 import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
+import org.carlospinan.bloqueador.app.home.HomeIntent
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
-import org.carlospinan.bloqueador.app.rules.CallLogEntryData
-import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.carlospinan.bloqueador.app.settings.InfoScreen
+import org.carlospinan.bloqueador.app.settings.SettingsIntent
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.stats.StatsScreen
@@ -111,7 +114,7 @@ fun AppNavHost(
                 val homeViewModel = koinViewModel<HomeViewModel>()
                 val state by homeViewModel.state.collectAsState()
                 LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-                    homeViewModel.refresh()
+                    homeViewModel.onIntent(HomeIntent.Refresh)
                 }
                 HomeScreen(
                     state = state,
@@ -123,7 +126,7 @@ fun AppNavHost(
                     onNavigateToBlockList = { navController.navigate(Routes.BLOCK_LIST) { launchSingleTop = true } },
                     onNavigateToSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
                     onNavigateToStats = { navController.navigate(Routes.STATS) { launchSingleTop = true } },
-                    onToggleBlocking = homeViewModel::toggleBlocking,
+                    onToggleBlocking = { homeViewModel.onIntent(HomeIntent.ToggleBlocking(it)) },
                 )
             }
 
@@ -136,15 +139,16 @@ fun AppNavHost(
 
                 @Suppress("UNCHECKED_CAST")
                 val filter = (backStackEntry.arguments as? Map<String, *>)?.get("filter") as? String ?: "all"
-                val allEntries by callLogViewModel.entries.collectAsState()
-                val filtered = filterEntries(allEntries, filter)
-                val contactNames by callLogViewModel.contactNames.collectAsState()
+                LaunchedEffect(filter) {
+                    callLogViewModel.onIntent(CallLogIntent.SetFilter(filter))
+                }
+                val state by callLogViewModel.state.collectAsState()
                 CallLogScreen(
-                    entries = filtered,
+                    entries = state.entries,
                     filter = filter,
-                    contactNames = contactNames,
-                    onBlockNumber = { number -> blockListViewModel.addBlockedNumber(number) },
-                    onAllowlistNumber = { number -> blockListViewModel.addAllowlistedNumber(number) },
+                    contactNames = state.contactNames,
+                    onBlockNumber = { number -> blockListViewModel.onIntent(BlockListIntent.AddBlockedNumber(number)) },
+                    onAllowlistNumber = { number -> blockListViewModel.onIntent(BlockListIntent.AddAllowlistedNumber(number)) },
                     onCopyNumber = onCopyNumber ?: {},
                     onCallBack = onCallBack ?: {},
                     onBack = { navController.popBackStack() },
@@ -162,17 +166,13 @@ fun AppNavHost(
 
             composable(Routes.BLOCK_LIST) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
-                val blockedCount by blockListViewModel.blockedCount.collectAsState()
-                val allowlistedCount by blockListViewModel.allowlistedCount.collectAsState()
-                val patternCount by blockListViewModel.patternCount.collectAsState()
-                val countryCount by blockListViewModel.countryCount.collectAsState()
-                val scheduleCount by blockListViewModel.scheduleCount.collectAsState()
+                val state by blockListViewModel.state.collectAsState()
                 BlockListHubScreen(
-                    blockedCount = blockedCount,
-                    allowlistedCount = allowlistedCount,
-                    patternCount = patternCount,
-                    countryCount = countryCount,
-                    scheduleCount = scheduleCount,
+                    blockedCount = state.blockedCount,
+                    allowlistedCount = state.allowlistedCount,
+                    patternCount = state.patternCount,
+                    countryCount = state.countryCount,
+                    scheduleCount = state.scheduleCount,
                     onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) { launchSingleTop = true } },
                     onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) { launchSingleTop = true } },
                     onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) { launchSingleTop = true } },
@@ -184,66 +184,62 @@ fun AppNavHost(
 
             composable(Routes.MANUAL_BLOCK_LIST) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
-                val blocked by blockListViewModel.blockedNumbers.collectAsState()
-                val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
-                val contactNames by blockListViewModel.contactNames.collectAsState()
+                val state by blockListViewModel.state.collectAsState()
                 ManualBlockListScreen(
-                    numbers = blocked,
-                    allowlistedNumbers = allowlisted.map { it.number }.toSet(),
-                    contactNames = contactNames,
-                    onAdd = blockListViewModel::addBlockedNumber,
-                    onRemove = blockListViewModel::removeBlockedNumber,
+                    numbers = state.blockedNumbers,
+                    allowlistedNumbers = state.allowlistedNumbers.map { it.number }.toSet(),
+                    contactNames = state.contactNames,
+                    onAdd = { number, label -> blockListViewModel.onIntent(BlockListIntent.AddBlockedNumber(number, label)) },
+                    onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveBlockedNumber(id)) },
                     onBack = { navController.popBackStack() },
                 )
             }
 
             composable(Routes.ALLOWLIST) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
-                val allowlisted by blockListViewModel.allowlistedNumbers.collectAsState()
-                val blocked by blockListViewModel.blockedNumbers.collectAsState()
-                val contactNames by blockListViewModel.contactNames.collectAsState()
+                val state by blockListViewModel.state.collectAsState()
                 AllowlistScreen(
-                    numbers = allowlisted,
-                    blockedNumbers = blocked.map { it.number }.toSet(),
-                    contactNames = contactNames,
-                    onAdd = blockListViewModel::addAllowlistedNumber,
-                    onRemove = blockListViewModel::removeAllowlistedNumber,
+                    numbers = state.allowlistedNumbers,
+                    blockedNumbers = state.blockedNumbers.map { it.number }.toSet(),
+                    contactNames = state.contactNames,
+                    onAdd = { number, label -> blockListViewModel.onIntent(BlockListIntent.AddAllowlistedNumber(number, label)) },
+                    onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveAllowlistedNumber(id)) },
                     onBack = { navController.popBackStack() },
                 )
             }
 
             composable(Routes.PATTERNS) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
-                val patterns by blockListViewModel.patternRules.collectAsState()
+                val state by blockListViewModel.state.collectAsState()
                 PatternRuleScreen(
-                    patterns = patterns,
-                    onAdd = blockListViewModel::addPatternRule,
-                    onToggle = blockListViewModel::togglePatternRule,
-                    onRemove = blockListViewModel::removePatternRule,
+                    patterns = state.patternRules,
+                    onAdd = { pattern, label -> blockListViewModel.onIntent(BlockListIntent.AddPatternRule(pattern, label)) },
+                    onToggle = { id, enabled -> blockListViewModel.onIntent(BlockListIntent.TogglePatternRule(id, enabled)) },
+                    onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemovePatternRule(id)) },
                     onBack = { navController.popBackStack() },
                 )
             }
 
             composable(Routes.COUNTRIES) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
-                val countries by blockListViewModel.countryRules.collectAsState()
+                val state by blockListViewModel.state.collectAsState()
                 CountryRuleScreen(
-                    countries = countries,
-                    onAdd = blockListViewModel::addCountryRule,
-                    onToggle = blockListViewModel::toggleCountryRule,
-                    onRemove = blockListViewModel::removeCountryRule,
+                    countries = state.countryRules,
+                    onAdd = { code, name -> blockListViewModel.onIntent(BlockListIntent.AddCountryRule(code, name)) },
+                    onToggle = { id, enabled -> blockListViewModel.onIntent(BlockListIntent.ToggleCountryRule(id, enabled)) },
+                    onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveCountryRule(id)) },
                     onBack = { navController.popBackStack() },
                 )
             }
 
             composable(Routes.SCHEDULES) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
-                val schedules by blockListViewModel.scheduleRules.collectAsState()
+                val state by blockListViewModel.state.collectAsState()
                 ScheduleRuleScreen(
-                    rules = schedules,
-                    onAdd = blockListViewModel::addScheduleRule,
-                    onToggle = blockListViewModel::toggleScheduleRule,
-                    onRemove = blockListViewModel::removeScheduleRule,
+                    rules = state.scheduleRules,
+                    onAdd = { label, start, end -> blockListViewModel.onIntent(BlockListIntent.AddScheduleRule(label, start, end)) },
+                    onToggle = { id, enabled -> blockListViewModel.onIntent(BlockListIntent.ToggleScheduleRule(id, enabled)) },
+                    onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveScheduleRule(id)) },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -257,12 +253,12 @@ fun AppNavHost(
                     notificationsPermissionGranted = notificationsPermissionGranted,
                     fullScreenIntentAllowed = fullScreenIntentAllowed,
                     callPhonePermissionGranted = callPhonePermissionGranted,
-                    onSetBlockingEnabled = settingsViewModel::setBlockingEnabled,
-                    onSetAutoAllowContacts = settingsViewModel::setAutoAllowContacts,
-                    onSetDefaultAction = settingsViewModel::setDefaultAction,
-                    onSetSpamEnabled = settingsViewModel::setSpamEnabled,
-                    onSetNotificationsEnabled = settingsViewModel::setNotificationsEnabled,
-                    onSetRepeatedCallerBypassCount = settingsViewModel::setRepeatedCallerBypassCount,
+                    onSetBlockingEnabled = { settingsViewModel.onIntent(SettingsIntent.SetBlockingEnabled(it)) },
+                    onSetAutoAllowContacts = { settingsViewModel.onIntent(SettingsIntent.SetAutoAllowContacts(it)) },
+                    onSetDefaultAction = { settingsViewModel.onIntent(SettingsIntent.SetDefaultAction(it)) },
+                    onSetSpamEnabled = { settingsViewModel.onIntent(SettingsIntent.SetSpamEnabled(it)) },
+                    onSetNotificationsEnabled = { settingsViewModel.onIntent(SettingsIntent.SetNotificationsEnabled(it)) },
+                    onSetRepeatedCallerBypassCount = { settingsViewModel.onIntent(SettingsIntent.SetRepeatedCallerBypassCount(it)) },
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onOpenNotificationSettings = onOpenNotificationSettings ?: {},
                     onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},
@@ -280,13 +276,13 @@ fun AppNavHost(
                 val autoResponderUiState by autoResponderViewModel.state.collectAsState()
                 AutoResponderScreen(
                     state = autoResponderUiState,
-                    onSetEnabled = autoResponderViewModel::setEnabled,
-                    onSetScript = autoResponderViewModel::setScript,
-                    onSetRecordingEnabled = autoResponderViewModel::setRecordingEnabled,
+                    onSetEnabled = { autoResponderViewModel.onIntent(AutoResponderIntent.SetEnabled(it)) },
+                    onSetScript = { autoResponderViewModel.onIntent(AutoResponderIntent.SetScript(it)) },
+                    onSetRecordingEnabled = { autoResponderViewModel.onIntent(AutoResponderIntent.SetRecordingEnabled(it)) },
                     onPickAudio = {
-                        onPickAudio?.invoke { uri -> autoResponderViewModel.setAudioUri(uri) }
+                        onPickAudio?.invoke { uri -> autoResponderViewModel.onIntent(AutoResponderIntent.SetAudioUri(uri)) }
                     },
-                    onClearAudio = autoResponderViewModel::clearAudioUri,
+                    onClearAudio = { autoResponderViewModel.onIntent(AutoResponderIntent.ClearAudioUri) },
                     onTest = {
                         onTestGreeting?.invoke(autoResponderUiState.config.script, autoResponderUiState.config.audioUri)
                     },
@@ -298,16 +294,13 @@ fun AppNavHost(
                 val backupViewModel = koinViewModel<BackupViewModel>()
                 BackupScreen(
                     effect = backupViewModel.effect,
-                    onExport = {
-                        backupViewModel.exportJson { json ->
-                            onShareFile?.invoke(json)
-                        }
-                    },
+                    onExport = { backupViewModel.onIntent(BackupIntent.Export) },
                     onImport = {
                         onPickImportFile?.invoke { content ->
-                            backupViewModel.importJson(content)
+                            backupViewModel.onIntent(BackupIntent.Import(content))
                         }
                     },
+                    onExportReady = { json -> onShareFile?.invoke(json) },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -315,17 +308,7 @@ fun AppNavHost(
             composable(Routes.PRIVACY_POLICY) {
                 InfoScreen(
                     title = stringResource(Res.string.settings_privacy_title),
-                    body =
-                        "Corta Spam does not collect, transmit, or share any personal data. " +
-                            "No analytics, no telemetry, no advertising. No data leaves your device " +
-                            "unless you explicitly enable the optional spam provider.\n\n" +
-                            "All rules, settings, and call logs are stored locally in a SQLite database. " +
-                            "You can delete them at any time by clearing the app data or uninstalling the app.\n\n" +
-                            "Network access is limited to the optional spam provider check, which sends " +
-                            "only the incoming caller's number to a public spam database. No contact data, " +
-                            "device identifiers, or call audio is ever transmitted.\n\n" +
-                            "The app is fully open source. Every line of code can be audited independently " +
-                            "at its public repository.",
+                    body = stringResource(Res.string.privacy_policy_body),
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -333,57 +316,10 @@ fun AppNavHost(
             composable(Routes.TERMS_CONDITIONS) {
                 InfoScreen(
                     title = stringResource(Res.string.settings_terms_title),
-                    body =
-                        "Corta Spam is open-source software provided under the MIT License.\n\n" +
-                            "Permission is hereby granted, free of charge, to any person obtaining a copy " +
-                            "of this software and associated documentation files (the \"Software\"), to deal " +
-                            "in the Software without restriction, including without limitation the rights " +
-                            "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell " +
-                            "copies of the Software, and to permit persons to whom the Software is " +
-                            "furnished to do so, subject to the following conditions:\n\n" +
-                            "The above copyright notice and this permission notice shall be included in " +
-                            "all copies or substantial portions of the Software.\n\n" +
-                            "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR " +
-                            "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, " +
-                            "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE " +
-                            "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER " +
-                            "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, " +
-                            "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN " +
-                            "THE SOFTWARE.",
+                    body = stringResource(Res.string.terms_conditions_body),
                     onBack = { navController.popBackStack() },
                 )
             }
         }
     }
-}
-
-private fun filterEntries(
-    entries: List<CallLogEntryData>,
-    filter: String,
-): List<CallLogEntryData> {
-    if (filter == "all") return entries
-    if (filter == "review") return entries.filter { it.ruleType == "REVIEW" }
-    val now =
-        Instant
-            .fromEpochMilliseconds(currentTimeMillis())
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-    val todayStart =
-        kotlinx.datetime.LocalDateTime(now.year, now.monthNumber, now.dayOfMonth, 0, 0, 0)
-    val todayStartEpoch =
-        todayStart.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-    val cutoff =
-        when (filter) {
-            "today" -> todayStartEpoch
-            "week" -> {
-                val daysBack = now.dayOfWeek.ordinal
-                todayStartEpoch - daysBack * 86_400_000L
-            }
-            "month" -> {
-                val monthStart =
-                    kotlinx.datetime.LocalDateTime(now.year, now.monthNumber, 1, 0, 0, 0)
-                monthStart.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
-            }
-            else -> return entries
-        }
-    return entries.filter { it.timestamp >= cutoff }
 }

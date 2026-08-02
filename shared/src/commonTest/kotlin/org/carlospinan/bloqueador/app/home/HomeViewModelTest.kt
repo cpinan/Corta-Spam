@@ -111,7 +111,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             repo.stats = BlockedStats(10, 20, 30)
-            vm.refresh()
+            vm.onIntent(HomeIntent.Refresh)
             advanceUntilIdle()
 
             val state = vm.state.first { it.blockedToday == 10 }
@@ -140,7 +140,7 @@ class HomeViewModelTest {
             val settings = FakeSettingsRepository()
             val vm = HomeViewModel(callLogRepository = repo, settingsRepository = settings)
 
-            vm.toggleBlocking(false)
+            vm.onIntent(HomeIntent.ToggleBlocking(false))
             advanceUntilIdle()
             val enabled = settings.blockingEnabled.first()
             assertFalse(enabled)

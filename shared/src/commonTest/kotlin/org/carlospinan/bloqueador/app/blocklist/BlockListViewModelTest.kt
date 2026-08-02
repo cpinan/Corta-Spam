@@ -66,10 +66,14 @@ class BlockListViewModelTest {
 
         override suspend fun deleteExpiredAttempts(beforeTimestampMillis: Long) {}
 
+        val addBlockedNumberCalls = mutableListOf<Pair<String, String?>>()
+
         override suspend fun addBlockedNumber(
             number: String,
             label: String?,
-        ) {}
+        ) {
+            addBlockedNumberCalls.add(number to label)
+        }
 
         override suspend fun removeBlockedNumber(id: Long) {}
 
@@ -158,7 +162,12 @@ class BlockListViewModelTest {
                 listOf(BlockedNumberEntry(id = 1, number = "+34", label = null, createdAt = 0L))
             val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
-            assertEquals(1, vm.blockedNumbers.first().size)
+            assertEquals(
+                1,
+                vm.state
+                    .first { it.blockedNumbers.isNotEmpty() }
+                    .blockedNumbers.size,
+            )
         }
 
     @Test
@@ -170,7 +179,12 @@ class BlockListViewModelTest {
                 listOf(AllowlistedNumberEntry(id = 1, number = "+34", label = null, createdAt = 0L))
             val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
-            assertEquals(1, vm.allowlistedNumbers.first().size)
+            assertEquals(
+                1,
+                vm.state
+                    .first { it.allowlistedNumbers.isNotEmpty() }
+                    .allowlistedNumbers.size,
+            )
         }
 
     @Test
@@ -182,7 +196,12 @@ class BlockListViewModelTest {
                 listOf(PatternRuleEntry(id = 1, pattern = "*900*", label = null, enabled = true, createdAt = 0L))
             val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
-            assertEquals(1, vm.patternRules.first().size)
+            assertEquals(
+                1,
+                vm.state
+                    .first { it.patternRules.isNotEmpty() }
+                    .patternRules.size,
+            )
         }
 
     @Test
@@ -194,7 +213,12 @@ class BlockListViewModelTest {
                 listOf(CountryRuleEntry(id = 1, countryCode = "34", countryName = "Spain", enabled = true, createdAt = 0L))
             val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
-            assertEquals(1, vm.countryRules.first().size)
+            assertEquals(
+                1,
+                vm.state
+                    .first { it.countryRules.isNotEmpty() }
+                    .countryRules.size,
+            )
         }
 
     @Test
@@ -204,11 +228,25 @@ class BlockListViewModelTest {
             val repo = FakeRuleRepository()
             val vm = BlockListViewModel(repo, FakeContactsGateway())
             advanceUntilIdle()
-            assertEquals(0, vm.blockedCount.first())
+            assertEquals(0, vm.state.first().blockedCount)
 
             repo.blockedNumbersFlow.value =
                 listOf(BlockedNumberEntry(id = 1, number = "+34", label = null, createdAt = 0L))
             advanceUntilIdle()
-            assertEquals(1, vm.blockedCount.first())
+            assertEquals(1, vm.state.first { it.blockedCount == 1 }.blockedCount)
+        }
+
+    @Test
+    fun `onIntent AddBlockedNumber delegates to repository`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeRuleRepository()
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
+
+            vm.onIntent(BlockListIntent.AddBlockedNumber("+34611223344", "Spam"))
+            advanceUntilIdle()
+
+            assertEquals(1, repo.addBlockedNumberCalls.size)
+            assertEquals("+34611223344" to "Spam", repo.addBlockedNumberCalls[0])
         }
 }

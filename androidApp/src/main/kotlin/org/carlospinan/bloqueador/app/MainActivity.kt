@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingIntent
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
 import org.carlospinan.bloqueador.app.telecom.AutoResponderAudio
@@ -41,7 +42,7 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(
             ActivityResultContracts.StartActivityForResult(),
         ) { result ->
-            viewModel.onRequestResult(granted = result.resultCode == RESULT_OK)
+            viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = result.resultCode == RESULT_OK))
         }
 
     private var audioPickResultCallback: ((String) -> Unit)? = null
@@ -120,15 +121,16 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val welcomeShown by viewModel.welcomeShown.collectAsState()
+            val state by viewModel.state.collectAsState()
 
-            if (!welcomeShown) {
+            if (!state.welcomeShown) {
                 WelcomeScreen(
-                    onGetStarted = viewModel::setWelcomeShown,
+                    onGetStarted = { viewModel.onIntent(DialerOnboardingIntent.WelcomeShown) },
                 )
             } else {
                 DialerOnboardingScreen(
-                    viewModel = viewModel,
+                    state = state,
+                    onIntent = viewModel::onIntent,
                     onRequestRole = ::launchDefaultDialerRequest,
                     content = {
                         App(
@@ -201,7 +203,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.refresh()
+        viewModel.onIntent(DialerOnboardingIntent.Refresh)
         refreshPermissionStatus()
     }
 

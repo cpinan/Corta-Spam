@@ -18,6 +18,14 @@ data class HomeUiState(
     val blockingEnabled: Boolean = true,
 )
 
+sealed interface HomeIntent {
+    data object Refresh : HomeIntent
+
+    data class ToggleBlocking(
+        val enabled: Boolean,
+    ) : HomeIntent
+}
+
 class HomeViewModel(
     private val callLogRepository: CallLogRepository,
     private val settingsRepository: SettingsRepository,
@@ -34,7 +42,14 @@ class HomeViewModel(
         }
     }
 
-    fun refresh() {
+    fun onIntent(intent: HomeIntent) {
+        when (intent) {
+            HomeIntent.Refresh -> refresh()
+            is HomeIntent.ToggleBlocking -> toggleBlocking(intent.enabled)
+        }
+    }
+
+    private fun refresh() {
         viewModelScope.launch {
             val stats = callLogRepository.blockedStats()
             _state.value =
@@ -48,7 +63,7 @@ class HomeViewModel(
         }
     }
 
-    fun toggleBlocking(enabled: Boolean) {
+    private fun toggleBlocking(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setBlockingEnabled(enabled)
         }

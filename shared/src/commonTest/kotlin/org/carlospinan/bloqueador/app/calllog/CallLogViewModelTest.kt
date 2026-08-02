@@ -68,7 +68,7 @@ class CallLogViewModelTest {
             val repo = FakeCallLogRepository(entriesFlow = flow)
             val vm = CallLogViewModel(callLogRepository = repo, contactsGateway = FakeContactsGateway())
 
-            val entries = vm.entries.first { it.isNotEmpty() }
+            val entries = vm.state.first { it.entries.isNotEmpty() }.entries
             assertEquals(1, entries.size)
             assertEquals("+34611223344", entries[0].number)
             assertEquals("BLOCKED", entries[0].action)
@@ -81,7 +81,73 @@ class CallLogViewModelTest {
             val repo = FakeCallLogRepository()
             val vm = CallLogViewModel(callLogRepository = repo, contactsGateway = FakeContactsGateway())
 
-            val entries = vm.entries.first()
+            val entries = vm.state.first().entries
             assertTrue(entries.isEmpty())
+        }
+
+    @Test
+    fun `SetFilter review keeps only REVIEW-tagged entries`() =
+        runTest {
+            val reviewEntry =
+                CallLogEntryData(
+                    id = 1L,
+                    number = "+34611223344",
+                    timestamp = 1L,
+                    action = "ALLOWED",
+                    ruleType = "REVIEW",
+                    ruleId = null,
+                    ruleDetail = "Pending review",
+                )
+            val manualEntry =
+                CallLogEntryData(
+                    id = 2L,
+                    number = "+34699887766",
+                    timestamp = 2L,
+                    action = "BLOCKED",
+                    ruleType = "MANUAL",
+                    ruleId = 5L,
+                    ruleDetail = "Manually blocked",
+                )
+            val flow = MutableStateFlow(listOf(reviewEntry, manualEntry))
+            val repo = FakeCallLogRepository(entriesFlow = flow)
+            val vm = CallLogViewModel(callLogRepository = repo, contactsGateway = FakeContactsGateway())
+
+            vm.onIntent(CallLogIntent.SetFilter("review"))
+
+            val entries = vm.state.first { it.entries.size == 1 }.entries
+            assertEquals("REVIEW", entries[0].ruleType)
+        }
+
+    @Test
+    fun `SetFilter all keeps every entry`() =
+        runTest {
+            val entryA =
+                CallLogEntryData(
+                    id = 1L,
+                    number = "+34611223344",
+                    timestamp = 1L,
+                    action = "ALLOWED",
+                    ruleType = "REVIEW",
+                    ruleId = null,
+                    ruleDetail = "Pending review",
+                )
+            val entryB =
+                CallLogEntryData(
+                    id = 2L,
+                    number = "+34699887766",
+                    timestamp = 2L,
+                    action = "BLOCKED",
+                    ruleType = "MANUAL",
+                    ruleId = 5L,
+                    ruleDetail = "Manually blocked",
+                )
+            val flow = MutableStateFlow(listOf(entryA, entryB))
+            val repo = FakeCallLogRepository(entriesFlow = flow)
+            val vm = CallLogViewModel(callLogRepository = repo, contactsGateway = FakeContactsGateway())
+
+            vm.onIntent(CallLogIntent.SetFilter("all"))
+
+            val entries = vm.state.first { it.entries.size == 2 }.entries
+            assertEquals(2, entries.size)
         }
 }

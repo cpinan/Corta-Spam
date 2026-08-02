@@ -18,6 +18,32 @@ data class SettingsUiState(
     val repeatedCallerBypassCount: Int = 0,
 )
 
+sealed interface SettingsIntent {
+    data class SetBlockingEnabled(
+        val enabled: Boolean,
+    ) : SettingsIntent
+
+    data class SetAutoAllowContacts(
+        val enabled: Boolean,
+    ) : SettingsIntent
+
+    data class SetDefaultAction(
+        val action: DefaultAction,
+    ) : SettingsIntent
+
+    data class SetSpamEnabled(
+        val enabled: Boolean,
+    ) : SettingsIntent
+
+    data class SetNotificationsEnabled(
+        val enabled: Boolean,
+    ) : SettingsIntent
+
+    data class SetRepeatedCallerBypassCount(
+        val count: Int,
+    ) : SettingsIntent
+}
+
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val spamProviderRepository: SpamProviderRepository,
@@ -43,37 +69,48 @@ class SettingsViewModel(
             partial.copy(repeatedCallerBypassCount = repeatedCallerBypassCount)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
-    fun setBlockingEnabled(enabled: Boolean) {
+    fun onIntent(intent: SettingsIntent) {
+        when (intent) {
+            is SettingsIntent.SetBlockingEnabled -> setBlockingEnabled(intent.enabled)
+            is SettingsIntent.SetAutoAllowContacts -> setAutoAllowContacts(intent.enabled)
+            is SettingsIntent.SetDefaultAction -> setDefaultAction(intent.action)
+            is SettingsIntent.SetSpamEnabled -> setSpamEnabled(intent.enabled)
+            is SettingsIntent.SetNotificationsEnabled -> setNotificationsEnabled(intent.enabled)
+            is SettingsIntent.SetRepeatedCallerBypassCount -> setRepeatedCallerBypassCount(intent.count)
+        }
+    }
+
+    private fun setBlockingEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setBlockingEnabled(enabled)
         }
     }
 
-    fun setAutoAllowContacts(enabled: Boolean) {
+    private fun setAutoAllowContacts(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setAutoAllowContacts(enabled)
         }
     }
 
-    fun setDefaultAction(action: DefaultAction) {
+    private fun setDefaultAction(action: DefaultAction) {
         viewModelScope.launch {
             settingsRepository.setDefaultAction(action)
         }
     }
 
-    fun setSpamEnabled(enabled: Boolean) {
+    private fun setSpamEnabled(enabled: Boolean) {
         viewModelScope.launch {
             spamProviderRepository.setEnabled(enabled)
         }
     }
 
-    fun setNotificationsEnabled(enabled: Boolean) {
+    private fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setNotificationsEnabled(enabled)
         }
     }
 
-    fun setRepeatedCallerBypassCount(count: Int) {
+    private fun setRepeatedCallerBypassCount(count: Int) {
         viewModelScope.launch {
             settingsRepository.setRepeatedCallerBypassCount(count)
         }

@@ -23,7 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,17 +66,17 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun DialerOnboardingScreen(
-    viewModel: DialerOnboardingViewModel,
+    state: DialerOnboardingUiState,
+    onIntent: (DialerOnboardingIntent) -> Unit,
     onRequestRole: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val state by viewModel.state.collectAsState()
     var skipped by remember { mutableStateOf(false) }
 
     val isPastOnboarding =
         skipped ||
-            state == DialerOnboardingState.GRANTED ||
-            state == DialerOnboardingState.ALREADY_DEFAULT
+            state.dialerState == DialerOnboardingState.GRANTED ||
+            state.dialerState == DialerOnboardingState.ALREADY_DEFAULT
 
     if (isPastOnboarding) {
         content()
@@ -86,13 +85,13 @@ fun DialerOnboardingScreen(
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            when (state) {
+            when (state.dialerState) {
                 DialerOnboardingState.REQUESTING -> RequestingIndicatorScreen()
 
                 DialerOnboardingState.DENIED ->
                     DeniedScreen(
                         onRetry = {
-                            viewModel.onRequestStarted()
+                            onIntent(DialerOnboardingIntent.RequestStarted)
                             onRequestRole()
                         },
                         onContinueWithoutDefault = { skipped = true },
@@ -101,7 +100,7 @@ fun DialerOnboardingScreen(
                 DialerOnboardingState.NOT_REQUESTED ->
                     PermissionExplainerScreen(
                         onContinue = {
-                            viewModel.onRequestStarted()
+                            onIntent(DialerOnboardingIntent.RequestStarted)
                             onRequestRole()
                         },
                         onNotNow = { skipped = true },
