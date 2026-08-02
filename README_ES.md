@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 166+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 173+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -18,21 +18,23 @@ M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idio
 
 ## Funcionalidades
 
-- **Bloqueo manual** — bloquea o permite números específicos
+- **Bloqueo manual** — bloquea o permite números específicos, con una etiqueta opcional visible en la lista y en las filas del registro que coincidan
 - **Reglas de patrón** — bloquea por prefijo, sufijo o comodín (`+34900*`, `*1234`)
 - **Bloqueo por país** — bloquea todas las llamadas de un código de país
 - **Horas de silencio** — silencia todas las llamadas en un horario (TimePicker con ajustes: Noche, Siesta, Trabajo)
-- **Auto-respondedor (Experimental)** — responde llamadas bloqueadas con saludo TTS o audio personalizado
-- **Registro de llamadas** — historial con hora local, resultado y detalle de la regla (panel dividido en tablet)
+- **Auto-respondedor (Experimental)** — responde llamadas bloqueadas con saludo TTS o audio personalizado; botón "Probar saludo" para escucharlo localmente sin necesidad de una llamada real
+- **Respuesta a llamadas repetidas** — opcional: un número desconocido que normalmente se bloquearía en silencio se deja pasar tras suficientes intentos, con un aviso en la pantalla de llamada entrante y una notificación. Nunca aplica a números bloqueados manualmente ni por patrón, país, spam u horario
+- **Registro de llamadas** — historial con hora local, resultado, detalle de la regla y el nombre del contacto cuando coincide (panel dividido en tablet)
 - **Devolver llamada** — toca cualquier número en el registro para devolver la llamada
 - **Copiar número** — copia números al portapapeles desde el registro
 - **Estadísticas** — conteo de llamadas bloqueadas por día/semana/mes
-- **Respaldo** — exporta/importa todas las reglas como JSON
+- **Respaldo** — exporta/importa todas las reglas como JSON, conservando las etiquetas; un diálogo en la app ("Ver formato de ejemplo") muestra la estructura JSON
 - **Diseño adaptativo** — barra inferior en móvil, barra lateral en tablet/apaisado, contenido centrado a 600dp
 - **Avisos de duplicados** — advierte al agregar un número que ya está en la otra lista
 - **Motor de precedencia** — el bloqueo manual tiene prioridad sobre contactos y lista de permitidos
 - **Normalización de contactos** — compara números formateados de contactos con números entrantes sin formato
 - **Privacidad y Términos** — política de privacidad y licencia MIT dentro de la app
+- **Control de notificaciones** — un solo interruptor "Mostrar notificaciones" silencia todo lo que publique la app, incluida la alerta de llamada entrante
 - **i18n** — inglés (predeterminado), español (es), portugués (pt), hindi (hi)
 
 ## Estructura del proyecto
@@ -106,13 +108,16 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 15 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, y notificaciones de llamadas/UX de permisos.
+Un curso completo de 16 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos y (el más nuevo) cómo extender el motor de precedencia con seguridad — dónde ubicar la lógica, migraciones de restricciones `CHECK` en SQLite, y cómo conectar una decisión asíncrona a una UI que ya está en pantalla.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 56 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 60 preguntas de evaluación.
 
 ## Cambios recientes
 
 **2026-08-01:**
+- **Nuevo**: respuesta a llamadas repetidas. Un número desconocido (sin regla coincidente, que cae en `defaultAction = Block`) que reintenta al menos N veces en 24h se deja pasar en vez de bloquearse en silencio para siempre — desactivado por defecto, umbral de intentos configurable (2-10) en Ajustes. Deliberadamente limitado a la ruta de "sin regla coincidente" en `RulePrecedenceResolver`: un bloqueo manual o una coincidencia de patrón, país, spam u horario siempre gana sin importar cuántas veces reintente, porque insistir es un rasgo típico de robollamadas y saltarse esos bloqueos anularía el bloqueo real de spam. Muestra un aviso "te llamó N veces" en la pantalla de llamada entrante y una notificación cuando se activa; reutiliza la infraestructura de conteo de intentos ya construida para la regla de acción "bloquear tras N intentos" (su contraparte inversa). Requirió una migración de esquema para la nueva etiqueta `REPEATED_ALLOWED` en `CallLogEntry.rule_type`.
+- Se agregó un diálogo "Ver formato de ejemplo" en la pantalla de Respaldo con un fragmento JSON de muestra (con una entrada etiquetada) — el campo de etiqueta ya se conservaba de punta a punta en exportar/importar, solo faltaba documentarlo en la app.
+- Se agregó un botón "Probar saludo" en la pantalla de Auto-respondedor que reproduce el guion/audio actual localmente por el altavoz del teléfono, para probarlo sin disparar una llamada real.
 - Se agregó un ajuste "Mostrar notificaciones" que silencia toda notificación que publique la app, incluida la alerta de llamada entrante — desactivado significa que las llamadas quedan totalmente silenciosas salvo que la app ya esté en primer plano. También se centró el logo de la app en el espacio vacío de la pantalla de llamada en todas sus fases (timbrando/marcando/activa).
 - Se corrigió un cierre inesperado: tocar "Llamar de vuelta" en una entrada del registro con número privado/restringido (número vacío, un caso legítimo para llamadas ocultas) generaba un intent `tel:` sin nada que resolver y lanzaba una `ActivityNotFoundException` sin capturar. La acción ahora está deshabilitada para números vacíos, y el código que realiza la llamada es defensivo ante cualquier otro caso de intent no resoluble.
 - Limpieza de arquitectura, a partir de una revisión completa contra las convenciones de clean architecture/MVVM:

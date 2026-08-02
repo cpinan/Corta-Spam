@@ -194,7 +194,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div>
 <h1>Corta Spam</h1>
 <p>From Zero to Master: Kotlin Multiplatform Android App Development</p>
-<p style="font-size:.85rem">A 15-module course walking through a real production app</p>
+<p style="font-size:.85rem">A 16-module course walking through a real production app</p>
 </div>
 <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙 Dark Mode</button>
 </div></div></div>
@@ -203,7 +203,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <!-- Progress -->
 <div class="progress-wrap">
-  <div class="progress-label">Progress: <span id="progress-text">0 / 13 modules</span></div>
+  <div class="progress-label">Progress: <span id="progress-text">0 / 16 modules</span></div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
@@ -1641,7 +1641,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <h3>Error 5: Koin not initialized — SIGABRT on launch</h3>
 <p><b>Symptom:</b> App launches, shows white screen, crashes with <code>SIGABRT</code>. Crash report shows <code>terminateWithUnhandledException</code>.</p>
-<p><b>Why:</b> Android initializes Koin in <code>BloqueaLlamadasApp.onCreate()</code> which is called by the Android framework. iOS has no equivalent — <code>MainViewController</code> created the Compose UI without first calling <code>initKoin()</code>, so <code>koinViewModel()</code> threw <code>DefinitionNotFoundException</code>.</p>
+<p><b>Why:</b> Android initializes Koin in <code>CortaSpamApp.onCreate()</code> which is called by the Android framework. iOS has no equivalent — <code>MainViewController</code> created the Compose UI without first calling <code>initKoin()</code>, so <code>koinViewModel()</code> threw <code>DefinitionNotFoundException</code>.</p>
 <p><b>Diagnosis:</b> The <code>.ips</code> crash report showed the stack trace ending in <code>static iOSApp.$main()</code> → <code>ComposeContainerView</code>. No Kotlin exception message visible. Fixed by running <code>xcrun simctl launch --console</code> which streams Kotlin exception output to the terminal.</p>
 <p><b>Fix:</b></p>
 <p class="file-label">MainViewController.kt (before and after)</p>
@@ -1662,7 +1662,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <pre><code><span class="line"><span class="kw">info:</span></span>
 <span class="line">  <span class="kw">path:</span> Generated/Info.plist</span>
 <span class="line">  <span class="kw">properties:</span></span>
-<span class="line">    <span class="kw">CFBundleDisplayName:</span> BloqueaLlamadas</span>
+<span class="line">    <span class="kw">CFBundleDisplayName:</span> "Corta Spam"</span>
 <span class="line">    <span class="kw">CADisableMinimumFrameDurationOnPhone:</span> true</span></code></pre>
 <p><b>Lesson:</b> Always check <code>--console</code> output before diving into crash reports. Compose Multiplatform diagnostics are excellent when you can see them.</p>
 
@@ -1671,11 +1671,11 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <p><b>Why:</b> Compose Multiplatform renders via Skia's Metal backend. On some iOS simulators (especially newer iPhone models on recent macOS), the Metal shader compiler's XPC service hangs — the GPU driver wait never completes.</p>
 <p><b>Diagnosis:</b></p>
 <pre><code><span class="line"><span class="cm"># Check if process is alive but stuck</span></span>
-<span class="line">ps aux | grep BloqueaLlamadas</span>
+<span class="line">ps aux | grep CortaSpam</span>
 <span class="line"></span>
 <span class="line"><span class="cm"># Read crash report from ~/Library/Logs/DiagnosticReports/</span></span>
 <span class="line"><span class="cm"># Look for: GrMtlPipelineStateBuilder, mach_msg2_trap, Main thread blocked</span></span>
-<span class="line">grep -o <span class="str">'"symbol":"[^"]*"'</span> ~/Library/Logs/DiagnosticReports/BloqueaLlamadas-*.ips | head -30</span></code></pre>
+<span class="line">grep -o <span class="str">'"symbol":"[^"]*"'</span> ~/Library/Logs/DiagnosticReports/CortaSpam-*.ips | head -30</span></code></pre>
 <p><b>Fix:</b> Three options — (1) Restart the simulator: <code>xcrun simctl shutdown all && xcrun simctl boot DEVICE_UUID</code>. (2) Use a different simulator model (iPhone SE worked while iPhone 16 Pro hung). (3) For production, use software rendering fallback (pending Compose Multiplatform API).</p>
 
 <div class="callout"><h3>Debugging Toolkit Summary</h3>
@@ -1794,11 +1794,99 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </section>
 
 <!-- ================================================================ -->
+<!-- MODULE 16 -->
+<!-- ================================================================ -->
+<section class="module" id="m16">
+<h2>Module 16: Extending a Precedence Engine Safely</h2>
+<p>A feature request that sounds like one sentence — "let repeated callers through" — touches the resolver, the database schema, an async-to-sync UI handoff, and a notification, and every one of those layers has a wrong place to put the change. This module is a single feature traced end-to-end through all four, including a real migration-tooling gap discovered along the way.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Add a new branch to an existing precedence chain without reordering it</li><li>Recognize why "block after N attempts" and "allow after N attempts" need opposite scoping rules</li><li>Understand why SQLite can't <code>ALTER</code> a <code>CHECK</code> constraint, and the rebuild-table migration pattern that works around it</li><li>Thread a value computed asynchronously (a rule decision) into UI that's already showing</li><li>Prefer reusing an existing function's shape over inventing a new one</li><li>Know the difference between "the build is green" and "every dev-time safety net actually ran"</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> The problem with a binary default action</h3>
+<p><code>defaultAction = Block</code> is one bit: match no rule, get blocked. That's fine for actual spam, but it can't distinguish a robocaller from an old friend calling from a number you never saved. The feature: if an otherwise-unrecognized number retries enough times, let the next attempt through — but only that number, only after real persistence, and never for a number the app has already positively identified as spam.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> One new branch, at the end of the chain, on purpose</h3>
+<p class="file-label">RulePrecedenceResolver.kt — step 8, the only place this can live</p>
+<pre><code><span class="line"><span class="cm">// 8. Default: honor the user's chosen default action. BLOCK gets one more check first</span></span>
+<span class="line"><span class="kw">return when</span> (context.defaultAction) {</span>
+<span class="line">    <span class="tp">DefaultAction</span>.BLOCK -></span>
+<span class="line">        <span class="kw">if</span> (context.repeatedAttemptsBypassCount &gt; <span class="num">0</span> &amp;&amp;</span>
+<span class="line">            context.recentAttemptsForNumber &gt;= context.repeatedAttemptsBypassCount</span>
+<span class="line">        ) <span class="tp">RuleDecision</span>.<span class="fn">AllowedAfterRepeatedAttempts</span>(context.recentAttemptsForNumber)</span>
+<span class="line">        <span class="kw">else</span> <span class="tp">RuleDecision</span>.DefaultBlock</span>
+<span class="line">    <span class="tp">DefaultAction</span>.ASK -> <span class="tp">RuleDecision</span>.PendingReview</span>
+<span class="line">    <span class="tp">DefaultAction</span>.ALLOW -> <span class="tp">RuleDecision</span>.DefaultAllow</span>
+<span class="line">}</span></code></pre>
+<p><b>Why step 8 and nowhere earlier:</b> manual block, pattern, country, spam, action-rule, and schedule checks (steps 1-7) all return before this code ever runs. That's not incidental — it's the entire point. Retrying is a robocall hallmark, so if the bypass were checked before the spam-pattern step, a number the app had already flagged as spam could talk its way back in just by calling more. Placing the new logic at the literal end of the existing chain, instead of threading a bypass check into every earlier branch, means the precedence order itself — not a separate flag on each rule type — is what protects real spam blocking. This mirrors <code>ActionRule</code>'s "block after N attempts" (Module 10) almost exactly, just inverted: same attempt-tracking table, opposite conclusion, and deliberately a different point in the chain.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> SQLite can't ALTER a CHECK constraint</h3>
+<p><code>CallLogEntry.rule_type</code> is constrained to a fixed list of tags. Adding <code>REPEATED_ALLOWED</code> to that list sounds like <code>ALTER TABLE ... ADD CONSTRAINT</code> — except SQLite has no such statement. The only way to change a <code>CHECK</code> is to rebuild the table:</p>
+<p class="file-label">7.sqm — the same shape as every prior rule_type migration</p>
+<pre><code><span class="line"><span class="kw">CREATE TABLE</span> CallLogEntry_new (</span>
+<span class="line">    ...</span>
+<span class="line">    rule_type <span class="kw">TEXT CHECK</span> (rule_type <span class="kw">IN</span> (<span class="str">'MANUAL'</span>, ..., <span class="str">'REPEATED_ALLOWED'</span>, <span class="kw">NULL</span>))</span>
+<span class="line">);</span>
+<span class="line"><span class="kw">INSERT INTO</span> CallLogEntry_new <span class="kw">SELECT</span> ... <span class="kw">FROM</span> CallLogEntry;</span>
+<span class="line"><span class="kw">DROP TABLE</span> CallLogEntry;</span>
+<span class="line"><span class="kw">ALTER TABLE</span> CallLogEntry_new <span class="kw">RENAME TO</span> CallLogEntry;</span></code></pre>
+<p>Create a shadow table with the new constraint, copy every row across, drop the old table, rename the shadow into place. SQLDelight's <code>verifyMigrations</code> build check replays every <code>.sqm</code> file in order against a fresh database and diffs the result against <code>AppDatabase.sq</code>'s <code>CREATE TABLE</code> — if they don't match bit-for-bit, the build fails before a mismatched migration ever ships.</p>
+
+<div class="callout"><h3>Case Study: A Broken Safety Net Nobody Noticed</h3>
+<p>Running <code>verifyMigrations</code> directly (not through the usual <code>./gradlew test</code>/<code>check</code> chain) surfaced a pre-existing failure — <code>duplicate column name: pattern_id</code> — that traced back to a missing snapshot file (<code>6.db</code>) from a migration added in an earlier session. <code>./gradlew check --dry-run</code> confirmed the task was silently <code>SKIPPED</code> in the normal build graph, meaning this verification had not actually run since that migration landed.</p>
+<p><b>The lesson isn't "the migration was broken"</b> — the real schema and the runtime <code>Schema.migrate()</code> path were both fine, confirmed independently via a fresh-schema DB test. The lesson is that a dev-time safety net can quietly stop running at all, and a green CI history proves nothing about a check that was never wired into the graph it looks like it belongs to. Flag it, don't silently route around it, and don't let it block unrelated work either.</p>
+</div>
+
+<h3><span class="badge badge-a">Advanced</span> Threading an async decision into UI that's already on screen</h3>
+<p>The rule decision resolves inside a coroutine, seconds after the ringing screen is already showing — there's no prop to just pass it in. <code>InCallState</code> already exists as exactly this kind of bridge (Module 9), so the fix is one more field and one more setter on a pattern already proven, not new plumbing:</p>
+<p class="file-label">InCallState.kt</p>
+<pre><code><span class="line"><span class="kw">data class</span> <span class="tp">UiState</span>(<span class="kw">val</span> number: <span class="tp">String</span>, <span class="kw">val</span> phase: <span class="tp">CallUiPhase</span>, <span class="kw">val</span> repeatedCallAttempts: <span class="tp">Int</span>? = <span class="kw">null</span>)</span>
+<span class="line">   </span>
+<span class="line"><span class="kw">fun</span> <span class="fn">setRepeatedCallAttempts</span>(attempts: <span class="tp">Int</span>) {</span>
+<span class="line">    _state.value = _state.value?.<span class="fn">copy</span>(repeatedCallAttempts = attempts)</span>
+<span class="line">}</span></code></pre>
+<p>Because <code>CallScreen</code> already collects <code>InCallState.state</code> as a <code>StateFlow</code>, calling <code>setRepeatedCallAttempts()</code> from the Telecom service — well after the screen first composed — recomposes it automatically with the new subtitle. The async result and the already-rendered UI meet through the same reactive state object, no callback or event bus required.</p>
+
+<h3><span class="badge badge-a">Advanced</span> The best new code is the code you don't write</h3>
+<p class="file-label">PassthroughInCallService.kt</p>
+<pre><code><span class="line"><span class="kw">if</span> (settingsRepository.notificationsEnabled.value) {</span>
+<span class="line">    <span class="tp">IncomingCallNotifier</span>.<span class="fn">notifyCallResult</span>(</span>
+<span class="line">        <span class="kw">this</span>, number, <span class="tp">R</span>.string.notification_repeated_caller_title, decision.blockReason,</span>
+<span class="line">    )</span>
+<span class="line">}</span></code></pre>
+<p><code>notifyCallResult()</code> already existed for post-call missed/blocked notifications (Module 15) — non-full-screen, auto-cancel, history channel. The repeated-caller notification needed exactly that shape, so it reuses the function verbatim with a new title string instead of a new method. Before writing a new notification builder, the question worth asking is whether an existing one already has the right shape — here it did.</p>
+
+<div class="callout"><h3>Case Study: When combine() Runs Out of Overloads</h3>
+<p><code>SettingsViewModel</code> already combined 5 flows of different types into one <code>UiState</code> — <code>kotlinx.coroutines.flow.combine()</code>'s typed overloads stop at 5. Adding a 6th setting doesn't mean switching to the untyped vararg <code>Array&lt;T&gt;</code> form (which needs every flow to share a type): chaining a plain two-argument <code>combine()</code> on top of the existing one composes cleanly instead —</p>
+<pre><code><span class="line">combine(a, b, c, d, e) { ... }.<span class="fn">combine</span>(f) { partial, f -> partial.<span class="fn">copy</span>(newField = f) }</span></code></pre>
+<p>Composing two small typed operators beat forcing one large untyped one.</p>
+</div>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>A new precedence branch belongs at the specific step that matches its risk profile — not wherever is convenient to code</li><li>"Block after N" and "allow after N" reuse the same attempt-tracking data but must live at different, deliberately chosen points in precedence order</li><li>SQLite has no <code>ALTER ... ADD CONSTRAINT</code> — changing a <code>CHECK</code> means rebuild-copy-drop-rename, and a migration-verification task should replay every step and diff the result</li><li>A build task that's silently <code>SKIPPED</code> is not the same as a build task that passed — confirm what's actually wired into the graph</li><li>Bridge state objects (<code>InCallState</code>-style) let already-rendered UI pick up an async result with zero new plumbing</li><li>Before adding a new function, check whether an existing one already has the shape you need</li><li>When a typed API runs out of overloads, compose smaller typed calls instead of dropping to an untyped one</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. Why does the repeated-caller bypass check live at step 8 (the default-action step) instead of being threaded into the pattern/spam/action-rule checks earlier in the chain?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Retrying is a common robocall behavior. If the bypass were checked earlier, a number already matched by a spam/pattern/action rule could use enough retries to talk its way past a block that was working correctly. Placing it only at the very end, after every real block rule has already had a chance to fire and return, means precedence order itself enforces that this bypass can only ever apply to numbers nothing else recognized as a threat.</div></div>
+<div class="quiz-item"><p>2. Why can't <code>rule_type</code>'s CHECK constraint just be altered in place to add a new allowed value?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">SQLite has no ALTER TABLE syntax for modifying a CHECK constraint. The only way to change one is to create a new table with the desired constraint, copy every row from the old table into it, drop the old table, and rename the new one into its place — the pattern every rule_type migration in this project follows.</div></div>
+<div class="quiz-item"><p>3. The migration-verification task failed when run directly, but had never failed in normal CI. What does that actually mean?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It means the task wasn't part of the task graph those normal runs exercised — confirmed via --dry-run showing it as SKIPPED — not that the migrations were secretly broken the whole time. A clean build/test history only proves the checks that actually ran passed; it says nothing about a safety net that was quietly disconnected.</div></div>
+<div class="quiz-item"><p>4. Why did the repeated-caller notification call the existing notifyCallResult() instead of a new notification function?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">notifyCallResult() already produced exactly the right notification shape for this case — non-full-screen, auto-cancel, posted on the history channel, same as the existing missed/blocked-call notifications. It needed a new title string, not new notification-building logic, so reusing it avoided duplicating code that already did the job.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>15 Modules, One Production App</h3>
+<div class="callout"><h3>16 Modules, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -1817,7 +1905,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Quality</td><td style="padding:8px">kotlin.test, fakes, Robolectric</td><td style="padding:8px">12</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
-<tr><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
+<tr><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -1828,8 +1917,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>158+ automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-07-31 — added Module 15 (call notifications, CallStyle, full-screen intent, permission UX, the auto-responder audio-ceiling case study) and a PendingReview addendum to Module 10 (DefaultAction.ASK made real).</p>
+<p>173+ automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-01 — added Module 16 (extending the precedence engine for a repeated-caller bypass: precedence placement, SQLite CHECK-constraint migrations, the missing-snapshot verification-tooling case study, and threading an async decision into already-rendered UI).</p>
 </div></div>
 
 <script>
@@ -1870,7 +1959,7 @@ function markVisited(n){
 }
 function updateProgress(){
   var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  var total=15,pct=Math.round(visited.length/total*100);
+  var total=16,pct=Math.round(visited.length/total*100);
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
   var links=document.querySelectorAll('#toc-grid a');

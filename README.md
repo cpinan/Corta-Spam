@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 166+ automated tests pass. Android APK builds. iOS deferred.
+M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 173+ automated tests pass. Android APK builds. iOS deferred.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -18,21 +18,23 @@ M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n.
 
 ## Features
 
-- **Manual blocking** — block or allow specific numbers
+- **Manual blocking** — block or allow specific numbers, with an optional label shown in the list and in matching Call Log rows
 - **Pattern rules** — block by prefix, suffix, or wildcard (`+34900*`, `*1234`)
 - **Country blocking** — block all numbers from a country code
 - **Quiet hours** — silence all calls on a schedule (TimePicker with presets: Night, Siesta, Work)
-- **Auto-responder (Experimental)** — answer blocked calls with TTS greeting or custom audio
-- **Call log** — every call with local timestamp, outcome, and rule detail (list-detail two-pane on tablet)
+- **Auto-responder (Experimental)** — answer blocked calls with TTS greeting or custom audio; "Test greeting" button previews it locally, no real call needed
+- **Repeated-caller bypass** — opt-in: an unknown number that would otherwise be silently blocked gets let through once it retries enough times, with a heads-up on the ringing screen and a notification. Never applies to numbers matched by a manual block, pattern, country, spam, or schedule rule
+- **Call log** — every call with local timestamp, outcome, rule detail, and the contact's name when it matches one (list-detail two-pane on tablet)
 - **Call back** — tap any number in the call log to return the call
 - **Copy number** — copy phone numbers to clipboard from the call log
 - **Stats** — blocked-call counts by day/week/month
-- **Backup/restore** — export/import all rules as JSON
+- **Backup/restore** — export/import all rules as JSON, with labels preserved; an in-app "View example format" dialog shows the JSON shape
 - **Adaptive layout** — bottom bar on phone, nav rail on tablet/landscape, content capped at 600dp
 - **Duplicate warnings** — warns when adding a number already present in the other list
 - **Precedence engine** — manual block overrides contacts and allowlist
 - **Contact normalization** — matches formatted contact numbers against raw incoming call numbers
 - **Privacy & Terms** — in-app privacy policy and MIT license terms
+- **Notification control** — a single "Show notifications" switch mutes everything the app posts, including the incoming-call alert
 - **i18n** — English (default), Spanish (es), Portuguese (pt), Hindi (hi)
 
 ## Project layout
@@ -106,13 +108,16 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 15-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, and call notifications/permission UX.
+A complete 16-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, and (newest) extending the precedence engine safely — precedence placement, SQLite `CHECK`-constraint migrations, and threading an async decision into already-rendered UI.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 56 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 60 quiz questions included.
 
 ## Recent Fixes
 
 **2026-08-01:**
+- **New**: repeated-caller bypass. An unknown number (no rule matched, falling through to `defaultAction = Block`) that retries at least N times within 24h gets let through instead of silently blocked forever — off by default, attempts threshold configurable (2-10) in Settings. Deliberately scoped to only the no-rule-matched path in `RulePrecedenceResolver`: a manual block, pattern, country, spam, action-rule, or schedule match always wins regardless of retry count, since retrying is a robocall hallmark and bypassing those would undo real spam blocking. Shows a "called you N times" hint on the ringing screen and a notification when it fires; reuses the existing attempt-tracking infrastructure built for the mirror-image "block after N attempts" action rule. Required a `CallLogEntry.rule_type` schema migration for the new `REPEATED_ALLOWED` tag.
+- Added a "View example format" dialog to the Backup screen showing a sample JSON snippet (with a labeled entry) — the label field was already round-tripped end-to-end in export/import, just undocumented in-app.
+- Added a "Test greeting" button to the Auto-responder screen that plays the current script/audio locally through the phone speaker, so you can preview it without triggering a real call.
 - Added a "Show notifications" setting that mutes every notification the app posts, including the incoming-call alert — off means calls stay fully silent unless the app is already foregrounded. Also centered the app logo in the empty middle of the in-call screen for all phases (ringing/dialing/active).
 - Fixed a crash: tapping "Call back" on a private/restricted call-log entry (blank number, a legitimate case for withheld callers) built an unresolvable `tel:` intent and threw an uncaught `ActivityNotFoundException`. The action is now disabled for blank numbers, and the call-placing code is defensive against any other unresolvable-intent case.
 - Architecture cleanup, driven by a full review against clean-architecture/MVVM conventions:
