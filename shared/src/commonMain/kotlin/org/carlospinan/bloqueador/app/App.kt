@@ -7,6 +7,7 @@ import org.carlospinan.bloqueador.app.navigation.AppNavHost
 @Composable
 fun App(
     onPickAudio: (((String) -> Unit) -> Unit)? = null,
+    onTestGreeting: ((script: String, audioUri: String) -> Unit)? = null,
     onRequestContactsPermission: (() -> Unit)? = null,
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
@@ -24,6 +25,7 @@ fun App(
     AppNavHost(
         navController = navController,
         onPickAudio = onPickAudio,
+        onTestGreeting = onTestGreeting,
         onRequestContactsPermission = onRequestContactsPermission,
         onShareFile = onShareFile,
         onPickImportFile = onPickImportFile,

@@ -26,11 +26,16 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
+import org.carlospinan.bloqueador.app.telecom.AutoResponderAudio
 import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DialerOnboardingViewModel by inject()
+
+    /** Lazily created so a plain app launch (no auto-responder test tapped) never touches TTS/MediaPlayer. */
+    private val testAudioLazy = lazy { AutoResponderAudio(this) }
+    private val testAudio get() = testAudioLazy.value
 
     private val roleRequestLauncher =
         registerForActivityResult(
@@ -131,6 +136,9 @@ class MainActivity : ComponentActivity() {
                                 audioPickResultCallback = onResult
                                 audioPickerLauncher.launch("audio/*")
                             },
+                            onTestGreeting = { script, audioUri ->
+                                testAudio.play(script, audioUri.ifBlank { null }, onComplete = {})
+                            },
                             onRequestContactsPermission = {
                                 contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
                             },
@@ -195,6 +203,13 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         viewModel.refresh()
         refreshPermissionStatus()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (testAudioLazy.isInitialized()) {
+            testAudio.release()
+        }
     }
 
     private fun placeCall(number: String) {

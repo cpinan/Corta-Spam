@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -36,6 +37,7 @@ import bloqueallamadas.shared.generated.resources.autoresponder_pick_audio
 import bloqueallamadas.shared.generated.resources.autoresponder_recording
 import bloqueallamadas.shared.generated.resources.autoresponder_recording_desc
 import bloqueallamadas.shared.generated.resources.autoresponder_script_hint
+import bloqueallamadas.shared.generated.resources.autoresponder_test
 import bloqueallamadas.shared.generated.resources.autoresponder_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
@@ -49,6 +51,7 @@ fun AutoResponderScreen(
     onSetRecordingEnabled: (Boolean) -> Unit,
     onPickAudio: () -> Unit,
     onClearAudio: () -> Unit,
+    onTest: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
@@ -162,6 +165,16 @@ fun AutoResponderScreen(
                                 }
                             }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = onTest,
+                        enabled = state.config.script.isNotBlank() || state.config.audioUri.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(Res.string.autoresponder_test))
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))

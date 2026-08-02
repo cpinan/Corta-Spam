@@ -129,6 +129,9 @@
     <string name="backup_title">Backup &amp; Restore</string>
     <string name="backup_export">Export rules to file</string>
     <string name="backup_import">Import rules from file</string>
+    <string name="backup_view_example">View example format</string>
+    <string name="backup_example_title">Backup file format</string>
+    <string name="backup_example_body">Every rule type supports an optional \"label\" field. Example:</string>
     <!-- Action rules -->
     <string name="hub_actions">Action Rules</string>
     <string name="action_rule_title">Action Rules</string>
@@ -158,6 +161,7 @@
     <string name="autoresponder_enabled">Enabled</string>
     <string name="autoresponder_enabled_desc">When on, blocked calls are answered and greeted instead of rejected silently.</string>
     <string name="autoresponder_script_hint">Greeting script</string>
+    <string name="autoresponder_test">Test greeting</string>
     <string name="autoresponder_audio_tts">Text-to-speech</string>
     <string name="autoresponder_audio_custom">Custom audio file</string>
     <string name="autoresponder_pick_audio">Pick audio file</string>

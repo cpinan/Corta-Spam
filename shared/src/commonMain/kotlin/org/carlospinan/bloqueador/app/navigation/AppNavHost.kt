@@ -70,6 +70,7 @@ object Routes {
 fun AppNavHost(
     navController: NavHostController,
     onPickAudio: (((String) -> Unit) -> Unit)? = null,
+    onTestGreeting: ((script: String, audioUri: String) -> Unit)? = null,
     onRequestContactsPermission: (() -> Unit)? = null,
     onShareFile: ((String) -> Unit)? = null,
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
@@ -285,6 +286,9 @@ fun AppNavHost(
                         onPickAudio?.invoke { uri -> autoResponderViewModel.setAudioUri(uri) }
                     },
                     onClearAudio = autoResponderViewModel::clearAudioUri,
+                    onTest = {
+                        onTestGreeting?.invoke(autoResponderUiState.config.script, autoResponderUiState.config.audioUri)
+                    },
                     onBack = { navController.popBackStack() },
                 )
             }

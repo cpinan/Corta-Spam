@@ -150,6 +150,9 @@
     <string name="backup_title">Respaldo y Restauración</string>
     <string name="backup_export">Exportar reglas a archivo</string>
     <string name="backup_import">Importar reglas desde archivo</string>
+    <string name="backup_view_example">Ver formato de ejemplo</string>
+    <string name="backup_example_title">Formato del archivo de respaldo</string>
+    <string name="backup_example_body">Todo tipo de regla admite un campo \"label\" (etiqueta) opcional. Ejemplo:</string>
 
     <!-- Privacidad -->
     <string name="settings_privacy_title">Política de Privacidad</string>
@@ -165,6 +168,7 @@
     <string name="autoresponder_enabled">Activado</string>
     <string name="autoresponder_enabled_desc">Cuando está activo, las llamadas bloqueadas se contestan con un saludo en vez de rechazarse.</string>
     <string name="autoresponder_script_hint">Guion de saludo</string>
+    <string name="autoresponder_test">Probar saludo</string>
     <string name="autoresponder_audio_tts">Texto a voz</string>
     <string name="autoresponder_audio_custom">Archivo de audio personalizado</string>
     <string name="autoresponder_pick_audio">Seleccionar archivo</string>

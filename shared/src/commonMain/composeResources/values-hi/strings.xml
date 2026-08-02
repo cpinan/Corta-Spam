@@ -141,6 +141,9 @@
     <string name="backup_title">बैकअप और पुनर्स्थापना</string>
     <string name="backup_export">नियमों को फ़ाइल में निर्यात करें</string>
     <string name="backup_import">फ़ाइल से नियम आयात करें</string>
+    <string name="backup_view_example">उदाहरण प्रारूप देखें</string>
+    <string name="backup_example_title">बैकअप फ़ाइल प्रारूप</string>
+    <string name="backup_example_body">हर नियम प्रकार में वैकल्पिक \"label\" (लेबल) फ़ील्ड होता है। उदाहरण:</string>
 
     <!-- गोपनीयता -->
     <string name="settings_privacy_title">गोपनीयता नीति</string>
@@ -156,6 +159,7 @@
     <string name="autoresponder_enabled">सक्षम</string>
     <string name="autoresponder_enabled_desc">चालू होने पर, ब्लॉक की गई कॉल चुपचाप अस्वीकार करने के बजाय ग्रीटिंग के साथ उत्तर दी जाती हैं।</string>
     <string name="autoresponder_script_hint">ग्रीटिंग स्क्रिप्ट</string>
+    <string name="autoresponder_test">ग्रीटिंग जांचें</string>
     <string name="autoresponder_audio_tts">टेक्स्ट-टू-स्पीच</string>
     <string name="autoresponder_audio_custom">कस्टम ऑडियो फ़ाइल</string>
     <string name="autoresponder_pick_audio">ऑडियो फ़ाइल चुनें</string>
