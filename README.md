@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 173+ automated tests pass. Android APK builds. iOS deferred.
+M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 176+ automated tests pass. Android APK builds. iOS deferred.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -108,11 +108,18 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 16-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, and (newest) extending the precedence engine safely — precedence placement, SQLite `CHECK`-constraint migrations, and threading an async decision into already-rendered UI.
+A complete 17-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, and (newest) state management — MVVM + MVI done right, including when *not* to force the pattern.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 60 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 64 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-02:**
+- Architecture review found the app was consistently MVVM (single `StateFlow<UiState>` per ViewModel, Koin-scoped) but not MVI — no ViewModel had a single typed entry point for user actions, just N public setter methods each. Every ViewModel with at least one dispatchable action now exposes a sealed `Intent` type + one `onIntent()` function; the old public methods are private implementation details now. Read-only ViewModels with nothing external to dispatch (`StatsViewModel`) deliberately did not get one — a one-case sealed class with no caller is ceremony, not MVI.
+- Fixed 3 ViewModels that had drifted from the app's own "one UiState per ViewModel" rule: `BlockListViewModel` (11 separate `StateFlow`s → one `BlockListUiState` with counts as derived properties), `CallLogViewModel` and `DialerOnboardingViewModel` (two disconnected flows each → one UiState). `CallLogViewModel` also absorbed the call-log date-range filtering logic that used to live inline in the navigation file, with new regression tests it never had before.
+- Fixed `DialerOnboardingScreen` taking the ViewModel directly as a Composable parameter — the one place in the app doing that. It now takes state + an intent-dispatch callback like every other screen.
+- `BackupViewModel`'s export flow used to hand the exported JSON back via a UI-supplied callback parameter, which doesn't fit cleanly into a plain-data Intent. Replaced with a new `BackupEffect.Exported(json)` case alongside the existing success/failure effects.
+- Moved the Privacy Policy and Terms & Conditions body text out of hardcoded Kotlin string literals into string resources (English only for now).
 
 **2026-08-01:**
 - **New**: repeated-caller bypass. An unknown number (no rule matched, falling through to `defaultAction = Block`) that retries at least N times within 24h gets let through instead of silently blocked forever — off by default, attempts threshold configurable (2-10) in Settings. Deliberately scoped to only the no-rule-matched path in `RulePrecedenceResolver`: a manual block, pattern, country, spam, action-rule, or schedule match always wins regardless of retry count, since retrying is a robocall hallmark and bypassing those would undo real spam blocking. Shows a "called you N times" hint on the ringing screen and a notification when it fires; reuses the existing attempt-tracking infrastructure built for the mirror-image "block after N attempts" action rule. Required a `CallLogEntry.rule_type` schema migration for the new `REPEATED_ALLOWED` tag.

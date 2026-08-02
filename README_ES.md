@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 173+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 176+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -108,11 +108,18 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 16 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos y (el más nuevo) cómo extender el motor de precedencia con seguridad — dónde ubicar la lógica, migraciones de restricciones `CHECK` en SQLite, y cómo conectar una decisión asíncrona a una UI que ya está en pantalla.
+Un curso completo de 17 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, y (el más nuevo) gestión de estado — MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 60 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 64 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-02:**
+- Una revisión de arquitectura encontró que la app era consistentemente MVVM (un único `StateFlow<UiState>` por ViewModel, con scope en Koin) pero no MVI — ningún ViewModel tenía un único punto de entrada tipado para las acciones del usuario, solo N métodos públicos sueltos. Todo ViewModel con al menos una acción despachable ahora expone un tipo `Intent` sellado + una función `onIntent()`; los antiguos métodos públicos ahora son detalles de implementación privados. Los ViewModels de solo lectura sin nada externo que despachar (`StatsViewModel`) deliberadamente no recibieron uno — una clase sellada de un solo caso sin quien la llame es ceremonia, no MVI.
+- Se corrigieron 3 ViewModels que se habían desviado de la propia regla del proyecto de "un UiState por ViewModel": `BlockListViewModel` (11 `StateFlow` separados → un `BlockListUiState` con los conteos como propiedades derivadas), `CallLogViewModel` y `DialerOnboardingViewModel` (dos flujos desconectados cada uno → un solo UiState). `CallLogViewModel` también absorbió la lógica de filtrado por rango de fechas del registro de llamadas que antes vivía en el archivo de navegación, con pruebas de regresión nuevas que nunca había tenido.
+- Se corrigió que `DialerOnboardingScreen` recibiera el ViewModel directamente como parámetro de un Composable — el único lugar de la app que lo hacía. Ahora recibe estado + un callback de despacho de intenciones, como cualquier otra pantalla.
+- El flujo de exportación de `BackupViewModel` devolvía el JSON exportado mediante un callback provisto por la UI, algo que no encaja bien en una Intent de datos puros. Se reemplazó con un nuevo caso `BackupEffect.Exported(json)` junto a los efectos de éxito/error ya existentes.
+- Se movió el texto de la Política de Privacidad y los Términos y Condiciones de literales de texto en Kotlin a recursos de cadenas (por ahora solo en inglés).
 
 **2026-08-01:**
 - **Nuevo**: respuesta a llamadas repetidas. Un número desconocido (sin regla coincidente, que cae en `defaultAction = Block`) que reintenta al menos N veces en 24h se deja pasar en vez de bloquearse en silencio para siempre — desactivado por defecto, umbral de intentos configurable (2-10) en Ajustes. Deliberadamente limitado a la ruta de "sin regla coincidente" en `RulePrecedenceResolver`: un bloqueo manual o una coincidencia de patrón, país, spam u horario siempre gana sin importar cuántas veces reintente, porque insistir es un rasgo típico de robollamadas y saltarse esos bloqueos anularía el bloqueo real de spam. Muestra un aviso "te llamó N veces" en la pantalla de llamada entrante y una notificación cuando se activa; reutiliza la infraestructura de conteo de intentos ya construida para la regla de acción "bloquear tras N intentos" (su contraparte inversa). Requirió una migración de esquema para la nueva etiqueta `REPEATED_ALLOWED` en `CallLogEntry.rule_type`.

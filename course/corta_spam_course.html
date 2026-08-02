@@ -203,7 +203,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <!-- Progress -->
 <div class="progress-wrap">
-  <div class="progress-label">Progress: <span id="progress-text">0 / 16 modules</span></div>
+  <div class="progress-label">Progress: <span id="progress-text">0 / 17 modules</span></div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
@@ -1882,11 +1882,87 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </section>
 
 <!-- ================================================================ -->
+<!-- MODULE 17 -->
+<!-- ================================================================ -->
+<section class="module" id="m17">
+<h2>Module 17: State Management — MVVM + MVI Done Right</h2>
+<p>Module 3 taught <code>ViewModel + StateFlow&lt;UiState&gt;</code> as the state bridge and called it done. An architecture review of all 8 ViewModels in this app found that pattern held up as MVVM — but a second, separate pattern was missing entirely: MVI's single inbound dispatch point. Worse, 4 of the 8 ViewModels had quietly drifted from the "one UiState" rule Module 3 itself taught, in ways nothing had caught because nothing was checking for it. This module is that review, and the fix, traced through the two hardest cases it turned up.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Name the difference between MVVM and MVI precisely enough to tell whether a codebase actually has both</li><li>Convert N public setter methods into one sealed Intent + one onIntent() dispatcher without touching leaf Composables</li><li>Recognize when a ViewModel genuinely needs an Intent type — and when adding one is pure ceremony</li><li>Handle a callback-shaped side effect (a platform share-sheet handoff) in an Intent-based world without breaking "intents are plain data"</li><li>Know when NOT to force a pattern: system callbacks are not user intents, even when they arrive on the same class</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> MVVM gets you unidirectional state. MVI adds unidirectional intent.</h3>
+<p>MVVM's contract, as already built in this app: a ViewModel exposes one immutable <code>StateFlow&lt;UiState&gt;</code>, mutates it privately, and Compose renders from it via <code>collectAsState()</code>. That part was already correct everywhere. What MVVM's contract does <b>not</b> specify is how the UI talks back to the ViewModel — and this app answered that with N public methods per screen (<code>SettingsViewModel</code> had 6: <code>setBlockingEnabled</code>, <code>setAutoAllowContacts</code>, <code>setDefaultAction</code>...). MVI adds exactly one more rule on top: every inbound user action is a value of one sealed type, dispatched through one function. State stays single and unidirectional either way — MVI is about making the <i>input</i> side just as single and typed as the output side already was.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> The pattern: one sealed Intent, one onIntent(), existing methods go private</h3>
+<p class="file-label">HomeViewModel.kt — before and after are the same logic, different entry shape</p>
+<pre><code><span class="line"><span class="kw">sealed interface</span> <span class="tp">HomeIntent</span> {</span>
+<span class="line">    <span class="kw">data object</span> <span class="tp">Refresh</span> : <span class="tp">HomeIntent</span></span>
+<span class="line">    <span class="kw">data class</span> <span class="tp">ToggleBlocking</span>(<span class="kw">val</span> enabled: <span class="tp">Boolean</span>) : <span class="tp">HomeIntent</span></span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">onIntent</span>(intent: <span class="tp">HomeIntent</span>) {</span>
+<span class="line">    <span class="kw">when</span> (intent) {</span>
+<span class="line">        <span class="tp">HomeIntent</span>.Refresh -> <span class="fn">refresh</span>()</span>
+<span class="line">        <span class="kw">is</span> <span class="tp">HomeIntent</span>.ToggleBlocking -> <span class="fn">toggleBlocking</span>(intent.enabled)</span>
+<span class="line">    }</span>
+<span class="line">}</span>
+<span class="line"><span class="cm">// refresh() and toggleBlocking() keep their exact original bodies -- just private now</span></span></code></pre>
+<p><b>Where the wiring changes, and where it deliberately doesn't:</b> <code>AppNavHost.kt</code>'s route wiring goes from a method reference (<code>homeViewModel::toggleBlocking</code>) to a lambda that builds and dispatches an intent (<code>{ homeViewModel.onIntent(HomeIntent.ToggleBlocking(it)) }</code>). <code>HomeScreen</code> itself — the leaf Composable — does not change at all. It still takes a plain <code>onToggleBlocking: (Boolean) -> Unit</code> callback, with no idea an <code>Intent</code> type exists. That's deliberate: leaking ViewModel-shaped types into leaf Composables is its own anti-pattern (Module 3's UI-layer boundary), and confining the whole refactor to ViewModel files plus one navigation file is what kept an 8-ViewModel, app-wide change from also touching ten screen files.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Case study: 11 StateFlows collapse into one UiState, 13 methods collapse into one onIntent()</h3>
+<p><code>BlockListViewModel</code> backs all 6 block-list screens (hub + manual + allowlist + patterns + countries + schedules) from a single Koin-scoped instance that doesn't know which screen is asking — so it had accumulated 5 list <code>StateFlow</code>s, 5 separately-collected count <code>StateFlow</code>s, and a <code>contactNames</code> flow, with no aggregate <code>UiState</code> tying them together. The counts were the tell: each one was a <code>MutableStateFlow</code> updated by its own <code>viewModelScope.launch { list.collect { ... } }</code> block in <code>init</code> — five nearly-identical collectors doing by hand what a derived property does for free.</p>
+<p class="file-label">BlockListViewModel.kt — counts became computed properties, not collected state</p>
+<pre><code><span class="line"><span class="kw">data class</span> <span class="tp">BlockListUiState</span>(</span>
+<span class="line">    <span class="kw">val</span> blockedNumbers: <span class="tp">List</span>&lt;BlockedNumberEntry&gt; = emptyList(),</span>
+<span class="line">    <span class="cm">// ...4 more lists, contactNames...</span></span>
+<span class="line">) {</span>
+<span class="line">    <span class="kw">val</span> blockedCount: <span class="tp">Int</span> <span class="kw">get</span>() = blockedNumbers.size</span>
+<span class="line">    <span class="cm">// ...4 more derived counts...</span></span>
+<span class="line">}</span></code></pre>
+<p>The 5 list flows combine via the same chained-<code>combine()</code> pattern Module 16 already established for exceeding the 5-flow typed-overload ceiling. The 13 mutation methods (<code>addBlockedNumber</code>, <code>removeBlockedNumber</code>, <code>addPatternRule</code>...) collapse into one <code>BlockListIntent</code> sealed type and one <code>onIntent()</code> — the single biggest before/after in this pass, and the case where MVI's value is least debatable: 13 near-identical public entry points is exactly the surface area a single typed dispatcher exists to remove.</p>
+
+<h3><span class="badge badge-a">Advanced</span> When an Intent can't just carry a callback</h3>
+<p><code>BackupViewModel.exportJson(onResult: (String) -> Unit)</code> took a UI-supplied callback so the exported JSON could reach a platform share-sheet Compose can't invoke directly. A sealed Intent case holding a function type would technically compile, but it breaks the actual point of MVI — intents are supposed to be inert data you can log, replay, or test by equality; a lambda inside one is neither.</p>
+<p class="file-label">BackupViewModel.kt — the result becomes a third effect case instead of a parameter</p>
+<pre><code><span class="line"><span class="kw">sealed interface</span> <span class="tp">BackupEffect</span> {</span>
+<span class="line">    <span class="kw">data class</span> <span class="tp">Exported</span>(<span class="kw">val</span> json: <span class="tp">String</span>) : <span class="tp">BackupEffect</span></span>
+<span class="line">    <span class="kw">data class</span> <span class="tp">Success</span>(<span class="kw">val</span> message: <span class="tp">String</span>) : <span class="tp">BackupEffect</span></span>
+<span class="line">    <span class="kw">data class</span> <span class="tp">Failure</span>(<span class="kw">val</span> message: <span class="tp">String</span>) : <span class="tp">BackupEffect</span></span>
+<span class="line">}</span>
+<span class="line"><span class="kw">sealed interface</span> <span class="tp">BackupIntent</span> { <span class="kw">data object</span> <span class="tp">Export</span> : <span class="tp">BackupIntent</span> <span class="cm">/* ... */</span> }</span></code></pre>
+<p><code>onIntent(BackupIntent.Export)</code> now sends <code>Exported(json)</code> down the same effect channel <code>Success</code>/<code>Failure</code> already used, and <code>BackupScreen</code> gained one more branch in its existing effect-collecting <code>LaunchedEffect</code> to call a new <code>onExportReady</code> callback. The general rule this generalizes to: when a mutation's "result" needs to reach something outside the state model — a share sheet, a file picker, a toast — that result is a one-time effect, not an intent parameter and not a UiState field.</p>
+
+<div class="callout"><h3>Case Study: The ViewModel That Deliberately Didn't Get an Intent Type</h3>
+<p><code>InCallState</code> — the Telecom bridge singleton from Module 9 and 16 — was reviewed for this same treatment and left alone on purpose. Its methods split into two categories that look identical in code but aren't: <code>answer()</code>/<code>decline()</code>/<code>hangUp()</code> are real user intents, dispatched from a tap in <code>CallScreen</code>. <code>attach()</code>/<code>detach()</code> are Android Telecom <b>system lifecycle callbacks</b>, invoked by <code>PassthroughInCallService</code> when the OS hands the app a call — no user asked for those to happen. Folding both into one <code>sealed interface CallIntent</code> would misrepresent a system event as something the user chose, which is a correctness problem in an MVI codebase, not just a style one: code reading "the user's intent was Attach" would be lying. <code>InCallState</code> already does the MVVM half correctly — one encapsulated <code>StateFlow&lt;UiState?&gt;</code> — and that's as far as this pattern should go here.</p>
+<p><b>The same instinct killed a second, smaller addition:</b> <code>StatsViewModel</code> has exactly one method, <code>refresh()</code>, and zero external call sites dispatch it (it only ever runs from its own <code>init</code>). A <code>sealed interface StatsIntent { data object Refresh : StatsIntent }</code> would compile and look consistent with every other VM — and add nothing. It stayed a plain private-called method. MVI earns its ceremony when there's more than one thing to dispatch and more than one place dispatching it; a single VM-internal call isn't that.</p>
+</div>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>MVVM (single StateFlow&lt;UiState&gt; out) and MVI (single sealed Intent + onIntent() in) are two separate rules — a codebase can have one without the other, and this one did</li><li>Leaf Composables shouldn't know an Intent type exists; only the ViewModel and its navigation-layer wiring should</li><li>Derived properties (counts from list.size) beat separately-collected StateFlows for anything computable from state already held</li><li>An Intent that needs to carry a callback is a sign the "result" belongs in a one-time Effect instead</li><li>System lifecycle callbacks are not user intents, even on a class that also has real ones — don't fold them together for pattern consistency</li><li>A one-case sealed class with no external dispatcher is ceremony, not MVI — skip it</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. This app already used ViewModel + single StateFlow&lt;UiState&gt; everywhere before this module. Why wasn't that already "MVI"?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">That pattern covers the outbound half only — state flowing from ViewModel to UI, which is the MVVM contract. MVI additionally requires the inbound half (user actions flowing from UI to ViewModel) to be a single typed sealed value dispatched through one function. This app had the first half everywhere and the second half nowhere — every VM took N separate public methods instead of one Intent type.</div></div>
+<div class="quiz-item"><p>2. Why didn't HomeScreen's parameters change when HomeViewModel got an onIntent() dispatcher?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">HomeScreen still takes a plain onToggleBlocking: (Boolean) -&gt; Unit callback, same as before. Only AppNavHost.kt's wiring changed, from a method reference to a lambda that constructs and dispatches an Intent. Leaf Composables staying ignorant of ViewModel-shaped types (Intent classes included) is a separate, still-enforced rule from Module 3 — MVI changes how the ViewModel is driven, not what the screen's function signature looks like.</div></div>
+<div class="quiz-item"><p>3. BackupViewModel's exportJson used to take an onResult: (String) -&gt; Unit callback parameter. Why not just make that a field on a BackupIntent.Export(val onResult: (String) -&gt; Unit) case instead of adding a new BackupEffect.Exported?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Intents are meant to be inert data — safe to log, compare, or replay in a test. A lambda inside one can't be compared for equality and can't be logged meaningfully, which defeats the point. The exported JSON is a one-time result the UI needs to hand off to a platform share sheet, which is exactly what an Effect channel is for — so it became a third BackupEffect case instead, delivered alongside the existing Success/Failure effects.</div></div>
+<div class="quiz-item"><p>4. InCallState has attach(), detach(), answer(), decline(), and hangUp() methods. Why didn't all five become cases in one sealed CallIntent, the way BlockListViewModel's 13 methods became one BlockListIntent?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">answer()/decline()/hangUp() are real user intents -- a tap on screen. attach()/detach() are Android Telecom system lifecycle callbacks fired by PassthroughInCallService when the OS hands over a call, with no user action behind them at all. Grouping both kinds into one "Intent" type would mislabel a system event as a user choice, which is a real correctness problem in a codebase that uses Intent to mean "what the user asked for" -- so InCallState was deliberately left as MVVM-only.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>16 Modules, One Production App</h3>
+<div class="callout"><h3>17 Modules, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -1906,7 +1982,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
-<tr><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
+<tr><td style="padding:8px">State management</td><td style="padding:8px">MVVM + MVI, sealed Intents, effect channels</td><td style="padding:8px">17</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
