@@ -203,7 +203,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <!-- Progress -->
 <div class="progress-wrap">
-  <div class="progress-label">Progress: <span id="progress-text">0 / 18 modules</span></div>
+  <div class="progress-label">Progress: <span id="progress-text">0 / 19 modules</span></div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
@@ -2056,11 +2056,94 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </section>
 
 <!-- ================================================================ -->
+<!-- MODULE 19 -->
+<!-- ================================================================ -->
+<section class="module" id="m19">
+<h2>Module 19: Testing Persistence Against a Real Database</h2>
+<p>Module 18 consolidated the fakes and, in passing, exposed something the fakes had been hiding: <b>not one <code>Sql*</code> repository in this app had a dedicated test.</b> Five classes held every byte that survives an app restart — settings, call log, auto-responder, spam flag, and the key-value store beneath them — and all five were untested. This module is that gap being closed, and the user-visible bug the very first pass of tests uncovered.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Decide when a fake is the wrong test double and only a real database engine will do</li><li>Place SQLite-backed tests correctly in a KMP module, and know why they can't be shared with iOS</li><li>Test a repository that hydrates once at construction — where "does this survive a restart?" needs a second instance</li><li>Use a test to prove every branch of a sealed decision type satisfies a database CHECK constraint</li><li>Handle the moment a new test disagrees with shipped behaviour: pin it, judge it, then fix it</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> When a fake stops being enough</h3>
+<p>A fake is a stand-in for a collaborator you're not testing. That's the right tool when you're testing a ViewModel: <code>HomeViewModel</code> shouldn't need SQLite to prove it maps stats into a UiState. But the moment the class <i>is</i> the persistence — <code>SqlSettingsRepository</code>, <code>SqlCallLogRepository</code> — a fake has nothing left to stand in for, and the interesting behaviour lives entirely in things a fake never reproduces: SQL <code>CHECK</code> constraints, <code>strftime</code> date arithmetic, <code>INSERT OR REPLACE</code> semantics, and what a value actually looks like when read back off disk. Those tests need a real engine.</p>
+<p class="file-label">shared/src/androidUnitTest/kotlin/.../app/testing/TestDatabase.kt</p>
+<pre><code><span class="line"><span class="kw">internal fun</span> <span class="fn">createTestDatabase</span>(): <span class="tp">AppDatabase</span> {</span>
+<span class="line">    <span class="kw">val</span> driver = <span class="fn">JdbcSqliteDriver</span>(<span class="tp">JdbcSqliteDriver</span>.IN_MEMORY)</span>
+<span class="line">    <span class="tp">AppDatabase</span>.Schema.<span class="fn">create</span>(driver)</span>
+<span class="line">    <span class="kw">return</span> <span class="fn">AppDatabase</span>(driver)</span>
+<span class="line">}</span></code></pre>
+<p><b>Why <code>androidUnitTest</code> and not <code>commonTest</code>:</b> <code>JdbcSqliteDriver</code> is JVM-only. There is no Kotlin/Native equivalent that runs in the shared test source set, so these tests are deliberately excluded from the iOS simulator run — the opposite of Module 12's default, and a real limit of the approach. The rule of thumb: logic tests go in <code>commonTest</code> and run everywhere; engine tests go in <code>androidUnitTest</code> and run on the JVM only.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Testing a repository that hydrates once</h3>
+<p><code>SqlSettingsRepository</code> reads the database exactly once, in <code>init</code>, into <code>MutableStateFlow</code>s. Its flows are <b>not</b> backed by live queries. That single design fact dictates how it must be tested: calling a setter and reading the flow back only proves the in-memory field moved. Proving the value reached <i>disk</i> takes a second repository over the same database — which is exactly what an app restart is.</p>
+<p class="file-label">SqlSettingsRepositoryTest.kt — a second instance is the restart</p>
+<pre><code><span class="line"><span class="kw">val</span> db = <span class="fn">createTestDatabase</span>()</span>
+<span class="line"><span class="kw">val</span> first = <span class="fn">SqlSettingsRepository</span>(db)</span>
+<span class="line">first.<span class="fn">setDefaultAction</span>(<span class="tp">DefaultAction</span>.ASK)</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// A fresh instance re-runs init, re-reading from the same database</span></span>
+<span class="line"><span class="fn">assertEquals</span>(<span class="tp">DefaultAction</span>.ASK, <span class="fn">SqlSettingsRepository</span>(db).defaultAction.<span class="fn">first</span>())</span></code></pre>
+<p>The same structure makes a subtler property testable: two live instances over one database <i>disagree</i>, because neither observes the other's writes. That isn't a bug — it's safe only because <code>SharedModule</code> binds the repository as <code>single&lt;SettingsRepository&gt;</code>. A test asserting the disagreement documents the constraint, so a future change to <code>factory { }</code> fails loudly instead of producing a screen showing stale settings.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Proving a sealed type satisfies a CHECK constraint</h3>
+<p>Module 16 added <code>REPEATED_ALLOWED</code> to the <code>CallLogEntry.rule_type</code> CHECK constraint via a rebuild-table migration. That constraint and the <code>RuleDecision</code> sealed hierarchy are two lists that must stay in lockstep — and nothing enforced it. A new decision variant whose <code>ruleTypeTag</code> isn't in the constraint compiles cleanly and throws at runtime, on a real user's phone, at the moment a call is being logged.</p>
+<p class="file-label">SqlCallLogRepositoryTest.kt — one test covers the whole hierarchy</p>
+<pre><code><span class="line"><span class="kw">val</span> decisions = <span class="fn">listOf</span>(</span>
+<span class="line">    <span class="tp">RuleDecision</span>.<span class="fn">Allowlist</span>(ruleId = 1, label = <span class="st">"Mom"</span>) to (<span class="st">"ALLOWED"</span> to <span class="st">"CONTACTS"</span>),</span>
+<span class="line">    <span class="tp">RuleDecision</span>.DefaultBlock to (<span class="st">"BLOCKED"</span> to <span class="kw">null</span>),</span>
+<span class="line">    <span class="tp">RuleDecision</span>.PendingReview to (<span class="st">"ALLOWED"</span> to <span class="st">"REVIEW"</span>),</span>
+<span class="line">    <span class="cm">// ...all 11 variants...</span></span>
+<span class="line">)</span>
+<span class="line">decisions.<span class="fn">forEachIndexed</span> { index, (decision, _) -></span>
+<span class="line">    repo.<span class="fn">logCall</span>(<span class="st">"+3460000000$index"</span>, now + index, decision)  <span class="cm">// throws if CHECK rejects the tag</span></span>
+<span class="line">}</span></code></pre>
+<p>The insert itself is the assertion — a tag outside the constraint fails the statement. The explicit <code>assertEquals</code> on action and rule type then pins the mapping, so a decision silently switching from <code>BLOCKED</code> to <code>ALLOWED</code> is caught too.</p>
+
+<div class="callout"><h3>Case Study: The Chart That Never Said "Today"</h3>
+<p>Writing an assertion for <code>blockedByDay()</code> meant reading it closely enough to predict its output — and the prediction didn't match the label. The old implementation walked forward from <code>now - daysBack</code> in 24-hour steps:</p>
+<pre><code><span class="line"><span class="kw">val</span> cutoff = now - daysBack * dayMillis</span>
+<span class="line">(0 until daysBack).<span class="fn">map</span> { dayOffset -></span>
+<span class="line">    <span class="kw">val</span> dayStart = cutoff + dayOffset * dayMillis   <span class="cm">// newest bucket = [now-1d, now)</span></span>
+<span class="line">    <span class="kw">val</span> epochDay = dayStart / dayMillis             <span class="cm">// ...whose START is one day ago</span></span>
+<span class="line">    <span class="fn">DayStat</span>(dateLabel = <span class="fn">dayLabel</span>(epochDay), <span class="cm">/* ... */</span>)   <span class="cm">// ...so the label is "Yesterday"</span></span>
+<span class="line">}.<span class="fn">reversed</span>()</span></code></pre>
+<p>The newest bucket held every blocked call from the last 24 hours — including one placed five seconds ago — but its label came from the bucket's start, one epoch-day back. <b>No bucket was ever labelled "Today".</b> <code>StatsViewModel</code> calls <code>blockedByDay(7)</code> and <code>StatsScreen</code> renders <code>dateLabel</code> verbatim, so every install shipped a Stats screen filing today's blocks under "Yesterday".</p>
+<p>The fix anchors buckets to UTC midnight — <b>the same boundary <code>countBlockedCallsToday</code> was already using</b>:</p>
+<pre><code><span class="line"><span class="kw">val</span> todayStart = (<span class="fn">currentTimeMillis</span>() / dayMillis) * dayMillis</span>
+<span class="line">(0 until daysBack).<span class="fn">map</span> { dayOffset -></span>
+<span class="line">    <span class="kw">val</span> dayStart = todayStart - dayOffset * dayMillis</span>
+<span class="line">    <span class="cm">// dayLabel() now yields "Today" for dayOffset 0, and no .reversed() is needed</span></span>
+<span class="line">}</span></code></pre>
+<p>That alignment buys an invariant the code could not previously satisfy: the chart's first bar and the "blocked today" stat now derive from one day boundary, so they cannot disagree. The new test asserts precisely that — <code>assertEquals(repo.blockedStats().today, repo.blockedByDay(7).first().count)</code>. <b>Note the sequencing:</b> the test suite landed first, pinning the wrong behaviour with a comment naming it as suspect, and the fix landed in the next commit updating those assertions. Enshrining a bug in a green test without saying so is how bugs become "intended behaviour"; documenting it and fixing it next is how it stays a bug.</p>
+<p><b>A second finding, deliberately not fixed:</b> clearing the auto-responder script writes <code>""</code>, but <code>KeyValueSettingsStore.readString</code> treats a stored blank as "unset" and returns the default — so a restart resurrects the default greeting. In memory the field is empty; after restart it isn't. That one stayed documented rather than fixed, because <code>readString</code> is shared by three repositories and changing its fallback semantics is a wider decision than a one-line patch.</p>
+</div>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Fakes are for collaborators you aren't testing; a persistence class has no collaborator left to fake, so it needs a real engine</li><li><code>JdbcSqliteDriver</code> is JVM-only — database tests live in <code>androidUnitTest</code> and knowingly skip the iOS run</li><li>A repository that hydrates in <code>init</code> can only be proven durable by constructing a second instance over the same database</li><li>Two live instances disagreeing is a DI constraint worth asserting, not just a quirk to remember</li><li>Round-trip every branch of a sealed type through the database when a CHECK constraint mirrors it — the insert is the assertion</li><li>When a new test disagrees with shipped behaviour, pin it with a comment naming the suspicion, then fix it in the next commit — never silently</li><li>Not every finding has to be fixed in the same pass; a shared primitive's semantics deserve their own decision</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. This app's ViewModel tests use fakes, and Module 12 recommended exactly that. Why do the <code>Sql*</code> repository tests use a real SQLite database instead?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">A fake stands in for a collaborator you are not testing — correct for a ViewModel, which shouldn't need SQLite to prove it maps data into a UiState. For a persistence class, the persistence IS the thing under test, and the behaviour that matters lives in the engine: CHECK constraints, strftime date arithmetic, INSERT OR REPLACE semantics, and what a value looks like when read back. A fake reproduces none of that.</div></div>
+<div class="quiz-item"><p>2. <code>SqlSettingsRepository.setBlockingEnabled(false)</code> followed by <code>assertFalse(repo.blockingEnabled.first())</code> passes. Why is that not enough to prove the setting persists?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Because the setter writes to the database AND to an in-memory MutableStateFlow, and the flow is what you just read. The assertion passes even if the database write is broken. Since the repository hydrates only once, in init, the only way to prove the value reached disk is to construct a second SqlSettingsRepository over the same database — that second init is the app restart.</div></div>
+<div class="quiz-item"><p>3. What made the <code>blockedByDay()</code> labelling bug survive so long, and what surfaced it?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">It produced a plausible-looking chart — seven rows with counts — so nothing looked broken, and the repository had no test at all. It surfaced because writing an assertion requires predicting the output exactly: the newest bucket spans [now-1d, now) and holds calls from the last 24 hours, but its label is derived from the bucket's start, one epoch-day earlier, so it read "Yesterday" and no bucket was ever labelled "Today".</div></div>
+<div class="quiz-item"><p>4. The first commit added a test asserting the buggy label <code>"Yesterday"</code>. Why write a test that asserts wrong behaviour instead of just fixing it first?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">To keep the two changes reviewable in isolation: the test commit proves the suite catches the behaviour, and the fix commit shows the assertions flipping, which is the diff that demonstrates the bug was real. The essential part is the comment naming the assertion as suspect — a green test over wrong behaviour with no comment is how a bug quietly becomes documented intent. The auto-responder blank-string finding stayed in that pinned-and-documented state on purpose, since fixing it means changing a primitive three repositories share.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>18 Modules, One Production App</h3>
+<div class="callout"><h3>19 Modules, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -2082,7 +2165,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">State management</td><td style="padding:8px">MVVM + MVI, sealed Intents, effect channels</td><td style="padding:8px">17</td></tr>
-<tr><td style="padding:8px">Test doubles</td><td style="padding:8px">Shared fakes, internal visibility across source sets</td><td style="padding:8px">18</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Test doubles</td><td style="padding:8px">Shared fakes, internal visibility across source sets</td><td style="padding:8px">18</td></tr>
+<tr><td style="padding:8px">Persistence testing</td><td style="padding:8px">In-memory SQLite, restart hydration, CHECK round-trips</td><td style="padding:8px">19</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2093,8 +2177,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>176 automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-04 — added Module 18 (test doubles at scale: consolidating duplicated fakes, <code>internal</code> visibility across KMP test source sets, the top-level-private redeclaration trap, and the case study of a test that only tested its own fake).</p>
+<p>213 automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-04 — added Module 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>
@@ -2135,7 +2219,7 @@ function markVisited(n){
 }
 function updateProgress(){
   var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  var total=18,pct=Math.round(visited.length/total*100);
+  var total=19,pct=Math.round(visited.length/total*100);
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
   var links=document.querySelectorAll('#toc-grid a');
