@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 175+ automated tests pass. Android APK builds. iOS deferred.
+M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 176 automated tests pass. Android APK builds. iOS deferred.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -79,7 +79,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 175+ tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 176 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ```
 
@@ -108,13 +108,14 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 17-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, and (newest) state management — MVVM + MVI done right, including when *not* to force the pattern.
+A complete 18-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), and (newest) test doubles at scale — consolidating duplicated fakes across KMP test source sets.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 64 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 68 quiz questions included.
 
 ## Recent Fixes
 
 **2026-08-04:**
+- Consolidated the test suite's three biggest duplicated fakes. `FakeRuleRepository` (2 copies), `FakeSettingsRepository` (5) and `FakeCallLogRepository` (3) now exist once each in `shared/src/commonTest/.../app/testing/`, shared by `commonTest` and `androidUnitTest` alike — 15% of all test source was hand-copied fake bodies, and `RuleRepository`'s 64 members meant every interface change had to be applied to each copy by hand. One side effect worth naming: `SettingsRepositoryTest.kt` turned out to assert nothing about `SqlSettingsRepository` — all five of its tests ran against the fake declared in the same file. It's now `FakeSettingsRepositoryTest.kt` and pins the shared fake's write-through setters, which the ViewModel tests genuinely depend on; the real `SqlSettingsRepository` remains untested, a pre-existing gap that the old filename was hiding. Deliberately left duplicated: the 5-to-10-line `ContactsGateway`/`DefaultDialerGateway` fakes, where a local declaration reads better than an import.
 - **Breaking (pre-release):** the database file was renamed `bloquellamadas.db` → `cortaspam.db` and `rootProject.name` is now `CortaSpam`. A new filename means every device opens a fresh, empty database — existing block lists, rules and call history on dev devices are gone. Done deliberately while there is no public release.
 - Fixed a migration safety net that had never actually run. `./gradlew :shared:verifySqlDelightMigration` failed with `duplicate column name: pattern_id`, and no CI job depended on it, so nothing noticed. Root cause was three-layered: `schemaOutputDirectory` was never configured so schema snapshots went stale at `5.db` while migrations reached `7.sqm`; and, once a correct baseline was rebuilt, the check caught a real bug — `5.sqm` added `pattern_id` via `ALTER TABLE ADD COLUMN`, which SQLite cannot use to attach the `REFERENCES PatternRule(id)` foreign key that `AppDatabase.sq` declares, so upgraded databases and fresh installs genuinely had different schemas.
 - Because the database rename leaves the seven historical migrations with no users, they were squashed into a single baseline snapshot at `shared/src/commonMain/sqldelight/databases/1.db`. `verifySqlDelightMigration` now runs in CI, and was verified to both pass on a matching schema and fail with a precise column diff on a mismatched one.

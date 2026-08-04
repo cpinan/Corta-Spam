@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 175+ pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 176 pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -79,7 +79,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 175+ pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 176 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
 
@@ -108,13 +108,14 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 17 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, y (el más nuevo) gestión de estado — MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón.
+Un curso completo de 18 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), y (el más nuevo) dobles de prueba a escala — cómo consolidar fakes duplicados entre los source sets de prueba de KMP.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 64 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 68 preguntas de evaluación.
 
 ## Cambios recientes
 
 **2026-08-04:**
+- Se consolidaron los tres fakes duplicados más grandes del conjunto de pruebas. `FakeRuleRepository` (2 copias), `FakeSettingsRepository` (5) y `FakeCallLogRepository` (3) ahora existen una sola vez, en `shared/src/commonTest/.../app/testing/`, compartidos tanto por `commonTest` como por `androidUnitTest` — el 15% del código de pruebas eran cuerpos de fakes copiados a mano, y los 64 miembros de `RuleRepository` obligaban a aplicar cada cambio de interfaz a cada copia manualmente. Un efecto secundario que conviene nombrar: `SettingsRepositoryTest.kt` resultó no afirmar nada sobre `SqlSettingsRepository` — sus cinco pruebas corrían contra el fake declarado en el mismo archivo. Ahora es `FakeSettingsRepositoryTest.kt` y fija el comportamiento de escritura directa de los setters del fake compartido, del que sí dependen las pruebas de los ViewModels; el `SqlSettingsRepository` real sigue sin pruebas, una carencia preexistente que el nombre del archivo ocultaba. Se dejaron duplicados a propósito: los fakes de 5 a 10 líneas de `ContactsGateway`/`DefaultDialerGateway`, donde una declaración local se lee mejor que un import.
 - **Cambio incompatible (pre-lanzamiento):** el archivo de base de datos pasó de `bloquellamadas.db` a `cortaspam.db`, y `rootProject.name` ahora es `CortaSpam`. Un nombre de archivo nuevo significa que cada dispositivo abre una base de datos vacía — las listas de bloqueo, reglas e historial de llamadas existentes en dispositivos de desarrollo se pierden. Se hizo a propósito mientras no hay lanzamiento público.
 - Se arregló una red de seguridad de migraciones que nunca había llegado a ejecutarse. `./gradlew :shared:verifySqlDelightMigration` fallaba con `duplicate column name: pattern_id`, y ningún job de CI dependía de esa tarea, así que nadie lo notó. La causa raíz tenía tres capas: nunca se configuró `schemaOutputDirectory`, así que los snapshots del esquema se quedaron estancados en `5.db` mientras las migraciones llegaban a `7.sqm`; y, una vez reconstruida una línea base correcta, la verificación detectó un error real — `5.sqm` añadía `pattern_id` con `ALTER TABLE ADD COLUMN`, sentencia con la que SQLite no puede adjuntar la clave foránea `REFERENCES PatternRule(id)` que declara `AppDatabase.sq`, de modo que las bases de datos actualizadas y las instalaciones nuevas tenían esquemas distintos.
 - Como el cambio de nombre de la base de datos deja las siete migraciones históricas sin usuarios, se compactaron en una única línea base en `shared/src/commonMain/sqldelight/databases/1.db`. `verifySqlDelightMigration` ahora corre en CI, y se comprobó que pasa con un esquema coherente y falla con un diff preciso de columnas cuando no lo es.

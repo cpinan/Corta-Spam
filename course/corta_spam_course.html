@@ -203,7 +203,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <!-- Progress -->
 <div class="progress-wrap">
-  <div class="progress-label">Progress: <span id="progress-text">0 / 17 modules</span></div>
+  <div class="progress-label">Progress: <span id="progress-text">0 / 18 modules</span></div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
@@ -1975,11 +1975,92 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </section>
 
 <!-- ================================================================ -->
+<!-- MODULE 18 -->
+<!-- ================================================================ -->
+<section class="module" id="m18">
+<h2>Module 18: Test Doubles at Scale — One Fake per Interface</h2>
+<p>Module 12 chose hand-written fakes over MockK, for a good reason: MockK doesn't run on Kotlin/Native, and this project's tests have to pass on both Android and the iOS simulator. That decision was right, and it has a bill that arrives later. By the time this app had 176 tests, <b>470 of its 3061 test source lines — 15% — were <code>Fake*</code> class bodies</b>, and three of those fakes existed in two, three, and four near-identical copies. This module is the cleanup: what to consolidate, what to deliberately leave duplicated, and the two surprises that fell out of doing it.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Decide which test doubles are worth consolidating and which are cheaper left duplicated</li><li>Place a shared fake so both <code>commonTest</code> and <code>androidUnitTest</code> can use it, and know why <code>internal</code> works there</li><li>Explain the Kotlin "private top-level class" redeclaration trap that duplicate fakes hit in KMP test source sets</li><li>Design one fake that satisfies call sites which previously needed different fakes, without silently changing what a test asserts</li><li>Recognize a test that only exercises its own fake and asserts nothing about production code</li></ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Duplication in tests is real duplication — with one exception</h3>
+<p>The usual defense of copy-pasted test helpers is that tests should be readable in isolation. That holds for small doubles. It stops holding when the interface is big: <code>RuleRepository</code> has 64 members, so each copy of <code>FakeRuleRepository</code> was ~115 lines of <code>override fun ... {}</code>, and adding one method to the interface meant editing both copies to keep the build green. The measured split before this pass:</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+<tr style="border-bottom:2px solid var(--accent)"><th style="text-align:left;padding:8px">Fake</th><th style="text-align:left;padding:8px">Copies</th><th style="text-align:left;padding:8px">Lines</th><th style="text-align:left;padding:8px">Verdict</th></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>FakeRuleRepository</code></td><td style="padding:8px">2</td><td style="padding:8px">229</td><td style="padding:8px">Consolidate</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>FakeSettingsRepository</code></td><td style="padding:8px">5</td><td style="padding:8px">104</td><td style="padding:8px">Consolidate</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>FakeCallLogRepository</code></td><td style="padding:8px">3</td><td style="padding:8px">76</td><td style="padding:8px">Consolidate</td></tr>
+<tr><td style="padding:8px"><code>FakeContactsGateway</code>, <code>FakeGateway</code></td><td style="padding:8px">3 + 2</td><td style="padding:8px">5–10 each</td><td style="padding:8px">Leave alone</td></tr>
+</table>
+<p>The exception is the bottom row. A <code>ContactsGateway</code> fake is three one-line overrides; a reader scanning the test file sees exactly what it returns without opening another file, and the interface is stable enough that a shared copy would rarely save an edit. <b>Consolidation is justified by edit-point count and body size, not by the mere fact that two files declare the same name.</b></p>
+
+<h3><span class="badge badge-i">Intermediate</span> Where the shared fake goes, and why <code>internal</code> reaches <code>androidUnitTest</code></h3>
+<p>The three shared fakes now live once each in <code>shared/src/commonTest/kotlin/.../app/testing/</code>, declared <code>internal</code>. That single placement covers every consumer: <code>androidUnitTest</code> <code>dependsOn</code> <code>commonTest</code> in the default KMP hierarchy, and <code>internal</code> is module-scoped, so a Robolectric Compose test in <code>androidUnitTest</code> imports the same class a pure-Kotlin ViewModel test in <code>commonTest</code> does. Nothing in <code>build.gradle.kts</code> had to change to make that work.</p>
+<p class="file-label">shared/src/commonTest/kotlin/.../app/testing/FakeSettingsRepository.kt</p>
+<pre><code><span class="line"><span class="kw">internal class</span> <span class="tp">FakeSettingsRepository</span>(</span>
+<span class="line">    <span class="kw">override val</span> blockingEnabled: <span class="tp">MutableStateFlow</span>&lt;Boolean&gt; = <span class="fn">MutableStateFlow</span>(<span class="kw">true</span>),</span>
+<span class="line">    <span class="cm">// ...one constructor parameter per flow, each with a default...</span></span>
+<span class="line">    <span class="kw">override val</span> welcomeShown: <span class="tp">Boolean</span> = <span class="kw">false</span>,</span>
+<span class="line">) : <span class="tp">SettingsRepository</span> {</span>
+<span class="line">    <span class="kw">override suspend fun</span> <span class="fn">setBlockingEnabled</span>(enabled: <span class="tp">Boolean</span>) {</span>
+<span class="line">        blockingEnabled.value = enabled   <span class="cm">// write-through, not a no-op</span></span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p>Every flow being a constructor parameter with a default is what let one class replace five: a test that needs a starting value passes it (<code>FakeSettingsRepository(defaultAction = MutableStateFlow(DefaultAction.BLOCK))</code>), a test that doesn't passes nothing, and a test that wants to observe a write keeps the handle it passed in. Adding a sixth setting to <code>SettingsRepository</code> is now <i>one</i> new parameter and <i>one</i> new setter — the project's own <code>corta-spam-add-setting</code> runbook had listed five test files to edit for that, and now lists one.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> The redeclaration trap that duplicate fakes were quietly working around</h3>
+<p>Two of the duplicated fakes had a naming tell: the <code>androidUnitTest</code> copy was called <code>FakeScreenTestSettingsRepository</code>, not <code>FakeSettingsRepository</code>. That prefix wasn't a style choice. <code>commonTest</code> and <code>androidUnitTest</code> compile into one JVM compilation, and Kotlin's <code>private</code> on a <b>top-level</b> class restricts visibility but does not change the class's binary name — so two files in the same package each declaring <code>private class FakeSettingsRepository</code> fail with a JVM <i>Redeclaration</i> error. The prefix was a workaround for a problem that only existed <i>because</i> the fake was duplicated. One shared class in a <code>testing</code> package removes the workaround and the trap together.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Merging two fakes that disagreed about how state is read</h3>
+<p>The two <code>FakeRuleRepository</code> copies weren't just duplicates — they modeled the repository differently. The BlockList copy was flow-backed (<code>MutableStateFlow</code> fields, because the ViewModel collects <code>blockedNumbers()</code>). The rule-engine copy was snapshot-backed (<code>var blockedEntries</code>, because <code>EvaluateIncomingCallUseCase</code> calls the <code>suspend</code> accessor <code>blockedNumberEntries()</code>). A merged fake has to serve both without making a test seed the same data twice.</p>
+<p class="file-label">FakeRuleRepository.kt — one source of truth, two read paths</p>
+<pre><code><span class="line"><span class="kw">val</span> blockedNumbersFlow = <span class="fn">MutableStateFlow</span>(<span class="fn">emptyList</span>&lt;BlockedNumberEntry&gt;())</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// reactive path -- what BlockListViewModel collects</span></span>
+<span class="line"><span class="kw">override fun</span> <span class="fn">blockedNumbers</span>() = blockedNumbersFlow</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// snapshot path -- what the rule engine calls</span></span>
+<span class="line"><span class="kw">override suspend fun</span> <span class="fn">blockedNumberEntries</span>() = blockedNumbersFlow.value</span>
+<span class="line"></span>
+<span class="line"><span class="cm">// derived, so seeding the flow is enough for the resolver too</span></span>
+<span class="line"><span class="kw">override suspend fun</span> <span class="fn">enabledCountryRules</span>() = countryRulesFlow.value.<span class="fn">filter</span> { it.enabled }</span></code></pre>
+<p>One assignment (<code>blockedNumbersFlow.value = ...</code>) now drives both. Writes stay recorded-not-applied on purpose: <code>addBlockedNumber()</code> appends to an <code>addBlockedNumberCalls</code> list rather than mutating the flow, because the tests that call it assert the ViewModel <i>delegated</i>, and a fake that also applied the write would let a test pass while the real repository call was missing.</p>
+
+<div class="callout"><h3>Case Study: The Test That Only Tested Its Own Fake</h3>
+<p><code>SettingsRepositoryTest.kt</code> — 78 lines, five green tests, sitting in the <code>settings</code> package next to the class it appeared to cover. It never touched <code>SqlSettingsRepository</code>. Every one of its assertions ran against the fake declared at the top of the same file:</p>
+<pre><code><span class="line"><span class="kw">val</span> repo = <span class="fn">FakeSettingsRepository</span>()</span>
+<span class="line">repo.defaultActionFlow.value = <span class="tp">DefaultAction</span>.BLOCK</span>
+<span class="line"><span class="fn">assertEquals</span>(<span class="tp">DefaultAction</span>.BLOCK, repo.defaultAction.value)  <span class="cm">// asserts MutableStateFlow works</span></span></code></pre>
+<p>That is a test of <code>kotlinx.coroutines</code>, wearing the name of a repository test. It was invisible for months precisely because it was green and its filename read like coverage. Consolidation surfaced it: once the fake moved out of the file, what remained had nothing left to test. It became <code>testing/FakeSettingsRepositoryTest.kt</code>, rewritten to drive the shared fake through its <i>setters</i> — which is a genuinely useful test now, because every ViewModel test depends on those setters writing through. <b>The honest part of the outcome: the real <code>SqlSettingsRepository</code> still has no test.</b> The gap didn't appear in this refactor; it was always there, hidden behind a filename. Renaming the file made the gap visible instead of pretending it was covered.</p>
+<p><b>A second trap, avoided by checking first:</b> the four <code>FakeSettingsRepository</code> copies differed in exactly one way — some had setters that mutated the backing flow, others had setters that did nothing. Unifying on write-through would silently break any test asserting that a setter had <i>no</i> effect. Every call site was checked for that assertion before the merge, and none existed. If one had, the merged fake would have needed a constructor flag, not a judgment call — <b>when consolidating doubles, the differences between copies are the specification, so read them before deleting them.</b></p>
+</div>
+
+<div class="takeaways"><h3>Key Takeaways</h3>
+<ul><li>Hand-written fakes are the right call in KMP (MockK has no Kotlin/Native support) — the cost is duplication that must be managed deliberately</li><li>Consolidate a double when the interface is large or the copies are many; leave 5-line doubles local where an import would cost more reading than it saves</li><li><code>internal</code> in <code>commonTest</code> is visible from <code>androidUnitTest</code> via the default <code>dependsOn</code> hierarchy — no Gradle change needed</li><li>Top-level <code>private</code> restricts visibility, not the JVM binary name — duplicate private fakes in one package collide, and name prefixes to dodge that are a duplication smell</li><li>One fake can serve a reactive and a snapshot read path by deriving the snapshot from the flow — seed once, both paths see it</li><li>Differences between copies of a fake encode real assumptions; audit them before unifying, or a test's meaning changes silently</li><li>A test file named after a production class can assert nothing about it — check what the assertions actually reach</li></ul></div>
+
+<details class="quiz"><summary>Check your understanding (4 questions)</summary>
+<div class="quiz-item"><p>1. Three fakes were consolidated but <code>FakeContactsGateway</code> — which had three copies — was deliberately left duplicated. On what basis?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Body size and edit-point cost, not copy count. FakeContactsGateway is three one-line overrides (7-10 lines total), so a reader sees exactly what it returns without opening another file, and ContactsGateway is small and stable enough that a shared copy would rarely save an edit. FakeRuleRepository was worth consolidating because RuleRepository has 64 members: each copy was ~115 lines, and every interface change meant editing every copy.</div></div>
+<div class="quiz-item"><p>2. The <code>androidUnitTest</code> fake used to be named <code>FakeScreenTestSettingsRepository</code>. Why couldn't it just be called <code>FakeSettingsRepository</code> like the <code>commonTest</code> one, given both were declared <code>private</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Because private on a top-level Kotlin class restricts visibility but leaves the binary name unchanged, and androidUnitTest compiles together with commonTest. Two files in the same package each declaring private class FakeSettingsRepository produce a JVM "Redeclaration" error. The prefix was a workaround for a collision that only existed because the fake was duplicated — a single shared internal class in a testing package removes both.</div></div>
+<div class="quiz-item"><p>3. A merged <code>FakeRuleRepository</code> has to serve <code>BlockListViewModel</code> (which collects <code>blockedNumbers(): Flow</code>) and <code>EvaluateIncomingCallUseCase</code> (which calls <code>blockedNumberEntries(): List</code>). How does one fake serve both from a single seed?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">The flow is the single source of truth and the snapshot accessor is derived from it: blockedNumbers() returns blockedNumbersFlow, and blockedNumberEntries() returns blockedNumbersFlow.value. A test assigns blockedNumbersFlow.value once and both the reactive and snapshot read paths see it. The same trick covers enabledCountryRules(), which filters countryRulesFlow.value for enabled entries.</div></div>
+<div class="quiz-item"><p>4. Four copies of <code>FakeSettingsRepository</code> differed only in whether their setters mutated the backing flow or did nothing. What had to be checked before unifying them on write-through setters?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
+<div class="answer">Whether any test asserted that a setter had no effect — e.g. calling setBlockingEnabled(false) and then asserting the flow still read true. If such a test existed, write-through setters would silently change what it means, and the merged fake would need a constructor flag instead. Every call site was checked; none did. The differences between copies of a double are a specification of what the tests assume, so they have to be read before they're deleted.</div></div>
+</details>
+</section>
+
+<!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>17 Modules, One Production App</h3>
+<div class="callout"><h3>18 Modules, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -2000,7 +2081,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
 <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
-<tr><td style="padding:8px">State management</td><td style="padding:8px">MVVM + MVI, sealed Intents, effect channels</td><td style="padding:8px">17</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">State management</td><td style="padding:8px">MVVM + MVI, sealed Intents, effect channels</td><td style="padding:8px">17</td></tr>
+<tr><td style="padding:8px">Test doubles</td><td style="padding:8px">Shared fakes, internal visibility across source sets</td><td style="padding:8px">18</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2011,8 +2093,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>173+ automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-01 — added Module 16 (extending the precedence engine for a repeated-caller bypass: precedence placement, SQLite CHECK-constraint migrations, the missing-snapshot verification-tooling case study, and threading an async decision into already-rendered UI).</p>
+<p>176 automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-04 — added Module 18 (test doubles at scale: consolidating duplicated fakes, <code>internal</code> visibility across KMP test source sets, the top-level-private redeclaration trap, and the case study of a test that only tested its own fake).</p>
 </div></div>
 
 <script>
@@ -2053,7 +2135,7 @@ function markVisited(n){
 }
 function updateProgress(){
   var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  var total=16,pct=Math.round(visited.length/total*100);
+  var total=18,pct=Math.round(visited.length/total*100);
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
   var links=document.querySelectorAll('#toc-grid a');
