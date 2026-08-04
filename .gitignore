@@ -25,9 +25,13 @@ xcuserdata/
 # Node
 node_modules/
 
+# IDE
+.idea/
+
 # Tool configs (local only)
 .codex/
 AGENTS.md
+graphify-out/
 
 # macOS
 .DS_Store
