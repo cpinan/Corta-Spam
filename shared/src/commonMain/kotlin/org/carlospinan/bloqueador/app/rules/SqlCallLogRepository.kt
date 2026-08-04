@@ -76,24 +76,28 @@ class SqlCallLogRepository(
         }
     }
 
+    /**
+     * Blocked-call counts for the last [daysBack] calendar days, newest first.
+     *
+     * Buckets align to UTC midnight — the same boundary [countBlockedCallsToday] uses — so
+     * the first bucket's count always equals [BlockedStats.today]. Anchoring them to `now`
+     * instead would make the newest bucket a rolling 24h window whose label ("Yesterday",
+     * derived from its start) contradicted the calls inside it.
+     */
     override suspend fun blockedByDay(daysBack: Int): List<DayStat> =
         withContext(Dispatchers.Default) {
             val entries = queries.selectAllCallLogEntries().executeAsList()
-            val now = currentTimeMillis()
             val dayMillis = 86_400_000L
-            val cutoff = now - daysBack * dayMillis
-            (0 until daysBack)
-                .map { dayOffset ->
-                    val dayStart = cutoff + dayOffset * dayMillis
-                    val dayEnd = dayStart + dayMillis
-                    val count =
-                        entries.count {
-                            it.action == "BLOCKED" && it.timestamp >= dayStart && it.timestamp < dayEnd
-                        }
-                    val epochDay = dayStart / dayMillis
-                    val label = dayLabel(epochDay)
-                    DayStat(dateLabel = label, count = count, cutoffEpochMillis = dayStart)
-                }.reversed()
+            val todayStart = (currentTimeMillis() / dayMillis) * dayMillis
+            (0 until daysBack).map { dayOffset ->
+                val dayStart = todayStart - dayOffset * dayMillis
+                val dayEnd = dayStart + dayMillis
+                val count =
+                    entries.count {
+                        it.action == "BLOCKED" && it.timestamp >= dayStart && it.timestamp < dayEnd
+                    }
+                DayStat(dateLabel = dayLabel(dayStart / dayMillis), count = count, cutoffEpochMillis = dayStart)
+            }
         }
 
     private fun dayLabel(epochDay: Long): String {

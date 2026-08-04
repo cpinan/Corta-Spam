@@ -163,37 +163,47 @@ class SqlCallLogRepositoryTest {
         }
 
     @Test
-    fun blockedByDayBucketsAreRolling24hWindowsAnchoredAtNow() =
+    fun blockedByDayBucketsAreCalendarDays() =
         runTest {
             val repo = SqlCallLogRepository(createTestDatabase())
-            repo.logCall("+34600000001", now - 1000L, RuleDecision.DefaultBlock)
+            repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
             repo.logCall("+34600000002", now - 2 * dayMillis, RuleDecision.DefaultBlock)
             repo.logCall("+34600000003", now - 30 * dayMillis, RuleDecision.DefaultBlock)
 
             val stats = repo.blockedByDay(daysBack = 7)
 
-            // A call one second old lands in the newest bucket; one two days old, two buckets
-            // back; one 30 days old falls outside the range entirely.
+            // A call made now lands in today's bucket; one two days old, two buckets back;
+            // one 30 days old falls outside the range entirely.
             assertEquals(1, stats[0].count)
             assertEquals(1, stats[2].count)
             assertEquals(2, stats.sumOf { it.count })
         }
 
     @Test
-    fun blockedByDayLabelsTheNewestBucketYesterday() =
+    fun blockedByDayLabelsTheNewestBucketToday() =
         runTest {
             val repo = SqlCallLogRepository(createTestDatabase())
-            repo.logCall("+34600000001", now - 1000L, RuleDecision.DefaultBlock)
+            repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
+            repo.logCall("+34600000002", now - dayMillis, RuleDecision.DefaultBlock)
 
             val stats = repo.blockedByDay(daysBack = 7)
 
-            // Documents current behaviour, which reads as a labelling bug: buckets are
-            // rolling 24h windows starting at now-7d, so the newest one spans [now-1d, now)
-            // and holds calls from the last 24 hours -- including one a second old -- yet
-            // its label is derived from its *start*, making it "Yesterday". No bucket is
-            // ever labelled "Today". StatsScreen renders these labels verbatim.
-            assertEquals("Yesterday", stats.first().dateLabel)
-            assertEquals(1, stats.first().count)
-            assertTrue(stats.none { it.dateLabel == "Today" })
+            assertEquals("Today", stats[0].dateLabel)
+            assertEquals(1, stats[0].count)
+            assertEquals("Yesterday", stats[1].dateLabel)
+            assertEquals(1, stats[1].count)
+        }
+
+    @Test
+    fun todaysBucketAgreesWithBlockedStatsToday() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase())
+            repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
+            repo.logCall("+34600000002", now, RuleDecision.DefaultBlock)
+            repo.logCall("+34600000003", now - dayMillis, RuleDecision.DefaultBlock)
+
+            // Both align to UTC midnight, so the chart's first bar and the "blocked today"
+            // stat can never disagree. Anchoring buckets at `now` used to break this.
+            assertEquals(repo.blockedStats().today, repo.blockedByDay(daysBack = 7).first().count)
         }
 }
