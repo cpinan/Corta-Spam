@@ -20,12 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import bloqueallamadas.shared.generated.resources.Res
-import bloqueallamadas.shared.generated.resources.about_open_source
-import bloqueallamadas.shared.generated.resources.ic_brand_app
-import bloqueallamadas.shared.generated.resources.welcome_get_started
-import bloqueallamadas.shared.generated.resources.welcome_subtitle
-import bloqueallamadas.shared.generated.resources.welcome_title
+import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.about_open_source
+import cortaspam.shared.generated.resources.ic_brand_app
+import cortaspam.shared.generated.resources.welcome_get_started
+import cortaspam.shared.generated.resources.welcome_subtitle
+import cortaspam.shared.generated.resources.welcome_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 

@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 class AndroidDriverFactory(
     private val context: Context,
 ) : DriverFactory {
-    override fun createDriver(): SqlDriver = AndroidSqliteDriver(AppDatabase.Schema, context, "bloquellamadas.db")
+    override fun createDriver(): SqlDriver = AndroidSqliteDriver(AppDatabase.Schema, context, "cortaspam.db")
 
     override val databaseDispatcher: CoroutineDispatcher = Dispatchers.IO
 }

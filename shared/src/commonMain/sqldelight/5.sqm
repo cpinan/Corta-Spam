@@ -1,1 +1,0 @@
-ALTER TABLE ActionRule ADD COLUMN pattern_id INTEGER;

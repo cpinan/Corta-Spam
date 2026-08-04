@@ -95,11 +95,20 @@ android {
     }
 }
 
+compose.resources {
+    // Pinned deliberately. Compose Multiplatform otherwise derives this package from
+    // rootProject.name, so renaming the project silently breaks every `Res` import.
+    packageOfResClass = "cortaspam.shared.generated.resources"
+}
+
 sqldelight {
     databases {
         create("AppDatabase") {
             packageName.set("org.carlospinan.bloqueador.app.db")
             verifyMigrations.set(true)
+            // Versioned schema snapshots. Without a baseline here, verifyMigrations replays
+            // every .sqm on top of the *current* .sq and fails on already-applied columns.
+            schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
         }
     }
 }

@@ -8,19 +8,22 @@ metadata:
 
 # SQLite CHECK-constraint migration — Corta Spam
 
-`CallLogEntry.rule_type` (and possibly other columns) has a `CHECK (rule_type IN (...))` constraint in `shared/src/commonMain/sqldelight/org/carlospinan/bloqueador/app/db/AppDatabase.sq`. SQLite has no `ALTER TABLE ... ALTER CONSTRAINT` — the only way to widen a CHECK is the rebuild-table pattern. This project has done this twice already (`4.sqm` added `SCHEDULE`, `6.sqm` added `REVIEW`, `7.sqm` added `REPEATED_ALLOWED`) — follow the same shape.
+`CallLogEntry.rule_type` (and possibly other columns) has a `CHECK (rule_type IN (...))` constraint in `shared/src/commonMain/sqldelight/org/carlospinan/bloqueador/app/db/AppDatabase.sq`. SQLite has no `ALTER TABLE ... ALTER CONSTRAINT` — the only way to widen a CHECK is the rebuild-table pattern shown below.
 
 ## 1. Find the next migration number
 
 ```
 ls shared/src/commonMain/sqldelight/*.sqm
+ls shared/src/commonMain/sqldelight/databases/
 ```
 
-Next file is `(highest + 1).sqm`, e.g. if `7.sqm` is latest, add `8.sqm`.
+`N.sqm` migrates schema version **N → N+1**, and `databases/N.db` is the snapshot of version N.
+
+Migration history was squashed when the database file was renamed to `cortaspam.db` pre-release: the only artifact is the baseline `databases/1.db` and there are currently **no** `.sqm` files. So the next migration to add is `1.sqm` (v1 → v2), then `2.sqm`, and so on.
 
 ## 2. Write the migration file
 
-`shared/src/commonMain/sqldelight/N.sqm`, following the exact shape of `6.sqm`/`7.sqm`:
+`shared/src/commonMain/sqldelight/N.sqm`, using this shape:
 
 ```sql
 CREATE TABLE CallLogEntry_new (
@@ -42,9 +45,18 @@ Copy the *actual current full column list* from `AppDatabase.sq`'s `CREATE TABLE
 
 `shared/src/commonMain/sqldelight/org/carlospinan/bloqueador/app/db/AppDatabase.sq` — update the same `CHECK (rule_type IN (...))` list in the live `CREATE TABLE CallLogEntry` statement. **Required**, not optional: `shared/build.gradle.kts` has `verifyMigrations.set(true)`, which fails the build if the migration chain's end state and the base schema disagree.
 
-## 4. Known gap in this project — don't let it block you, but don't make it worse silently
+## 4. Run the migration check — it is real now, and it gates CI
 
-There is a *separate* SQLDelight verification task, `verifyCommonMainAppDatabaseMigration`, that replays `.sqm` files on top of a `1.db` snapshot and diffs against `N.db` snapshots — `6.db` and `7.db` are currently missing (only `1.db`-`5.db` exist), so that specific task already fails with `duplicate column name`. It's confirmed `SKIPPED` in the normal build/test graph so it won't block you, but adding `N.sqm` without an `N.db` snapshot means the gap now spans one more version. Either regenerate the missing `.db` snapshots (build a fresh sqlite db via the intended `CREATE TABLE` statements, then `PRAGMA user_version = N;`) or explicitly flag in your summary that the gap grew — don't silently ignore it a third time.
+```
+./gradlew :shared:verifySqlDelightMigration
+```
+
+This replays every `.sqm` on top of `databases/1.db` and diffs the result against `AppDatabase.sq`. It is wired into the `jvm-android` job in `.github/workflows/ci.yml`, so a mismatch fails the build. Run it locally before pushing — it takes about a second.
+
+Two rules that matter:
+
+- **Never use `ALTER TABLE ... ADD COLUMN` for a column that carries a `REFERENCES` clause.** SQLite cannot add a foreign key that way. The column will exist but the FK will not, so upgraded databases silently diverge from fresh installs. Use the rebuild-table pattern above for those too. (This exact bug shipped once in the old `5.sqm` and went unnoticed because the check was not in CI.)
+- **Do not regenerate the baseline to make a failure go away.** `./gradlew :shared:generateCommonMainAppDatabaseSchema` rewrites `databases/1.db` from the *current* `.sq`, which makes any diff vanish without fixing anything. Only regenerate when deliberately cutting a new squashed baseline.
 
 ## 5. Add the RuleDecision variant (if this migration is backing a new decision type)
 

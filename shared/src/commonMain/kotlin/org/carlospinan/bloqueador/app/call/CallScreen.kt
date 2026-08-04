@@ -21,16 +21,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import bloqueallamadas.shared.generated.resources.Res
-import bloqueallamadas.shared.generated.resources.action_answer
-import bloqueallamadas.shared.generated.resources.action_decline
-import bloqueallamadas.shared.generated.resources.action_hang_up
-import bloqueallamadas.shared.generated.resources.call_repeated_caller_hint
-import bloqueallamadas.shared.generated.resources.call_status_active
-import bloqueallamadas.shared.generated.resources.call_status_dialing
-import bloqueallamadas.shared.generated.resources.call_status_ringing
-import bloqueallamadas.shared.generated.resources.call_unknown_number
-import bloqueallamadas.shared.generated.resources.ic_brand_app
+import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.action_answer
+import cortaspam.shared.generated.resources.action_decline
+import cortaspam.shared.generated.resources.action_hang_up
+import cortaspam.shared.generated.resources.call_repeated_caller_hint
+import cortaspam.shared.generated.resources.call_status_active
+import cortaspam.shared.generated.resources.call_status_dialing
+import cortaspam.shared.generated.resources.call_status_ringing
+import cortaspam.shared.generated.resources.call_unknown_number
+import cortaspam.shared.generated.resources.ic_brand_app
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 

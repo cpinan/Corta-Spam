@@ -79,7 +79,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 159+ tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 176+ tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ```
 
@@ -113,6 +113,12 @@ A complete 17-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 64 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-04:**
+- **Breaking (pre-release):** the database file was renamed `bloquellamadas.db` → `cortaspam.db` and `rootProject.name` is now `CortaSpam`. A new filename means every device opens a fresh, empty database — existing block lists, rules and call history on dev devices are gone. Done deliberately while there is no public release.
+- Fixed a migration safety net that had never actually run. `./gradlew :shared:verifySqlDelightMigration` failed with `duplicate column name: pattern_id`, and no CI job depended on it, so nothing noticed. Root cause was three-layered: `schemaOutputDirectory` was never configured so schema snapshots went stale at `5.db` while migrations reached `7.sqm`; and, once a correct baseline was rebuilt, the check caught a real bug — `5.sqm` added `pattern_id` via `ALTER TABLE ADD COLUMN`, which SQLite cannot use to attach the `REFERENCES PatternRule(id)` foreign key that `AppDatabase.sq` declares, so upgraded databases and fresh installs genuinely had different schemas.
+- Because the database rename leaves the seven historical migrations with no users, they were squashed into a single baseline snapshot at `shared/src/commonMain/sqldelight/databases/1.db`. `verifySqlDelightMigration` now runs in CI, and was verified to both pass on a matching schema and fail with a precise column diff on a mismatched one.
+- Pinned the Compose Multiplatform resources package via `compose.resources { packageOfResClass = ... }`. It was previously derived from `rootProject.name`, so renaming the project broke every `Res.string.*` import across 12 screen files.
 
 **2026-08-02:**
 - Architecture review found the app was consistently MVVM (single `StateFlow<UiState>` per ViewModel, Koin-scoped) but not MVI — no ViewModel had a single typed entry point for user actions, just N public setter methods each. Every ViewModel with at least one dispatchable action now exposes a sealed `Intent` type + one `onIntent()` function; the old public methods are private implementation details now. Read-only ViewModels with nothing external to dispatch (`StatsViewModel`) deliberately did not get one — a one-case sealed class with no caller is ceremony, not MVI.

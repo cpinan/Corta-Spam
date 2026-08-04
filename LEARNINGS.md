@@ -36,7 +36,7 @@ Open-source call blocking app similar to TrueCaller, built with Kotlin Multiplat
 ## Project Structure
 
 ```
-BloqueaLlamadas/
+CortaSpam/
 ├── build.gradle.kts              # Root: plugin declarations, resolution strategy
 ├── settings.gradle.kts           # Module registry (shared + androidApp)
 ├── gradle.properties             # JVM args, AndroidX, native cache
@@ -157,7 +157,7 @@ BloqueaLlamadas/
 | CallLogEntry | Every call with outcome and rule detail |
 | AppSettings | Key-value store for preferences |
 
-5 migration files (1.sqm through 5.sqm) track schema evolution.
+Schema history was squashed to a single baseline snapshot (`src/commonMain/sqldelight/databases/1.db`) when the database file was renamed to `cortaspam.db` pre-release — the rename gives every device a fresh database, so the seven historical `.sqm` files had no one left to migrate. New schema changes add `2.sqm`, `3.sqm`, ... on top of that baseline, and `./gradlew :shared:verifySqlDelightMigration` (wired into CI) replays them against it.
 
 Timestamp handling uses `strftime('%s', 'now')` instead of `unixepoch()` for compatibility with SQLite versions older than 3.38 (Android API < 33).
 

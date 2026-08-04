@@ -30,6 +30,16 @@ Non-optional. `commonMain` code that only ever ran on Android historically compi
 
 Unless the user has explicitly asked for a device/simulator run in *this* turn, stop at compile/test/lint. This project has a standing "do not install until I say it" instruction — code, build, test, lint only. See project memory `user-preferences` if unsure whether that's still in effect.
 
-## 4. Known pre-existing gap — do not treat as your bug
+## 4. If the change touched the SQLDelight schema or migrations
 
-`./gradlew verifyCommonMainAppDatabaseMigration` (or the broader `verifyMigrations` task) currently fails with `duplicate column name` because `shared/src/commonMain/sqldelight/6.db` and `7.db` snapshot files are missing (only `1.db`-`5.db` exist). This task is `SKIPPED` in the normal `build`/`check`/`test`/`ktlintCheck` graph, so it never blocks the sequence above — confirmed via `--dry-run`. Don't silently "fix" this as a drive-by; it's tracked in project memory. If you add a new `N.sqm` migration, either regenerate the missing snapshots or explicitly flag that the gap now spans one more file.
+```
+./gradlew :shared:verifySqlDelightMigration
+```
+
+Replays every `.sqm` on top of the baseline snapshot `shared/src/commonMain/sqldelight/databases/1.db` and diffs against `AppDatabase.sq`. It is **not** in the normal `build`/`check` graph, so step 1 will not catch a schema mismatch — run it explicitly. It is wired into the `jvm-android` CI job, so a mismatch fails the pipeline.
+
+Never make a failure here disappear by regenerating the baseline (`generateCommonMainAppDatabaseSchema` rewrites it from the current `.sq`, hiding any diff). See `corta-spam-sqldelight-check-migration` for the migration rules.
+
+## 5. Renaming the project
+
+`rootProject.name` is not cosmetic. Compose Multiplatform derives the generated resources package from it, so a rename changes `Res` imports across every screen file. The package is now pinned in `shared/build.gradle.kts` via `compose.resources { packageOfResClass = ... }` — keep it pinned, and change that string only alongside a matching import sweep.

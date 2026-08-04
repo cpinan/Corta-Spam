@@ -79,7 +79,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 159+ pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 176+ pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
 
@@ -113,6 +113,12 @@ Un curso completo de 17 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 64 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-04:**
+- **Cambio incompatible (pre-lanzamiento):** el archivo de base de datos pasó de `bloquellamadas.db` a `cortaspam.db`, y `rootProject.name` ahora es `CortaSpam`. Un nombre de archivo nuevo significa que cada dispositivo abre una base de datos vacía — las listas de bloqueo, reglas e historial de llamadas existentes en dispositivos de desarrollo se pierden. Se hizo a propósito mientras no hay lanzamiento público.
+- Se arregló una red de seguridad de migraciones que nunca había llegado a ejecutarse. `./gradlew :shared:verifySqlDelightMigration` fallaba con `duplicate column name: pattern_id`, y ningún job de CI dependía de esa tarea, así que nadie lo notó. La causa raíz tenía tres capas: nunca se configuró `schemaOutputDirectory`, así que los snapshots del esquema se quedaron estancados en `5.db` mientras las migraciones llegaban a `7.sqm`; y, una vez reconstruida una línea base correcta, la verificación detectó un error real — `5.sqm` añadía `pattern_id` con `ALTER TABLE ADD COLUMN`, sentencia con la que SQLite no puede adjuntar la clave foránea `REFERENCES PatternRule(id)` que declara `AppDatabase.sq`, de modo que las bases de datos actualizadas y las instalaciones nuevas tenían esquemas distintos.
+- Como el cambio de nombre de la base de datos deja las siete migraciones históricas sin usuarios, se compactaron en una única línea base en `shared/src/commonMain/sqldelight/databases/1.db`. `verifySqlDelightMigration` ahora corre en CI, y se comprobó que pasa con un esquema coherente y falla con un diff preciso de columnas cuando no lo es.
+- Se fijó el paquete de recursos de Compose Multiplatform con `compose.resources { packageOfResClass = ... }`. Antes se derivaba de `rootProject.name`, así que renombrar el proyecto rompía todos los imports `Res.string.*` en 12 archivos de pantalla.
 
 **2026-08-02:**
 - Una revisión de arquitectura encontró que la app era consistentemente MVVM (un único `StateFlow<UiState>` por ViewModel, con scope en Koin) pero no MVI — ningún ViewModel tenía un único punto de entrada tipado para las acciones del usuario, solo N métodos públicos sueltos. Todo ViewModel con al menos una acción despachable ahora expone un tipo `Intent` sellado + una función `onIntent()`; los antiguos métodos públicos ahora son detalles de implementación privados. Los ViewModels de solo lectura sin nada externo que despachar (`StatsViewModel`) deliberadamente no recibieron uno — una clase sellada de un solo caso sin quien la llame es ceremonia, no MVI.

@@ -1,4 +1,4 @@
-rootProject.name = "BloqueaLlamadas"
+rootProject.name = "CortaSpam"
 
 pluginManagement {
     repositories {

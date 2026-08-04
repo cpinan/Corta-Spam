@@ -16,11 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import bloqueallamadas.shared.generated.resources.Res
-import bloqueallamadas.shared.generated.resources.stats_blocked_label
-import bloqueallamadas.shared.generated.resources.stats_empty
-import bloqueallamadas.shared.generated.resources.stats_loading
-import bloqueallamadas.shared.generated.resources.stats_title
+import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.stats_blocked_label
+import cortaspam.shared.generated.resources.stats_empty
+import cortaspam.shared.generated.resources.stats_loading
+import cortaspam.shared.generated.resources.stats_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.DayStat

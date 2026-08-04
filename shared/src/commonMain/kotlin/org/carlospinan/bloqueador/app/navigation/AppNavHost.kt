@@ -12,11 +12,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import bloqueallamadas.shared.generated.resources.Res
-import bloqueallamadas.shared.generated.resources.privacy_policy_body
-import bloqueallamadas.shared.generated.resources.settings_privacy_title
-import bloqueallamadas.shared.generated.resources.settings_terms_title
-import bloqueallamadas.shared.generated.resources.terms_conditions_body
+import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.privacy_policy_body
+import cortaspam.shared.generated.resources.settings_privacy_title
+import cortaspam.shared.generated.resources.settings_terms_title
+import cortaspam.shared.generated.resources.terms_conditions_body
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.routeSection

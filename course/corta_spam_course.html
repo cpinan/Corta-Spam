@@ -790,9 +790,19 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <p><b>Pattern:</b> each table gets CRUD queries: <code>selectAll</code>, <code>insert</code>, <code>deleteById</code>, <code>toggle</code>. The <code>CallLogEntry</code> table uses <code>CHECK</code> constraints for type safety on the <code>action</code> column.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Migrations & timestamp portability</h3>
-<p>The app has 5 migration files (<code>1.sqm</code> through <code>5.sqm</code>). Each adds columns or tables without breaking existing data:</p>
-<pre><code><span class="line"><span class="cm">-- 1.sqm: initial schema</span></span>
-<span class="line"><span class="kw">ALTER TABLE</span> BlockedNumber <span class="kw">ADD COLUMN</span> label <span class="kw">TEXT</span>;</span></code></pre>
+<p>Schema history lives in two places you probably expect — <code>AppDatabase.sq</code> holds the current <code>CREATE TABLE</code> statements, and numbered <code>.sqm</code> files describe how to bring an older database up to that shape — plus a third that is easy to forget: a <b>snapshot baseline</b> under <code>src/commonMain/sqldelight/databases/</code>, which only exists if you point the build at it:</p>
+<pre><code><span class="line"><span class="cm">// shared/build.gradle.kts</span></span>
+<span class="line">sqldelight {</span>
+<span class="line">    databases {</span>
+<span class="line">        <span class="fn">create</span>(<span class="str">"AppDatabase"</span>) {</span>
+<span class="line">            packageName.<span class="fn">set</span>(<span class="str">"org.carlospinan.bloqueador.app.db"</span>)</span>
+<span class="line">            verifyMigrations.<span class="fn">set</span>(<span class="kw">true</span>)</span>
+<span class="line">            schemaOutputDirectory.<span class="fn">set</span>(<span class="fn">file</span>(<span class="str">"src/commonMain/sqldelight/databases"</span>))</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p><code>verifyMigrations</code> takes the <b>oldest</b> snapshot in that directory, replays every later <code>.sqm</code> on top of it, and diffs the result against <code>AppDatabase.sq</code>. With no baseline it has nothing to replay <i>from</i>, so it builds the database from the current <code>.sq</code> — which already contains every column the migrations were going to add — and then dies on the first <code>ADD COLUMN</code>. A missing <code>databases/</code> directory doesn't disable the check; it makes it fail for a reason that has nothing to do with your migrations.</p>
+<p><b>Squashing while still pre-release:</b> this app renamed its database file (<code>bloquellamadas.db</code> → <code>cortaspam.db</code>) before any public release. A new filename means every device opens a fresh, empty database, so the seven historical <code>.sqm</code> files had zero users left to migrate. They were deleted and the current schema was snapshotted as <code>databases/1.db</code>. Migration history is only worth carrying when somebody is actually still on the old version — otherwise it is untested code that can only cost you.</p>
 <p><b>Critical decision:</b> timestamps use <code>strftime('%s', 'now')</code> instead of <code>unixepoch()</code>. Why? <code>unixepoch()</code> needs SQLite 3.38+ — not available on older Android devices (confirmed crash on API 33 emulator). <code>strftime()</code> has been available since SQLite 3.0.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Repository pattern — interface + SQL impl</h3>
@@ -1822,7 +1832,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <h3><span class="badge badge-i">Intermediate</span> SQLite can't ALTER a CHECK constraint</h3>
 <p><code>CallLogEntry.rule_type</code> is constrained to a fixed list of tags. Adding <code>REPEATED_ALLOWED</code> to that list sounds like <code>ALTER TABLE ... ADD CONSTRAINT</code> — except SQLite has no such statement. The only way to change a <code>CHECK</code> is to rebuild the table:</p>
-<p class="file-label">7.sqm — the same shape as every prior rule_type migration</p>
+<p class="file-label">The rebuild pattern — the shape every rule_type migration used</p>
 <pre><code><span class="line"><span class="kw">CREATE TABLE</span> CallLogEntry_new (</span>
 <span class="line">    ...</span>
 <span class="line">    rule_type <span class="kw">TEXT CHECK</span> (rule_type <span class="kw">IN</span> (<span class="str">'MANUAL'</span>, ..., <span class="str">'REPEATED_ALLOWED'</span>, <span class="kw">NULL</span>))</span>
@@ -1830,11 +1840,18 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line"><span class="kw">INSERT INTO</span> CallLogEntry_new <span class="kw">SELECT</span> ... <span class="kw">FROM</span> CallLogEntry;</span>
 <span class="line"><span class="kw">DROP TABLE</span> CallLogEntry;</span>
 <span class="line"><span class="kw">ALTER TABLE</span> CallLogEntry_new <span class="kw">RENAME TO</span> CallLogEntry;</span></code></pre>
-<p>Create a shadow table with the new constraint, copy every row across, drop the old table, rename the shadow into place. SQLDelight's <code>verifyMigrations</code> build check replays every <code>.sqm</code> file in order against a fresh database and diffs the result against <code>AppDatabase.sq</code>'s <code>CREATE TABLE</code> — if they don't match bit-for-bit, the build fails before a mismatched migration ever ships.</p>
+<p>Create a shadow table with the new constraint, copy every row across, drop the old table, rename the shadow into place. SQLDelight's <code>verifyMigrations</code> build check replays every <code>.sqm</code> file in order on top of the snapshot baseline in <code>databases/</code> and diffs the result against <code>AppDatabase.sq</code>'s <code>CREATE TABLE</code> — if they don't match bit-for-bit, the build fails before a mismatched migration ever ships. Regenerate the snapshot with <code>./gradlew :shared:generateCommonMainAppDatabaseSchema</code> whenever you cut a new baseline.</p>
 
 <div class="callout"><h3>Case Study: A Broken Safety Net Nobody Noticed</h3>
-<p>Running <code>verifyMigrations</code> directly (not through the usual <code>./gradlew test</code>/<code>check</code> chain) surfaced a pre-existing failure — <code>duplicate column name: pattern_id</code> — that traced back to a missing snapshot file (<code>6.db</code>) from a migration added in an earlier session. <code>./gradlew check --dry-run</code> confirmed the task was silently <code>SKIPPED</code> in the normal build graph, meaning this verification had not actually run since that migration landed.</p>
-<p><b>The lesson isn't "the migration was broken"</b> — the real schema and the runtime <code>Schema.migrate()</code> path were both fine, confirmed independently via a fresh-schema DB test. The lesson is that a dev-time safety net can quietly stop running at all, and a green CI history proves nothing about a check that was never wired into the graph it looks like it belongs to. Flag it, don't silently route around it, and don't let it block unrelated work either.</p>
+<p>Running <code>verifyMigrations</code> directly (not through the usual <code>./gradlew test</code>/<code>check</code> chain) surfaced a pre-existing failure — <code>duplicate column name: pattern_id</code>. An early pass blamed a single missing snapshot file and concluded the schema itself was fine. That conclusion was wrong, and it is worth keeping the mistake visible.</p>
+<p><b>What was actually wrong, in three layers:</b></p>
+<ol>
+<li><code>schemaOutputDirectory</code> was never configured, so nothing regenerated the snapshots. The committed ones (<code>1.db</code> through <code>5.db</code>) sat loose in the sqldelight source root and stopped at version 5 while migrations went on to 7.</li>
+<li>Replaying <code>5.sqm</code> onto a snapshot that already carried the column produced the <code>duplicate column name</code> error — a symptom of the stale baseline, not of the migration.</li>
+<li>Once a correct baseline was rebuilt, the check failed again on something real: <code>5.sqm</code> ran <code>ALTER TABLE ActionRule ADD COLUMN pattern_id INTEGER</code>, while <code>AppDatabase.sq</code> declares <code>pattern_id INTEGER REFERENCES PatternRule(id)</code>. SQLite cannot add a foreign key through <code>ALTER TABLE</code>, so an <i>upgraded</i> database and a <i>freshly installed</i> one genuinely had different schemas. The safety net was broken and it was also right.</li>
+</ol>
+<p>On top of all three, <code>ci.yml</code> ran <code>ktlintCheck</code>, <code>assembleDebug</code>, <code>testDebugUnitTest</code> and the iOS test task — none of which depend on <code>verifySqlDelightMigration</code>. The check had never run in CI even once.</p>
+<p><b>The lesson:</b> a dev-time safety net can quietly stop running, and a green CI history proves nothing about a check that was never wired into the graph it looks like it belongs to. The second lesson is sharper — when a check fails and you can't immediately explain it, "the tool is misconfigured" and "the code is broken" are not mutually exclusive. Fix the configuration <i>first</i>, then re-run, because a misconfigured check hides real findings behind fake ones. Here the fix was to configure <code>schemaOutputDirectory</code>, squash the seven now-userless migrations into a single <code>databases/1.db</code> baseline, and add the task to CI so it can never silently stop running again.</p>
 </div>
 
 <h3><span class="badge badge-a">Advanced</span> Threading an async decision into UI that's already on screen</h3>
