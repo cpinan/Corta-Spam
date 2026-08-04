@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 213 automated tests pass. Android APK builds. iOS deferred.
+M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 239 automated tests pass. Android APK builds. iOS deferred.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -79,7 +79,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 213 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 239 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ```
 
@@ -115,6 +115,7 @@ Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any bro
 ## Recent Fixes
 
 **2026-08-04:**
+- Tested the last three untested ViewModels — `SettingsViewModel`, `BackupViewModel`, `AutoResponderViewModel` — taking ViewModel coverage to 8 of 8 and the suite to 239 tests. Each guards something specific: `SettingsViewModel`'s sixth flow rides a second `combine()` chained on the first (the typed overloads stop at five), so there's now an assertion that catches a future setting being dropped; `AutoResponderViewModel` gets a test per validation code, `MISSING_CONSENT` included, since recording a call without a consent line in the greeting is a legal problem rather than a cosmetic one; `BackupViewModel` emits only one-time effects on a rendezvous channel, so both export and import failure paths are covered.
 - Moved all 7 Robolectric screen tests to the v2 `createComposeRule`, clearing the deprecation warnings from Compose UI test 1.11.2. The v2 rule uses `StandardTestDispatcher` rather than `UnconfinedTestDispatcher`, so coroutines queue instead of running immediately — no test here depended on that, so it was an import swap with no synchronization added.
 - Fixed the Stats screen filing today's blocked calls under "Yesterday". `blockedByDay()` built its buckets by stepping forward from `now - daysBack` in 24-hour jumps, so the newest bucket spanned `[now-1d, now)` — it held every call from the last 24 hours, including one placed seconds ago — while its label came from the bucket's *start*, one day earlier. No bucket was ever labelled "Today". Buckets now align to UTC midnight, the same boundary `countBlockedCallsToday` already used, so the chart's first bar and the "blocked today" stat are computed off the same day boundary and can no longer disagree.
 - Gave the persistence layer its first real tests — 36 of them, against an in-memory SQLite engine rather than a fake. Not one `Sql*` repository had a dedicated test before: `SqlSettingsRepository`, `SqlCallLogRepository`, `SqlAutoResponderRepository`, `SqlSpamProviderRepository`, and the `KeyValueSettingsStore` they all share. Coverage includes every setting surviving a restart (a second repository over the same database, since these hydrate once in `init` and never re-read), every `RuleDecision` variant round-tripping through the `CallLogEntry.rule_type` CHECK constraint, and the `strftime`-based stats windows. The labelling bug above is what they caught. A second finding is documented but deliberately unfixed: clearing the auto-responder script persists an empty string, but `readString` treats a stored blank as "unset", so a restart resurrects the default script — `readString` is shared by three repositories, so changing its semantics is a wider decision.

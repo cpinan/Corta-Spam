@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 213 pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 239 pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -79,7 +79,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 213 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 239 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
 
@@ -115,6 +115,7 @@ Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualqui
 ## Cambios recientes
 
 **2026-08-04:**
+- Se probaron los tres ViewModels que faltaban — `SettingsViewModel`, `BackupViewModel`, `AutoResponderViewModel` — llevando la cobertura de ViewModels a 8 de 8 y el conjunto a 239 pruebas. Cada uno protege algo concreto: el sexto flujo de `SettingsViewModel` va en un segundo `combine()` encadenado sobre el primero (las sobrecargas tipadas llegan solo a cinco), así que ahora hay una aserción que detecta si un ajuste futuro se pierde; `AutoResponderViewModel` tiene una prueba por código de validación, incluido `MISSING_CONSENT`, porque grabar una llamada sin una frase de consentimiento en el saludo es un problema legal, no estético; `BackupViewModel` solo emite efectos de una sola vez por un canal rendezvous, por lo que se cubren los caminos de fallo de exportación e importación.
 - Las 7 pruebas de pantalla con Robolectric pasaron al `createComposeRule` v2, eliminando los avisos de obsolescencia de Compose UI test 1.11.2. La regla v2 usa `StandardTestDispatcher` en lugar de `UnconfinedTestDispatcher`, así que las corrutinas se encolan en vez de ejecutarse de inmediato — ninguna prueba dependía de eso, de modo que bastó con cambiar el import, sin añadir sincronización.
 - Se corrigió que la pantalla de Estadísticas archivara las llamadas bloqueadas de hoy bajo "Ayer". `blockedByDay()` construía sus intervalos avanzando desde `now - daysBack` en saltos de 24 horas, así que el más reciente abarcaba `[now-1d, now)` — contenía todas las llamadas de las últimas 24 horas, incluida una hecha hace segundos — mientras que su etiqueta se derivaba del *inicio* del intervalo, un día antes. Ningún intervalo se etiquetaba nunca como "Hoy". Ahora los intervalos se alinean con la medianoche UTC, el mismo límite que ya usaba `countBlockedCallsToday`, de modo que la primera barra del gráfico y el conteo de "bloqueadas hoy" se calculan con el mismo límite de día y ya no pueden discrepar.
 - La capa de persistencia recibió sus primeras pruebas reales — 36, contra un motor SQLite en memoria en lugar de un fake. Antes ningún repositorio `Sql*` tenía pruebas propias: `SqlSettingsRepository`, `SqlCallLogRepository`, `SqlAutoResponderRepository`, `SqlSpamProviderRepository` y el `KeyValueSettingsStore` que todos comparten. Cubren que cada ajuste sobreviva a un reinicio (un segundo repositorio sobre la misma base de datos, ya que estos se hidratan una sola vez en `init` y no vuelven a leer), que cada variante de `RuleDecision` pase por la restricción CHECK de `CallLogEntry.rule_type`, y las ventanas de estadísticas basadas en `strftime`. El error de etiquetado anterior es lo que detectaron. Queda documentado un segundo hallazgo, deliberadamente sin corregir: borrar el guion del auto-respondedor guarda una cadena vacía, pero `readString` interpreta un valor en blanco como "sin definir", así que al reiniciar reaparece el guion por defecto — `readString` lo comparten tres repositorios, de modo que cambiar su semántica es una decisión más amplia.
