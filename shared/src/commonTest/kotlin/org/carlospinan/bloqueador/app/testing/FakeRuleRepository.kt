@@ -45,6 +45,16 @@ internal class FakeRuleRepository : RuleRepository {
     val recordedAttempts = mutableListOf<String>()
     val addBlockedNumberCalls = mutableListOf<Pair<String, String?>>()
 
+    /** Payload [exportAll] returns. */
+    var exportJson: String = "{}"
+
+    /** Result [importAll] returns; the JSON it was handed is recorded in [importedJson]. */
+    var importResult: ImportResult = ImportResult()
+    val importedJson = mutableListOf<String>()
+
+    /** When set, [exportAll] and [importAll] throw it instead — for exercising failure paths. */
+    var backupFailure: Exception? = null
+
     override fun blockedNumbers() = blockedNumbersFlow
 
     override fun allowlistedNumbers() = allowlistedNumbersFlow
@@ -150,7 +160,11 @@ internal class FakeRuleRepository : RuleRepository {
 
     override suspend fun removeScheduleRule(id: Long) {}
 
-    override suspend fun exportAll(): String = "{}"
+    override suspend fun exportAll(): String = backupFailure?.let { throw it } ?: exportJson
 
-    override suspend fun importAll(json: String): ImportResult = ImportResult()
+    override suspend fun importAll(json: String): ImportResult {
+        backupFailure?.let { throw it }
+        importedJson += json
+        return importResult
+    }
 }

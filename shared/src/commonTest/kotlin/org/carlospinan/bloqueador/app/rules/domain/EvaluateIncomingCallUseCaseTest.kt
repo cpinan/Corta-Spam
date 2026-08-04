@@ -8,10 +8,10 @@ import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.settings.DefaultAction
 import org.carlospinan.bloqueador.app.spam.SpamProviderClient
-import org.carlospinan.bloqueador.app.spam.SpamProviderRepository
 import org.carlospinan.bloqueador.app.spam.SpamResult
 import org.carlospinan.bloqueador.app.testing.FakeRuleRepository
 import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
+import org.carlospinan.bloqueador.app.testing.FakeSpamProviderRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -25,14 +25,6 @@ private class FakeContactsGateway(
     override suspend fun contactNames(): Map<String, String> = emptyMap()
 
     override fun hasPermission(): Boolean = granted
-}
-
-private class FakeSpamProviderRepository(
-    enabled: Boolean = false,
-) : SpamProviderRepository {
-    override val enabled = MutableStateFlow(enabled)
-
-    override suspend fun setEnabled(enabled: Boolean) {}
 }
 
 private object NoOpSpamClient : SpamProviderClient {
