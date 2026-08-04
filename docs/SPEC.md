@@ -230,6 +230,8 @@ fun grantedResultMovesToGranted() {
 
 **Naming gotcha:** `androidUnitTest` compiles together with `commonTest` (they share a compilation unit), so a private top-level class with the same simple name in both — e.g. two files each declaring `private class FakeGateway` — fails with a JVM "Redeclaration" error, since top-level `private` in Kotlin restricts *visibility*, not the class's binary name. Give the `androidUnitTest`-side fake a distinct name (this project uses `FakeScreenTestGateway` in `DialerOnboardingScreenTest.kt`).
 
+**Shared repository fakes** sidestep that gotcha entirely: `FakeRuleRepository`, `FakeCallLogRepository`, and `FakeSettingsRepository` live once each in `shared/src/commonTest/kotlin/.../testing/` as `internal` classes, imported by both `commonTest` and `androidUnitTest`. Adding a member to one of those three repository interfaces is a one-file test change. Keep tiny fakes (a 5-line `ContactsGateway`/`DefaultDialerGateway`) local to the test that uses them — a local declaration reads better than an import, and the naming gotcha above is the only cost.
+
 **Android Compose UI tests** that require rendering and visibility assertions (e.g., full onboarding screen flow) live in `shared/src/androidUnitTest` and use Robolectric + `androidx.compose.ui.test.junit4.createComposeRule()` with `@RunWith(AndroidJUnit4::class)` and `@GraphicsMode(GraphicsMode.Mode.NATIVE)`. Run via `./gradlew :shared:testDebugUnitTest` (no emulator needed).
 
 ### 6.6 Lint: ktlint with EditorConfig

@@ -1,8 +1,6 @@
 package org.carlospinan.bloqueador.app.onboarding
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.carlospinan.bloqueador.app.settings.DefaultAction
-import org.carlospinan.bloqueador.app.settings.SettingsRepository
+import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -11,28 +9,6 @@ private class FakeGateway(
     var isDefault: Boolean,
 ) : DefaultDialerGateway {
     override fun isDefaultDialer(): Boolean = isDefault
-}
-
-private class FakeSettingsRepository(
-    override val welcomeShown: Boolean = false,
-) : SettingsRepository {
-    override val blockingEnabled = MutableStateFlow(true)
-    override val autoAllowContacts = MutableStateFlow(true)
-    override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
-    override val notificationsEnabled = MutableStateFlow(true)
-    override val repeatedCallerBypassCount = MutableStateFlow(0)
-
-    override suspend fun setBlockingEnabled(enabled: Boolean) {}
-
-    override suspend fun setAutoAllowContacts(enabled: Boolean) {}
-
-    override suspend fun setDefaultAction(action: DefaultAction) {}
-
-    override suspend fun setNotificationsEnabled(enabled: Boolean) {}
-
-    override suspend fun setRepeatedCallerBypassCount(count: Int) {}
-
-    override suspend fun setWelcomeShown() {}
 }
 
 class DialerOnboardingViewModelTest {

@@ -2,18 +2,14 @@ package org.carlospinan.bloqueador.app.stats
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.carlospinan.bloqueador.app.rules.BlockedStats
-import org.carlospinan.bloqueador.app.rules.CallLogEntryData
-import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.DayStat
-import org.carlospinan.bloqueador.app.rules.RuleDecision
+import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,32 +18,6 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class StatsViewModelTest {
-    private class FakeCallLogRepository(
-        var dailyStats: List<DayStat> = emptyList(),
-    ) : CallLogRepository {
-        override fun allEntries() = MutableStateFlow(emptyList<CallLogEntryData>())
-
-        override fun recentEntries(limit: Int) = MutableStateFlow(emptyList<CallLogEntryData>())
-
-        override suspend fun blockedCountToday(): Int = 0
-
-        override suspend fun blockedCountThisWeek(): Int = 0
-
-        override suspend fun blockedCountThisMonth(): Int = 0
-
-        override suspend fun blockedStats(): BlockedStats = BlockedStats(0, 0, 0)
-
-        override suspend fun blockedByDay(daysBack: Int): List<DayStat> = dailyStats
-
-        override suspend fun logCall(
-            number: String,
-            timestamp: Long,
-            decision: RuleDecision,
-        ) {}
-
-        override suspend fun clearAll() {}
-    }
-
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()

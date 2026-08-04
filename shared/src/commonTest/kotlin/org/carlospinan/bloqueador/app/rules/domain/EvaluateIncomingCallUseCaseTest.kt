@@ -2,141 +2,19 @@ package org.carlospinan.bloqueador.app.rules.domain
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
-import org.carlospinan.bloqueador.app.backup.ImportResult
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
-import org.carlospinan.bloqueador.app.rules.ActionRule
-import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
-import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
-import org.carlospinan.bloqueador.app.rules.PatternRule
-import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RuleDecision
-import org.carlospinan.bloqueador.app.rules.RuleRepository
-import org.carlospinan.bloqueador.app.rules.ScheduleRule
-import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 import org.carlospinan.bloqueador.app.settings.DefaultAction
-import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.carlospinan.bloqueador.app.spam.SpamProviderClient
 import org.carlospinan.bloqueador.app.spam.SpamProviderRepository
 import org.carlospinan.bloqueador.app.spam.SpamResult
+import org.carlospinan.bloqueador.app.testing.FakeRuleRepository
+import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
-private class FakeRuleRepository : RuleRepository {
-    var blockedEntries = emptyList<BlockedNumberEntry>()
-    var allowlistedEntries = emptyList<AllowlistedNumberEntry>()
-    var recentAttemptsForNumber = 0
-    val recordedAttempts = mutableListOf<String>()
-
-    override fun blockedNumbers() = MutableStateFlow(blockedEntries)
-
-    override fun allowlistedNumbers() = MutableStateFlow(allowlistedEntries)
-
-    override fun patternRules() = MutableStateFlow(emptyList<PatternRuleEntry>())
-
-    override fun countryRules() = MutableStateFlow(emptyList<CountryRuleEntry>())
-
-    override fun actionRules() = MutableStateFlow(emptyList<ActionRuleEntry>())
-
-    override fun scheduleRules() = MutableStateFlow(emptyList<ScheduleRuleEntry>())
-
-    override suspend fun blockedNumberEntries() = blockedEntries
-
-    override suspend fun allowlistedNumberEntries() = allowlistedEntries
-
-    override suspend fun enabledPatterns(): List<PatternRule> = emptyList()
-
-    override suspend fun enabledCountryRules(): List<CountryRuleEntry> = emptyList()
-
-    override suspend fun enabledActionRules(): List<ActionRule> = emptyList()
-
-    override suspend fun enabledScheduleRules(): List<ScheduleRule> = emptyList()
-
-    override suspend fun recordCallAttempt(
-        number: String,
-        timestampMillis: Long,
-    ) {
-        recordedAttempts += number
-    }
-
-    override suspend fun countRecentAttempts(
-        number: String,
-        sinceTimestampMillis: Long,
-    ) = recentAttemptsForNumber
-
-    override suspend fun deleteExpiredAttempts(beforeTimestampMillis: Long) {}
-
-    override suspend fun addBlockedNumber(
-        number: String,
-        label: String?,
-    ) {}
-
-    override suspend fun removeBlockedNumber(id: Long) {}
-
-    override suspend fun addAllowlistedNumber(
-        number: String,
-        label: String?,
-    ) {}
-
-    override suspend fun removeAllowlistedNumber(id: Long) {}
-
-    override suspend fun addPatternRule(
-        pattern: String,
-        label: String?,
-    ) {}
-
-    override suspend fun togglePatternRule(
-        id: Long,
-        enabled: Boolean,
-    ) {}
-
-    override suspend fun removePatternRule(id: Long) {}
-
-    override suspend fun addCountryRule(
-        countryCode: String,
-        countryName: String,
-    ) {}
-
-    override suspend fun toggleCountryRule(
-        id: Long,
-        enabled: Boolean,
-    ) {}
-
-    override suspend fun removeCountryRule(id: Long) {}
-
-    override suspend fun addActionRule(
-        label: String?,
-        attempts: Int,
-        windowMinutes: Int,
-        patternId: Long?,
-    ) {}
-
-    override suspend fun toggleActionRule(
-        id: Long,
-        enabled: Boolean,
-    ) {}
-
-    override suspend fun removeActionRule(id: Long) {}
-
-    override suspend fun addScheduleRule(
-        label: String?,
-        startMinute: Int,
-        endMinute: Int,
-    ) {}
-
-    override suspend fun toggleScheduleRule(
-        id: Long,
-        enabled: Boolean,
-    ) {}
-
-    override suspend fun removeScheduleRule(id: Long) {}
-
-    override suspend fun exportAll() = "{}"
-
-    override suspend fun importAll(json: String) = ImportResult()
-}
 
 private class FakeContactsGateway(
     private val granted: Boolean = false,
@@ -147,28 +25,6 @@ private class FakeContactsGateway(
     override suspend fun contactNames(): Map<String, String> = emptyMap()
 
     override fun hasPermission(): Boolean = granted
-}
-
-private class FakeSettingsRepository(
-    override val blockingEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
-    override val autoAllowContacts: MutableStateFlow<Boolean> = MutableStateFlow(false),
-    override val defaultAction: MutableStateFlow<DefaultAction> = MutableStateFlow(DefaultAction.ALLOW),
-    override val notificationsEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
-    override val repeatedCallerBypassCount: MutableStateFlow<Int> = MutableStateFlow(0),
-) : SettingsRepository {
-    override val welcomeShown = true
-
-    override suspend fun setBlockingEnabled(enabled: Boolean) {}
-
-    override suspend fun setAutoAllowContacts(enabled: Boolean) {}
-
-    override suspend fun setDefaultAction(action: DefaultAction) {}
-
-    override suspend fun setNotificationsEnabled(enabled: Boolean) {}
-
-    override suspend fun setRepeatedCallerBypassCount(count: Int) {}
-
-    override suspend fun setWelcomeShown() {}
 }
 
 private class FakeSpamProviderRepository(
@@ -189,7 +45,7 @@ class EvaluateIncomingCallUseCaseTest {
         runTest {
             val ruleRepository =
                 FakeRuleRepository().apply {
-                    blockedEntries = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
+                    blockedNumbersFlow.value = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
                 }
             val useCase =
                 EvaluateIncomingCallUseCase(
@@ -210,7 +66,7 @@ class EvaluateIncomingCallUseCaseTest {
         runTest {
             val ruleRepository =
                 FakeRuleRepository().apply {
-                    blockedEntries = listOf(BlockedNumberEntry(7, "+34600123456", "Spam caller", 0))
+                    blockedNumbersFlow.value = listOf(BlockedNumberEntry(7, "+34600123456", "Spam caller", 0))
                 }
             val useCase =
                 EvaluateIncomingCallUseCase(
@@ -233,7 +89,7 @@ class EvaluateIncomingCallUseCaseTest {
         runTest {
             val ruleRepository =
                 FakeRuleRepository().apply {
-                    allowlistedEntries = listOf(AllowlistedNumberEntry(3, "+34600123456", "Mom's new number", 0))
+                    allowlistedNumbersFlow.value = listOf(AllowlistedNumberEntry(3, "+34600123456", "Mom's new number", 0))
                 }
             val useCase =
                 EvaluateIncomingCallUseCase(

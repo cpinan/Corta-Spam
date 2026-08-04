@@ -2,7 +2,6 @@ package org.carlospinan.bloqueador.app.home
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -10,12 +9,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.carlospinan.bloqueador.app.rules.BlockedStats
-import org.carlospinan.bloqueador.app.rules.CallLogEntryData
-import org.carlospinan.bloqueador.app.rules.CallLogRepository
-import org.carlospinan.bloqueador.app.rules.DayStat
-import org.carlospinan.bloqueador.app.rules.RuleDecision
-import org.carlospinan.bloqueador.app.settings.DefaultAction
-import org.carlospinan.bloqueador.app.settings.SettingsRepository
+import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
+import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,63 +19,6 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
-    private class FakeCallLogRepository(
-        var stats: BlockedStats = BlockedStats(0, 0, 0),
-    ) : CallLogRepository {
-        override fun allEntries() = MutableStateFlow(emptyList<CallLogEntryData>())
-
-        override fun recentEntries(limit: Int) = MutableStateFlow(emptyList<CallLogEntryData>())
-
-        override suspend fun blockedCountToday(): Int = stats.today
-
-        override suspend fun blockedCountThisWeek(): Int = stats.thisWeek
-
-        override suspend fun blockedCountThisMonth(): Int = stats.thisMonth
-
-        override suspend fun blockedStats(): BlockedStats = stats
-
-        override suspend fun blockedByDay(daysBack: Int): List<DayStat> = emptyList()
-
-        override suspend fun logCall(
-            number: String,
-            timestamp: Long,
-            decision: RuleDecision,
-        ) {}
-
-        override suspend fun clearAll() {}
-    }
-
-    private class FakeSettingsRepository(
-        private val blockingEnabledFlow: MutableStateFlow<Boolean> =
-            MutableStateFlow(true),
-    ) : SettingsRepository {
-        override val blockingEnabled = blockingEnabledFlow
-        override val autoAllowContacts = MutableStateFlow(false)
-        override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
-        override val notificationsEnabled = MutableStateFlow(true)
-        override val repeatedCallerBypassCount = MutableStateFlow(0)
-
-        override suspend fun setBlockingEnabled(enabled: Boolean) {
-            blockingEnabledFlow.value = enabled
-        }
-
-        override suspend fun setAutoAllowContacts(enabled: Boolean) {}
-
-        override suspend fun setDefaultAction(action: DefaultAction) {}
-
-        override suspend fun setNotificationsEnabled(enabled: Boolean) {
-            notificationsEnabled.value = enabled
-        }
-
-        override suspend fun setRepeatedCallerBypassCount(count: Int) {
-            repeatedCallerBypassCount.value = count
-        }
-
-        override val welcomeShown: Boolean = true
-
-        override suspend fun setWelcomeShown() {}
-    }
-
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()

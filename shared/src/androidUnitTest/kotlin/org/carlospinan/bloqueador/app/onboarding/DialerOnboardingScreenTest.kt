@@ -4,9 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.carlospinan.bloqueador.app.settings.DefaultAction
-import org.carlospinan.bloqueador.app.settings.SettingsRepository
+import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,27 +17,6 @@ private class FakeScreenTestGateway(
     override fun isDefaultDialer(): Boolean = isDefault
 }
 
-private class FakeScreenTestSettingsRepository : SettingsRepository {
-    override val blockingEnabled = MutableStateFlow(true)
-    override val autoAllowContacts = MutableStateFlow(true)
-    override val defaultAction = MutableStateFlow(DefaultAction.ALLOW)
-    override val notificationsEnabled = MutableStateFlow(true)
-    override val repeatedCallerBypassCount = MutableStateFlow(0)
-    override val welcomeShown = false
-
-    override suspend fun setBlockingEnabled(enabled: Boolean) {}
-
-    override suspend fun setAutoAllowContacts(enabled: Boolean) {}
-
-    override suspend fun setDefaultAction(action: DefaultAction) {}
-
-    override suspend fun setNotificationsEnabled(enabled: Boolean) {}
-
-    override suspend fun setRepeatedCallerBypassCount(count: Int) {}
-
-    override suspend fun setWelcomeShown() {}
-}
-
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34])
@@ -49,7 +26,7 @@ class DialerOnboardingScreenTest {
 
     @Test
     fun notRequestedShowsPermissionExplainer() {
-        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeScreenTestSettingsRepository())
+        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeSettingsRepository())
 
         composeTestRule.setContent {
             DialerOnboardingScreen(state = viewModel.state.value, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
@@ -61,7 +38,7 @@ class DialerOnboardingScreenTest {
 
     @Test
     fun requestingShowsIndicator() {
-        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeScreenTestSettingsRepository())
+        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeSettingsRepository())
         viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
 
         composeTestRule.setContent {
@@ -73,7 +50,7 @@ class DialerOnboardingScreenTest {
 
     @Test
     fun deniedShowsRetryScreen() {
-        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeScreenTestSettingsRepository())
+        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeSettingsRepository())
         viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
         viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = false))
 
@@ -87,7 +64,7 @@ class DialerOnboardingScreenTest {
 
     @Test
     fun grantedSkipsToContent() {
-        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeScreenTestSettingsRepository())
+        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeSettingsRepository())
         viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
         viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = true))
 
@@ -105,7 +82,7 @@ class DialerOnboardingScreenTest {
 
     @Test
     fun alreadyDefaultSkipsToContent() {
-        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = true), FakeScreenTestSettingsRepository())
+        val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = true), FakeSettingsRepository())
 
         composeTestRule.setContent {
             DialerOnboardingScreen(
