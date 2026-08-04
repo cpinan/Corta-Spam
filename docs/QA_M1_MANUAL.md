@@ -22,7 +22,7 @@ dialer."*
 2. **Expect:** permission-explainer screen appears (hero text "We need to
    become your default phone app", 3 reason bullets, "what we will never
    do" box, Continue / Not now buttons) — matches
-   `bloquea_llamadas_mockups.html` screen 2.
+   `design/mockups.html` screen 2.
 3. Tap **Not now**. **Expect:** app proceeds past onboarding without
    showing any OS dialog (skip path, `DialerOnboardingScreen`'s local
    `skipped` flag).
