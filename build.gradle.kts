@@ -9,6 +9,10 @@ plugins {
     alias(libs.plugins.ktlint) apply false
 }
 
+// Captured here: the `libs` accessor resolves in the root script's own scope, not inside the
+// allprojects/configurations closure below.
+val kotlinVersion = libs.versions.kotlin.get()
+
 subprojects {
     // Generated code (SQLDelight, Compose Multiplatform resources) is excluded via the
     // root .editorconfig, not here -- ktlint-gradle's own `filter { exclude(...) }`
@@ -20,14 +24,17 @@ subprojects {
 allprojects {
     configurations.all {
         resolutionStrategy {
-            // koin-android:4.2.0 pulls androidx.activity-ktx 1.12.4, which needs AGP
-            // 8.9.1+ (we're on 8.7.3). Force the whole androidx.activity family back to
-            // the version we already build against; Koin only touches baseline
-            // ComponentActivity/Application APIs present since well before 1.9.3.
+            // SQLDelight 2.3.2 depends on kotlin-stdlib 2.3.10, which drags the whole graph past
+            // the 2.2.20 compiler we build with. Compiling against a newer stdlib than the
+            // compiler is wrong on its own terms, and it breaks Android Lint outright: the UAST
+            // frontend bundled with AGP 8.7.3 can't read Kotlin 2.3 metadata and fails every
+            // lint task with "Module was compiled with an incompatible version of Kotlin".
+            // Pinning to the toolchain's own version is the fix; raise both together.
             force(
-                "androidx.activity:activity:1.9.3",
-                "androidx.activity:activity-ktx:1.9.3",
-                "androidx.activity:activity-compose:1.9.3",
+                "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
+                "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion",
+                "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion",
+                "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion",
             )
         }
     }

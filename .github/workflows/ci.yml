@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   lint:
-    name: ktlint
+    name: ktlint + Android Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -21,10 +21,30 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # Android Lint needs a real SDK to resolve platform APIs; ktlint alone did not.
+      - uses: android-actions/setup-android@v4
+
       - uses: gradle/actions/setup-gradle@v5
 
       - name: Run ktlint
         run: ./gradlew ktlintCheck
+
+      # Android Lint could not run at all until AGP was raised past 8.7.3: the UAST frontend
+      # bundled with that version reads Kotlin 2.0 metadata only, and every lint task died on
+      # "Module was compiled with an incompatible version of Kotlin" against our 2.2.20 output.
+      # It catches a class of defect ktlint never looks for -- missing permission guards, dead
+      # SDK_INT branches, plural forms that are wrong in a specific locale.
+      - name: Run Android Lint
+        run: ./gradlew :androidApp:lintDebug :shared:lintDebug
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lint-report
+          path: |
+            androidApp/build/reports/lint-results-debug.html
+            shared/build/reports/lint-results-debug.html
 
   jvm-android:
     name: Shared (JVM) + Android
@@ -46,6 +66,12 @@ jobs:
 
       - name: Assemble Android debug APK
         run: ./gradlew :androidApp:assembleDebug
+
+      # The release build is the only thing that exercises R8 and the ProGuard rules. Shipping
+      # is the wrong moment to discover that shrinking stripped a serializer or a Telecom entry
+      # point, so the minified build is assembled on every push.
+      - name: Assemble Android release APK (R8 + resource shrinking)
+        run: ./gradlew :androidApp:assembleRelease
 
       - name: Run shared module unit tests (JVM)
         run: ./gradlew :shared:testDebugUnitTest

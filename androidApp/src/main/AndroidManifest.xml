@@ -14,12 +14,21 @@
          the vibration the platform dialer would otherwise have produced. See CallRinger. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Declared explicitly rather than inherited from READ_PHONE_STATE. This app *is* the
+         dialer: without telephony there are no calls to screen, so a device that lacks it has
+         nothing to install this for. required="true" is the honest declaration even though it
+         costs ChromeOS availability. -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="true" />
+
     <application
         android:name=".CortaSpamApp"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
         <activity

@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.telecom
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -32,6 +34,7 @@ object IncomingCallNotifier {
     private const val HISTORY_CHANNEL_ID = "call_history"
     private const val HISTORY_NOTIFICATION_ID_BASE = 2_000_000
     private const val HISTORY_ID_RANGE = 1_000_000L
+    private const val TAG = "IncomingCallNotifier"
 
     fun createChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
@@ -103,7 +106,7 @@ object IncomingCallNotifier {
                 .setStyle(NotificationCompat.CallStyle.forIncomingCall(caller, declinePendingIntent, answerPendingIntent))
                 .build()
 
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        post(context, NOTIFICATION_ID, notification)
     }
 
     fun cancel(context: Context) {
@@ -145,7 +148,7 @@ object IncomingCallNotifier {
                 .setStyle(NotificationCompat.CallStyle.forOngoingCall(caller, hangUpPendingIntent))
                 .build()
 
-        NotificationManagerCompat.from(context).notify(ONGOING_NOTIFICATION_ID, notification)
+        post(context, ONGOING_NOTIFICATION_ID, notification)
     }
 
     fun cancelOngoing(context: Context) {
@@ -181,7 +184,7 @@ object IncomingCallNotifier {
                 .setAutoCancel(true)
                 .build()
 
-        NotificationManagerCompat.from(context).notify(historyNotificationId(number), notification)
+        post(context, historyNotificationId(number), notification)
     }
 
     /**
@@ -193,6 +196,28 @@ object IncomingCallNotifier {
      */
     internal fun historyNotificationId(number: String): Int =
         HISTORY_NOTIFICATION_ID_BASE + (number.hashCode().toLong().let { if (it < 0) -it else it } % HISTORY_ID_RANGE).toInt()
+
+    /**
+     * Posts [notification], tolerating the permission being gone.
+     *
+     * Every caller checks [canPostNotifications] first, but that check and this call are two
+     * separate moments: the user can revoke notifications from the shade in between, and on the
+     * ringing-call path a `SecurityException` here would take down the service handling a live
+     * call. Lint can't see through the helper either, hence the suppression — the check it asks
+     * for is genuinely present, and the exception it warns about is genuinely handled.
+     */
+    @SuppressLint("MissingPermission")
+    private fun post(
+        context: Context,
+        id: Int,
+        notification: Notification,
+    ) {
+        try {
+            NotificationManagerCompat.from(context).notify(id, notification)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Notification permission was revoked before the notification could be posted", e)
+        }
+    }
 
     private fun canPostNotifications(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||

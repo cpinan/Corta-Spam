@@ -28,8 +28,10 @@ class DialerOnboardingScreenTest {
     fun notRequestedShowsPermissionExplainer() {
         val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeSettingsRepository())
 
+        val state = viewModel.state.value
+
         composeTestRule.setContent {
-            DialerOnboardingScreen(state = viewModel.state.value, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
+            DialerOnboardingScreen(state = state, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
         }
 
         composeTestRule.onNodeWithText("Continue").assertExists()
@@ -41,8 +43,10 @@ class DialerOnboardingScreenTest {
         val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = false), FakeSettingsRepository())
         viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
 
+        val state = viewModel.state.value
+
         composeTestRule.setContent {
-            DialerOnboardingScreen(state = viewModel.state.value, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
+            DialerOnboardingScreen(state = state, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
         }
 
         composeTestRule.onNodeWithText("Waiting for the system dialog…").assertExists()
@@ -54,8 +58,10 @@ class DialerOnboardingScreenTest {
         viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
         viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = false))
 
+        val state = viewModel.state.value
+
         composeTestRule.setContent {
-            DialerOnboardingScreen(state = viewModel.state.value, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
+            DialerOnboardingScreen(state = state, onIntent = viewModel::onIntent, onRequestRole = {}, content = {})
         }
 
         composeTestRule.onNodeWithText("Try again").assertExists()
@@ -68,9 +74,11 @@ class DialerOnboardingScreenTest {
         viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
         viewModel.onIntent(DialerOnboardingIntent.RequestResult(granted = true))
 
+        val state = viewModel.state.value
+
         composeTestRule.setContent {
             DialerOnboardingScreen(
-                state = viewModel.state.value,
+                state = state,
                 onIntent = viewModel::onIntent,
                 onRequestRole = {},
                 content = { Text("home") },
@@ -84,9 +92,11 @@ class DialerOnboardingScreenTest {
     fun alreadyDefaultSkipsToContent() {
         val viewModel = DialerOnboardingViewModel(FakeScreenTestGateway(isDefault = true), FakeSettingsRepository())
 
+        val state = viewModel.state.value
+
         composeTestRule.setContent {
             DialerOnboardingScreen(
-                state = viewModel.state.value,
+                state = state,
                 onIntent = viewModel::onIntent,
                 onRequestRole = {},
                 content = { Text("home") },

@@ -3,9 +3,9 @@ package org.carlospinan.bloqueador.app.telecom
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.net.Uri
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import androidx.core.net.toUri
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -108,7 +108,7 @@ class AutoResponderAudio(
                             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                             .build(),
                     )
-                    setDataSource(context, Uri.parse(uriString))
+                    setDataSource(context, uriString.toUri())
                     setOnPreparedListener { start() }
                     setOnCompletionListener {
                         release()

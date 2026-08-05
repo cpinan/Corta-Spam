@@ -9,7 +9,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -24,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingIntent
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                                         type = "text/plain"
                                         putExtra(Intent.EXTRA_TEXT, json)
                                     }
-                                startActivity(Intent.createChooser(shareIntent, "Share backup"))
+                                startActivity(Intent.createChooser(shareIntent, getString(R.string.share_backup_chooser_title)))
                             },
                             onPickImportFile = { onResult ->
                                 importResultCallback = onResult
@@ -185,13 +185,13 @@ class MainActivity : ComponentActivity() {
                             onOpenFullScreenIntentSettings = {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                                     startActivity(
-                                        Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName")),
+                                        Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, "package:$packageName".toUri()),
                                     )
                                 }
                             },
                             onOpenAppSettings = {
                                 startActivity(
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")),
+                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
                                 )
                             },
                         )
@@ -217,7 +217,7 @@ class MainActivity : ComponentActivity() {
     private fun placeCall(number: String) {
         if (number.isBlank()) return
         val callIntent = Intent(Intent.ACTION_CALL)
-        callIntent.data = Uri.parse("tel:${number.trim()}")
+        callIntent.data = "tel:${number.trim()}".toUri()
         try {
             startActivity(callIntent)
         } catch (e: ActivityNotFoundException) {

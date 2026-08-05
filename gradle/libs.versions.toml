@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.2.20"
-agp = "8.7.3"
+agp = "8.13.2"
 compose-multiplatform = "1.11.1"
 navigation-cmp = "2.9.2"
 sqldelight = "2.3.2"

@@ -67,14 +67,11 @@ class InCallActivity : ComponentActivity() {
         }
     }
 
+    // No pre-O branch: minSdk is 26, so requestDismissKeyguard is always available and the
+    // FLAG_DISMISS_KEYGUARD fallback was unreachable.
     private fun dismissKeyguard() {
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            keyguardManager?.requestDismissKeyguard(this, null)
-        } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
-        }
+        keyguardManager?.requestDismissKeyguard(this, null)
     }
 
     companion object {
