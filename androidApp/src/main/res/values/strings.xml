@@ -13,4 +13,16 @@
     <string name="notification_channel_ongoing_call_desc">Return-to-call notification shown while a call is active</string>
     <string name="notification_channel_history_name">Missed &amp; blocked calls</string>
     <string name="notification_channel_history_desc">Posted after a call ends: missed, or blocked with the reason</string>
+    <string name="reason_manually_blocked">Manually blocked</string>
+    <string name="reason_pattern_match">Pattern match: %1$s</string>
+    <string name="reason_country">Country: %1$s (+%2$s)</string>
+    <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
+    <string name="reason_repeated_calls">Repeated calls (%1$d in %2$d min)</string>
+    <string name="reason_quiet_hours">Quiet hours</string>
+    <string name="reason_no_matching_rule">No matching rule (default: block)</string>
+    <string name="share_backup_chooser_title">Share backup</string>
+    <plurals name="reason_allowed_after_repeated">
+        <item quantity="one">Called once — allowed</item>
+        <item quantity="other">Called %1$d times — allowed</item>
+    </plurals>
 </resources>

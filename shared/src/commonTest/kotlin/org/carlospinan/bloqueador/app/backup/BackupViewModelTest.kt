@@ -14,7 +14,6 @@ import org.carlospinan.bloqueador.app.testing.FakeRuleRepository
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * [BackupViewModel] has no UiState at all — everything it produces is a one-time
@@ -42,9 +41,11 @@ class BackupViewModelTest {
             advanceUntilIdle()
 
             val emitted = effects.await()
-            // Exported carries the JSON for the platform share sheet; Success is the toast.
+            // Exported carries the JSON for the platform share sheet; the second effect is the
+            // toast signal. It carries no text -- the wording is picked in the Composable, in
+            // the reader's locale, rather than being built in English here.
             assertEquals(BackupEffect.Exported("""{"blockedNumbers":[]}"""), emitted[0])
-            assertEquals(BackupEffect.Success("Exported successfully."), emitted[1])
+            assertEquals(BackupEffect.ExportSucceeded, emitted[1])
         }
 
     @Test
@@ -59,7 +60,7 @@ class BackupViewModelTest {
             vm.onIntent(BackupIntent.Export)
             advanceUntilIdle()
 
-            assertEquals(BackupEffect.Failure("Export failed: disk full"), effects.await().single())
+            assertEquals(BackupEffect.ExportFailed("disk full"), effects.await().single())
         }
 
     @Test
@@ -86,10 +87,11 @@ class BackupViewModelTest {
             advanceUntilIdle()
 
             assertEquals(listOf("""{"blockedNumbers":[]}"""), repo.importedJson)
-            val message = (effects.await().single() as BackupEffect.Success).message
-            assertTrue(message.startsWith("Imported 11 rules"), message)
-            assertTrue(message.contains("2 blocked"), message)
-            assertTrue(message.contains("4 schedules"), message)
+            // The counts travel as data; BackupScreen turns them into a localized sentence.
+            val counts = (effects.await().single() as BackupEffect.ImportSucceeded).result
+            assertEquals(11, counts.total)
+            assertEquals(2, counts.blockedNumbersImported)
+            assertEquals(4, counts.schedulesImported)
         }
 
     @Test
@@ -103,8 +105,7 @@ class BackupViewModelTest {
             vm.onIntent(BackupIntent.Import("{}"))
             advanceUntilIdle()
 
-            val message = (effects.await().single() as BackupEffect.Success).message
-            assertTrue(message.startsWith("Imported 0 rules"), message)
+            assertEquals(0, (effects.await().single() as BackupEffect.ImportSucceeded).result.total)
         }
 
     @Test
@@ -119,6 +120,6 @@ class BackupViewModelTest {
             vm.onIntent(BackupIntent.Import("not json"))
             advanceUntilIdle()
 
-            assertEquals(BackupEffect.Failure("Import failed: malformed JSON"), effects.await().single())
+            assertEquals(BackupEffect.ImportFailed("malformed JSON"), effects.await().single())
         }
 }

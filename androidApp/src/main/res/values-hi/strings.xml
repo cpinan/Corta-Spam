@@ -13,4 +13,16 @@
     <string name="notification_channel_ongoing_call_desc">कॉल सक्रिय होने पर वापस लौटने की सूचना</string>
     <string name="notification_channel_history_name">मिस्ड और ब्लॉक की गई कॉलें</string>
     <string name="notification_channel_history_desc">कॉल समाप्त होने के बाद भेजी जाती है: मिस्ड, या कारण सहित ब्लॉक की गई</string>
+    <string name="reason_manually_blocked">मैन्युअल रूप से ब्लॉक किया गया</string>
+    <string name="reason_pattern_match">पैटर्न से मेल: %1$s</string>
+    <string name="reason_country">देश: %1$s (+%2$s)</string>
+    <string name="reason_spam">स्पैम (%1$s, %2$d%%)</string>
+    <string name="reason_repeated_calls">बार-बार कॉल (%2$d मिनट में %1$d)</string>
+    <string name="reason_quiet_hours">शांत घंटे</string>
+    <string name="reason_no_matching_rule">कोई नियम मेल नहीं खाया (डिफ़ॉल्ट: ब्लॉक)</string>
+    <string name="share_backup_chooser_title">बैकअप साझा करें</string>
+    <plurals name="reason_allowed_after_repeated">
+        <item quantity="one">%1$d बार कॉल किया — अनुमति दी गई</item>
+        <item quantity="other">%1$d बार कॉल किया — अनुमति दी गई</item>
+    </plurals>
 </resources>

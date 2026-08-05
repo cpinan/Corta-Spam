@@ -241,15 +241,15 @@ class RulePrecedenceResolverTest {
         }
 
     @Test
-    fun blockReason_isHumanReadable() =
+    fun reason_reportsWhichRuleFired() =
         runTest {
             val ctx = emptyContext.copy(blockedNumbers = setOf("+34600123456"))
             val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
-            assertEquals("Manually blocked", decision.blockReason)
+            assertEquals(BlockReason.ManuallyBlocked, decision.reason)
         }
 
     @Test
-    fun blockReason_patternIncludesPattern() =
+    fun reason_prefersTheUsersOwnLabelOverAGeneratedOne() =
         runTest {
             val ctx =
                 emptyContext.copy(
@@ -257,7 +257,8 @@ class RulePrecedenceResolverTest {
                         listOf(PatternRule(id = 1, pattern = "+34900*", label = "Spam prefix", enabled = true)),
                 )
             val decision = RulePrecedenceResolver.evaluate("+34900123456", ctx)
-            assertEquals("Spam prefix", decision.blockReason)
+            // A label the user typed is passed through verbatim; only generated wording is translated.
+            assertEquals(BlockReason.Custom("Spam prefix"), decision.reason)
         }
 
     @Test

@@ -28,15 +28,22 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_ok
+import cortaspam.shared.generated.resources.backup_error_unknown
 import cortaspam.shared.generated.resources.backup_example_body
 import cortaspam.shared.generated.resources.backup_example_title
 import cortaspam.shared.generated.resources.backup_export
+import cortaspam.shared.generated.resources.backup_export_failed
+import cortaspam.shared.generated.resources.backup_export_success
 import cortaspam.shared.generated.resources.backup_import
+import cortaspam.shared.generated.resources.backup_import_failed
+import cortaspam.shared.generated.resources.backup_import_skipped
+import cortaspam.shared.generated.resources.backup_import_success
 import cortaspam.shared.generated.resources.backup_title
 import cortaspam.shared.generated.resources.backup_view_example
 import kotlinx.coroutines.flow.Flow
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 /** Trimmed BackupData shape, shown verbatim so hand-edited import files match the real format. */
@@ -73,8 +80,43 @@ fun BackupScreen(
         effect.collect { result ->
             when (result) {
                 is BackupEffect.Exported -> onExportReady(result.json)
-                is BackupEffect.Success -> snackbarHostState.showSnackbar(result.message)
-                is BackupEffect.Failure -> snackbarHostState.showSnackbar(result.message)
+                is BackupEffect.ExportSucceeded ->
+                    snackbarHostState.showSnackbar(getString(Res.string.backup_export_success))
+                is BackupEffect.ExportFailed ->
+                    snackbarHostState.showSnackbar(
+                        getString(Res.string.backup_export_failed, result.cause ?: getString(Res.string.backup_error_unknown)),
+                    )
+                is BackupEffect.ImportFailed ->
+                    snackbarHostState.showSnackbar(
+                        getString(Res.string.backup_import_failed, result.cause ?: getString(Res.string.backup_error_unknown)),
+                    )
+                is BackupEffect.ImportSucceeded -> {
+                    // The suspend getString, not the @Composable stringResource: this runs in
+                    // LaunchedEffect's coroutine, where composable reads aren't available.
+                    val counts = result.result
+                    val message =
+                        buildString {
+                            append(
+                                getString(
+                                    Res.string.backup_import_success,
+                                    counts.total,
+                                    counts.blockedNumbersImported,
+                                    counts.allowlistedNumbersImported,
+                                    counts.patternsImported,
+                                    counts.countriesImported,
+                                    counts.actionsImported,
+                                    counts.schedulesImported,
+                                ),
+                            )
+                            // Entries the file held but the app already had or refused. Saying
+                            // nothing made a partial restore read as a complete one.
+                            if (counts.skipped > 0) {
+                                append(' ')
+                                append(getString(Res.string.backup_import_skipped, counts.skipped))
+                            }
+                        }
+                    snackbarHostState.showSnackbar(message)
+                }
             }
         }
     }

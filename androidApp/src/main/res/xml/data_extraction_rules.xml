@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nothing leaves the device. The database holds the user's call log, their block and allow lists,
+  and the numbers of everyone who has called them: a complete record of who contacts them and
+  when. That belongs on their phone and nowhere else, so both cloud backup and device-to-device
+  transfer are refused outright. Users who want their rules on a new phone have the explicit
+  export/import in Settings, which they trigger themselves and can see the contents of.
+
+  android:allowBackup="false" already covers Android 11 and below; this file is the Android 12+
+  replacement for the same intent.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

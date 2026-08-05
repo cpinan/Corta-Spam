@@ -86,22 +86,35 @@ sealed class RuleDecision {
                 this !is PendingReview &&
                 this !is AllowedAfterRepeatedAttempts
 
-    /** Human-readable reason for the decision, or null if allowed. */
-    val blockReason: String?
+    /**
+     * Why this decision was reached, or null when there's nothing worth saying.
+     *
+     * Structured, not a sentence: the app ships in four locales, and this value is both shown
+     * in notifications and written into `CallLogEntry.rule_detail`. Building the English words
+     * here meant every user saw English, and every historical log row stayed English forever.
+     * See [BlockReason]. A rule the user gave a label to reports that label verbatim.
+     */
+    val reason: BlockReason?
         get() =
             when (this) {
-                is Allowlist -> label
-                is ManualBlock -> label ?: "Manually blocked"
-                is PatternBlock -> label ?: "Pattern match: $pattern"
-                is CountryBlock -> "Country: $countryName ($countryCode)"
-                is SpamHit -> "Spam ($source, ${(confidence * 100).toInt()}%)"
-                is ActionBlock -> label ?: "Repeated calls ($attempts in ${windowMinutes}m)"
-                is ScheduleBlock -> label ?: "Quiet hours"
+                is Allowlist -> label?.let { BlockReason.Custom(it) }
+                is ManualBlock -> label?.let { BlockReason.Custom(it) } ?: BlockReason.ManuallyBlocked
+                is PatternBlock -> label?.let { BlockReason.Custom(it) } ?: BlockReason.PatternMatch(pattern)
+                is CountryBlock -> BlockReason.Country(countryCode = countryCode, countryName = countryName)
+                is SpamHit -> BlockReason.Spam(source = source, confidencePercent = (confidence * 100).toInt())
+                is ActionBlock ->
+                    label?.let { BlockReason.Custom(it) }
+                        ?: BlockReason.RepeatedCalls(attempts = attempts, windowMinutes = windowMinutes)
+                is ScheduleBlock -> label?.let { BlockReason.Custom(it) } ?: BlockReason.QuietHours
                 is DefaultAllow -> null
-                is DefaultBlock -> "No matching rule (default: block)"
+                is DefaultBlock -> BlockReason.NoMatchingRule
                 is PendingReview -> null
-                is AllowedAfterRepeatedAttempts -> "Called $attempts times — allowed"
+                is AllowedAfterRepeatedAttempts -> BlockReason.AllowedAfterRepeatedAttempts(attempts)
             }
+
+    /** [reason] in the form the call log persists, or null when there's nothing to record. */
+    val loggedDetail: String?
+        get() = reason?.let { BlockReasonCodec.encode(it) }
 
     /** Id of the rule that fired, for persistence in the call log, or null when not applicable. */
     val loggedRuleId: Long?

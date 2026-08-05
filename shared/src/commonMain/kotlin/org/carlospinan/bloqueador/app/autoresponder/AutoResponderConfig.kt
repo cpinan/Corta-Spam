@@ -17,7 +17,7 @@ data class AutoResponderConfig(
         if (script.length > MAX_SCRIPT_LENGTH) {
             return ValidationResult.Error(ErrorCode.SCRIPT_TOO_LONG)
         }
-        if (recordingEnabled && !script.contains(CONSENT_MARKER, ignoreCase = true)) {
+        if (recordingEnabled && CONSENT_MARKERS.none { script.contains(it, ignoreCase = true) }) {
             return ValidationResult.Error(ErrorCode.MISSING_CONSENT)
         }
         return ValidationResult.Ok
@@ -39,7 +39,31 @@ data class AutoResponderConfig(
 
     companion object {
         const val MAX_SCRIPT_LENGTH = 500
-        const val CONSENT_MARKER = "This call may be recorded"
+
+        /**
+         * Phrases that satisfy the recording-consent gate, one per shipped locale.
+         *
+         * The check used to be against the English sentence alone, so a user writing their
+         * greeting in Spanish, Hindi or Portuguese could never turn recording on — the only way
+         * through was to paste an English sentence into a greeting the caller would hear in
+         * another language. All four are accepted regardless of the device's current locale, so
+         * changing language doesn't invalidate a greeting that was already lawful.
+         */
+        val CONSENT_MARKERS =
+            listOf(
+                "This call may be recorded",
+                "Esta llamada puede ser grabada",
+                "इस कॉल को रिकॉर्ड किया जा सकता है",
+                "Esta chamada pode ser gravada",
+            )
+
+        /** The phrase shown to the user as the one to include; locale-specific rendering lives in the UI. */
+        val CONSENT_MARKER: String get() = CONSENT_MARKERS.first()
+
+        /**
+         * Last-resort greeting when no platform-supplied default is available (iOS today).
+         * Android injects a localized one — see `AutoResponderDefaults`.
+         */
         const val DEFAULT_SCRIPT =
             "Hello. The person you are calling is not available. Please try again later."
     }

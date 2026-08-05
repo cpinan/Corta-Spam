@@ -130,7 +130,7 @@ class PassthroughInCallService :
                             this@PassthroughInCallService,
                             number,
                             R.string.notification_blocked_call_title,
-                            decision.blockReason,
+                            decision.reason?.let { BlockReasonStrings.format(this@PassthroughInCallService, it) },
                         )
                     }
                     val autoConfig = autoResponderRepository.config.first()
@@ -151,7 +151,7 @@ class PassthroughInCallService :
                             this@PassthroughInCallService,
                             number,
                             R.string.notification_repeated_caller_title,
-                            decision.blockReason,
+                            decision.reason?.let { BlockReasonStrings.format(this@PassthroughInCallService, it) },
                         )
                     }
                 }

@@ -8,17 +8,32 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 
+/**
+ * Outcomes of a backup action.
+ *
+ * These carry data, not sentences. They used to hold pre-built English strings ("Exported
+ * successfully.", "Imported 12 rules (3 blocked, ...)") assembled here, which every user saw in
+ * English no matter which of the app's four locales they were running. Formatting happens in
+ * the Composable, where `stringResource` is available.
+ */
 sealed interface BackupEffect {
     data class Exported(
         val json: String,
     ) : BackupEffect
 
-    data class Success(
-        val message: String,
+    data object ExportSucceeded : BackupEffect
+
+    data class ImportSucceeded(
+        val result: ImportResult,
     ) : BackupEffect
 
-    data class Failure(
-        val message: String,
+    /** [cause] is an exception message — developer-facing detail, shown as-is after a localized prefix. */
+    data class ExportFailed(
+        val cause: String?,
+    ) : BackupEffect
+
+    data class ImportFailed(
+        val cause: String?,
     ) : BackupEffect
 }
 
@@ -48,9 +63,9 @@ class BackupViewModel(
             try {
                 val json = ruleRepository.exportAll()
                 _effect.send(BackupEffect.Exported(json))
-                _effect.send(BackupEffect.Success("Exported successfully."))
+                _effect.send(BackupEffect.ExportSucceeded)
             } catch (e: Exception) {
-                _effect.send(BackupEffect.Failure("Export failed: ${e.message}"))
+                _effect.send(BackupEffect.ExportFailed(e.message))
             }
         }
     }
@@ -58,20 +73,9 @@ class BackupViewModel(
     private fun importJson(json: String) {
         viewModelScope.launch {
             try {
-                val result = ruleRepository.importAll(json)
-                _effect.send(
-                    BackupEffect.Success(
-                        "Imported ${result.total} rules " +
-                            "(${result.blockedNumbersImported} blocked, " +
-                            "${result.allowlistedNumbersImported} allowlisted, " +
-                            "${result.patternsImported} patterns, " +
-                            "${result.countriesImported} countries, " +
-                            "${result.actionsImported} actions, " +
-                            "${result.schedulesImported} schedules).",
-                    ),
-                )
+                _effect.send(BackupEffect.ImportSucceeded(ruleRepository.importAll(json)))
             } catch (e: Exception) {
-                _effect.send(BackupEffect.Failure("Import failed: ${e.message}"))
+                _effect.send(BackupEffect.ImportFailed(e.message))
             }
         }
     }

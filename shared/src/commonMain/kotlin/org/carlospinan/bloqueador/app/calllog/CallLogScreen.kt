@@ -63,6 +63,7 @@ import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.currentTimeMillis
+import org.carlospinan.bloqueador.app.rules.storedBlockReasonText
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -329,8 +330,11 @@ private fun CallLogDetailPane(
             Spacer(modifier = Modifier.height(18.dp))
 
             CallLogDetailRow(stringResource(Res.string.call_log_action_label), entry.action, actionColor)
-            if (entry.ruleDetail != null) {
-                CallLogDetailRow(stringResource(Res.string.call_log_rule_label), entry.ruleDetail)
+            // rule_detail is stored as structured data, not prose, so the log re-renders in
+            // whatever locale the reader is using now rather than the one it was written in.
+            val reasonText = storedBlockReasonText(entry.ruleDetail)
+            if (reasonText != null) {
+                CallLogDetailRow(stringResource(Res.string.call_log_rule_label), reasonText)
             }
             CallLogDetailRow(
                 stringResource(Res.string.call_log_time_label),
@@ -440,7 +444,7 @@ private fun CallLogEntryRow(
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    text = entry.ruleDetail ?: statusLabel,
+                    text = storedBlockReasonText(entry.ruleDetail) ?: statusLabel,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

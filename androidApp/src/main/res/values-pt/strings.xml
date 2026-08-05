@@ -13,4 +13,16 @@
     <string name="notification_channel_ongoing_call_desc">Notificação para retornar à chamada enquanto ela está ativa</string>
     <string name="notification_channel_history_name">Chamadas perdidas e bloqueadas</string>
     <string name="notification_channel_history_desc">Publicada quando uma chamada termina: perdida, ou bloqueada com o motivo</string>
+    <string name="reason_manually_blocked">Bloqueado manualmente</string>
+    <string name="reason_pattern_match">Corresponde ao padrão: %1$s</string>
+    <string name="reason_country">País: %1$s (+%2$s)</string>
+    <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
+    <string name="reason_repeated_calls">Chamadas repetidas (%1$d em %2$d min)</string>
+    <string name="reason_quiet_hours">Horas de silêncio</string>
+    <string name="reason_no_matching_rule">Nenhuma regra corresponde (padrão: bloquear)</string>
+    <string name="share_backup_chooser_title">Compartilhar backup</string>
+    <plurals name="reason_allowed_after_repeated">
+        <item quantity="one">Ligou %1$d vez — permitida</item>
+        <item quantity="other">Ligou %1$d vezes — permitida</item>
+    </plurals>
 </resources>

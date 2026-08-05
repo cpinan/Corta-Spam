@@ -40,7 +40,7 @@ val sharedModule =
         single<SettingsRepository> { SqlSettingsRepository(get(), get()) }
         single<SpamProviderRepository> { SqlSpamProviderRepository(get(), get()) }
         single<SpamProviderClient> { BundledSpamProvider() }
-        single<AutoResponderRepository> { SqlAutoResponderRepository(get(), get()) }
+        single<AutoResponderRepository> { SqlAutoResponderRepository(get(), get(), get()) }
         single { EvaluateIncomingCallUseCase(get(), get(), get(), get(), get()) }
 
         factory { HomeViewModel(get(), get()) }

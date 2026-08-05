@@ -88,6 +88,7 @@
     <string name="pattern_add_hint">Padrão (ex: +55*, *1234)</string>
     <string name="pattern_label_hint">Rótulo (opcional)</string>
     <string name="pattern_examples">Prefixo: +55* corresponde a +5511999999999\nSufixo: *1234 corresponde a qualquer número terminado em 1234\nContém: *900* corresponde a qualquer número contendo 900\nExato: +5511999999999 corresponde apenas a esse número</string>
+    <string name="pattern_needs_digits">Um padrão precisa conter ao menos um dígito. Um padrão feito apenas de curingas bloquearia todas as chamadas.</string>
     <string name="pattern_android_only">Somente Android</string>
 
     <!-- Países -->
@@ -224,10 +225,7 @@
     <string name="call_log_rule_label">Regra</string>
 
     <!-- Sobre -->
-    <string name="about_open_source">Open source · Licença MIT</string>
-    <string name="stats_day_today">Hoje</string>
-    <string name="stats_day_yesterday">Ontem</string>
-    <string name="stats_day_n_days_ago">Há %1$d dias</string>
+    <string name="about_open_source">Código aberto · Licença MIT</string>
     <string name="hub_action_rules">Chamadas repetidas</string>
     <string name="action_rule_title">Regras de chamadas repetidas</string>
     <string name="action_rule_add_title">Bloquear chamadas repetidas</string>
@@ -241,5 +239,26 @@
     <string name="action_rule_scope_none">Qualquer número</string>
     <string name="action_rule_scope_label">Apenas: %1$s</string>
     <string name="action_rule_scope_hint">Um padrão de escopo limita quais chamadas são contadas. Desative esse padrão como regra de bloqueio; caso contrário ele bloqueia esses números diretamente e esta regra nunca se aplica.</string>
-    <string name="pattern_needs_digits">Um padrão precisa conter ao menos um dígito. Um padrão feito apenas de curingas bloquearia todas as chamadas.</string>
+    <string name="stats_day_today">Hoje</string>
+    <string name="stats_day_yesterday">Ontem</string>
+    <string name="stats_day_n_days_ago">Há %1$d dias</string>
+    <string name="reason_manually_blocked">Bloqueado manualmente</string>
+    <string name="reason_pattern_match">Corresponde ao padrão: %1$s</string>
+    <string name="reason_country">País: %1$s (+%2$s)</string>
+    <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
+    <string name="reason_repeated_calls">Chamadas repetidas (%1$d em %2$d min)</string>
+    <string name="reason_quiet_hours">Horas de silêncio</string>
+    <string name="reason_no_matching_rule">Nenhuma regra corresponde (padrão: bloquear)</string>
+    <string name="backup_export_success">Exportado com sucesso.</string>
+    <string name="backup_export_failed">Falha ao exportar: %1$s</string>
+    <string name="backup_import_failed">Falha ao importar: %1$s</string>
+    <string name="backup_import_success">%1$d regras importadas (%2$d bloqueadas, %3$d permitidas, %4$d padrões, %5$d países, %6$d de chamadas repetidas, %7$d de horas de silêncio).</string>
+    <string name="backup_import_skipped">%1$d entradas foram ignoradas por já existirem ou não serem válidas.</string>
+    <string name="backup_error_unknown">erro desconhecido</string>
+    <plurals name="reason_allowed_after_repeated">
+        <item quantity="one">Ligou %1$d vez — permitida</item>
+        <item quantity="other">Ligou %1$d vezes — permitida</item>
+    </plurals>
+    <string name="privacy_policy_body">O Corta Spam não coleta, transmite nem compartilha nenhum dado pessoal. Sem análises, sem telemetria, sem publicidade e sem nenhum acesso à rede.\n\nTodas as regras, configurações e o registro de chamadas ficam armazenados localmente em um banco de dados SQLite no seu dispositivo. Você pode apagá-los quando quiser limpando os dados do aplicativo ou desinstalando-o.\n\nO provedor de spam opcional é uma lista de códigos de discagem fraudulentos conhecidos incluída dentro do próprio aplicativo. Ativá-lo não entra em contato com nenhum servidor: a verificação acontece inteiramente no seu dispositivo, e nenhum número, contato, identificador do dispositivo ou áudio de chamada é transmitido.\n\nO aplicativo é totalmente de código aberto. Cada linha do código pode ser auditada de forma independente em seu repositório público.</string>
+    <string name="terms_conditions_body">O Corta Spam é software de código aberto distribuído sob a Licença MIT. O texto legal da licença é reproduzido abaixo em inglês, seu idioma original e única versão com validade legal.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
 </resources>

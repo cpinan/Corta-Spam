@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Read synchronously from SqlAutoResponderRepository's constructor via
+         AutoResponderDefaults, so it can't use the Compose resource system (whose
+         getString is suspend). Keep in sync with the commonMain composeResources copy
+         used by the auto-responder screen. -->
+    <string name="auto_responder_default_script">Hello. The person you are calling is not available. Please try again later.</string>
+</resources>

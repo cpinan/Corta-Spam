@@ -88,6 +88,7 @@
     <string name="pattern_add_hint">पैटर्न (जैसे +91*, *1234)</string>
     <string name="pattern_label_hint">लेबल (वैकल्पिक)</string>
     <string name="pattern_examples">उपसर्ग: +91* +919999999999 से मेल खाता है\nप्रत्यय: *1234, 1234 से समाप्त होने वाले किसी भी नंबर से मेल खाता है\nशामिल: *900*, 900 वाले किसी भी नंबर से मेल खाता है\nसटीक: +919999999999 केवल उस नंबर से मेल खाता है</string>
+    <string name="pattern_needs_digits">पैटर्न में कम से कम एक अंक होना चाहिए। केवल वाइल्डकार्ड वाला पैटर्न हर कॉल को ब्लॉक कर देगा।</string>
     <string name="pattern_android_only">केवल Android</string>
 
     <!-- देश -->
@@ -225,9 +226,6 @@
 
     <!-- के बारे में -->
     <string name="about_open_source">ओपन सोर्स · MIT लाइसेंस</string>
-    <string name="stats_day_today">आज</string>
-    <string name="stats_day_yesterday">कल</string>
-    <string name="stats_day_n_days_ago">%1$d दिन पहले</string>
     <string name="hub_action_rules">बार-बार कॉल करने वाले</string>
     <string name="action_rule_title">बार-बार कॉल करने के नियम</string>
     <string name="action_rule_add_title">बार-बार कॉल करने वालों को ब्लॉक करें</string>
@@ -241,5 +239,26 @@
     <string name="action_rule_scope_none">कोई भी नंबर</string>
     <string name="action_rule_scope_label">केवल: %1$s</string>
     <string name="action_rule_scope_hint">स्कोप पैटर्न तय करता है कि कौन-सी कॉल गिनी जाएँ। उस पैटर्न को ब्लॉक नियम के रूप में बंद कर दें, वरना वह उन नंबरों को सीधे ब्लॉक कर देगा और यह नियम कभी लागू नहीं होगा।</string>
-    <string name="pattern_needs_digits">पैटर्न में कम से कम एक अंक होना चाहिए। केवल वाइल्डकार्ड वाला पैटर्न हर कॉल को ब्लॉक कर देगा।</string>
+    <string name="stats_day_today">आज</string>
+    <string name="stats_day_yesterday">कल</string>
+    <string name="stats_day_n_days_ago">%1$d दिन पहले</string>
+    <string name="reason_manually_blocked">मैन्युअल रूप से ब्लॉक किया गया</string>
+    <string name="reason_pattern_match">पैटर्न से मेल: %1$s</string>
+    <string name="reason_country">देश: %1$s (+%2$s)</string>
+    <string name="reason_spam">स्पैम (%1$s, %2$d%%)</string>
+    <string name="reason_repeated_calls">बार-बार कॉल (%2$d मिनट में %1$d)</string>
+    <string name="reason_quiet_hours">शांत घंटे</string>
+    <string name="reason_no_matching_rule">कोई नियम मेल नहीं खाया (डिफ़ॉल्ट: ब्लॉक)</string>
+    <string name="backup_export_success">सफलतापूर्वक निर्यात किया गया।</string>
+    <string name="backup_export_failed">निर्यात विफल: %1$s</string>
+    <string name="backup_import_failed">आयात विफल: %1$s</string>
+    <string name="backup_import_success">%1$d नियम आयात किए गए (%2$d ब्लॉक, %3$d अनुमत, %4$d पैटर्न, %5$d देश, %6$d बार-बार कॉल, %7$d शांत घंटे)।</string>
+    <string name="backup_import_skipped">%1$d प्रविष्टियाँ छोड़ी गईं क्योंकि वे पहले से मौजूद थीं या मान्य नहीं थीं।</string>
+    <string name="backup_error_unknown">अज्ञात त्रुटि</string>
+    <plurals name="reason_allowed_after_repeated">
+        <item quantity="one">%1$d बार कॉल किया — अनुमति दी गई</item>
+        <item quantity="other">%1$d बार कॉल किया — अनुमति दी गई</item>
+    </plurals>
+    <string name="privacy_policy_body">Corta Spam कोई भी व्यक्तिगत डेटा एकत्र, प्रेषित या साझा नहीं करता। न कोई एनालिटिक्स, न टेलीमेट्री, न विज्ञापन, और न ही कोई नेटवर्क एक्सेस।\n\nसभी नियम, सेटिंग्स और कॉल लॉग आपके डिवाइस पर एक स्थानीय SQLite डेटाबेस में संग्रहीत होते हैं। आप ऐप डेटा साफ़ करके या ऐप अनइंस्टॉल करके उन्हें कभी भी हटा सकते हैं।\n\nवैकल्पिक स्पैम प्रदाता ऐप के भीतर ही शामिल ज्ञात धोखाधड़ी डायलिंग कोड की एक सूची है। इसे चालू करने पर किसी सर्वर से संपर्क नहीं होता: जाँच पूरी तरह आपके डिवाइस पर होती है, और कोई नंबर, संपर्क, डिवाइस पहचानकर्ता या कॉल ऑडियो कभी प्रेषित नहीं किया जाता।\n\nऐप पूरी तरह ओपन सोर्स है। कोड की हर पंक्ति इसके सार्वजनिक रिपॉज़िटरी में स्वतंत्र रूप से जाँची जा सकती है।</string>
+    <string name="terms_conditions_body">Corta Spam, MIT लाइसेंस के अंतर्गत वितरित ओपन सोर्स सॉफ़्टवेयर है। लाइसेंस का कानूनी पाठ नीचे अंग्रेज़ी में दिया गया है — यही उसका मूल और कानूनी रूप से मान्य एकमात्र संस्करण है।\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
 </resources>

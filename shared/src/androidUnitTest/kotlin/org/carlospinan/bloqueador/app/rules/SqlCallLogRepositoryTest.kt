@@ -32,7 +32,10 @@ class SqlCallLogRepositoryTest {
             assertEquals("BLOCKED", entry.action)
             assertEquals("MANUAL", entry.ruleType)
             assertEquals(7L, entry.ruleId)
-            assertEquals("Spam caller", entry.ruleDetail)
+            // rule_detail holds the reason as data, not as an English sentence, so the call log
+            // re-renders in whatever locale the reader is using rather than the one it was
+            // written in. The user's own label still round-trips verbatim inside it.
+            assertEquals(BlockReason.Custom("Spam caller"), BlockReasonCodec.decode(entry.ruleDetail))
         }
 
     @Test

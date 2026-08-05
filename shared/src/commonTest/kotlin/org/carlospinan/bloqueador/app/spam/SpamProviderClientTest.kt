@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.spam
 
 import kotlinx.coroutines.test.runTest
+import org.carlospinan.bloqueador.app.rules.BlockReason
 import org.carlospinan.bloqueador.app.rules.ResolveContext
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
@@ -117,7 +118,7 @@ class SpamProviderClientTest {
         }
 
     @Test
-    fun spamHit_blockReason_containsSourceAndConfidence() =
+    fun spamHit_reasonCarriesSourceAndConfidence() =
         runTest {
             val provider =
                 object : SpamProviderClient {
@@ -130,6 +131,6 @@ class SpamProviderClientTest {
                     spamEnabled = true,
                 )
             val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
-            assertEquals("Spam (known-spam, 75%)", decision.blockReason)
+            assertEquals(BlockReason.Spam(source = "known-spam", confidencePercent = 75), decision.reason)
         }
 }

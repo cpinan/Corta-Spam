@@ -88,6 +88,7 @@
     <string name="pattern_add_hint">Patrón (ej. +34900*, *1234)</string>
     <string name="pattern_label_hint">Etiqueta (opcional)</string>
     <string name="pattern_examples">Prefijo: +34900* coincide con +34900123456\nSufijo: *1234 coincide con cualquier número que termine en 1234\nContiene: *900* coincide con cualquier número que contenga 900\nExacto: +34900123456 coincide solo con ese número</string>
+    <string name="pattern_needs_digits">Un patrón debe contener al menos un dígito. Un patrón formado solo por comodines bloquearía todas las llamadas.</string>
     <string name="pattern_android_only">Solo Android</string>
 
     <!-- Países -->
@@ -222,10 +223,6 @@
     <string name="schedule_preset_work">Trabajo</string>
 
     <!-- Acerca de -->
-    <string name="onboarding_dialer_icon">📞</string>
-    <string name="stats_day_today">Hoy</string>
-    <string name="stats_day_yesterday">Ayer</string>
-    <string name="stats_day_n_days_ago">Hace %1$d días</string>
     <string name="hub_action_rules">Llamadas repetidas</string>
     <string name="action_rule_title">Reglas de llamadas repetidas</string>
     <string name="action_rule_add_title">Bloquear llamadas repetidas</string>
@@ -239,5 +236,27 @@
     <string name="action_rule_scope_none">Cualquier número</string>
     <string name="action_rule_scope_label">Solo: %1$s</string>
     <string name="action_rule_scope_hint">Un patrón de alcance limita qué llamadas se cuentan. Desactiva ese patrón como regla de bloqueo; si no, bloquea esos números directamente y esta regla nunca se aplica.</string>
-    <string name="pattern_needs_digits">Un patrón debe contener al menos un dígito. Un patrón formado solo por comodines bloquearía todas las llamadas.</string>
+    <string name="stats_day_today">Hoy</string>
+    <string name="stats_day_yesterday">Ayer</string>
+    <string name="stats_day_n_days_ago">Hace %1$d días</string>
+    <string name="reason_manually_blocked">Bloqueado manualmente</string>
+    <string name="reason_pattern_match">Coincide con el patrón: %1$s</string>
+    <string name="reason_country">País: %1$s (+%2$s)</string>
+    <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
+    <string name="reason_repeated_calls">Llamadas repetidas (%1$d en %2$d min)</string>
+    <string name="reason_quiet_hours">Horas de silencio</string>
+    <string name="reason_no_matching_rule">Ninguna regla coincide (predeterminado: bloquear)</string>
+    <string name="backup_export_success">Exportado correctamente.</string>
+    <string name="backup_export_failed">Error al exportar: %1$s</string>
+    <string name="backup_import_failed">Error al importar: %1$s</string>
+    <string name="backup_import_success">Se importaron %1$d reglas (%2$d bloqueadas, %3$d permitidas, %4$d patrones, %5$d países, %6$d de llamadas repetidas, %7$d de horas de silencio).</string>
+    <string name="backup_import_skipped">Se omitieron %1$d entradas porque ya existían o no eran válidas.</string>
+    <string name="backup_error_unknown">error desconocido</string>
+    <plurals name="reason_allowed_after_repeated">
+        <item quantity="one">Llamó una vez — permitida</item>
+        <item quantity="other">Llamó %1$d veces — permitida</item>
+    </plurals>
+    <string name="privacy_policy_body">Corta Spam no recopila, transmite ni comparte ningún dato personal. Sin analíticas, sin telemetría, sin publicidad y sin ningún acceso a la red.\n\nTodas las reglas, los ajustes y el registro de llamadas se guardan localmente en una base de datos SQLite de tu dispositivo. Puedes borrarlos cuando quieras vaciando los datos de la aplicación o desinstalándola.\n\nEl proveedor de spam opcional es una lista de prefijos fraudulentos conocidos incluida dentro de la propia aplicación. Activarlo no contacta con ningún servidor: la comprobación ocurre por completo en tu dispositivo, y nunca se transmite ningún número, contacto, identificador del dispositivo ni audio de las llamadas.\n\nLa aplicación es totalmente de código abierto. Cada línea de código se puede auditar de forma independiente en su repositorio público.</string>
+    <string name="about_open_source">Código abierto · Licencia MIT</string>
+    <string name="terms_conditions_body">Corta Spam es software de código abierto distribuido bajo la Licencia MIT. El texto legal de la licencia se reproduce a continuación en inglés, su idioma original y única versión con validez legal.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
 </resources>

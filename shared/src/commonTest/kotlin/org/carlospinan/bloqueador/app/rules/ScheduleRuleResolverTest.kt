@@ -85,7 +85,7 @@ class ScheduleRuleResolverTest {
             assertTrue(decision is RuleDecision.ScheduleBlock)
             assertTrue(decision.isBlocked)
             assertEquals("SCHEDULE", decision.ruleTypeTag)
-            assertEquals("Nighttime", decision.blockReason)
+            assertEquals(BlockReason.Custom("Nighttime"), decision.reason)
             assertEquals(1L, decision.loggedRuleId)
         }
 

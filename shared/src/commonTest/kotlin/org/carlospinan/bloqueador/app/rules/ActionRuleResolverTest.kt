@@ -42,7 +42,7 @@ class ActionRuleResolverTest {
             assertTrue(decision is RuleDecision.ActionBlock)
             assertTrue(decision.isBlocked)
             assertEquals("ACTION", decision.ruleTypeTag)
-            assertEquals("spam", decision.blockReason)
+            assertEquals(BlockReason.Custom("spam"), decision.reason)
         }
 
     @Test
@@ -56,7 +56,8 @@ class ActionRuleResolverTest {
                 )
             val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
             assertTrue(decision is RuleDecision.ActionBlock)
-            assertEquals("Repeated calls (3 in 5m)", decision.blockReason)
+            // Structured, not a sentence -- the wording is chosen per locale at display time.
+            assertEquals(BlockReason.RepeatedCalls(attempts = 3, windowMinutes = 5), decision.reason)
         }
 
     @Test

@@ -10,6 +10,7 @@ import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
 class SqlAutoResponderRepository(
     db: AppDatabase,
     dispatcher: CoroutineDispatcher,
+    private val defaults: AutoResponderDefaults = AutoResponderDefaults(),
 ) : AutoResponderRepository {
     private val store = KeyValueSettingsStore(db, dispatcher)
 
@@ -19,7 +20,7 @@ class SqlAutoResponderRepository(
     private fun loadConfig(): AutoResponderConfig =
         AutoResponderConfig(
             enabled = store.readBool(KEY_ENABLED, false),
-            script = store.readString(KEY_SCRIPT, AutoResponderConfig.DEFAULT_SCRIPT),
+            script = store.readString(KEY_SCRIPT, defaults.script),
             audioUri = store.readString(KEY_AUDIO_URI, ""),
             recordingEnabled = store.readBool(KEY_RECORDING, false),
         )

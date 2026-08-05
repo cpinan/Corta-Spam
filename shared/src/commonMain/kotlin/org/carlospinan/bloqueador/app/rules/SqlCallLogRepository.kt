@@ -76,7 +76,7 @@ class SqlCallLogRepository(
                     action = if (decision.isBlocked) "BLOCKED" else "ALLOWED",
                     rule_type = decision.ruleTypeTag,
                     rule_id = decision.loggedRuleId,
-                    rule_detail = decision.blockReason,
+                    rule_detail = decision.loggedDetail,
                 ).value
         }
     }
