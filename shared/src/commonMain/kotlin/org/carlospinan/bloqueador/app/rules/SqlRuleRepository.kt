@@ -401,6 +401,9 @@ class SqlRuleRepository(
                                 label = it.label,
                                 enabled = it.enabled == 1L,
                                 createdAt = it.created_at,
+                                // Carried only so importAll can re-link action rules scoped to
+                                // this pattern; ids are reassigned on the importing device.
+                                id = it.id,
                             )
                         },
                     countryRules =
@@ -437,63 +440,129 @@ class SqlRuleRepository(
             json.encodeToString(BackupData.serializer(), data)
         }
 
+    /**
+     * Restore from a backup produced by [exportAll].
+     *
+     * Three things this deliberately does, each of which used to be wrong:
+     *
+     * 1. Rows are written with their real `enabled`/`created_at` in a single `*Full` insert. The
+     *    previous two-step "insert a default row, then find it and toggle it off" read the last
+     *    element of a `created_at DESC, id DESC` query -- the *oldest* row -- so importing any
+     *    disabled rule silently disabled an unrelated one the user still wanted.
+     * 2. Counts come from the insert's affected-row count, not the loop counter. Numbers and
+     *    country codes are `INSERT OR IGNORE` against a UNIQUE column, so re-importing a backup
+     *    the user already holds legitimately writes nothing and must report nothing.
+     * 3. The whole thing runs in one transaction, so a malformed entry halfway down the file
+     *    can't leave the rule set half-restored.
+     */
     override suspend fun importAll(jsonStr: String): ImportResult =
         withContext(dispatcher) {
             val data = json.decodeFromString(BackupData.serializer(), jsonStr)
+            val nowSeconds = currentTimeMillis() / 1000L
             var blocked = 0
             var allowlisted = 0
             var patterns = 0
             var countries = 0
             var actions = 0
             var schedules = 0
+            var skipped = 0
 
-            for (entry in data.blockedNumbers) {
-                queries.insertBlockedNumber(entry.number, entry.label)
-                blocked++
-            }
-            for (entry in data.allowlistedNumbers) {
-                queries.insertAllowlistedNumber(entry.number, entry.label)
-                allowlisted++
-            }
-            for (entry in data.patternRules) {
-                queries.insertPatternRule(entry.pattern, entry.label)
-                if (!entry.enabled) {
-                    val inserted = queries.selectAllPatternRules().executeAsList().lastOrNull()
-                    if (inserted != null) {
-                        queries.togglePatternRule(0, inserted.id)
+            // Source pattern id -> id it was given here, so an action rule scoped to a pattern
+            // still points at that same pattern after restore.
+            val patternIdRemap = mutableMapOf<Long, Long>()
+
+            queries.transaction {
+                for (entry in data.blockedNumbers) {
+                    if (!BackupEntryValidator.isValid(entry)) {
+                        skipped++
+                        continue
                     }
+                    val inserted =
+                        queries
+                            .insertBlockedNumberFull(
+                                number = entry.number,
+                                label = entry.label,
+                                created_at = BackupEntryValidator.createdAtOrNow(entry.createdAt, nowSeconds),
+                            ).value
+                    if (inserted > 0) blocked++ else skipped++
                 }
-                patterns++
-            }
-            for (entry in data.countryRules) {
-                queries.insertCountryRule(entry.countryCode, entry.countryName)
-                if (!entry.enabled) {
-                    val inserted = queries.selectAllCountryRules().executeAsList().lastOrNull()
-                    if (inserted != null) {
-                        queries.toggleCountryRule(0, inserted.id)
+                for (entry in data.allowlistedNumbers) {
+                    if (!BackupEntryValidator.isValid(entry)) {
+                        skipped++
+                        continue
                     }
+                    val inserted =
+                        queries
+                            .insertAllowlistedNumberFull(
+                                number = entry.number,
+                                label = entry.label,
+                                created_at = BackupEntryValidator.createdAtOrNow(entry.createdAt, nowSeconds),
+                            ).value
+                    if (inserted > 0) allowlisted++ else skipped++
                 }
-                countries++
-            }
-            for (entry in data.actionRules) {
-                queries.insertActionRule(entry.label, entry.attempts.toLong(), entry.windowMinutes.toLong(), entry.patternId)
-                if (!entry.enabled) {
-                    val inserted = queries.selectAllActionRules().executeAsList().lastOrNull()
-                    if (inserted != null) {
-                        queries.toggleActionRule(0, inserted.id)
+                for (entry in data.patternRules) {
+                    if (!BackupEntryValidator.isValid(entry)) {
+                        skipped++
+                        continue
                     }
-                }
-                actions++
-            }
-            for (entry in data.scheduleRules) {
-                queries.insertScheduleRule(entry.label, entry.startMinute.toLong(), entry.endMinute.toLong())
-                if (!entry.enabled) {
-                    val inserted = queries.selectAllScheduleRules().executeAsList().lastOrNull()
-                    if (inserted != null) {
-                        queries.toggleScheduleRule(0, inserted.id)
+                    queries.insertPatternRuleFull(
+                        pattern = entry.pattern,
+                        label = entry.label,
+                        enabled = if (entry.enabled) 1L else 0L,
+                        created_at = BackupEntryValidator.createdAtOrNow(entry.createdAt, nowSeconds),
+                    )
+                    entry.id?.let { sourceId ->
+                        patternIdRemap[sourceId] = queries.lastInsertRowId().executeAsOne()
                     }
+                    patterns++
                 }
-                schedules++
+                for (entry in data.countryRules) {
+                    if (!BackupEntryValidator.isValid(entry)) {
+                        skipped++
+                        continue
+                    }
+                    val inserted =
+                        queries
+                            .insertCountryRuleFull(
+                                country_code = entry.countryCode,
+                                country_name = entry.countryName,
+                                enabled = if (entry.enabled) 1L else 0L,
+                                created_at = BackupEntryValidator.createdAtOrNow(entry.createdAt, nowSeconds),
+                            ).value
+                    if (inserted > 0) countries++ else skipped++
+                }
+                for (entry in data.actionRules) {
+                    if (!BackupEntryValidator.isValid(entry)) {
+                        skipped++
+                        continue
+                    }
+                    queries.insertActionRuleFull(
+                        label = entry.label,
+                        attempts = entry.attempts.toLong(),
+                        window_minutes = entry.windowMinutes.toLong(),
+                        // An id we can't re-link would dangle onto whatever row happens to hold
+                        // it here, silently rescoping the rule. Dropping the scope is the safe
+                        // reading of "we no longer know which pattern this meant".
+                        pattern_id = entry.patternId?.let { patternIdRemap[it] },
+                        enabled = if (entry.enabled) 1L else 0L,
+                        created_at = BackupEntryValidator.createdAtOrNow(entry.createdAt, nowSeconds),
+                    )
+                    actions++
+                }
+                for (entry in data.scheduleRules) {
+                    if (!BackupEntryValidator.isValid(entry)) {
+                        skipped++
+                        continue
+                    }
+                    queries.insertScheduleRuleFull(
+                        label = entry.label,
+                        start_minute = entry.startMinute.toLong(),
+                        end_minute = entry.endMinute.toLong(),
+                        enabled = if (entry.enabled) 1L else 0L,
+                        created_at = BackupEntryValidator.createdAtOrNow(entry.createdAt, nowSeconds),
+                    )
+                    schedules++
+                }
             }
 
             ImportResult(
@@ -503,6 +572,7 @@ class SqlRuleRepository(
                 countriesImported = countries,
                 actionsImported = actions,
                 schedulesImported = schedules,
+                skipped = skipped,
             )
         }
 

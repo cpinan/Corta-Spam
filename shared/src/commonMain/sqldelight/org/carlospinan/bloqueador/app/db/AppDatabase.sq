@@ -58,6 +58,14 @@ SELECT * FROM BlockedNumber WHERE number = ?;
 insertBlockedNumber:
 INSERT OR IGNORE INTO BlockedNumber(number, label) VALUES (?, ?);
 
+-- Import-only variant. Backup restore must reproduce the exported row verbatim, including
+-- created_at (which drives list order) and enabled. The `*Full` inserts exist so the importer
+-- never has to write a default row and then hunt for "the one I just inserted" -- that hunt
+-- used to read the last element of a DESC-ordered SELECT, i.e. the *oldest* row, and silently
+-- disabled an unrelated rule on every restore that contained a disabled one.
+insertBlockedNumberFull:
+INSERT OR IGNORE INTO BlockedNumber(number, label, created_at) VALUES (?, ?, ?);
+
 deleteBlockedNumberById:
 DELETE FROM BlockedNumber WHERE id = ?;
 
@@ -74,6 +82,9 @@ SELECT * FROM AllowlistedNumber WHERE number = ?;
 insertAllowlistedNumber:
 INSERT OR IGNORE INTO AllowlistedNumber(number, label) VALUES (?, ?);
 
+insertAllowlistedNumberFull:
+INSERT OR IGNORE INTO AllowlistedNumber(number, label, created_at) VALUES (?, ?, ?);
+
 deleteAllowlistedNumberById:
 DELETE FROM AllowlistedNumber WHERE id = ?;
 
@@ -87,6 +98,15 @@ SELECT * FROM PatternRule ORDER BY created_at DESC, id DESC;
 insertPatternRule:
 INSERT INTO PatternRule(pattern, label) VALUES (?, ?);
 
+insertPatternRuleFull:
+INSERT INTO PatternRule(pattern, label, enabled, created_at) VALUES (?, ?, ?, ?);
+
+-- Only meaningful when read inside the same transaction as the INSERT that produced it.
+-- The importer uses it to build a source-id -> new-id map so an action rule's pattern_id
+-- scope survives a restore instead of pointing at whatever row happens to hold that id now.
+lastInsertRowId:
+SELECT last_insert_rowid() AS id;
+
 togglePatternRule:
 UPDATE PatternRule SET enabled = ? WHERE id = ?;
 
@@ -99,6 +119,9 @@ SELECT * FROM CountryRule ORDER BY country_name ASC;
 
 insertCountryRule:
 INSERT OR IGNORE INTO CountryRule(country_code, country_name) VALUES (?, ?);
+
+insertCountryRuleFull:
+INSERT OR IGNORE INTO CountryRule(country_code, country_name, enabled, created_at) VALUES (?, ?, ?, ?);
 
 toggleCountryRule:
 UPDATE CountryRule SET enabled = ? WHERE id = ?;
@@ -172,6 +195,10 @@ SELECT * FROM ActionRule ORDER BY created_at DESC, id DESC;
 insertActionRule:
 INSERT INTO ActionRule(label, attempts, window_minutes, pattern_id) VALUES (?, ?, ?, ?);
 
+insertActionRuleFull:
+INSERT INTO ActionRule(label, attempts, window_minutes, pattern_id, enabled, created_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
 toggleActionRule:
 UPDATE ActionRule SET enabled = ? WHERE id = ?;
 
@@ -215,6 +242,9 @@ SELECT * FROM ScheduleRule ORDER BY created_at DESC, id DESC;
 
 insertScheduleRule:
 INSERT INTO ScheduleRule(label, start_minute, end_minute) VALUES (?, ?, ?);
+
+insertScheduleRuleFull:
+INSERT INTO ScheduleRule(label, start_minute, end_minute, enabled, created_at) VALUES (?, ?, ?, ?, ?);
 
 toggleScheduleRule:
 UPDATE ScheduleRule SET enabled = ? WHERE id = ?;
