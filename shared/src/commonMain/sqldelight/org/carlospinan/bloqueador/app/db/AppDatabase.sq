@@ -45,8 +45,12 @@ CREATE TABLE CallLogEntry (
 );
 
 -- BlockedNumber queries
+-- created_at defaults to whole seconds, so rows added within the same second tie on it.
+-- id DESC breaks the tie in insertion order, which is what "most recent first" in
+-- RuleRepository's KDoc promises; without it SQLite falls back to rowid ASC and the
+-- list comes back oldest-first for anything added in the same second.
 selectAllBlockedNumbers:
-SELECT * FROM BlockedNumber ORDER BY created_at DESC;
+SELECT * FROM BlockedNumber ORDER BY created_at DESC, id DESC;
 
 selectBlockedNumberByNumber:
 SELECT * FROM BlockedNumber WHERE number = ?;
@@ -62,7 +66,7 @@ SELECT count(*) AS count FROM BlockedNumber;
 
 -- AllowlistedNumber queries
 selectAllAllowlistedNumbers:
-SELECT * FROM AllowlistedNumber ORDER BY created_at DESC;
+SELECT * FROM AllowlistedNumber ORDER BY created_at DESC, id DESC;
 
 selectAllowlistedNumberByNumber:
 SELECT * FROM AllowlistedNumber WHERE number = ?;
@@ -78,7 +82,7 @@ SELECT count(*) AS count FROM AllowlistedNumber;
 
 -- PatternRule queries
 selectAllPatternRules:
-SELECT * FROM PatternRule ORDER BY created_at DESC;
+SELECT * FROM PatternRule ORDER BY created_at DESC, id DESC;
 
 insertPatternRule:
 INSERT INTO PatternRule(pattern, label) VALUES (?, ?);
@@ -163,7 +167,7 @@ CREATE TABLE ActionRule (
 );
 
 selectAllActionRules:
-SELECT * FROM ActionRule ORDER BY created_at DESC;
+SELECT * FROM ActionRule ORDER BY created_at DESC, id DESC;
 
 insertActionRule:
 INSERT INTO ActionRule(label, attempts, window_minutes, pattern_id) VALUES (?, ?, ?, ?);
@@ -207,7 +211,7 @@ CREATE TABLE ScheduleRule (
 );
 
 selectAllScheduleRules:
-SELECT * FROM ScheduleRule ORDER BY created_at DESC;
+SELECT * FROM ScheduleRule ORDER BY created_at DESC, id DESC;
 
 insertScheduleRule:
 INSERT INTO ScheduleRule(label, start_minute, end_minute) VALUES (?, ?, ?);
