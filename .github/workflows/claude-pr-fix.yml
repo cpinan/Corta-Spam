@@ -20,7 +20,7 @@ jobs:
       contains(github.event.comment.body, '@claude fix') &&
       github.event.comment.user.login != 'claude[bot]'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 

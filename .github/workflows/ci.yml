@@ -14,14 +14,14 @@ jobs:
     name: ktlint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Run ktlint
         run: ./gradlew ktlintCheck
@@ -30,16 +30,16 @@ jobs:
     name: Shared (JVM) + Android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Verify SQLDelight migrations against schema baseline
         run: ./gradlew :shared:verifySqlDelightMigration
@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: shared-jvm-test-report
           path: shared/build/reports/tests/testDebugUnitTest
@@ -65,14 +65,14 @@ jobs:
     # framework links with "Undefined symbols: _OBJC_CLASS_$_UIViewLayoutRegion".
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       # Printed so an image default moving out from under us is visible in the log
       # rather than showing up as an unexplained linker error.
