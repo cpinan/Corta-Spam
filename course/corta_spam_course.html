@@ -226,7 +226,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line"></span>
 <span class="line"><span class="kw">[plugins]</span></span>
 <span class="line"><span class="kw">kotlin-multiplatform</span> = { id = <span class="str">"org.jetbrains.kotlin.multiplatform"</span>, version.ref = <span class="str">"kotlin"</span> }</span></code></pre>
-<p><b>Why this pattern:</b> Upgrade Kotlin from 2.2.20 to 2.3.0? Change one line. All 8 plugins and libraries that reference <code>kotlin</code> update automatically. No hunting through Gradle files.</p>
+<div class="note why"><span class="tag">Why this pattern</span><p style="margin-bottom:0"> Upgrade Kotlin from 2.2.20 to 2.3.0? Change one line. All 8 plugins and libraries that reference <code>kotlin</code> update automatically. No hunting through Gradle files.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> Root build.gradle.kts — Plugin declarations</h3>
 <p class="file-label">build.gradle.kts</p>
@@ -258,7 +258,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        }</span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b>Why:</b> <code>force()</code> overrides whatever version any library requests. We pin to 1.9.3 which works with AGP 8.7.3. Koin only touches baseline ComponentActivity APIs present since 1.9.3 — safe downgrade.</p>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> <code>force()</code> overrides whatever version any library requests. We pin to 1.9.3 which works with AGP 8.7.3. Koin only touches baseline ComponentActivity APIs present since 1.9.3 — safe downgrade.</p></div>
 <div class="callout"><h3>Trade-off</h3><p>Forcing versions is a hammer — use sparingly. If Koin 4.3.0 removes the need, remove the force block. Document <em>why</em> each force exists (see the comment in the real build file) so future maintainers know when it can be dropped.</p></div>
 
 <figure class="diagram">
@@ -336,7 +336,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        }</span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b>Key insight:</b> <code>commonMain</code> depends on <code>sqldelight.runtime</code> (pure Kotlin). <code>androidMain</code> adds the Android-specific driver; <code>iosMain</code> adds the Native driver. The <code>expect</code>/<code>actual</code> pattern bridges these at compile time.</p>
+<div class="note contrast"><span class="tag">Key insight</span><p style="margin-bottom:0"> <code>commonMain</code> depends on <code>sqldelight.runtime</code> (pure Kotlin). <code>androidMain</code> adds the Android-specific driver; <code>iosMain</code> adds the Native driver. The <code>expect</code>/<code>actual</code> pattern bridges these at compile time.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> The expect/actual pattern</h3>
 <p>Declare an interface (or <code>expect</code> declaration) in <code>commonMain</code>. Each platform provides an <code>actual</code> implementation:</p>
@@ -475,7 +475,7 @@ th{background:var(--panel-2);font-weight:600}
 <p><b>In the Composable:</b></p>
 <pre><code><span class="line"><span class="kw">val</span> state <span class="kw">by</span> homeViewModel.state.<span class="fn">collectAsState</span>()</span>
 <span class="line"><span class="tp">Text</span>(text = <span class="str">"${state.blockedToday}"</span>)  <span class="cm">// auto-updates when StateFlow emits</span></span></code></pre>
-<p><b>Why StateFlow over LiveData:</b> LiveData is Android-only. StateFlow is pure Kotlin — works in KMP <code>commonMain</code>, works with Compose's <code>collectAsState()</code>, and integrates with coroutines naturally.</p>
+<div class="note why"><span class="tag">Why StateFlow over LiveData</span><p style="margin-bottom:0"> LiveData is Android-only. StateFlow is pure Kotlin — works in KMP <code>commonMain</code>, works with Compose's <code>collectAsState()</code>, and integrates with coroutines naturally.</p></div>
 
 <h3><span class="badge badge-a">Advanced</span> Modifier chains — order matters</h3>
 <pre><code><span class="line"><span class="cm">// Padding added OUTSIDE the clickable area</span></span>
@@ -572,7 +572,7 @@ th{background:var(--panel-2);font-weight:600}
 <p>Each <code>composable()</code> block registers a screen. When the navController navigates to that route, Compose creates (or reuses) the composable. The <code>backStackEntry.arguments</code> bundle contains the parsed route parameters.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Navigation options — preventing reload</h3>
-<p><b>The bug:</b> User taps "Call Log" in the bottom bar repeatedly. Each tap navigates <code>call_log/all</code> → <code>popUpTo(home)</code> → <code>navigate(call_log/all)</code>, which destroys and recreates the screen.</p>
+<div class="note gotcha"><span class="tag">The bug</span><p style="margin-bottom:0"> User taps "Call Log" in the bottom bar repeatedly. Each tap navigates <code>call_log/all</code> → <code>popUpTo(home)</code> → <code>navigate(call_log/all)</code>, which destroys and recreates the screen.</p></div>
 <p class="file-label">AppNavHost.kt — the fix</p>
 <pre><code><span class="line"><span class="kw">val</span> navBackStackEntry <span class="kw">by</span> navController.<span class="fn">currentBackStackEntryAsState</span>()</span>
 <span class="line"><span class="kw">val</span> currentRoute = navBackStackEntry?.destination?.route</span>
@@ -588,7 +588,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        launchSingleTop = <span class="kw">true</span></span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b>Why two checks:</b> <code>launchSingleTop</code> alone isn't enough — it prevents duplicate instances but <code>popUpTo</code> can still destroy the existing screen. The explicit <code>isRoot</code> check prevents any navigation when already on the section root. The <code>call_log</code> pattern check handles route templates where <code>"call_log/{filter}"</code> ≠ <code>"call_log/all"</code>.</p>
+<div class="note why"><span class="tag">Why two checks</span><p style="margin-bottom:0"> <code>launchSingleTop</code> alone isn't enough — it prevents duplicate instances but <code>popUpTo</code> can still destroy the existing screen. The explicit <code>isRoot</code> check prevents any navigation when already on the section root. The <code>call_log</code> pattern check handles route templates where <code>"call_log/{filter}"</code> ≠ <code>"call_log/all"</code>.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
@@ -799,7 +799,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        .<span class="fn">selectAllBlockedNumbers</span>()</span>
 <span class="line">        .<span class="fn">asFlow</span>().<span class="fn">mapToList</span>()</span>
 <span class="line">}</span></code></pre>
-<p><b>Why Flow:</b> SQLDelight's <code>asFlow()</code> emits on every database change. ViewModels collect these flows and the UI auto-updates — no polling, no manual refresh.</p>
+<div class="note why"><span class="tag">Why Flow</span><p style="margin-bottom:0"> SQLDelight's <code>asFlow()</code> emits on every database change. ViewModels collect these flows and the UI auto-updates — no polling, no manual refresh.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 550 180" xmlns="http://www.w3.org/2000/svg">
@@ -892,7 +892,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">    <span class="fn">single</span>&lt;<span class="tp">DefaultDialerGateway</span>&gt; { <span class="fn">AndroidDefaultDialerGateway</span>(<span class="fn">androidContext</span>()) }</span>
 <span class="line">    <span class="fn">factory</span> { <span class="fn">DialerOnboardingViewModel</span>(<span class="fn">get</span>()) }</span>
 <span class="line">}</span></code></pre>
-<p><b>Why platform first:</b> <code>sharedModule</code> needs <code>DriverFactory</code> (from <code>platformModule</code>) to create the database. Platform module registers the concrete implementation; shared module uses it via <code>get()</code>.</p>
+<div class="note why"><span class="tag">Why platform first</span><p style="margin-bottom:0"> <code>sharedModule</code> needs <code>DriverFactory</code> (from <code>platformModule</code>) to create the database. Platform module registers the concrete implementation; shared module uses it via <code>get()</code>.</p></div>
 <div class="callout"><h3>Koin vs Dagger/Hilt</h3><ul><li><b>Dagger/Hilt:</b> Compile-time DI with annotation processing. Faster at runtime, catches mistakes at build time. But generates code (longer builds), Java-only patterns, Android-specific Hilt.</li><li><b>Koin:</b> Runtime DI with a DSL. No code generation, works in KMP, simpler mental model. Trade-off: misconfigurations crash at runtime instead of compile time.</li><li><b>Why Koin here:</b> KMP compatibility. Dagger/Hilt don't work in Kotlin/Native (iOS). Koin's pure-Kotlin approach works everywhere.</li></ul></div>
 
 <figure class="diagram">
@@ -997,7 +997,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        _state.value = <span class="kw">if</span> (granted) GRANTED <span class="kw">else</span> DENIED</span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b>Key insight:</b> On <code>onResume()</code>, the ViewModel re-checks <code>isDefaultDialer()</code>. If the user changed the default dialer from system Settings directly, the app detects it without requiring a restart.</p>
+<div class="note contrast"><span class="tag">Key insight</span><p style="margin-bottom:0"> On <code>onResume()</code>, the ViewModel re-checks <code>isDefaultDialer()</code>. If the user changed the default dialer from system Settings directly, the app detects it without requiring a restart.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 500 180" xmlns="http://www.w3.org/2000/svg">
@@ -1097,7 +1097,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        <span class="cm">// If allowed: InCallActivity already showing — user decides answer/decline</span></span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b>Why show UI first, evaluate later:</b> If you evaluate before showing UI and the evaluation takes 500ms (DB queries, contact lookup), Android shows its own system incoming-call UI because it thinks you're not responding. By showing <code>InCallActivity</code> immediately, the system sees your UI and stays out of the way. If the call turns out to be blocked, <code>call.reject()</code> dismisses it.</p>
+<div class="note why"><span class="tag">Why show UI first, evaluate later</span><p style="margin-bottom:0"> If you evaluate before showing UI and the evaluation takes 500ms (DB queries, contact lookup), Android shows its own system incoming-call UI because it thinks you're not responding. By showing <code>InCallActivity</code> immediately, the system sees your UI and stays out of the way. If the call turns out to be blocked, <code>call.reject()</code> dismisses it.</p></div>
 
 <h3><span class="badge badge-a">Advanced</span> InCallState — the singleton bridge</h3>
 <p class="file-label">InCallState.kt</p>
@@ -1201,7 +1201,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">    <span class="kw">val</span> defaultAction: <span class="tp">DefaultAction</span> = <span class="tp">DefaultAction</span>.ALLOW,</span>
 <span class="line">    <span class="cm">// ... plus spam provider, action rules, schedule rules</span></span>
 <span class="line">)</span></code></pre>
-<p><b>Why a data class, not global state:</b> The resolver is a pure function: <code>evaluate(number, context) → Decision</code>. All inputs are in the data class. No mutable state. This makes it <b>trivially testable</b> — create a context, check the output. No mock servers, no database setup, no race conditions.</p>
+<div class="note why"><span class="tag">Why a data class, not global state</span><p style="margin-bottom:0"> The resolver is a pure function: <code>evaluate(number, context) → Decision</code>. All inputs are in the data class. No mutable state. This makes it <b>trivially testable</b> — create a context, check the output. No mock servers, no database setup, no race conditions.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> Precedence order (7 levels)</h3>
 <p>The order is deliberate and tested at each step:</p>
@@ -1220,7 +1220,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line"><span class="cm">// 5. SPAM → 6. ACTION → 7. SCHEDULE</span></span>
 <span class="line"></span>
 <span class="line"><span class="cm">// 8. DEFAULT — allow, block, or ask (based on user settings)</span></span></code></pre>
-<p><b>Why manual block overrides contacts:</b> If a user explicitly added mom's number to the block list, they have a reason. Respecting that explicit choice is more important than the auto-allow-contacts convenience feature.</p>
+<div class="note why"><span class="tag">Why manual block overrides contacts</span><p style="margin-bottom:0"> If a user explicitly added mom's number to the block list, they have a reason. Respecting that explicit choice is more important than the auto-allow-contacts convenience feature.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> Making "Ask" mean something</h3>
 <p>The default action has three settings: Allow, Block, Ask. For a long time, <code>Ask</code> silently behaved exactly like <code>Allow</code> — there was no way to build a real-time "should I let this through?" prompt, because by the time the resolver runs, the call is already ringing. Rather than ship a setting that lies about what it does, the fix makes <code>Ask</code> a genuinely distinct outcome:</p>
@@ -1343,12 +1343,12 @@ th{background:var(--panel-2);font-weight:600}
 <p>When a user's device is set to <code>es-PE</code> (Spanish Peru), the system falls back: <b>es-PE → es → en</b>. Since <code>values-es/</code> exists, Spanish strings are used. If we only had <code>values-es-rMX/</code> (Mexico), a Peruvian user would see English.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Format string pitfalls</h3>
-<p><b>The bug:</b> We wrote <code>&lt;string name="stats_blocked_count"&gt;%d blocked&lt;/string&gt;</code> and called <code>stringResource(Res.string.stats_blocked_count, day.count)</code>. The screen showed <b>"%d blocked"</b> literally.</p>
+<div class="note gotcha"><span class="tag">The bug</span><p style="margin-bottom:0"> We wrote <code>&lt;string name="stats_blocked_count"&gt;%d blocked&lt;/string&gt;</code> and called <code>stringResource(Res.string.stats_blocked_count, day.count)</code>. The screen showed <b>"%d blocked"</b> literally.</p></div>
 <p><b>The fix:</b> Compose Multiplatform's <code>stringResource()</code> vararg format doesn't always work as expected. Solution: use string interpolation with a separate translatable label:</p>
 <pre><code><span class="line"><span class="cm">// Instead of: "%d blocked" with format arg</span></span>
 <span class="line"><span class="cm">// Use: $count + translatable "blocked" label</span></span>
 <span class="line"><span class="tp">Text</span>(text = <span class="str">"</span>${day.count}<span class="str"> </span>${<span class="fn">stringResource</span>(Res.string.stats_blocked_label)}<span class="str">"</span>)</span></code></pre>
-<p><b>Lesson:</b> Always test format strings on device. What works in the IDE preview doesn't always work at runtime, especially with Compose Multiplatform resources.</p>
+<div class="note contrast"><span class="tag">Lesson</span><p style="margin-bottom:0"> Always test format strings on device. What works in the IDE preview doesn't always work at runtime, especially with Compose Multiplatform resources.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 500 170" xmlns="http://www.w3.org/2000/svg">
@@ -1437,7 +1437,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">    vm.<span class="fn">refresh</span>()</span>
 <span class="line">    <span class="fn">assertEquals</span>(<span class="num">3</span>, vm.state.value.blockedToday)</span>
 <span class="line">}</span></code></pre>
-<p><b>Why fakes over MockK:</b> MockK is a mocking library that generates fake implementations at runtime — but it's JVM-only. Fakes are plain Kotlin classes implementing the interface — they work in <code>commonTest</code> (Kotlin/Native for iOS tests too). Write once, test everywhere.</p>
+<div class="note why"><span class="tag">Why fakes over MockK</span><p style="margin-bottom:0"> MockK is a mocking library that generates fake implementations at runtime — but it's JVM-only. Fakes are plain Kotlin classes implementing the interface — they work in <code>commonTest</code> (Kotlin/Native for iOS tests too). Write once, test everywhere.</p></div>
 
 <h3><span class="badge badge-a">Advanced</span> Compose UI tests with Robolectric</h3>
 <p class="file-label">CallLogScreenUiTest.kt (fragment, androidUnitTest)</p>
@@ -1549,7 +1549,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line"></span>
 <span class="line"><span class="cm"># 3. Toast debugging — quick visual feedback</span></span>
 <span class="line"><span class="tp">Toast</span>.<span class="fn">makeText</span>(<span class="kw">this</span>, <span class="str">"Callback fired"</span>, <span class="tp">Toast</span>.SHORT).<span class="fn">show</span>()</span></code></pre>
-<p><b>Lesson from this project:</b> 3 rounds of Toast debugging were needed to trace the callback chain. Sometimes <code>Log.d</code> is filtered; Toast is always visible.</p>
+<div class="note contrast"><span class="tag">Lesson from this project</span><p style="margin-bottom:0"> 3 rounds of Toast debugging were needed to trace the callback chain. Sometimes <code>Log.d</code> is filtered; Toast is always visible.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg">
@@ -1599,10 +1599,10 @@ th{background:var(--panel-2);font-weight:600}
 <ul><li>Decode Kotlin/Native compilation errors</li><li>Read iOS <code>.ips</code> crash reports</li><li>Use <code>launch --console</code> for Kotlin exception messages</li><li>Diagnose Metal GPU rendering hangs</li><li>Apply platform-specific workarounds (expect/actual, Map casts, simulator restarts)</li></ul></div>
 
 <h3>Error 1: Dispatchers.IO is internal on Kotlin/Native</h3>
-<p><b>Symptom:</b> <code>e: Cannot access 'val IO: CoroutineDispatcher': it is internal in 'kotlinx.coroutines.Dispatchers'</code></p>
-<p><b>Why:</b> <code>Dispatchers.IO</code> is annotated with <code>@InternalCoroutinesApi</code> in the Kotlin/Native artifact. It's platform-specific — Android implemented it as a thread pool, but Native/JS haven't stabilized it.</p>
-<p><b>Diagnosis:</b> The error message is self-explanatory, but the compiler may show 43+ occurrences cascading from other errors. <code>grep "Dispatchers.IO" -r shared/src/commonMain/</code> finds all instances.</p>
-<p><b>Fix:</b> Replace all <code>Dispatchers.IO</code> with <code>Dispatchers.Default</code> (43 occurrences across SqlRuleRepository, SqlCallLogRepository, KeyValueSettingsStore). <code>Default</code> is public on all platforms. For IO-heavy workloads, use expect/actual to provide the optimal dispatcher per platform.</p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> <code>e: Cannot access 'val IO: CoroutineDispatcher': it is internal in 'kotlinx.coroutines.Dispatchers'</code></p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> <code>Dispatchers.IO</code> is annotated with <code>@InternalCoroutinesApi</code> in the Kotlin/Native artifact. It's platform-specific — Android implemented it as a thread pool, but Native/JS haven't stabilized it.</p></div>
+<div class="note verified"><span class="tag">Diagnosis</span><p style="margin-bottom:0"> The error message is self-explanatory, but the compiler may show 43+ occurrences cascading from other errors. <code>grep "Dispatchers.IO" -r shared/src/commonMain/</code> finds all instances.</p></div>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"> Replace all <code>Dispatchers.IO</code> with <code>Dispatchers.Default</code> (43 occurrences across SqlRuleRepository, SqlCallLogRepository, KeyValueSettingsStore). <code>Default</code> is public on all platforms. For IO-heavy workloads, use expect/actual to provide the optimal dispatcher per platform.</p></div>
 <p class="file-label">DriverFactory.kt — added platform dispatcher</p>
 <pre><code><span class="line"><span class="kw">interface</span> <span class="tp">DriverFactory</span> {</span>
 <span class="line">    <span class="kw">fun</span> <span class="fn">createDriver</span>(): <span class="tp">SqlDriver</span></span>
@@ -1610,9 +1610,9 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">}</span></code></pre>
 
 <h3>Error 2: Clock.System unresolved on iOS</h3>
-<p><b>Symptom:</b> <code>e: Unresolved reference 'System'</code> at <code>Clock.System.now().toEpochMilliseconds()</code></p>
-<p><b>Why:</b> <code>kotlinx.datetime.Clock.System</code> companion doesn't always resolve correctly on Kotlin/Native toolchains, especially with the <code>import kotlinx.datetime.Clock</code> pattern.</p>
-<p><b>Fix:</b> Created expect/actual for getting current time in milliseconds:</p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> <code>e: Unresolved reference 'System'</code> at <code>Clock.System.now().toEpochMilliseconds()</code></p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> <code>kotlinx.datetime.Clock.System</code> companion doesn't always resolve correctly on Kotlin/Native toolchains, especially with the <code>import kotlinx.datetime.Clock</code> pattern.</p></div>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"> Created expect/actual for getting current time in milliseconds:</p></div>
 <p class="file-label">commonMain — TimeProvider.kt</p>
 <pre><code><span class="line"><span class="kw">expect fun</span> <span class="fn">currentTimeMillis</span>(): <span class="tp">Long</span></span></code></pre>
 <p class="file-label">androidMain — TimeProvider.android.kt</p>
@@ -1621,28 +1621,28 @@ th{background:var(--panel-2);font-weight:600}
 <pre><code><span class="line"><span class="kw">actual fun</span> <span class="fn">currentTimeMillis</span>(): <span class="tp">Long</span> = (<span class="tp">NSDate</span>().timeIntervalSince1970 * <span class="num">1000</span>).<span class="fn">toLong</span>()</span></code></pre>
 
 <h3>Error 3: Navigation Bundle.getString() not in KMP</h3>
-<p><b>Symptom:</b> <code>e: Unresolved reference 'getString'</code> at <code>backStackEntry.arguments?.getString("filter")</code></p>
-<p><b>Why:</b> Navigation Compose KMP <code>arguments</code> returns <code>Bundle?</code> but <code>Bundle</code> on iOS doesn't expose <code>getString()</code>. The method isn't part of the KMP-common API surface.</p>
-<p><b>Fix:</b> Cast to <code>Map&lt;String, *&gt;</code> — a pure Kotlin type available everywhere:</p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> <code>e: Unresolved reference 'getString'</code> at <code>backStackEntry.arguments?.getString("filter")</code></p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> Navigation Compose KMP <code>arguments</code> returns <code>Bundle?</code> but <code>Bundle</code> on iOS doesn't expose <code>getString()</code>. The method isn't part of the KMP-common API surface.</p></div>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"> Cast to <code>Map&lt;String, *&gt;</code> — a pure Kotlin type available everywhere:</p></div>
 <pre><code><span class="line"><span class="cm">// Before (fails on iOS):</span></span>
 <span class="line"><span class="kw">val</span> filter = backStackEntry.arguments?.<span class="fn">getString</span>(<span class="str">"filter"</span>) ?: <span class="str">"all"</span></span>
 <span class="line"></span>
 <span class="line"><span class="cm">// After (works everywhere):</span></span>
 <span class="line"><span class="ann">@Suppress</span>(<span class="str">"UNCHECKED_CAST"</span>)</span>
 <span class="line"><span class="kw">val</span> filter = (backStackEntry.arguments <span class="kw">as?</span> <span class="tp">Map</span>&lt;<span class="tp">String</span>, *&gt;)?.<span class="fn">get</span>(<span class="str">"filter"</span>) <span class="kw">as?</span> <span class="tp">String</span> ?: <span class="str">"all"</span></span></code></pre>
-<p><b>Lesson:</b> When Navigation Compose KMP APIs fail, fall back to Kotlin stdlib types (<code>Map</code>, <code>List</code>) which compile on all targets.</p>
+<div class="note contrast"><span class="tag">Lesson</span><p style="margin-bottom:0"> When Navigation Compose KMP APIs fail, fall back to Kotlin stdlib types (<code>Map</code>, <code>List</code>) which compile on all targets.</p></div>
 
 <h3>Error 4: Leftover import kotlinx.coroutines.IO</h3>
-<p><b>Symptom:</b> 40+ cascading compilation errors after replacing <code>Dispatchers.IO</code> with <code>Dispatchers.Default</code></p>
-<p><b>Why:</b> <code>sed -i '' 's/Dispatchers\.IO/Dispatchers.Default/g'</code> only replaces occurrences of the qualified form. The bare <code>import kotlinx.coroutines.IO</code> survived but caused subsequent errors to be attributed to wrong lines.</p>
-<p><b>Diagnosis:</b> <code>grep "import kotlinx\.coroutines\.IO" -r shared/src/</code> — found 2 leftover imports in <code>SqlCallLogRepository.kt</code> and <code>SqlRuleRepository.kt</code>.</p>
-<p><b>Fix:</b> Delete the bare import lines and add <code>import kotlinx.datetime.Clock</code> where needed.</p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> 40+ cascading compilation errors after replacing <code>Dispatchers.IO</code> with <code>Dispatchers.Default</code></p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> <code>sed -i '' 's/Dispatchers\.IO/Dispatchers.Default/g'</code> only replaces occurrences of the qualified form. The bare <code>import kotlinx.coroutines.IO</code> survived but caused subsequent errors to be attributed to wrong lines.</p></div>
+<div class="note verified"><span class="tag">Diagnosis</span><p style="margin-bottom:0"> <code>grep "import kotlinx\.coroutines\.IO" -r shared/src/</code> — found 2 leftover imports in <code>SqlCallLogRepository.kt</code> and <code>SqlRuleRepository.kt</code>.</p></div>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"> Delete the bare import lines and add <code>import kotlinx.datetime.Clock</code> where needed.</p></div>
 
 <h3>Error 5: Koin not initialized — SIGABRT on launch</h3>
-<p><b>Symptom:</b> App launches, shows white screen, crashes with <code>SIGABRT</code>. Crash report shows <code>terminateWithUnhandledException</code>.</p>
-<p><b>Why:</b> Android initializes Koin in <code>CortaSpamApp.onCreate()</code> which is called by the Android framework. iOS has no equivalent — <code>MainViewController</code> created the Compose UI without first calling <code>initKoin()</code>, so <code>koinViewModel()</code> threw <code>DefinitionNotFoundException</code>.</p>
-<p><b>Diagnosis:</b> The <code>.ips</code> crash report showed the stack trace ending in <code>static iOSApp.$main()</code> → <code>ComposeContainerView</code>. No Kotlin exception message visible. Fixed by running <code>xcrun simctl launch --console</code> which streams Kotlin exception output to the terminal.</p>
-<p><b>Fix:</b></p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> App launches, shows white screen, crashes with <code>SIGABRT</code>. Crash report shows <code>terminateWithUnhandledException</code>.</p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> Android initializes Koin in <code>CortaSpamApp.onCreate()</code> which is called by the Android framework. iOS has no equivalent — <code>MainViewController</code> created the Compose UI without first calling <code>initKoin()</code>, so <code>koinViewModel()</code> threw <code>DefinitionNotFoundException</code>.</p></div>
+<div class="note verified"><span class="tag">Diagnosis</span><p style="margin-bottom:0"> The <code>.ips</code> crash report showed the stack trace ending in <code>static iOSApp.$main()</code> → <code>ComposeContainerView</code>. No Kotlin exception message visible. Fixed by running <code>xcrun simctl launch --console</code> which streams Kotlin exception output to the terminal.</p></div>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"></p></div>
 <p class="file-label">MainViewController.kt (before and after)</p>
 <pre><code><span class="line"><span class="cm">// Before:</span></span>
 <span class="line"><span class="kw">fun</span> <span class="fn">MainViewController</span>(): <span class="tp">UIViewController</span> = <span class="fn">ComposeUIViewController</span> { <span class="fn">App</span>() }</span>
@@ -1654,28 +1654,28 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">}</span></code></pre>
 
 <h3>Error 6: Compose PlistSanityCheck — CADisableMinimumFrameDurationOnPhone</h3>
-<p><b>Symptom:</b> Console shows <code>IllegalStateException: Info.plist doesn't have a valid CADisableMinimumFrameDurationOnPhone entry</code></p>
-<p><b>Why:</b> Compose Multiplatform for iOS requires this key set to <code>true</code> for proper rendering on high-refresh-rate iPhones. The xcodegen-generated <code>Info.plist</code> didn't include it.</p>
-<p><b>Diagnosis:</b> <code>xcrun simctl launch --console</code> prints the exact error message including the fix instructions directly from Compose's PlistSanityCheck.</p>
-<p><b>Fix:</b> Add to <code>iosApp/project.yml</code> under <code>info.properties</code>:</p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> Console shows <code>IllegalStateException: Info.plist doesn't have a valid CADisableMinimumFrameDurationOnPhone entry</code></p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> Compose Multiplatform for iOS requires this key set to <code>true</code> for proper rendering on high-refresh-rate iPhones. The xcodegen-generated <code>Info.plist</code> didn't include it.</p></div>
+<div class="note verified"><span class="tag">Diagnosis</span><p style="margin-bottom:0"> <code>xcrun simctl launch --console</code> prints the exact error message including the fix instructions directly from Compose's PlistSanityCheck.</p></div>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"> Add to <code>iosApp/project.yml</code> under <code>info.properties</code>:</p></div>
 <pre><code><span class="line"><span class="kw">info:</span></span>
 <span class="line">  <span class="kw">path:</span> Generated/Info.plist</span>
 <span class="line">  <span class="kw">properties:</span></span>
 <span class="line">    <span class="kw">CFBundleDisplayName:</span> "Corta Spam"</span>
 <span class="line">    <span class="kw">CADisableMinimumFrameDurationOnPhone:</span> true</span></code></pre>
-<p><b>Lesson:</b> Always check <code>--console</code> output before diving into crash reports. Compose Multiplatform diagnostics are excellent when you can see them.</p>
+<div class="note contrast"><span class="tag">Lesson</span><p style="margin-bottom:0"> Always check <code>--console</code> output before diving into crash reports. Compose Multiplatform diagnostics are excellent when you can see them.</p></div>
 
 <h3>Error 7: Metal GPU rendering hang on simulator</h3>
-<p><b>Symptom:</b> App process visible in <code>ps</code> but no UI appears. Crash report shows main thread blocked in <code>dispatch_mach_send_and_wait_for_reply</code> calling <code>GrMtlPipelineStateBuilder::finalize</code>.</p>
-<p><b>Why:</b> Compose Multiplatform renders via Skia's Metal backend. On some iOS simulators (especially newer iPhone models on recent macOS), the Metal shader compiler's XPC service hangs — the GPU driver wait never completes.</p>
-<p><b>Diagnosis:</b></p>
+<div class="note gotcha"><span class="tag">Symptom</span><p style="margin-bottom:0"> App process visible in <code>ps</code> but no UI appears. Crash report shows main thread blocked in <code>dispatch_mach_send_and_wait_for_reply</code> calling <code>GrMtlPipelineStateBuilder::finalize</code>.</p></div>
+<div class="note why"><span class="tag">Why</span><p style="margin-bottom:0"> Compose Multiplatform renders via Skia's Metal backend. On some iOS simulators (especially newer iPhone models on recent macOS), the Metal shader compiler's XPC service hangs — the GPU driver wait never completes.</p></div>
+<div class="note verified"><span class="tag">Diagnosis</span><p style="margin-bottom:0"></p></div>
 <pre><code><span class="line"><span class="cm"># Check if process is alive but stuck</span></span>
 <span class="line">ps aux | grep CortaSpam</span>
 <span class="line"></span>
 <span class="line"><span class="cm"># Read crash report from ~/Library/Logs/DiagnosticReports/</span></span>
 <span class="line"><span class="cm"># Look for: GrMtlPipelineStateBuilder, mach_msg2_trap, Main thread blocked</span></span>
 <span class="line">grep -o <span class="str">'"symbol":"[^"]*"'</span> ~/Library/Logs/DiagnosticReports/CortaSpam-*.ips | head -30</span></code></pre>
-<p><b>Fix:</b> Three options — (1) Restart the simulator: <code>xcrun simctl shutdown all && xcrun simctl boot DEVICE_UUID</code>. (2) Use a different simulator model (iPhone SE worked while iPhone 16 Pro hung). (3) For production, use software rendering fallback (pending Compose Multiplatform API).</p>
+<div class="note verified"><span class="tag">Fix</span><p style="margin-bottom:0"> Three options — (1) Restart the simulator: <code>xcrun simctl shutdown all && xcrun simctl boot DEVICE_UUID</code>. (2) Use a different simulator model (iPhone SE worked while iPhone 16 Pro hung). (3) For production, use software rendering fallback (pending Compose Multiplatform API).</p></div>
 
 <div class="callout"><h3>Debugging Toolkit Summary</h3>
 <table style="width:100%;border-collapse:collapse;margin:12px 0">
@@ -1755,7 +1755,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">        <span class="tp">IncomingCallNotifier</span>.<span class="fn">cancel</span>(context)</span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b>Why this works without an Activity:</b> <code>InCallState</code> is a plain Kotlin singleton holding the live <code>android.telecom.Call</code> reference — same process, same object, regardless of whether the caller is <code>InCallActivity</code>'s buttons or this receiver. The <code>BroadcastReceiver</code> is just a second entry point into the same state.</p>
+<div class="note why"><span class="tag">Why this works without an Activity</span><p style="margin-bottom:0"> <code>InCallState</code> is a plain Kotlin singleton holding the live <code>android.telecom.Call</code> reference — same process, same object, regardless of whether the caller is <code>InCallActivity</code>'s buttons or this receiver. The <code>BroadcastReceiver</code> is just a second entry point into the same state.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> Permission UX: detect and deep-link, don't ask once and go quiet</h3>
 <p>A single <code>requestPermission()</code> call handles the happy path. It says nothing about what happens when the user taps Deny, or later revokes the permission from system Settings — both cases where the feature just silently stops working with zero signal. The fix tracks real state and surfaces it:</p>
@@ -1768,9 +1768,9 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">}</span></code></pre>
 <p>Settings then shows a warning card per broken permission, each with a button to the <i>specific</i> system screen that fixes it — <code>ACTION_APP_NOTIFICATION_SETTINGS</code>, <code>ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT</code> (API 34+, since users can revoke this independently of notifications), or <code>ACTION_APPLICATION_DETAILS_SETTINGS</code> — instead of one generic "open Settings" link.</p>
 
-<div class="callout"><h3>Case Study: The Auto-Responder Audio Ceiling</h3>
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: The Auto-Responder Audio Ceiling</h3>
 <p>The auto-responder plays TTS/MediaPlayer audio with <code>AudioAttributes.USAGE_VOICE_COMMUNICATION</code>, hoping Android mixes it into the live call's uplink so the caller hears it. This is the exact same technique call-recorder and IVR/auto-attendant apps have used for years — and exactly what Google and OEMs have been hardening against at the audio-HAL level on newer Android versions, as an anti-wiretapping measure. Verified live on a Motorola razr running Android 16: this is a real, current-generation device where that hardening plausibly applies.</p>
-<p><b>Why no code fix exists:</b> there is no public Android API that grants a non-privileged third-party app guaranteed injection into a live cellular call's uplink. Forcing <code>AudioManager.mode</code>/routing calls during a Telecom-managed call is explicitly discouraged and risks breaking the user's <i>actual</i> call audio — a far worse failure than a silent auto-responder.</p>
+<div class="note why"><span class="tag">Why no code fix exists</span><p style="margin-bottom:0"> there is no public Android API that grants a non-privileged third-party app guaranteed injection into a live cellular call's uplink. Forcing <code>AudioManager.mode</code>/routing calls during a Telecom-managed call is explicitly discouraged and risks breaking the user's <i>actual</i> call audio — a far worse failure than a silent auto-responder.</p></div>
 <p><b>The right fix was honest UI, not more code:</b> sharpen the existing experimental-badge string to explain <i>why</i> ("depends on your phone letting call audio through; many newer Android versions block it") instead of chasing a workaround that either doesn't exist or actively risks the live call. Recognizing a platform ceiling — and saying so in the UI — is sometimes the correct engineering deliverable.</p>
 </div>
 
@@ -1819,7 +1819,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">    <span class="tp">DefaultAction</span>.ASK -> <span class="tp">RuleDecision</span>.PendingReview</span>
 <span class="line">    <span class="tp">DefaultAction</span>.ALLOW -> <span class="tp">RuleDecision</span>.DefaultAllow</span>
 <span class="line">}</span></code></pre>
-<p><b>Why step 8 and nowhere earlier:</b> manual block, pattern, country, spam, action-rule, and schedule checks (steps 1-7) all return before this code ever runs. That's not incidental — it's the entire point. Retrying is a robocall hallmark, so if the bypass were checked before the spam-pattern step, a number the app had already flagged as spam could talk its way back in just by calling more. Placing the new logic at the literal end of the existing chain, instead of threading a bypass check into every earlier branch, means the precedence order itself — not a separate flag on each rule type — is what protects real spam blocking. This mirrors <code>ActionRule</code>'s "block after N attempts" (Chapter 10) almost exactly, just inverted: same attempt-tracking table, opposite conclusion, and deliberately a different point in the chain.</p>
+<div class="note why"><span class="tag">Why step 8 and nowhere earlier</span><p style="margin-bottom:0"> manual block, pattern, country, spam, action-rule, and schedule checks (steps 1-7) all return before this code ever runs. That's not incidental — it's the entire point. Retrying is a robocall hallmark, so if the bypass were checked before the spam-pattern step, a number the app had already flagged as spam could talk its way back in just by calling more. Placing the new logic at the literal end of the existing chain, instead of threading a bypass check into every earlier branch, means the precedence order itself — not a separate flag on each rule type — is what protects real spam blocking. This mirrors <code>ActionRule</code>'s "block after N attempts" (Chapter 10) almost exactly, just inverted: same attempt-tracking table, opposite conclusion, and deliberately a different point in the chain.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> SQLite can't ALTER a CHECK constraint</h3>
 <p><code>CallLogEntry.rule_type</code> is constrained to a fixed list of tags. Adding <code>REPEATED_ALLOWED</code> to that list sounds like <code>ALTER TABLE ... ADD CONSTRAINT</code> — except SQLite has no such statement. The only way to change a <code>CHECK</code> is to rebuild the table:</p>
@@ -1833,7 +1833,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line"><span class="kw">ALTER TABLE</span> CallLogEntry_new <span class="kw">RENAME TO</span> CallLogEntry;</span></code></pre>
 <p>Create a shadow table with the new constraint, copy every row across, drop the old table, rename the shadow into place. SQLDelight's <code>verifyMigrations</code> build check replays every <code>.sqm</code> file in order on top of the snapshot baseline in <code>databases/</code> and diffs the result against <code>AppDatabase.sq</code>'s <code>CREATE TABLE</code> — if they don't match bit-for-bit, the build fails before a mismatched migration ever ships. Regenerate the snapshot with <code>./gradlew :shared:generateCommonMainAppDatabaseSchema</code> whenever you cut a new baseline.</p>
 
-<div class="callout"><h3>Case Study: A Broken Safety Net Nobody Noticed</h3>
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: A Broken Safety Net Nobody Noticed</h3>
 <p>Running <code>verifyMigrations</code> directly (not through the usual <code>./gradlew test</code>/<code>check</code> chain) surfaced a pre-existing failure — <code>duplicate column name: pattern_id</code>. An early pass blamed a single missing snapshot file and concluded the schema itself was fine. That conclusion was wrong, and it is worth keeping the mistake visible.</p>
 <p><b>What was actually wrong, in three layers:</b></p>
 <ol>
@@ -1864,7 +1864,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">}</span></code></pre>
 <p><code>notifyCallResult()</code> already existed for post-call missed/blocked notifications (Chapter 15) — non-full-screen, auto-cancel, history channel. The repeated-caller notification needed exactly that shape, so it reuses the function verbatim with a new title string instead of a new method. Before writing a new notification builder, the question worth asking is whether an existing one already has the right shape — here it did.</p>
 
-<div class="callout"><h3>Case Study: When combine() Runs Out of Overloads</h3>
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: When combine() Runs Out of Overloads</h3>
 <p><code>SettingsViewModel</code> already combined 5 flows of different types into one <code>UiState</code> — <code>kotlinx.coroutines.flow.combine()</code>'s typed overloads stop at 5. Adding a 6th setting doesn't mean switching to the untyped vararg <code>Array&lt;T&gt;</code> form (which needs every flow to share a type): chaining a plain two-argument <code>combine()</code> on top of the existing one composes cleanly instead —</p>
 <pre><code><span class="line">combine(a, b, c, d, e) { ... }.<span class="fn">combine</span>(f) { partial, f -> partial.<span class="fn">copy</span>(newField = f) }</span></code></pre>
 <p>Composing two small typed operators beat forcing one large untyped one.</p>
@@ -1942,7 +1942,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line"><span class="kw">sealed interface</span> <span class="tp">BackupIntent</span> { <span class="kw">data object</span> <span class="tp">Export</span> : <span class="tp">BackupIntent</span> <span class="cm">/* ... */</span> }</span></code></pre>
 <p><code>onIntent(BackupIntent.Export)</code> now sends <code>Exported(json)</code> down the same effect channel <code>Success</code>/<code>Failure</code> already used, and <code>BackupScreen</code> gained one more branch in its existing effect-collecting <code>LaunchedEffect</code> to call a new <code>onExportReady</code> callback. The general rule this generalizes to: when a mutation's "result" needs to reach something outside the state model — a share sheet, a file picker, a toast — that result is a one-time effect, not an intent parameter and not a UiState field.</p>
 
-<div class="callout"><h3>Case Study: The ViewModel That Deliberately Didn't Get an Intent Type</h3>
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: The ViewModel That Deliberately Didn't Get an Intent Type</h3>
 <p><code>InCallState</code> — the Telecom bridge singleton from Chapter 09 and 16 — was reviewed for this same treatment and left alone on purpose. Its methods split into two categories that look identical in code but aren't: <code>answer()</code>/<code>decline()</code>/<code>hangUp()</code> are real user intents, dispatched from a tap in <code>CallScreen</code>. <code>attach()</code>/<code>detach()</code> are Android Telecom <b>system lifecycle callbacks</b>, invoked by <code>PassthroughInCallService</code> when the OS hands the app a call — no user asked for those to happen. Folding both into one <code>sealed interface CallIntent</code> would misrepresent a system event as something the user chose, which is a correctness problem in an MVI codebase, not just a style one: code reading "the user's intent was Attach" would be lying. <code>InCallState</code> already does the MVVM half correctly — one encapsulated <code>StateFlow&lt;UiState?&gt;</code> — and that's as far as this pattern should go here.</p>
 <p><b>The same instinct killed a second, smaller addition:</b> <code>StatsViewModel</code> has exactly one method, <code>refresh()</code>, and zero external call sites dispatch it (it only ever runs from its own <code>init</code>). A <code>sealed interface StatsIntent { data object Refresh : StatsIntent }</code> would compile and look consistent with every other VM — and add nothing. It stayed a plain private-called method. MVI earns its ceremony when there's more than one thing to dispatch and more than one place dispatching it; a single VM-internal call isn't that.</p>
 </div>
@@ -2020,7 +2020,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line"><span class="kw">override suspend fun</span> <span class="fn">enabledCountryRules</span>() = countryRulesFlow.value.<span class="fn">filter</span> { it.enabled }</span></code></pre>
 <p>One assignment (<code>blockedNumbersFlow.value = ...</code>) now drives both. Writes stay recorded-not-applied on purpose: <code>addBlockedNumber()</code> appends to an <code>addBlockedNumberCalls</code> list rather than mutating the flow, because the tests that call it assert the ViewModel <i>delegated</i>, and a fake that also applied the write would let a test pass while the real repository call was missing.</p>
 
-<div class="callout"><h3>Case Study: The Test That Only Tested Its Own Fake</h3>
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: The Test That Only Tested Its Own Fake</h3>
 <p><code>SettingsRepositoryTest.kt</code> — 78 lines, five green tests, sitting in the <code>settings</code> package next to the class it appeared to cover. It never touched <code>SqlSettingsRepository</code>. Every one of its assertions ran against the fake declared at the top of the same file:</p>
 <pre><code><span class="line"><span class="kw">val</span> repo = <span class="fn">FakeSettingsRepository</span>()</span>
 <span class="line">repo.defaultActionFlow.value = <span class="tp">DefaultAction</span>.BLOCK</span>
@@ -2094,7 +2094,7 @@ th{background:var(--panel-2);font-weight:600}
 <span class="line">}</span></code></pre>
 <p>The insert itself is the assertion — a tag outside the constraint fails the statement. The explicit <code>assertEquals</code> on action and rule type then pins the mapping, so a decision silently switching from <code>BLOCKED</code> to <code>ALLOWED</code> is caught too.</p>
 
-<div class="callout"><h3>Case Study: The Chart That Never Said "Today"</h3>
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: The Chart That Never Said "Today"</h3>
 <p>Writing an assertion for <code>blockedByDay()</code> meant reading it closely enough to predict its output — and the prediction didn't match the label. The old implementation walked forward from <code>now - daysBack</code> in 24-hour steps:</p>
 <pre><code><span class="line"><span class="kw">val</span> cutoff = now - daysBack * dayMillis</span>
 <span class="line">(0 until daysBack).<span class="fn">map</span> { dayOffset -></span>
