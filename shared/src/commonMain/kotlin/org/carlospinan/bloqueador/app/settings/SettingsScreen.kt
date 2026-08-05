@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -68,12 +70,17 @@ import cortaspam.shared.generated.resources.settings_privacy_title
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass_count_label
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass_desc
+import cortaspam.shared.generated.resources.settings_section_about
+import cortaspam.shared.generated.resources.settings_section_blocking
+import cortaspam.shared.generated.resources.settings_section_contacts
+import cortaspam.shared.generated.resources.settings_section_notifications
 import cortaspam.shared.generated.resources.settings_show_notifications
 import cortaspam.shared.generated.resources.settings_show_notifications_desc
 import cortaspam.shared.generated.resources.settings_terms_desc
 import cortaspam.shared.generated.resources.settings_terms_title
 import cortaspam.shared.generated.resources.settings_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
+import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -82,6 +89,17 @@ import org.jetbrains.compose.resources.stringResource
 private const val MIN_REPEATED_CALLER_BYPASS_COUNT = 2
 private const val MAX_REPEATED_CALLER_BYPASS_COUNT = 10
 private const val DEFAULT_REPEATED_CALLER_BYPASS_COUNT = 3
+
+/**
+ * Sections of the Expanded (tablet) list-detail layout. Compact and Medium ignore this and
+ * render every setting in one scrolling column, in the order they have always been in.
+ */
+private enum class SettingsSection {
+    Blocking,
+    Contacts,
+    Notifications,
+    About,
+}
 
 @Composable
 fun SettingsScreen(
@@ -105,182 +123,132 @@ fun SettingsScreen(
     onNavigateToPrivacy: () -> Unit = {},
     onNavigateToTerms: () -> Unit = {},
     onBack: () -> Unit,
+    // Injectable so a test can exercise the Expanded layout without a wide container,
+    // the same shape AdaptiveScaffold already uses.
+    windowSizeClass: WindowSizeClass = rememberWindowSizeClass(),
 ) {
     var showDefaultActionDialog by remember { mutableStateOf(false) }
-    val windowSizeClass = rememberWindowSizeClass()
+    var selectedSection by remember { mutableStateOf(SettingsSection.Blocking) }
 
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            AdaptiveContent(
-                windowSizeClass = windowSizeClass,
-                contentModifier = Modifier.verticalScroll(rememberScrollState()),
-            ) {
-                Text(
-                    text = stringResource(Res.string.settings_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                if (!notificationsPermissionGranted) {
-                    PermissionWarningCard(
-                        title = stringResource(Res.string.settings_notifications_disabled),
-                        description = stringResource(Res.string.settings_notifications_disabled_desc),
-                        onFix = onOpenNotificationSettings,
+            if (windowSizeClass == WindowSizeClass.Expanded) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    SettingsSectionPane(
+                        selected = selectedSection,
+                        onSelect = { selectedSection = it },
+                        onNavigateToAutoResponder = onNavigateToAutoResponder,
+                        onNavigateToBackup = onNavigateToBackup,
+                        modifier = Modifier.width(340.dp).fillMaxHeight(),
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                if (!fullScreenIntentAllowed) {
-                    PermissionWarningCard(
-                        title = stringResource(Res.string.settings_fullscreen_disabled),
-                        description = stringResource(Res.string.settings_fullscreen_disabled_desc),
-                        onFix = onOpenFullScreenIntentSettings,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                if (!callPhonePermissionGranted) {
-                    PermissionWarningCard(
-                        title = stringResource(Res.string.settings_call_permission_disabled),
-                        description = stringResource(Res.string.settings_call_permission_disabled_desc),
-                        onFix = onOpenAppSettings,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                SettingToggle(
-                    title = stringResource(Res.string.settings_blocking_enabled),
-                    description = stringResource(Res.string.settings_blocking_enabled_desc),
-                    icon = Res.drawable.ic_blocking,
-                    checked = state.blockingEnabled,
-                    onCheckedChange = onSetBlockingEnabled,
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SettingToggle(
-                    title = stringResource(Res.string.settings_show_notifications),
-                    description = stringResource(Res.string.settings_show_notifications_desc),
-                    icon = Res.drawable.ic_settings,
-                    checked = state.notificationsEnabled,
-                    onCheckedChange = onSetNotificationsEnabled,
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SettingToggle(
-                    title = stringResource(Res.string.settings_auto_allow_contacts),
-                    description = stringResource(Res.string.settings_auto_allow_contacts_desc),
-                    icon = Res.drawable.ic_contacts,
-                    checked = state.autoAllowContacts,
-                    onCheckedChange = onSetAutoAllowContacts,
-                )
-
-                if (showGrantContacts && state.autoAllowContacts) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = onRequestContactsPermission) {
-                        Text(stringResource(Res.string.settings_grant_contacts))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SettingToggle(
-                    title = stringResource(Res.string.settings_repeated_caller_bypass),
-                    description = stringResource(Res.string.settings_repeated_caller_bypass_desc),
-                    icon = Res.drawable.ic_unknown_call,
-                    checked = state.repeatedCallerBypassCount > 0,
-                    onCheckedChange = { checked ->
-                        onSetRepeatedCallerBypassCount(if (checked) DEFAULT_REPEATED_CALLER_BYPASS_COUNT else 0)
-                    },
-                )
-
-                if (state.repeatedCallerBypassCount > 0) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    Column(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .verticalScroll(rememberScrollState())
+                                .padding(24.dp),
                     ) {
-                        Text(
-                            text = stringResource(Res.string.settings_repeated_caller_bypass_count_label),
-                            style = MaterialTheme.typography.bodyMedium,
+                        // Permission warnings render on every section, not just the matching one:
+                        // they are app-level failures, and filing the notification warning under
+                        // "Notifications" would make it findable only by accident.
+                        PermissionWarnings(
+                            notificationsPermissionGranted = notificationsPermissionGranted,
+                            fullScreenIntentAllowed = fullScreenIntentAllowed,
+                            callPhonePermissionGranted = callPhonePermissionGranted,
+                            onOpenNotificationSettings = onOpenNotificationSettings,
+                            onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
+                            onOpenAppSettings = onOpenAppSettings,
                         )
-                        TextButton(
-                            onClick = {
-                                onSetRepeatedCallerBypassCount(
-                                    (state.repeatedCallerBypassCount - 1).coerceAtLeast(MIN_REPEATED_CALLER_BYPASS_COUNT),
+
+                        when (selectedSection) {
+                            SettingsSection.Blocking -> {
+                                BlockingToggleItem(state.blockingEnabled, onSetBlockingEnabled)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                RepeatedCallerBypassItem(state.repeatedCallerBypassCount, onSetRepeatedCallerBypassCount)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                DefaultActionItem(state.defaultAction) { showDefaultActionDialog = true }
+                            }
+
+                            SettingsSection.Contacts ->
+                                ContactsToggleItem(
+                                    checked = state.autoAllowContacts,
+                                    onCheckedChange = onSetAutoAllowContacts,
+                                    showGrantContacts = showGrantContacts,
+                                    onRequestContactsPermission = onRequestContactsPermission,
                                 )
-                            },
-                        ) { Text("−") }
-                        Text(
-                            text = "${state.repeatedCallerBypassCount}",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        TextButton(
-                            onClick = {
-                                onSetRepeatedCallerBypassCount(
-                                    (state.repeatedCallerBypassCount + 1).coerceAtMost(MAX_REPEATED_CALLER_BYPASS_COUNT),
-                                )
-                            },
-                        ) { Text("+") }
+
+                            SettingsSection.Notifications ->
+                                NotificationsToggleItem(state.notificationsEnabled, onSetNotificationsEnabled)
+
+                            SettingsSection.About -> {
+                                PrivacyItem(onNavigateToPrivacy)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                TermsItem(onNavigateToTerms)
+                            }
+                        }
                     }
                 }
+            } else {
+                AdaptiveContent(
+                    windowSizeClass = windowSizeClass,
+                    contentModifier = Modifier.verticalScroll(rememberScrollState()),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.settings_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                SettingDropdown(
-                    title = stringResource(Res.string.settings_default_action),
-                    description = stringResource(Res.string.settings_default_action_desc),
-                    icon = Res.drawable.ic_default_action,
-                    value =
-                        when (state.defaultAction) {
-                            DefaultAction.ALLOW -> stringResource(Res.string.settings_default_action_allow)
-                            DefaultAction.BLOCK -> stringResource(Res.string.settings_default_action_block)
-                            DefaultAction.ASK -> stringResource(Res.string.settings_default_action_ask)
-                        },
-                    onClick = { showDefaultActionDialog = true },
-                )
+                    PermissionWarnings(
+                        notificationsPermissionGranted = notificationsPermissionGranted,
+                        fullScreenIntentAllowed = fullScreenIntentAllowed,
+                        callPhonePermissionGranted = callPhonePermissionGranted,
+                        onOpenNotificationSettings = onOpenNotificationSettings,
+                        onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
+                        onOpenAppSettings = onOpenAppSettings,
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    BlockingToggleItem(state.blockingEnabled, onSetBlockingEnabled)
 
-                SettingDropdown(
-                    title = stringResource(Res.string.settings_autoresponder),
-                    description = stringResource(Res.string.settings_autoresponder_desc),
-                    icon = Res.drawable.ic_autoresponder,
-                    value = stringResource(Res.string.autoresponder_experimental_badge),
-                    onClick = onNavigateToAutoResponder,
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    NotificationsToggleItem(state.notificationsEnabled, onSetNotificationsEnabled)
 
-                SettingDropdown(
-                    title = stringResource(Res.string.settings_backup),
-                    description = stringResource(Res.string.settings_backup_desc),
-                    icon = Res.drawable.ic_backup,
-                    value = stringResource(Res.string.settings_backup),
-                    onClick = onNavigateToBackup,
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    ContactsToggleItem(
+                        checked = state.autoAllowContacts,
+                        onCheckedChange = onSetAutoAllowContacts,
+                        showGrantContacts = showGrantContacts,
+                        onRequestContactsPermission = onRequestContactsPermission,
+                    )
 
-                SettingDropdown(
-                    title = stringResource(Res.string.settings_privacy_title),
-                    description = stringResource(Res.string.settings_privacy_desc),
-                    icon = Res.drawable.ic_privacy,
-                    value = stringResource(Res.string.action_view),
-                    onClick = onNavigateToPrivacy,
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    RepeatedCallerBypassItem(state.repeatedCallerBypassCount, onSetRepeatedCallerBypassCount)
 
-                SettingDropdown(
-                    title = stringResource(Res.string.settings_terms_title),
-                    description = stringResource(Res.string.settings_terms_desc),
-                    icon = Res.drawable.ic_privacy,
-                    value = stringResource(Res.string.action_view),
-                    onClick = onNavigateToTerms,
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    DefaultActionItem(state.defaultAction) { showDefaultActionDialog = true }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    AutoResponderItem(onNavigateToAutoResponder)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    BackupItem(onNavigateToBackup)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    PrivacyItem(onNavigateToPrivacy)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    TermsItem(onNavigateToTerms)
+                }
             }
         }
     }
@@ -295,6 +263,284 @@ fun SettingsScreen(
             onDismiss = { showDefaultActionDialog = false },
         )
     }
+}
+
+/** Left pane of the Expanded layout: section picker plus the two rows that navigate away. */
+@Composable
+private fun SettingsSectionPane(
+    selected: SettingsSection,
+    onSelect: (SettingsSection) -> Unit,
+    onNavigateToAutoResponder: () -> Unit,
+    onNavigateToBackup: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()).padding(16.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.settings_title),
+            style = MaterialTheme.typography.headlineMedium,
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SettingsSection.entries.forEach { section ->
+            SectionRow(
+                title =
+                    when (section) {
+                        SettingsSection.Blocking -> stringResource(Res.string.settings_section_blocking)
+                        SettingsSection.Contacts -> stringResource(Res.string.settings_section_contacts)
+                        SettingsSection.Notifications -> stringResource(Res.string.settings_section_notifications)
+                        SettingsSection.About -> stringResource(Res.string.settings_section_about)
+                    },
+                icon =
+                    when (section) {
+                        SettingsSection.Blocking -> Res.drawable.ic_blocking
+                        SettingsSection.Contacts -> Res.drawable.ic_contacts
+                        SettingsSection.Notifications -> Res.drawable.ic_settings
+                        SettingsSection.About -> Res.drawable.ic_privacy
+                    },
+                selected = section == selected,
+                onClick = { onSelect(section) },
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Auto-responder and Backup are whole screens, not settings panels, so they keep
+        // navigating away instead of becoming detail-pane sections.
+        AutoResponderItem(onNavigateToAutoResponder)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        BackupItem(onNavigateToBackup)
+    }
+}
+
+@Composable
+private fun SectionRow(
+    title: String,
+    icon: DrawableResource,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        colors =
+            if (selected) {
+                CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            } else {
+                CardDefaults.cardColors()
+            },
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp),
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PermissionWarnings(
+    notificationsPermissionGranted: Boolean,
+    fullScreenIntentAllowed: Boolean,
+    callPhonePermissionGranted: Boolean,
+    onOpenNotificationSettings: () -> Unit,
+    onOpenFullScreenIntentSettings: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+) {
+    if (!notificationsPermissionGranted) {
+        PermissionWarningCard(
+            title = stringResource(Res.string.settings_notifications_disabled),
+            description = stringResource(Res.string.settings_notifications_disabled_desc),
+            onFix = onOpenNotificationSettings,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+
+    if (!fullScreenIntentAllowed) {
+        PermissionWarningCard(
+            title = stringResource(Res.string.settings_fullscreen_disabled),
+            description = stringResource(Res.string.settings_fullscreen_disabled_desc),
+            onFix = onOpenFullScreenIntentSettings,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+
+    if (!callPhonePermissionGranted) {
+        PermissionWarningCard(
+            title = stringResource(Res.string.settings_call_permission_disabled),
+            description = stringResource(Res.string.settings_call_permission_disabled_desc),
+            onFix = onOpenAppSettings,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun BlockingToggleItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_blocking_enabled),
+        description = stringResource(Res.string.settings_blocking_enabled_desc),
+        icon = Res.drawable.ic_blocking,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
+}
+
+@Composable
+private fun NotificationsToggleItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_show_notifications),
+        description = stringResource(Res.string.settings_show_notifications_desc),
+        icon = Res.drawable.ic_settings,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
+}
+
+@Composable
+private fun ContactsToggleItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    showGrantContacts: Boolean,
+    onRequestContactsPermission: () -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_auto_allow_contacts),
+        description = stringResource(Res.string.settings_auto_allow_contacts_desc),
+        icon = Res.drawable.ic_contacts,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
+
+    if (showGrantContacts && checked) {
+        Spacer(modifier = Modifier.height(8.dp))
+        TextButton(onClick = onRequestContactsPermission) {
+            Text(stringResource(Res.string.settings_grant_contacts))
+        }
+    }
+}
+
+@Composable
+private fun RepeatedCallerBypassItem(
+    count: Int,
+    onCountChange: (Int) -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_repeated_caller_bypass),
+        description = stringResource(Res.string.settings_repeated_caller_bypass_desc),
+        icon = Res.drawable.ic_unknown_call,
+        checked = count > 0,
+        onCheckedChange = { checked ->
+            onCountChange(if (checked) DEFAULT_REPEATED_CALLER_BYPASS_COUNT else 0)
+        },
+    )
+
+    if (count > 0) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.settings_repeated_caller_bypass_count_label),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            TextButton(
+                onClick = { onCountChange((count - 1).coerceAtLeast(MIN_REPEATED_CALLER_BYPASS_COUNT)) },
+            ) { Text("\u2212") }
+            Text(
+                text = "$count",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            TextButton(
+                onClick = { onCountChange((count + 1).coerceAtMost(MAX_REPEATED_CALLER_BYPASS_COUNT)) },
+            ) { Text("+") }
+        }
+    }
+}
+
+@Composable
+private fun DefaultActionItem(
+    current: DefaultAction,
+    onClick: () -> Unit,
+) {
+    SettingDropdown(
+        title = stringResource(Res.string.settings_default_action),
+        description = stringResource(Res.string.settings_default_action_desc),
+        icon = Res.drawable.ic_default_action,
+        value =
+            when (current) {
+                DefaultAction.ALLOW -> stringResource(Res.string.settings_default_action_allow)
+                DefaultAction.BLOCK -> stringResource(Res.string.settings_default_action_block)
+                DefaultAction.ASK -> stringResource(Res.string.settings_default_action_ask)
+            },
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun AutoResponderItem(onClick: () -> Unit) {
+    SettingDropdown(
+        title = stringResource(Res.string.settings_autoresponder),
+        description = stringResource(Res.string.settings_autoresponder_desc),
+        icon = Res.drawable.ic_autoresponder,
+        value = stringResource(Res.string.autoresponder_experimental_badge),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun BackupItem(onClick: () -> Unit) {
+    SettingDropdown(
+        title = stringResource(Res.string.settings_backup),
+        description = stringResource(Res.string.settings_backup_desc),
+        icon = Res.drawable.ic_backup,
+        value = stringResource(Res.string.settings_backup),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun PrivacyItem(onClick: () -> Unit) {
+    SettingDropdown(
+        title = stringResource(Res.string.settings_privacy_title),
+        description = stringResource(Res.string.settings_privacy_desc),
+        icon = Res.drawable.ic_privacy,
+        value = stringResource(Res.string.action_view),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun TermsItem(onClick: () -> Unit) {
+    SettingDropdown(
+        title = stringResource(Res.string.settings_terms_title),
+        description = stringResource(Res.string.settings_terms_desc),
+        icon = Res.drawable.ic_privacy,
+        value = stringResource(Res.string.action_view),
+        onClick = onClick,
+    )
 }
 
 @Composable

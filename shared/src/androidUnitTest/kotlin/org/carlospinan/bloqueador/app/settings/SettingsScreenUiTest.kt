@@ -1,8 +1,11 @@
 package org.carlospinan.bloqueador.app.settings
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,6 +18,31 @@ import org.robolectric.annotation.GraphicsMode
 class SettingsScreenUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    private fun setContent(
+        windowSizeClass: WindowSizeClass,
+        state: SettingsUiState = SettingsUiState(blockingEnabled = true, autoAllowContacts = false),
+        showGrantContacts: Boolean = false,
+        notificationsPermissionGranted: Boolean = true,
+        onNavigateToAutoResponder: () -> Unit = {},
+    ) {
+        composeTestRule.setContent {
+            SettingsScreen(
+                state = state,
+                showGrantContacts = showGrantContacts,
+                notificationsPermissionGranted = notificationsPermissionGranted,
+                onSetBlockingEnabled = {},
+                onSetAutoAllowContacts = {},
+                onSetDefaultAction = {},
+                onSetSpamEnabled = {},
+                onRequestContactsPermission = {},
+                onNavigateToAutoResponder = onNavigateToAutoResponder,
+                onNavigateToBackup = {},
+                onBack = {},
+                windowSizeClass = windowSizeClass,
+            )
+        }
+    }
 
     @Test
     fun `all items render`() {
@@ -55,5 +83,67 @@ class SettingsScreenUiTest {
         }
         composeTestRule.onNodeWithText("How your data is handled").assertExists()
         composeTestRule.onNodeWithText("Open source license and usage terms").assertExists()
+    }
+
+    // Expanded means >=840dp; Robolectric otherwise renders a phone-width window, where the
+    // 340dp list pane starves the detail pane and nothing in it is actually displayed.
+    @Test
+    @Config(sdk = [34], qualifiers = "w1280dp-h800dp")
+    fun `expanded shows the section list beside a detail pane`() {
+        setContent(WindowSizeClass.Expanded)
+
+        // Left pane: every section, plus the two rows that navigate away rather than
+        // becoming sections of their own.
+        composeTestRule.onNodeWithText("Blocking").assertExists()
+        composeTestRule.onNodeWithText("Contacts").assertExists()
+        composeTestRule.onNodeWithText("Notifications").assertExists()
+        composeTestRule.onNodeWithText("About").assertExists()
+        composeTestRule.onNodeWithText("Auto-responder (Experimental)").assertExists()
+        // Not asserting on the Backup row's title: SettingDropdown renders settings_backup as
+        // both its title and its value, so the same text matches two nodes.
+
+        // Detail pane opens on Blocking.
+        composeTestRule.onNodeWithText("Default action").assertExists()
+    }
+
+    // Expanded means >=840dp; Robolectric otherwise renders a phone-width window, where the
+    // 340dp list pane starves the detail pane and nothing in it is actually displayed.
+    @Test
+    @Config(sdk = [34], qualifiers = "w1280dp-h800dp")
+    fun `expanded swaps the detail pane when another section is selected`() {
+        setContent(WindowSizeClass.Expanded)
+        composeTestRule.onNodeWithText("Default action").assertExists()
+
+        composeTestRule.onNodeWithText("About").performClick()
+
+        composeTestRule.onNodeWithText("Privacy Policy").assertExists()
+        // Blocking's controls are gone -- this is a swap, not an accumulating column.
+        composeTestRule.onNodeWithText("Default action").assertDoesNotExist()
+    }
+
+    // Expanded means >=840dp; Robolectric otherwise renders a phone-width window, where the
+    // 340dp list pane starves the detail pane and nothing in it is actually displayed.
+    @Test
+    @Config(sdk = [34], qualifiers = "w1280dp-h800dp")
+    fun `expanded keeps permission warnings visible on every section`() {
+        setContent(WindowSizeClass.Expanded, notificationsPermissionGranted = false)
+
+        // Warning is app-level, so it must not be filed away behind the Notifications
+        // section where a user browsing Blocking would never see it.
+        composeTestRule.onNodeWithText("Notifications are off").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("About").performClick()
+
+        composeTestRule.onNodeWithText("Notifications are off").assertIsDisplayed()
+    }
+
+    @Test
+    fun `compact keeps every setting in one column`() {
+        setContent(WindowSizeClass.Compact)
+
+        // No section picker; the flat list is unchanged from before the split layout.
+        composeTestRule.onNodeWithText("Default action").assertExists()
+        composeTestRule.onNodeWithText("Auto-allow contacts").assertExists()
+        composeTestRule.onNodeWithText("Privacy Policy").assertExists()
     }
 }

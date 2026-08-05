@@ -107,6 +107,12 @@
     <string name="settings_show_notifications_desc">When off, this app posts no notifications at all, including the incoming-call alert.</string>
     <string name="settings_repeated_caller_bypass">Answer repeated unknown callers</string>
     <string name="settings_repeated_caller_bypass_desc">If an unknown number retries enough times, let it ring through instead of blocking it. Only applies when Default action below is set to Block.</string>
+
+    <!-- Settings section headers, used by the Expanded (tablet) list-detail layout -->
+    <string name="settings_section_blocking">Blocking</string>
+    <string name="settings_section_contacts">Contacts</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_section_about">About</string>
     <string name="settings_repeated_caller_bypass_count_label">Attempts before answering</string>
     <string name="settings_auto_allow_contacts">Auto-allow contacts</string>
     <string name="settings_auto_allow_contacts_desc">Contacts bypass all block rules.</string>

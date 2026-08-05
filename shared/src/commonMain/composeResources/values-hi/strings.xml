@@ -118,6 +118,12 @@
     <string name="settings_show_notifications_desc">बंद होने पर, ऐप कोई सूचना नहीं भेजेगा, आने वाली कॉल का अलर्ट भी नहीं।</string>
     <string name="settings_repeated_caller_bypass">बार-बार कॉल करने वाले अज्ञात नंबरों का जवाब दें</string>
     <string name="settings_repeated_caller_bypass_desc">अगर कोई अज्ञात नंबर पर्याप्त बार कोशिश करे, तो उसे ब्लॉक करने के बजाय रिंग होने दें। यह तभी लागू होता है जब डिफ़ॉल्ट कार्रवाई ब्लॉक पर सेट हो।</string>
+
+    <!-- Settings section headers, used by the Expanded (tablet) list-detail layout -->
+    <string name="settings_section_blocking">ब्लॉकिंग</string>
+    <string name="settings_section_contacts">संपर्क</string>
+    <string name="settings_section_notifications">सूचनाएं</string>
+    <string name="settings_section_about">ऐप के बारे में</string>
     <string name="settings_repeated_caller_bypass_count_label">जवाब देने से पहले प्रयास</string>
     <string name="settings_auto_allow_contacts">संपर्कों को स्वतः अनुमति दें</string>
     <string name="settings_auto_allow_contacts_desc">संपर्क सभी ब्लॉक नियमों को बायपास करते हैं।</string>

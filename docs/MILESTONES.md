@@ -224,7 +224,7 @@ M0 → M1 → M1.5 → M2 are strictly sequential (each is the foundation for th
 | Screen adaptations (Home, CallLog, BlockListHub, Settings, Stats, AutoResponder, Backup) | builder | sonnet |
 | Android configChanges manifest update | builder | haiku |
 
-**Status:** Implemented 2026-07-28. Pending on-device QA. Two-pane list-detail layouts (CallLog Expanded, Settings Expanded) deferred for follow-up.
+**Status:** Complete 2026-08-05. Both two-pane list-detail layouts are in: CallLog Expanded (`CallLogDetailPane`) and Settings Expanded (section list + detail pane). On-device QA done on the `Pixel_8_Pro_API_33` AVD — portrait (448dp) shows the bottom nav bar and the unchanged flat settings list; landscape (997dp, Expanded) shows the nav rail with labels plus the Settings list-detail split, and selecting a section swaps the detail pane.
 
 ## M13 — Store compliance
 

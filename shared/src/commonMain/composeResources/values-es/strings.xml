@@ -127,6 +127,12 @@
     <string name="settings_show_notifications_desc">Cuando está desactivado, la app no publica ninguna notificación, incluida la alerta de llamada entrante.</string>
     <string name="settings_repeated_caller_bypass">Responder a llamadas repetidas desconocidas</string>
     <string name="settings_repeated_caller_bypass_desc">Si un número desconocido insiste lo suficiente, déjalo timbrar en vez de bloquearlo. Solo aplica cuando la acción predeterminada está en Bloquear.</string>
+
+    <!-- Settings section headers, used by the Expanded (tablet) list-detail layout -->
+    <string name="settings_section_blocking">Bloqueo</string>
+    <string name="settings_section_contacts">Contactos</string>
+    <string name="settings_section_notifications">Notificaciones</string>
+    <string name="settings_section_about">Acerca de</string>
     <string name="settings_repeated_caller_bypass_count_label">Intentos antes de responder</string>
     <string name="settings_auto_allow_contacts">Auto-permitir contactos</string>
     <string name="settings_auto_allow_contacts_desc">Los contactos evitan todas las reglas de bloqueo.</string>
