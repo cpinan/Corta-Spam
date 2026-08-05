@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.autoresponder
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.testing.createTestDatabase
@@ -19,7 +20,7 @@ class SqlAutoResponderRepositoryTest {
     @Test
     fun defaultsOnEmptyDatabase() =
         runTest {
-            val config = SqlAutoResponderRepository(createTestDatabase()).config.first()
+            val config = SqlAutoResponderRepository(createTestDatabase(), Dispatchers.Unconfined).config.first()
 
             assertFalse(config.enabled)
             assertEquals(AutoResponderConfig.DEFAULT_SCRIPT, config.script)
@@ -31,7 +32,7 @@ class SqlAutoResponderRepositoryTest {
     @Test
     fun settersUpdateTheExposedConfig() =
         runTest {
-            val repo = SqlAutoResponderRepository(createTestDatabase())
+            val repo = SqlAutoResponderRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             repo.setEnabled(true)
             repo.setScript("Please text instead.")
@@ -51,14 +52,14 @@ class SqlAutoResponderRepositoryTest {
     fun everyFieldSurvivesARestart() =
         runTest {
             val db = createTestDatabase()
-            val first = SqlAutoResponderRepository(db)
+            val first = SqlAutoResponderRepository(db, Dispatchers.Unconfined)
 
             first.setEnabled(true)
             first.setScript("Please text instead.")
             first.setAudioUri("content://greeting.m4a")
             first.setRecordingEnabled(true)
 
-            val config = SqlAutoResponderRepository(db).config.first()
+            val config = SqlAutoResponderRepository(db, Dispatchers.Unconfined).config.first()
             assertTrue(config.enabled)
             assertEquals("Please text instead.", config.script)
             assertEquals("content://greeting.m4a", config.audioUri)
@@ -69,7 +70,7 @@ class SqlAutoResponderRepositoryTest {
     fun anEmptiedScriptRevertsToTheDefaultOnRestart() =
         runTest {
             val db = createTestDatabase()
-            val repo = SqlAutoResponderRepository(db)
+            val repo = SqlAutoResponderRepository(db, Dispatchers.Unconfined)
             repo.setScript("Please text instead.")
 
             repo.setScript("")
@@ -79,19 +80,19 @@ class SqlAutoResponderRepositoryTest {
             // ...but KeyValueSettingsStore.readString treats a stored blank as "unset", so a
             // restart resurrects the default script rather than an empty one. Clearing the
             // script in the UI therefore does not persist as "no script".
-            assertEquals(AutoResponderConfig.DEFAULT_SCRIPT, SqlAutoResponderRepository(db).config.first().script)
+            assertEquals(AutoResponderConfig.DEFAULT_SCRIPT, SqlAutoResponderRepository(db, Dispatchers.Unconfined).config.first().script)
         }
 
     @Test
     fun aClearedAudioUriStaysClearedAcrossARestart() =
         runTest {
             val db = createTestDatabase()
-            val repo = SqlAutoResponderRepository(db)
+            val repo = SqlAutoResponderRepository(db, Dispatchers.Unconfined)
             repo.setAudioUri("content://greeting.m4a")
 
             repo.setAudioUri("")
 
             // Here the blank-is-unset behaviour is harmless: the default is "" too.
-            assertEquals("", SqlAutoResponderRepository(db).config.first().audioUri)
+            assertEquals("", SqlAutoResponderRepository(db, Dispatchers.Unconfined).config.first().audioUri)
         }
 }

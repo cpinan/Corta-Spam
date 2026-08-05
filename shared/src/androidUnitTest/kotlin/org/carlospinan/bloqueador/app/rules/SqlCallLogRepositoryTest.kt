@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.rules
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.testing.createTestDatabase
@@ -22,7 +23,7 @@ class SqlCallLogRepositoryTest {
     fun logCallPersistsAManualBlockWithItsRuleIdAndLabel() =
         runTest {
             val db = createTestDatabase()
-            val repo = SqlCallLogRepository(db)
+            val repo = SqlCallLogRepository(db, Dispatchers.Unconfined)
 
             repo.logCall("+34600123456", now, RuleDecision.ManualBlock(ruleId = 7, label = "Spam caller"))
 
@@ -38,7 +39,7 @@ class SqlCallLogRepositoryTest {
     fun everyDecisionTypeIsAcceptedByTheRuleTypeCheckConstraint() =
         runTest {
             val db = createTestDatabase()
-            val repo = SqlCallLogRepository(db)
+            val repo = SqlCallLogRepository(db, Dispatchers.Unconfined)
             val decisions =
                 listOf(
                     RuleDecision.Allowlist(ruleId = 1, label = "Mom") to ("ALLOWED" to "CONTACTS"),
@@ -70,7 +71,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun spamHitAndDefaultBlockCarryNoRuleId() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             repo.logCall("+34600000001", now, RuleDecision.SpamHit(confidence = 0.8f, source = "bundled"))
             repo.logCall("+34600000002", now + 1, RuleDecision.DefaultBlock)
@@ -82,7 +83,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun allEntriesAreOrderedMostRecentFirst() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             repo.logCall("+34600000001", now - 2 * dayMillis, RuleDecision.DefaultBlock)
             repo.logCall("+34600000002", now, RuleDecision.DefaultBlock)
@@ -95,7 +96,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun recentEntriesTruncatesToTheRequestedLimit() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repeat(5) { repo.logCall("+3460000000$it", now - it * 1000L, RuleDecision.DefaultBlock) }
 
             val recent = repo.recentEntries(limit = 2).first()
@@ -107,7 +108,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun blockedStatsCountOnlyBlockedCallsInsideTheirWindow() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
             // 40 days is older than any calendar month, so it falls outside every window.
@@ -127,7 +128,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun individualCountQueriesAgreeWithBatchedStats() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
             repo.logCall("+34600000002", now - 40 * dayMillis, RuleDecision.DefaultBlock)
 
@@ -141,7 +142,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun clearAllEmptiesTheLog() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
 
             repo.clearAll()
@@ -153,7 +154,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun blockedByDayReturnsOneBucketPerRequestedDay() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             val stats = repo.blockedByDay(daysBack = 7)
 
@@ -165,7 +166,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun blockedByDayBucketsAreCalendarDays() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
             repo.logCall("+34600000002", now - 2 * dayMillis, RuleDecision.DefaultBlock)
             repo.logCall("+34600000003", now - 30 * dayMillis, RuleDecision.DefaultBlock)
@@ -182,7 +183,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun blockedByDayLabelsTheNewestBucketToday() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
             repo.logCall("+34600000002", now - dayMillis, RuleDecision.DefaultBlock)
 
@@ -197,7 +198,7 @@ class SqlCallLogRepositoryTest {
     @Test
     fun todaysBucketAgreesWithBlockedStatsToday() =
         runTest {
-            val repo = SqlCallLogRepository(createTestDatabase())
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
             repo.logCall("+34600000002", now, RuleDecision.DefaultBlock)
             repo.logCall("+34600000003", now - dayMillis, RuleDecision.DefaultBlock)

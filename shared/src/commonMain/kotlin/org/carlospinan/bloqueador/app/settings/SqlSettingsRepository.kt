@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.settings
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,8 +10,9 @@ import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
 
 class SqlSettingsRepository(
     db: AppDatabase,
+    dispatcher: CoroutineDispatcher,
 ) : SettingsRepository {
-    private val store = KeyValueSettingsStore(db)
+    private val store = KeyValueSettingsStore(db, dispatcher)
 
     private val _blockingEnabled = MutableStateFlow(true)
     override val blockingEnabled: Flow<Boolean> = _blockingEnabled.asStateFlow()

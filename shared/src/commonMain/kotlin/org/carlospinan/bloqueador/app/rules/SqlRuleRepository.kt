@@ -2,7 +2,7 @@ package org.carlospinan.bloqueador.app.rules
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -13,6 +13,7 @@ import org.carlospinan.bloqueador.app.db.AppDatabase
 
 class SqlRuleRepository(
     private val database: AppDatabase,
+    private val dispatcher: CoroutineDispatcher,
 ) : RuleRepository {
     private val queries get() = database.appDatabaseQueries
 
@@ -20,7 +21,7 @@ class SqlRuleRepository(
         queries
             .selectAllBlockedNumbers()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list ->
                 list.map {
                     BlockedNumberEntry(
@@ -36,7 +37,7 @@ class SqlRuleRepository(
         queries
             .selectAllAllowlistedNumbers()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list ->
                 list.map {
                     AllowlistedNumberEntry(
@@ -52,7 +53,7 @@ class SqlRuleRepository(
         queries
             .selectAllPatternRules()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list ->
                 list.map {
                     PatternRuleEntry(
@@ -69,7 +70,7 @@ class SqlRuleRepository(
         queries
             .selectAllCountryRules()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list ->
                 list.map {
                     CountryRuleEntry(
@@ -86,7 +87,7 @@ class SqlRuleRepository(
         queries
             .selectAllActionRules()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list ->
                 list.map {
                     ActionRuleEntry(
@@ -105,7 +106,7 @@ class SqlRuleRepository(
         queries
             .selectAllScheduleRules()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list ->
                 list.map {
                     ScheduleRuleEntry(
@@ -120,7 +121,7 @@ class SqlRuleRepository(
             }
 
     override suspend fun blockedNumberEntries(): List<BlockedNumberEntry> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.selectAllBlockedNumbers().executeAsList().map {
                 BlockedNumberEntry(
                     id = it.id,
@@ -132,7 +133,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun allowlistedNumberEntries(): List<AllowlistedNumberEntry> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.selectAllAllowlistedNumbers().executeAsList().map {
                 AllowlistedNumberEntry(
                     id = it.id,
@@ -144,7 +145,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun enabledPatterns(): List<PatternRule> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.selectAllPatternRules().executeAsList().filter { it.enabled == 1L }.map {
                 PatternRule(
                     id = it.id,
@@ -156,7 +157,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun allPatterns(): List<PatternRule> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.selectAllPatternRules().executeAsList().map {
                 PatternRule(
                     id = it.id,
@@ -168,7 +169,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun enabledCountryRules(): List<CountryRuleEntry> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries
                 .selectAllCountryRules()
                 .executeAsList()
@@ -185,7 +186,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun enabledActionRules(): List<ActionRule> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries
                 .selectAllActionRules()
                 .executeAsList()
@@ -203,7 +204,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun enabledScheduleRules(): List<ScheduleRule> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries
                 .selectAllScheduleRules()
                 .executeAsList()
@@ -223,7 +224,7 @@ class SqlRuleRepository(
         number: String,
         timestampMillis: Long,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertCallAttempt(number, timestampMillis).value
         }
     }
@@ -232,12 +233,12 @@ class SqlRuleRepository(
         number: String,
         sinceTimestampMillis: Long,
     ): Int =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.countRecentAttempts(number, sinceTimestampMillis).executeAsOne().toInt()
         }
 
     override suspend fun deleteExpiredAttempts(beforeTimestampMillis: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deleteExpiredAttempts(beforeTimestampMillis).value
         }
     }
@@ -246,13 +247,13 @@ class SqlRuleRepository(
         number: String,
         label: String?,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertBlockedNumber(number, label).value
         }
     }
 
     override suspend fun removeBlockedNumber(id: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deleteBlockedNumberById(id).value
         }
     }
@@ -261,13 +262,13 @@ class SqlRuleRepository(
         number: String,
         label: String?,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertAllowlistedNumber(number, label).value
         }
     }
 
     override suspend fun removeAllowlistedNumber(id: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deleteAllowlistedNumberById(id).value
         }
     }
@@ -276,7 +277,7 @@ class SqlRuleRepository(
         pattern: String,
         label: String?,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertPatternRule(pattern, label).value
         }
     }
@@ -285,13 +286,13 @@ class SqlRuleRepository(
         id: Long,
         enabled: Boolean,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.togglePatternRule(if (enabled) 1L else 0L, id).value
         }
     }
 
     override suspend fun removePatternRule(id: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deletePatternRuleById(id).value
         }
     }
@@ -300,7 +301,7 @@ class SqlRuleRepository(
         countryCode: String,
         countryName: String,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertCountryRule(countryCode, countryName).value
         }
     }
@@ -309,13 +310,13 @@ class SqlRuleRepository(
         id: Long,
         enabled: Boolean,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.toggleCountryRule(if (enabled) 1L else 0L, id).value
         }
     }
 
     override suspend fun removeCountryRule(id: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deleteCountryRuleById(id).value
         }
     }
@@ -326,7 +327,7 @@ class SqlRuleRepository(
         windowMinutes: Int,
         patternId: Long?,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertActionRule(label, attempts.toLong(), windowMinutes.toLong(), patternId).value
         }
     }
@@ -335,13 +336,13 @@ class SqlRuleRepository(
         id: Long,
         enabled: Boolean,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.toggleActionRule(if (enabled) 1L else 0L, id).value
         }
     }
 
     override suspend fun removeActionRule(id: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deleteActionRuleById(id).value
         }
     }
@@ -351,7 +352,7 @@ class SqlRuleRepository(
         startMinute: Int,
         endMinute: Int,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.insertScheduleRule(label, startMinute.toLong(), endMinute.toLong()).value
         }
     }
@@ -360,19 +361,19 @@ class SqlRuleRepository(
         id: Long,
         enabled: Boolean,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.toggleScheduleRule(if (enabled) 1L else 0L, id).value
         }
     }
 
     override suspend fun removeScheduleRule(id: Long) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.deleteScheduleRuleById(id).value
         }
     }
 
     override suspend fun exportAll(): String =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             val now = currentTimeMillis()
             val data =
                 BackupData(
@@ -437,7 +438,7 @@ class SqlRuleRepository(
         }
 
     override suspend fun importAll(jsonStr: String): ImportResult =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             val data = json.decodeFromString(BackupData.serializer(), jsonStr)
             var blocked = 0
             var allowlisted = 0

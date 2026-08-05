@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.settings
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
@@ -21,7 +22,7 @@ class SqlSettingsRepositoryTest {
     @Test
     fun defaultsOnEmptyDatabase() =
         runTest {
-            val repo = SqlSettingsRepository(createTestDatabase())
+            val repo = SqlSettingsRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             assertTrue(repo.blockingEnabled.first())
             assertTrue(repo.autoAllowContacts.first())
@@ -34,7 +35,7 @@ class SqlSettingsRepositoryTest {
     @Test
     fun settersUpdateTheExposedFlows() =
         runTest {
-            val repo = SqlSettingsRepository(createTestDatabase())
+            val repo = SqlSettingsRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             repo.setBlockingEnabled(false)
             repo.setAutoAllowContacts(false)
@@ -53,7 +54,7 @@ class SqlSettingsRepositoryTest {
     fun everySettingSurvivesARestart() =
         runTest {
             val db = createTestDatabase()
-            val first = SqlSettingsRepository(db)
+            val first = SqlSettingsRepository(db, Dispatchers.Unconfined)
 
             first.setBlockingEnabled(false)
             first.setAutoAllowContacts(false)
@@ -61,7 +62,7 @@ class SqlSettingsRepositoryTest {
             first.setNotificationsEnabled(false)
             first.setRepeatedCallerBypassCount(9)
 
-            val restarted = SqlSettingsRepository(db)
+            val restarted = SqlSettingsRepository(db, Dispatchers.Unconfined)
 
             assertFalse(restarted.blockingEnabled.first())
             assertFalse(restarted.autoAllowContacts.first())
@@ -74,13 +75,13 @@ class SqlSettingsRepositoryTest {
     fun welcomeShownIsFalseUntilSetAndThenSurvivesARestart() =
         runTest {
             val db = createTestDatabase()
-            val first = SqlSettingsRepository(db)
+            val first = SqlSettingsRepository(db, Dispatchers.Unconfined)
             assertFalse(first.welcomeShown)
 
             first.setWelcomeShown()
 
             assertTrue(first.welcomeShown)
-            assertTrue(SqlSettingsRepository(db).welcomeShown)
+            assertTrue(SqlSettingsRepository(db, Dispatchers.Unconfined).welcomeShown)
         }
 
     @Test
@@ -88,9 +89,9 @@ class SqlSettingsRepositoryTest {
         runTest {
             val db = createTestDatabase()
             // Simulates a value written by a newer build, or a corrupted row.
-            KeyValueSettingsStore(db).write("default_action", "TRANSFER_TO_VOICEMAIL")
+            KeyValueSettingsStore(db, Dispatchers.Unconfined).write("default_action", "TRANSFER_TO_VOICEMAIL")
 
-            assertEquals(DefaultAction.ALLOW, SqlSettingsRepository(db).defaultAction.first())
+            assertEquals(DefaultAction.ALLOW, SqlSettingsRepository(db, Dispatchers.Unconfined).defaultAction.first())
         }
 
     @Test
@@ -98,9 +99,9 @@ class SqlSettingsRepositoryTest {
         runTest {
             DefaultAction.entries.forEach { action ->
                 val db = createTestDatabase()
-                SqlSettingsRepository(db).setDefaultAction(action)
+                SqlSettingsRepository(db, Dispatchers.Unconfined).setDefaultAction(action)
 
-                assertEquals(action, SqlSettingsRepository(db).defaultAction.first())
+                assertEquals(action, SqlSettingsRepository(db, Dispatchers.Unconfined).defaultAction.first())
             }
         }
 
@@ -108,8 +109,8 @@ class SqlSettingsRepositoryTest {
     fun aLiveRepositoryDoesNotSeeAnotherInstancesWrite() =
         runTest {
             val db = createTestDatabase()
-            val observer = SqlSettingsRepository(db)
-            val writer = SqlSettingsRepository(db)
+            val observer = SqlSettingsRepository(db, Dispatchers.Unconfined)
+            val writer = SqlSettingsRepository(db, Dispatchers.Unconfined)
 
             writer.setBlockingEnabled(false)
 
@@ -118,6 +119,6 @@ class SqlSettingsRepositoryTest {
             // in the app only because SharedModule binds it as `single<SettingsRepository>`
             // — two live instances would silently disagree.
             assertTrue(observer.blockingEnabled.first())
-            assertFalse(SqlSettingsRepository(db).blockingEnabled.first())
+            assertFalse(SqlSettingsRepository(db, Dispatchers.Unconfined).blockingEnabled.first())
         }
 }

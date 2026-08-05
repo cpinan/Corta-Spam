@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.spam
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,8 +9,9 @@ import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
 
 class SqlSpamProviderRepository(
     db: AppDatabase,
+    dispatcher: CoroutineDispatcher,
 ) : SpamProviderRepository {
-    private val store = KeyValueSettingsStore(db)
+    private val store = KeyValueSettingsStore(db, dispatcher)
 
     private val _enabled = MutableStateFlow(false)
     override val enabled: Flow<Boolean> = _enabled.asStateFlow()

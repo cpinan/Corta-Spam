@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.autoresponder
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,8 +9,9 @@ import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
 
 class SqlAutoResponderRepository(
     db: AppDatabase,
+    dispatcher: CoroutineDispatcher,
 ) : AutoResponderRepository {
-    private val store = KeyValueSettingsStore(db)
+    private val store = KeyValueSettingsStore(db, dispatcher)
 
     private val _config = MutableStateFlow(loadConfig())
     override val config: Flow<AutoResponderConfig> = _config.asStateFlow()

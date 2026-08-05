@@ -2,7 +2,7 @@ package org.carlospinan.bloqueador.app.rules
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -10,6 +10,7 @@ import org.carlospinan.bloqueador.app.db.AppDatabase
 
 class SqlCallLogRepository(
     private val database: AppDatabase,
+    private val dispatcher: CoroutineDispatcher,
 ) : CallLogRepository {
     private val queries get() = database.appDatabaseQueries
 
@@ -17,33 +18,33 @@ class SqlCallLogRepository(
         queries
             .selectAllCallLogEntries()
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list -> list.map { it.toData() } }
 
     override fun recentEntries(limit: Int): Flow<List<CallLogEntryData>> =
         queries
             .selectRecentCallLogEntries(limit.toLong())
             .asFlow()
-            .mapToList(Dispatchers.Default)
+            .mapToList(dispatcher)
             .map { list -> list.map { it.toData() } }
 
     override suspend fun blockedCountToday(): Int =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.countBlockedCallsToday().executeAsOne().toInt()
         }
 
     override suspend fun blockedCountThisWeek(): Int =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.countBlockedCallsThisWeek().executeAsOne().toInt()
         }
 
     override suspend fun blockedCountThisMonth(): Int =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.countBlockedCallsThisMonth().executeAsOne().toInt()
         }
 
     override suspend fun blockedStats(): BlockedStats =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             BlockedStats(
                 today = queries.countBlockedCallsToday().executeAsOne().toInt(),
                 thisWeek = queries.countBlockedCallsThisWeek().executeAsOne().toInt(),
@@ -57,7 +58,7 @@ class SqlCallLogRepository(
         timestamp: Long,
         decision: RuleDecision,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries
                 .insertCallLogEntry(
                     number = number,
@@ -71,7 +72,7 @@ class SqlCallLogRepository(
     }
 
     override suspend fun clearAll() {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             queries.clearCallLog().value
         }
     }
@@ -85,7 +86,7 @@ class SqlCallLogRepository(
      * derived from its start) contradicted the calls inside it.
      */
     override suspend fun blockedByDay(daysBack: Int): List<DayStat> =
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             val entries = queries.selectAllCallLogEntries().executeAsList()
             val dayMillis = 86_400_000L
             val todayStart = (currentTimeMillis() / dayMillis) * dayMillis

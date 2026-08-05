@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.spam
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.testing.createTestDatabase
@@ -17,13 +18,13 @@ class SqlSpamProviderRepositoryTest {
     @Test
     fun defaultsToDisabled() =
         runTest {
-            assertFalse(SqlSpamProviderRepository(createTestDatabase()).enabled.first())
+            assertFalse(SqlSpamProviderRepository(createTestDatabase(), Dispatchers.Unconfined).enabled.first())
         }
 
     @Test
     fun enablingUpdatesTheExposedFlow() =
         runTest {
-            val repo = SqlSpamProviderRepository(createTestDatabase())
+            val repo = SqlSpamProviderRepository(createTestDatabase(), Dispatchers.Unconfined)
 
             repo.setEnabled(true)
 
@@ -34,19 +35,19 @@ class SqlSpamProviderRepositoryTest {
     fun enabledSurvivesARestart() =
         runTest {
             val db = createTestDatabase()
-            SqlSpamProviderRepository(db).setEnabled(true)
+            SqlSpamProviderRepository(db, Dispatchers.Unconfined).setEnabled(true)
 
-            assertTrue(SqlSpamProviderRepository(db).enabled.first())
+            assertTrue(SqlSpamProviderRepository(db, Dispatchers.Unconfined).enabled.first())
         }
 
     @Test
     fun disablingSurvivesARestart() =
         runTest {
             val db = createTestDatabase()
-            SqlSpamProviderRepository(db).setEnabled(true)
+            SqlSpamProviderRepository(db, Dispatchers.Unconfined).setEnabled(true)
 
-            SqlSpamProviderRepository(db).setEnabled(false)
+            SqlSpamProviderRepository(db, Dispatchers.Unconfined).setEnabled(false)
 
-            assertFalse(SqlSpamProviderRepository(db).enabled.first())
+            assertFalse(SqlSpamProviderRepository(db, Dispatchers.Unconfined).enabled.first())
         }
 }

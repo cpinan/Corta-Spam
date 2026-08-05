@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.rules
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.testing.createTestDatabase
@@ -18,7 +19,7 @@ import kotlin.test.assertTrue
  * flows and the suspend snapshots agree about the same rows.
  */
 class SqlRuleRepositoryTest {
-    private fun repository() = SqlRuleRepository(createTestDatabase())
+    private fun repository() = SqlRuleRepository(createTestDatabase(), Dispatchers.Unconfined)
 
     // ---- blocked numbers ----
 

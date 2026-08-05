@@ -6,6 +6,7 @@ import org.carlospinan.bloqueador.app.autoresponder.SqlAutoResponderRepository
 import org.carlospinan.bloqueador.app.backup.BackupViewModel
 import org.carlospinan.bloqueador.app.blocklist.BlockListViewModel
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
+import org.carlospinan.bloqueador.app.db.DriverFactory
 import org.carlospinan.bloqueador.app.db.createDatabase
 import org.carlospinan.bloqueador.app.home.HomeViewModel
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
@@ -28,12 +29,18 @@ val sharedModule =
     module {
         single { createDatabase(get()) }
 
-        single<RuleRepository> { SqlRuleRepository(get()) }
-        single<CallLogRepository> { SqlCallLogRepository(get()) }
-        single<SettingsRepository> { SqlSettingsRepository(get()) }
-        single<SpamProviderRepository> { SqlSpamProviderRepository(get()) }
+        // SQLite work is blocking I/O, so it belongs on the platform's I/O pool -- not on
+        // Dispatchers.Default, whose thread count is the core count and which Compose also uses
+        // for recomposition work. DriverFactory has always declared the right dispatcher for its
+        // platform; nothing read it until now.
+        single { get<DriverFactory>().databaseDispatcher }
+
+        single<RuleRepository> { SqlRuleRepository(get(), get()) }
+        single<CallLogRepository> { SqlCallLogRepository(get(), get()) }
+        single<SettingsRepository> { SqlSettingsRepository(get(), get()) }
+        single<SpamProviderRepository> { SqlSpamProviderRepository(get(), get()) }
         single<SpamProviderClient> { BundledSpamProvider() }
-        single<AutoResponderRepository> { SqlAutoResponderRepository(get()) }
+        single<AutoResponderRepository> { SqlAutoResponderRepository(get(), get()) }
         single { EvaluateIncomingCallUseCase(get(), get(), get(), get(), get()) }
 
         factory { HomeViewModel(get(), get()) }

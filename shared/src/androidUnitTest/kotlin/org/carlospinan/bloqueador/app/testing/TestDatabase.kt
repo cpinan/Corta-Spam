@@ -14,8 +14,8 @@ import org.carlospinan.bloqueador.app.db.AppDatabase
  *
  * ```
  * val db = createTestDatabase()
- * SqlSettingsRepository(db).setBlockingEnabled(false)
- * assertFalse(SqlSettingsRepository(db).blockingEnabled.first())  // re-hydrated from disk
+ * SqlSettingsRepository(db, Dispatchers.Unconfined).setBlockingEnabled(false)
+ * assertFalse(SqlSettingsRepository(db, Dispatchers.Unconfined).blockingEnabled.first())  // re-hydrated from disk
  * ```
  */
 internal fun createTestDatabase(): AppDatabase {

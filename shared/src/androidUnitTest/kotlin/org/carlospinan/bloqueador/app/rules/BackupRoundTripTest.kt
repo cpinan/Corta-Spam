@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.rules
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.db.AppDatabase
 import kotlin.test.Test
@@ -16,7 +17,7 @@ class BackupRoundTripTest {
     @Test
     fun roundTrip_preservesAllRules() =
         runTest {
-            val originalRepo = SqlRuleRepository(createDatabase())
+            val originalRepo = SqlRuleRepository(createDatabase(), Dispatchers.Unconfined)
             originalRepo.addBlockedNumber("+34600123456", "spam")
             originalRepo.addAllowlistedNumber("+34600123457", "friend")
             originalRepo.addPatternRule("+34900*", "Spanish spam")
@@ -27,7 +28,7 @@ class BackupRoundTripTest {
 
             val json = originalRepo.exportAll()
 
-            val importRepo = SqlRuleRepository(createDatabase())
+            val importRepo = SqlRuleRepository(createDatabase(), Dispatchers.Unconfined)
             val result = importRepo.importAll(json)
 
             assertEquals(1, result.blockedNumbersImported)

@@ -1,11 +1,12 @@
 package org.carlospinan.bloqueador.app.db
 
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 /** Thin wrapper over the AppSettings key-value table, shared by settings/spam/autoresponder repositories. */
 class KeyValueSettingsStore(
     private val db: AppDatabase,
+    private val dispatcher: CoroutineDispatcher,
 ) {
     fun readBool(
         key: String,
@@ -35,7 +36,7 @@ class KeyValueSettingsStore(
         key: String,
         value: String,
     ) {
-        withContext(Dispatchers.Default) {
+        withContext(dispatcher) {
             db.appDatabaseQueries.upsertSetting(key, value)
         }
     }

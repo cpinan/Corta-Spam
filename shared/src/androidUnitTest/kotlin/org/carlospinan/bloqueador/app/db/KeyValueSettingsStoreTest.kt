@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.db
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.testing.createTestDatabase
 import kotlin.test.Test
@@ -11,7 +12,7 @@ import kotlin.test.assertEquals
  * repositories' defaults actually rests on.
  */
 class KeyValueSettingsStoreTest {
-    private fun store() = KeyValueSettingsStore(createTestDatabase())
+    private fun store() = KeyValueSettingsStore(createTestDatabase(), Dispatchers.Unconfined)
 
     @Test
     fun missingKeyReturnsDefault() {
