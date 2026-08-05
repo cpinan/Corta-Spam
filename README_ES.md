@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M10 completos. Diseño adaptativo integrado (móvil/tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 239 pruebas automatizadas pasan. APK de Android compila. iOS pospuesto.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 273 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -79,7 +79,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 239 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 265 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 8 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
 
@@ -113,6 +114,12 @@ Un curso completo de 19 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 72 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-05:**
+- **M12 queda terminado.** Ajustes estrena el diseño list-detail para tablet que estaba pendiente desde el 2026-07-28: en Expanded (>=840dp) una lista de secciones — Bloqueo, Contactos, Notificaciones, Acerca de — se coloca junto a un panel de detalle, igual que el registro de llamadas. Los diseños de móvil y Medium no cambian, ni siquiera el orden de la lista de ajustes. Los avisos de permisos se muestran a propósito en todas las secciones en lugar de archivarse en la que les corresponde: un aviso que solo se encuentra por casualidad no es un aviso. Verificado en un AVD a 448dp (barra inferior, lista plana) y a 997dp (barra lateral, paneles divididos).
+- Se cerraron las carencias de pruebas restantes: `SqlRuleRepository` (unos 40 miembros sin probar), `BundledSpamProvider` y `ContactNameLookup`. `androidApp` no tenía ningún source set de pruebas — ahora sí, con Robolectric y conectado a CI. De 239 a 273 pruebas.
+- Se corrigió que las listas de reglas se devolvieran de más antigua a más reciente. `created_at` guarda segundos enteros, así que las reglas añadidas en el mismo segundo empataban y SQLite recurría al orden de inserción — lo contrario de "más recientes primero" que documenta el repositorio. Las cinco consultas afectadas ahora desempatan por `id`.
+- Dos hallazgos se dejaron sin corregir a propósito, documentados en pruebas: el único *patrón* de spam de `BundledSpamProvider` (`+*000*`) no puede coincidir nunca, porque el comparador de comodines solo entiende asteriscos al principio y al final, de modo que su rama de confianza 0.65 es inalcanzable — hacer que funcionen los comodines intermedios empezaría a bloquear cualquier número que contenga "000", y eso es una decisión de producto. Y `InCallState` no se puede probar del todo sin una librería de mocks que el proyecto evita deliberadamente; cubrirlo bien exige una interfaz entre los callbacks de Telecom y el objeto.
 
 **2026-08-04:**
 - Se arregló el job de iOS en CI, en rojo en cada ejecución durante semanas, con dos fallos encadenados:

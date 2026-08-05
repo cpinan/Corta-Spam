@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M10 complete. Adaptive landscape/tablet layout integrated. 4-language i18n. Open source under MIT License. 239 automated tests pass. Android APK builds. iOS deferred.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 273 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -79,7 +79,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 239 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 265 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 8 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ```
 
@@ -113,6 +114,12 @@ A complete 19-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 72 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-05:**
+- **M12 is finished.** Settings gains the tablet list-detail layout that had been deferred since 2026-07-28: on Expanded (>=840dp) a section list — Blocking, Contacts, Notifications, About — sits beside a detail pane, matching the Call Log's existing split. Phone and Medium layouts are unchanged, down to the ordering of the settings list. Permission warnings deliberately render on every section rather than being filed under the matching one, since a warning findable only by accident isn't a warning. Verified on an AVD at both 448dp (bottom nav, flat list) and 997dp (nav rail, split panes).
+- Closed the remaining test gaps: `SqlRuleRepository` (~40 previously untested members), `BundledSpamProvider`, and `ContactNameLookup`. `androidApp` had no test source set at all — it does now, running under Robolectric and wired into CI. 239 → 273 tests.
+- Fixed rule lists coming back oldest-first. `created_at` defaults to whole seconds, so rules added in the same second tied on it and SQLite fell back to insertion order — the opposite of the "most recent first" the repository documents. The five affected queries now break ties by `id`.
+- Two findings left deliberately unfixed and documented in tests instead: `BundledSpamProvider`'s only spam *pattern* (`+*000*`) can never match, because the glob matcher only understands leading and trailing stars, so its 0.65-confidence branch is unreachable — making mid-string globs work would start blocking every number containing "000", which is a product call. And `InCallState` can't be fully tested without a mocking library the project deliberately avoids; covering it properly needs an interface between the Telecom callbacks and the object.
 
 **2026-08-04:**
 - Fixed the iOS CI job, red on every run for weeks, and stacked two separate faults:
