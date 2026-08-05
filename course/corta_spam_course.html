@@ -1,189 +1,161 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Corta Spam — From Zero to Master: KMP Android App Development</title>
+<title>Corta Spam, from scratch — a progressive Kotlin Multiplatform course</title>
 <style>
-/* ========== THEME VARIABLES ========== */
-:root {
-  --bg: #FFF4E6;
-  --text: #17233C;
-  --accent: #EF6A5B;
-  --code-bg: #F0E8D8;
-  --card-bg: #FFFFFF;
-  --border: #E0D5C5;
-  --muted: #6B7280;
-  --green: #059669;
-  --amber: #D97706;
-  --shadow: 0 2px 8px rgba(23,35,60,0.08);
-  --radius: 8px;
+/* ========== TEMPEST-STYLE THEME ==========
+   Dark by default, cyan/magenta accents, monospace for anything the compiler reads. */
+:root{
+  --bg:#0B0F14; --panel:#111823; --panel-2:#0E141D;
+  --text:#DDE6F2; --muted:#8899AE; --line:#1E2A3A;
+  --cyan:#4FD6E0; --magenta:#FF6BD6; --amber:#FFC46B; --green:#5BE49B; --red:#FF6B6B;
+  --code-bg:#0A0F17;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --radius:6px;
 }
-[data-theme="dark"] {
-  --bg: #17233C;
-  --text: #FFF4E6;
-  --code-bg: #1E2D4A;
-  --card-bg: #1F3050;
-  --border: #2A3D5C;
-  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+[data-theme="light"]{
+  --bg:#FBFAF7; --panel:#FFFFFF; --panel-2:#F3F1EC;
+  --text:#121A24; --muted:#5B6675; --line:#E2DED6;
+  --cyan:#0E7C86; --magenta:#B5127F; --amber:#8A5A00; --green:#0B7A48; --red:#B3261E;
+  --code-bg:#F3F1EC;
 }
-/* ========== RESET & BASE ========== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:17px}
+html{scroll-behavior:smooth;font-size:16px}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  background:var(--bg);color:var(--text);line-height:1.7;
-  transition:background .3s,color .3s
+  background:var(--bg);color:var(--text);line-height:1.75;
+  -webkit-font-smoothing:antialiased;
 }
-/* ========== LAYOUT ========== */
-.wrap{max-width:900px;margin:0 auto;padding:0 24px}
-/* ========== HEADER ========== */
-.header{
-  background:var(--card-bg);border-bottom:1px solid var(--border);
-  padding:32px 0;margin-bottom:40px;box-shadow:var(--shadow)
-}
-.header h1{font-size:2.2rem;color:var(--accent);margin-bottom:6px}
-.header p{color:var(--muted);font-size:1rem}
-.header-bar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+a{color:var(--cyan)}
+
+/* ---------- header ---------- */
+.header{border-bottom:1px solid var(--line);background:var(--panel-2);padding:34px 0 26px}
+.header h1{font-size:1.75rem;letter-spacing:-.02em;font-weight:650}
+.header h1 .dim{color:var(--muted);font-weight:400}
+.header .sub{color:var(--muted);margin-top:8px}
+.header .stack{font-family:var(--mono);font-size:.82rem;color:var(--cyan);margin-top:10px}
+.header-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
 .theme-btn{
-  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:8px 16px;cursor:pointer;font-size:.9rem;color:var(--text);
-  transition:background .2s
+  background:transparent;color:var(--muted);border:1px solid var(--line);
+  border-radius:var(--radius);padding:7px 12px;cursor:pointer;font-family:var(--mono);font-size:.78rem;
 }
-.theme-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-/* ========== PROGRESS ========== */
-.progress-wrap{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:16px 20px;margin-bottom:32px;box-shadow:var(--shadow)
+.theme-btn:hover{color:var(--text);border-color:var(--cyan)}
+
+/* ---------- progress ---------- */
+.progress-wrap{margin:26px 0 8px}
+.progress-label{font-family:var(--mono);font-size:.82rem;color:var(--muted);margin-bottom:8px}
+.progress-label b{color:var(--cyan);font-weight:600}
+.progress-bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--magenta));transition:width .35s}
+
+/* ---------- horizontal chapter rail ---------- */
+.toc{margin:18px 0 40px}
+.toc h2{font-family:var(--mono);font-size:.8rem;color:var(--muted);font-weight:500;
+  text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px}
+.toc-rail{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin}
+.toc-rail::-webkit-scrollbar{height:6px}
+.toc-rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.toc-rail a{
+  flex:0 0 auto;font-family:var(--mono);font-size:.78rem;text-decoration:none;
+  color:var(--muted);background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:8px 11px;white-space:nowrap;transition:.15s;
 }
-.progress-bar{
-  height:10px;background:var(--code-bg);border-radius:5px;overflow:hidden;margin-top:8px
-}
-.progress-fill{
-  height:100%;background:var(--accent);border-radius:5px;transition:width .4s;width:0%
-}
-.progress-label{font-size:.85rem;color:var(--muted)}
-/* ========== TOC ========== */
-.toc{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:24px;margin-bottom:40px;box-shadow:var(--shadow)
-}
-.toc h2{font-size:1.2rem;margin-bottom:16px;color:var(--accent)}
-.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.toc a{
-  display:block;padding:8px 12px;border-radius:var(--radius);text-decoration:none;
-  color:var(--text);font-size:.9rem;transition:background .2s;border:1px solid transparent
-}
-.toc a:hover{background:var(--code-bg);border-color:var(--border)}
-.toc a.visited{opacity:.5}
-/* ========== MODULES ========== */
+.toc-rail a .n{color:var(--cyan);margin-right:7px}
+.toc-rail a:hover{border-color:var(--cyan);color:var(--text)}
+.toc-rail a.visited{border-color:var(--green)}
+.toc-rail a.visited .n{color:var(--green)}
+
+/* ---------- chapters ---------- */
 .module{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:40px;margin-bottom:40px;box-shadow:var(--shadow)
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:30px 28px;margin:0 0 22px;scroll-margin-top:16px;
 }
-.module h2{font-size:1.7rem;color:var(--accent);margin-bottom:4px}
-.module h3{font-size:1.2rem;margin:28px 0 12px;color:var(--text)}
-.module h4{font-size:1rem;margin:20px 0 8px;color:var(--muted)}
-.module p{margin-bottom:14px}
-.module ul,.module ol{margin:0 0 14px 24px}
+.chapter-status{
+  display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--green);border:1px solid var(--green);
+  border-radius:3px;padding:2px 8px;margin-bottom:14px;opacity:.85
+}
+.module h2{font-size:1.42rem;letter-spacing:-.015em;margin-bottom:10px;font-weight:640}
+.module h2 .cn{font-family:var(--mono);color:var(--cyan);font-size:1rem;margin-right:10px}
+.module h3{font-size:1.02rem;margin:26px 0 9px;font-weight:620}
+.module p{margin-bottom:13px}
+.module ul,.module ol{margin:0 0 13px 22px}
 .module li{margin-bottom:6px}
-/* ========== CALLOUTS ========== */
-.callout{
-  border-left:4px solid var(--accent);background:var(--code-bg);
-  padding:16px 20px;margin:20px 0;border-radius:0 var(--radius) var(--radius) 0
-}
-.callout h3{margin-top:0;color:var(--accent)}
-/* ========== BADGES ========== */
-.badge{
-  display:inline-block;padding:3px 10px;border-radius:12px;font-size:.75rem;
-  font-weight:600;margin-right:6px;text-transform:uppercase;letter-spacing:.5px
-}
-.badge-b{background:#D1FAE5;color:#065F46}
-.badge-i{background:#FEF3C7;color:#92400E}
-.badge-a{background:#FEE2E2;color:#991B1B}
-[data-theme="dark"] .badge-b{background:#064E3B;color:#A7F3D0}
-[data-theme="dark"] .badge-i{background:#78350F;color:#FDE68A}
-[data-theme="dark"] .badge-a{background:#7F1D1D;color:#FECACA}
-/* ========== CODE ========== */
-pre{
-  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:20px;overflow-x:auto;margin:16px 0;font-size:.82rem;line-height:1.6;
-  position:relative;counter-reset:line
-}
-pre .line{display:block;padding-left:52px;position:relative;white-space:pre-wrap}
-pre .line::before{
-  counter-increment:line;content:counter(line);
-  position:absolute;left:0;width:40px;text-align:right;
-  color:var(--muted);font-size:.75rem;padding-right:8px;user-select:none
-}
-code{font-family:"JetBrains Mono","Fira Code","Cascadia Code",Consolas,monospace}
-pre .kw{color:#7C3AED;font-weight:600}
-pre .str{color:#059669}
-pre .cm{color:var(--muted);font-style:italic}
-pre .fn{color:#D97706}
-pre .tp{color:#2563EB}
-pre .num{color:#DC2626}
-pre .ann{color:#9333EA}
-[data-theme="dark"] pre .kw{color:#A78BFA}
-[data-theme="dark"] pre .str{color:#34D399}
-[data-theme="dark"] pre .fn{color:#FBBF24}
-[data-theme="dark"] pre .tp{color:#60A5FA}
-[data-theme="dark"] pre .num{color:#F87171}
-[data-theme="dark"] pre .ann{color:#C084FC}
-.file-label{
-  font-size:.75rem;color:var(--muted);margin-bottom:-12px;padding:4px 12px;
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;
-  display:inline-block;position:relative;top:1px;z-index:1
-}
-/* ========== DIAGRAMS ========== */
-figure.diagram{
-  margin:24px 0;text-align:center;background:var(--code-bg);
-  border:1px solid var(--border);border-radius:var(--radius);padding:24px;overflow-x:auto
-}
-figure.diagram svg{max-width:100%}
-figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
-/* ========== TAKEAWAYS ========== */
-.takeaways{
-  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:20px 24px;margin:24px 0
-}
-.takeaways h3{color:var(--accent);margin-top:0}
-/* ========== QUIZ ========== */
-.quiz{
-  background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:20px 24px;margin:24px 0
-}
-.quiz summary{
-  cursor:pointer;font-weight:600;font-size:1rem;color:var(--accent);padding:8px 0
-}
-.quiz-item{margin:20px 0;padding-bottom:16px;border-bottom:1px solid var(--border)}
+
+/* ---------- badges ---------- */
+.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;text-transform:uppercase;
+  letter-spacing:.06em;padding:2px 7px;border-radius:3px;margin-right:9px;vertical-align:middle}
+.badge-b{background:rgba(91,228,155,.13);color:var(--green);border:1px solid rgba(91,228,155,.3)}
+.badge-i{background:rgba(255,196,107,.13);color:var(--amber);border:1px solid rgba(255,196,107,.3)}
+.badge-a{background:rgba(255,107,214,.13);color:var(--magenta);border:1px solid rgba(255,107,214,.3)}
+
+/* ---------- callouts ---------- */
+.callout{background:var(--panel-2);border:1px solid var(--line);border-left:2px solid var(--cyan);
+  border-radius:var(--radius);padding:15px 18px;margin:18px 0}
+.callout h3{margin:0 0 8px;font-size:.95rem}
+.callout ul{margin-bottom:0}
+.note{border-left:2px solid var(--line);padding:2px 0 2px 16px;margin:16px 0;color:var(--text)}
+.note .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;
+  display:block;margin-bottom:5px;font-weight:600}
+.note.gotcha{border-left-color:var(--red)}   .note.gotcha .tag{color:var(--red)}
+.note.why{border-left-color:var(--cyan)}     .note.why .tag{color:var(--cyan)}
+.note.verified{border-left-color:var(--green)}  .note.verified .tag{color:var(--green)}
+.note.contrast{border-left-color:var(--magenta)}.note.contrast .tag{color:var(--magenta)}
+.note.scope{border-left-color:var(--amber)}  .note.scope .tag{color:var(--amber)}
+
+/* ---------- done-when ---------- */
+.donewhen{border:1px dashed var(--line);border-radius:var(--radius);padding:14px 18px;margin:22px 0 0}
+.donewhen h4{font-family:var(--mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;font-weight:600}
+.donewhen ul{margin:0 0 0 20px;font-size:.93rem}
+
+/* ---------- code ---------- */
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;overflow-x:auto;margin:14px 0;font-size:.84rem;line-height:1.6}
+code{font-family:var(--mono);font-size:.88em}
+p code,li code{background:var(--code-bg);border:1px solid var(--line);
+  padding:1px 5px;border-radius:3px;color:var(--cyan)}
+pre code{background:none;border:none;padding:0;color:var(--text)}
+.line{display:block}
+.filepath{font-family:var(--mono);font-size:.74rem;color:var(--muted);
+  margin:16px 0 -8px;padding-left:2px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left}
+th{background:var(--panel-2);font-weight:600}
+
+/* ---------- quiz ---------- */
+.quiz{margin-top:26px;border-top:1px solid var(--line);padding-top:20px}
+.quiz > h3{font-family:var(--mono);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px}
+.quiz-item{margin:16px 0;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .quiz-item:last-child{border-bottom:none;padding-bottom:0}
-.quiz-item p{margin-bottom:8px;font-weight:600}
+.quiz-item p{margin-bottom:8px;font-weight:600;font-size:.95rem}
 .quiz-item button{
-  background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:6px 14px;cursor:pointer;font-size:.85rem;color:var(--text);margin-right:6px;transition:background .2s
-}
-.quiz-item button:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-.quiz-item .answer{display:none;margin-top:8px;padding:8px 12px;background:var(--card-bg);border-radius:var(--radius);font-size:.9rem}
+  background:transparent;color:var(--cyan);border:1px solid var(--line);
+  border-radius:var(--radius);padding:5px 11px;cursor:pointer;font-family:var(--mono);font-size:.75rem}
+.quiz-item button:hover{border-color:var(--cyan)}
+.quiz-item .answer{display:none;margin-top:9px;padding:10px 13px;background:var(--panel-2);
+  border-left:2px solid var(--green);border-radius:var(--radius);font-size:.9rem}
 .quiz-item .answer.show{display:block}
-/* ========== FOOTER ========== */
-.footer{
-  text-align:center;padding:40px 0;color:var(--muted);font-size:.85rem;
-  border-top:1px solid var(--border);margin-top:40px
-}
-.footer a{color:var(--accent)}
-/* ========== RESPONSIVE ========== */
-@media(max-width:768px){
-  .module{padding:24px}
-  pre{font-size:.75rem}
-  .toc-grid{grid-template-columns:1fr}
-  .header h1{font-size:1.6rem}
+
+.footer{border-top:1px solid var(--line);margin-top:46px;padding:26px 0 60px;
+  color:var(--muted);font-size:.86rem}
+.footer a{color:var(--cyan)}
+
+@media(max-width:600px){
+  .header h1{font-size:1.35rem}
+  .module{padding:22px 18px}
+  .header-bar{flex-direction:column}
 }
 @media print{
   .header,.toc,.footer,.theme-btn,.progress-wrap{display:none}
-  .module{box-shadow:none;border:none;page-break-inside:avoid}
-  body{font-size:12pt;color:#000;background:#fff}
-  pre{background:#f5f5f5;border:1px solid #ddd}
+  .module{border:none;page-break-inside:avoid;background:#fff}
+  body{font-size:11pt;color:#000;background:#fff}
   .quiz .answer{display:block!important}
 }
 </style>
@@ -192,33 +164,37 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="header"><div class="wrap"><div class="header-bar">
 <div>
-<h1>Corta Spam</h1>
-<p>From Zero to Master: Kotlin Multiplatform Android App Development</p>
-<p style="font-size:.85rem">A 16-module course walking through a real production app</p>
+<h1>Corta Spam, <span class="dim">from scratch</span></h1>
+<p class="sub">A progressive course written against a real, shipping call-blocking app — including the wrong turns.</p>
+<p class="stack">Kotlin Multiplatform · Compose Multiplatform · MVVM + MVI · SQLDelight · Telecom</p>
 </div>
-<button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">🌙 Dark Mode</button>
+<button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">Light</button>
 </div></div></div>
 
 <div class="wrap">
 
-<!-- Progress -->
 <div class="progress-wrap">
-  <div class="progress-label">Progress: <span id="progress-text">0 / 19 modules</span></div>
+  <div class="progress-label"><b><span id="progress-count">0</span> / <span id="progress-total">20</span></b> chapters read · <span id="progress-written">20 / 20 chapters written</span></div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
-<!-- Table of Contents -->
 <nav class="toc" id="toc">
-  <h2>Course Modules</h2>
-  <p style="font-size:.85rem;margin-bottom:12px;color:var(--muted)"><b>Part 1:</b> Foundation (1-3) · <b>Part 2:</b> Navigation & Layout (4-5) · <b>Part 3:</b> Data Layer (6-7) · <b>Part 4:</b> Android Platform (8-9) · <b>Part 5:</b> Domain Logic (10-11) · <b>Part 6:</b> Quality (12-13) · <b>Part 7:</b> iOS Debugging (14)</p>
-  <div class="toc-grid" id="toc-grid"></div>
+  <h2>Chapters</h2>
+  <div class="toc-rail" id="toc-rail"></div>
 </nav>
+
+<div class="callout">
+<h3>How to read this</h3>
+<p>Every chapter documents code that already exists in the repository, written <em>after</em> it shipped rather than as an idealised plan. Where something went wrong — and a lot did — the chapter says so in a <b>GOTCHA</b> box instead of quietly presenting the fixed version.</p>
+<p style="margin-bottom:0">Inline labels used throughout: <b style="color:var(--red)">GOTCHA</b> a trap that cost real time · <b style="color:var(--cyan)">WHY</b> the reasoning behind a choice · <b style="color:var(--green)">VERIFIED</b> what was actually run to prove it · <b style="color:var(--magenta)">CONTRAST</b> how this differs from the obvious approach · <b style="color:var(--amber)">SCOPE</b> what was deliberately left out.</p>
+</div>
 
 <!-- ================================================================ -->
 <!-- MODULE 1 -->
 <!-- ================================================================ -->
 <section class="module" id="m1">
-<h2>Module 1: Gradle &amp; The Build System</h2>
+<div class="chapter-status">Chapter 01 done</div>
+<h2><span class="cn">01</span>Gradle &amp; The Build System</h2>
 <p>Learn how the project compiles, links dependencies, and packages into an APK.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -290,15 +266,15 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <rect x="40" y="20" width="140" height="40" rx="6" fill="#EF6A5B" opacity="0.2" stroke="#EF6A5B"/>
 <text x="110" y="45" text-anchor="middle" font-size="12" fill="var(--text)">libs.versions.toml</text>
 <line x1="180" y1="40" x2="240" y2="40" stroke="#EF6A5B" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="250" y="10" width="140" height="30" rx="6" fill="none" stroke="var(--border)"/>
+<rect x="250" y="10" width="140" height="30" rx="6" fill="none" stroke="var(--line)"/>
 <text x="320" y="30" text-anchor="middle" font-size="11" fill="var(--text)">build.gradle.kts</text>
 <line x1="320" y1="40" x2="320" y2="70" stroke="#EF6A5B" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="200" y="78" width="120" height="30" rx="6" fill="none" stroke="var(--border)"/>
+<rect x="200" y="78" width="120" height="30" rx="6" fill="none" stroke="var(--line)"/>
 <text x="260" y="98" text-anchor="middle" font-size="11" fill="var(--text)">shared/build.gradle.kts</text>
 <line x1="320" y1="40" x2="420" y2="70" stroke="#EF6A5B" stroke-width="2" marker-end="url(#arrow)"/>
-<rect x="420" y="78" width="140" height="30" rx="6" fill="none" stroke="var(--border)"/>
+<rect x="420" y="78" width="140" height="30" rx="6" fill="none" stroke="var(--line)"/>
 <text x="490" y="98" text-anchor="middle" font-size="11" fill="var(--text)">androidApp/build.gradle.kts</text>
-<rect x="40" y="130" width="520" height="40" rx="6" fill="#17233C" opacity="0.08" stroke="var(--border)"/>
+<rect x="40" y="130" width="520" height="40" rx="6" fill="#17233C" opacity="0.08" stroke="var(--line)"/>
 <text x="300" y="155" text-anchor="middle" font-size="12" fill="var(--text)">settings.gradle.kts — ties modules together</text>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#EF6A5B"/></marker></defs>
 </svg>
@@ -328,7 +304,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 2 -->
 <!-- ================================================================ -->
 <section class="module" id="m2">
-<h2>Module 2: KMM Architecture</h2>
+<div class="chapter-status">Chapter 02 done</div>
+<h2><span class="cn">02</span>KMM Architecture</h2>
 <p>How Kotlin Multiplatform shares code between Android and iOS without sacrificing platform APIs.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -394,22 +371,22 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div class="callout"><h3>Common KMP iOS Pitfalls</h3>
 <p>iOS Kotlin/Native compilation often reveals issues hidden on JVM. The Corta Spam project hit several real-world gotchas:</p>
 <ul><li><code>Dispatchers.IO</code> is marked <code>@InternalCoroutinesApi</code> on Kotlin/Native — crashes at compile time. Use <code>Dispatchers.Default</code> or an expect/actual dispatcher.</li><li><code>kotlinx.datetime.Clock.System</code> may not resolve on all Native toolchains — platform-specific time providers (expect/actual) are more reliable.</li><li>Navigation Compose KMP <code>Bundle.getString()</code> doesn't compile for iOS — cast to <code>Map&lt;String, *&gt;</code> instead.</li><li>Koin must be initialized manually on iOS — Android's <code>Application.onCreate()</code> doesn't exist on iOS.</li><li>Compose Multiplatform Metal GPU rendering may hang on certain iOS simulators — restart the simulator or test on a different device model.</li></ul>
-<p>See <b>Module 14</b> for full debugging procedures and real crash logs for each of these errors.</p></div>
+<p>See <b>Chapter 14</b> for full debugging procedures and real crash logs for each of these errors.</p></div>
 
 <figure class="diagram">
 <svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
 <rect x="200" y="10" width="200" height="50" rx="6" fill="#EF6A5B" opacity="0.15" stroke="#EF6A5B"/>
 <text x="300" y="32" text-anchor="middle" font-size="13" fill="var(--text)">commonMain</text>
 <text x="300" y="50" text-anchor="middle" font-size="10" fill="var(--muted)">Rules, Repos, ViewModels, Compose UI</text>
-<line x1="250" y1="60" x2="160" y2="100" stroke="var(--border)" stroke-width="1.5"/>
-<line x1="350" y1="60" x2="440" y2="100" stroke="var(--border)" stroke-width="1.5"/>
+<line x1="250" y1="60" x2="160" y2="100" stroke="var(--line)" stroke-width="1.5"/>
+<line x1="350" y1="60" x2="440" y2="100" stroke="var(--line)" stroke-width="1.5"/>
 <rect x="80" y="105" width="160" height="50" rx="6" fill="#059669" opacity="0.1" stroke="#059669"/>
 <text x="160" y="127" text-anchor="middle" font-size="13" fill="var(--text)">androidMain</text>
 <text x="160" y="145" text-anchor="middle" font-size="10" fill="var(--muted)">AndroidSqliteDriver, Context</text>
 <rect x="360" y="105" width="160" height="50" rx="6" fill="#2563EB" opacity="0.1" stroke="#2563EB"/>
 <text x="440" y="127" text-anchor="middle" font-size="13" fill="var(--text)">iosMain</text>
 <text x="440" y="145" text-anchor="middle" font-size="10" fill="var(--muted)">NativeSqliteDriver, NSApplication</text>
-<rect x="120" y="180" width="360" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="120" y="180" width="360" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="300" y="205" text-anchor="middle" font-size="11" fill="var(--text)">expect/actual bridges: DriverFactory, ContactsGateway, DI</text>
 </svg>
 <figcaption>commonMain is the heavy layer. Platform modules are thin adapters.</figcaption>
@@ -435,7 +412,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 3 -->
 <!-- ================================================================ -->
 <section class="module" id="m3">
-<h2>Module 3: Jetpack Compose — Declarative UI</h2>
+<div class="chapter-status">Chapter 03 done</div>
+<h2><span class="cn">03</span>Jetpack Compose — Declarative UI</h2>
 <p>Build native Android UI with pure Kotlin — no XML, no findViewById, no View hierarchy.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -525,7 +503,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <rect x="410" y="10" width="140" height="50" rx="6" fill="#059669" opacity="0.1" stroke="#059669"/>
 <text x="480" y="32" text-anchor="middle" font-size="12" fill="var(--text)">@Composable UI</text>
 <text x="480" y="50" text-anchor="middle" font-size="9" fill="var(--muted)">Text, Button, Card...</text>
-<rect x="180" y="90" width="220" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="180" y="90" width="220" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="290" y="115" text-anchor="middle" font-size="10" fill="var(--text)">UI = f(state) — declarative, reactive</text>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#EF6A5B"/></marker></defs>
 </svg>
@@ -555,7 +533,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 4: Navigation -->
 <!-- ================================================================ -->
 <section class="module" id="m4">
-<h2>Module 4: Navigation Compose</h2>
+<div class="chapter-status">Chapter 04 done</div>
+<h2><span class="cn">04</span>Navigation Compose</h2>
 <p>Move between screens while keeping state, passing arguments, and managing the back stack.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -615,14 +594,14 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <svg viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
 <rect x="180" y="10" width="140" height="40" rx="6" fill="#EF6A5B" opacity="0.2" stroke="#EF6A5B"/>
 <text x="250" y="35" text-anchor="middle" font-size="12" fill="var(--text)">Home</text>
-<line x1="250" y1="50" x2="80" y2="90" stroke="var(--border)" stroke-width="1.5"/>
-<line x1="250" y1="50" x2="420" y2="90" stroke="var(--border)" stroke-width="1.5"/>
-<line x1="250" y1="50" x2="250" y2="90" stroke="var(--border)" stroke-width="1.5"/>
-<rect x="15" y="95" width="130" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<line x1="250" y1="50" x2="80" y2="90" stroke="var(--line)" stroke-width="1.5"/>
+<line x1="250" y1="50" x2="420" y2="90" stroke="var(--line)" stroke-width="1.5"/>
+<line x1="250" y1="50" x2="250" y2="90" stroke="var(--line)" stroke-width="1.5"/>
+<rect x="15" y="95" width="130" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="80" y="120" text-anchor="middle" font-size="11" fill="var(--text)">CallLog/all</text>
-<rect x="180" y="95" width="140" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="180" y="95" width="140" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="250" y="120" text-anchor="middle" font-size="11" fill="var(--text)">BlockList</text>
-<rect x="355" y="95" width="130" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="355" y="95" width="130" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="420" y="120" text-anchor="middle" font-size="11" fill="var(--text)">Settings</text>
 <rect x="15" y="155" width="130" height="30" rx="4" fill="none" stroke="var(--muted)" stroke-dasharray="3"/>
 <text x="80" y="175" text-anchor="middle" font-size="9" fill="var(--muted)">CallLog/today</text>
@@ -652,7 +631,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 5: Adaptive Form Factors -->
 <!-- ================================================================ -->
 <section class="module" id="m5">
-<h2>Module 5: Adaptive Form Factors</h2>
+<div class="chapter-status">Chapter 05 done</div>
+<h2><span class="cn">05</span>Adaptive Form Factors</h2>
 <p>Make the app look great on phones (portrait/landscape), foldables, and tablets with zero platform-specific code.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -717,24 +697,24 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <figure class="diagram">
 <svg viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg">
-<rect x="20" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="20" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="90" y="40" text-anchor="middle" font-size="10" fill="var(--text)">Compact</text>
 <text x="90" y="55" text-anchor="middle" font-size="8" fill="var(--muted)">&lt;600dp</text>
-<rect x="35" y="65" width="110" height="12" rx="2" fill="var(--accent)" opacity="0.3"/>
+<rect x="35" y="65" width="110" height="12" rx="2" fill="var(--cyan)" opacity="0.3"/>
 <text x="90" y="74" text-anchor="middle" font-size="7" fill="var(--text)">BottomBar</text>
 <rect x="35" y="82" width="110" height="45" rx="2" fill="#17233C" opacity="0.08"/>
 <text x="90" y="108" text-anchor="middle" font-size="7" fill="var(--text)">Single Column</text>
-<rect x="190" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="190" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="260" y="40" text-anchor="middle" font-size="10" fill="var(--text)">Medium</text>
 <text x="260" y="55" text-anchor="middle" font-size="8" fill="var(--muted)">600-839dp</text>
-<rect x="205" y="65" width="12" height="75" rx="2" fill="var(--accent)" opacity="0.3"/>
+<rect x="205" y="65" width="12" height="75" rx="2" fill="var(--cyan)" opacity="0.3"/>
 <text x="211" y="140" text-anchor="middle" font-size="7" fill="var(--text)">NavRail</text>
 <rect x="222" y="70" width="93" height="60" rx="2" fill="#17233C" opacity="0.08"/>
 <text x="268" y="103" text-anchor="middle" font-size="7" fill="var(--text)">Capped 600dp</text>
-<rect x="360" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="360" y="20" width="140" height="120" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="430" y="40" text-anchor="middle" font-size="10" fill="var(--text)">Expanded</text>
 <text x="430" y="55" text-anchor="middle" font-size="8" fill="var(--muted)">≥840dp</text>
-<rect x="375" y="65" width="12" height="70" rx="2" fill="var(--accent)" opacity="0.3"/>
+<rect x="375" y="65" width="12" height="70" rx="2" fill="var(--cyan)" opacity="0.3"/>
 <rect x="392" y="70" width="93" height="28" rx="2" fill="#17233C" opacity="0.08"/>
 <rect x="392" y="105" width="93" height="28" rx="2" fill="#17233C" opacity="0.08"/>
 <text x="438" y="88" text-anchor="middle" font-size="7" fill="var(--text)">Two Pane</text>
@@ -762,7 +742,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 6: SQLDelight -->
 <!-- ================================================================ -->
 <section class="module" id="m6">
-<h2>Module 6: SQLDelight — Type-Safe SQL for KMP</h2>
+<div class="chapter-status">Chapter 06 done</div>
+<h2><span class="cn">06</span>SQLDelight — Type-Safe SQL for KMP</h2>
 <p>Persist rules, call logs, and settings with a database that works identically on Android and iOS.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -822,24 +803,24 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <figure class="diagram">
 <svg viewBox="0 0 550 180" xmlns="http://www.w3.org/2000/svg">
-<rect x="30" y="10" width="110" height="45" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="30" y="10" width="110" height="45" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="85" y="28" text-anchor="middle" font-size="11" fill="var(--text)">.sq files</text>
 <text x="85" y="44" text-anchor="middle" font-size="9" fill="var(--muted)">schema + queries</text>
-<line x1="140" y1="32" x2="190" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a2)"/>
-<rect x="200" y="10" width="120" height="45" rx="6" fill="var(--accent)" opacity="0.15" stroke="var(--accent)"/>
+<line x1="140" y1="32" x2="190" y2="32" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a2)"/>
+<rect x="200" y="10" width="120" height="45" rx="6" fill="var(--cyan)" opacity="0.15" stroke="var(--cyan)"/>
 <text x="260" y="28" text-anchor="middle" font-size="11" fill="var(--text)">Code Gen</text>
 <text x="260" y="44" text-anchor="middle" font-size="9" fill="var(--muted)">type-safe Kotlin</text>
-<line x1="320" y1="32" x2="370" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a2)"/>
-<rect x="380" y="10" width="140" height="45" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<line x1="320" y1="32" x2="370" y2="32" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a2)"/>
+<rect x="380" y="10" width="140" height="45" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="450" y="28" text-anchor="middle" font-size="11" fill="var(--text)">Repository</text>
 <text x="450" y="44" text-anchor="middle" font-size="9" fill="var(--muted)">Flow-based API</text>
-<rect x="170" y="80" width="210" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="170" y="80" width="210" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="275" y="98" text-anchor="middle" font-size="10" fill="var(--text)">DriverFactory (expect/actual)</text>
 <text x="275" y="114" text-anchor="middle" font-size="8" fill="var(--muted)">AndroidSqliteDriver | NativeSqliteDriver</text>
-<line x1="275" y1="80" x2="275" y2="65" stroke="var(--border)" stroke-width="1" stroke-dasharray="3"/>
-<rect x="170" y="138" width="210" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<line x1="275" y1="80" x2="275" y2="65" stroke="var(--line)" stroke-width="1" stroke-dasharray="3"/>
+<rect x="170" y="138" width="210" height="30" rx="4" fill="none" stroke="var(--line)"/>
 <text x="275" y="158" text-anchor="middle" font-size="10" fill="var(--text)">SQLite (platform-provided)</text>
-<defs><marker id="a2" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker></defs>
+<defs><marker id="a2" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--cyan)"/></marker></defs>
 </svg>
 <figcaption>SQLDelight pipeline: .sq → codegen → Repository → DriverFactory → SQLite</figcaption>
 </figure>
@@ -867,7 +848,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 7: Koin DI -->
 <!-- ================================================================ -->
 <section class="module" id="m7">
-<h2>Module 7: Koin — Dependency Injection</h2>
+<div class="chapter-status">Chapter 07 done</div>
+<h2><span class="cn">07</span>Koin — Dependency Injection</h2>
 <p>Wire up repositories, ViewModels, and platform services without annotation processing or code generation.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -915,26 +897,26 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <figure class="diagram">
 <svg viewBox="0 0 520 190" xmlns="http://www.w3.org/2000/svg">
-<rect x="180" y="5" width="160" height="35" rx="6" fill="var(--accent)" opacity="0.15" stroke="var(--accent)"/>
+<rect x="180" y="5" width="160" height="35" rx="6" fill="var(--cyan)" opacity="0.15" stroke="var(--cyan)"/>
 <text x="260" y="27" text-anchor="middle" font-size="12" fill="var(--text)">Koin Container</text>
-<rect x="20" y="60" width="140" height="35" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="20" y="60" width="140" height="35" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="90" y="82" text-anchor="middle" font-size="10" fill="var(--text)">platformModule</text>
-<rect x="180" y="60" width="160" height="35" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="180" y="60" width="160" height="35" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="260" y="82" text-anchor="middle" font-size="10" fill="var(--text)">sharedModule</text>
-<rect x="360" y="60" width="140" height="35" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="360" y="60" width="140" height="35" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="430" y="82" text-anchor="middle" font-size="10" fill="var(--text)">ViewModels</text>
-<line x1="90" y1="95" x2="90" y2="115" stroke="var(--border)" stroke-width="1"/>
-<line x1="260" y1="95" x2="260" y2="115" stroke="var(--border)" stroke-width="1"/>
-<line x1="430" y1="95" x2="430" y2="115" stroke="var(--border)" stroke-width="1"/>
-<rect x="20" y="120" width="140" height="55" rx="4" fill="none" stroke="var(--border)"/>
+<line x1="90" y1="95" x2="90" y2="115" stroke="var(--line)" stroke-width="1"/>
+<line x1="260" y1="95" x2="260" y2="115" stroke="var(--line)" stroke-width="1"/>
+<line x1="430" y1="95" x2="430" y2="115" stroke="var(--line)" stroke-width="1"/>
+<rect x="20" y="120" width="140" height="55" rx="4" fill="none" stroke="var(--line)"/>
 <text x="90" y="140" text-anchor="middle" font-size="9" fill="var(--muted)">DriverFactory</text>
 <text x="90" y="155" text-anchor="middle" font-size="9" fill="var(--muted)">DefaultDialerGateway</text>
 <text x="90" y="170" text-anchor="middle" font-size="9" fill="var(--muted)">ContactsGateway</text>
-<rect x="180" y="120" width="160" height="55" rx="4" fill="none" stroke="var(--border)"/>
+<rect x="180" y="120" width="160" height="55" rx="4" fill="none" stroke="var(--line)"/>
 <text x="260" y="140" text-anchor="middle" font-size="9" fill="var(--muted)">AppDatabase</text>
 <text x="260" y="155" text-anchor="middle" font-size="9" fill="var(--muted)">Repositories</text>
 <text x="260" y="170" text-anchor="middle" font-size="9" fill="var(--muted)">SpamProviderClient</text>
-<rect x="360" y="120" width="140" height="55" rx="4" fill="none" stroke="var(--border)"/>
+<rect x="360" y="120" width="140" height="55" rx="4" fill="none" stroke="var(--line)"/>
 <text x="430" y="140" text-anchor="middle" font-size="9" fill="var(--muted)">HomeViewModel</text>
 <text x="430" y="155" text-anchor="middle" font-size="9" fill="var(--muted)">CallLogViewModel</text>
 <text x="430" y="170" text-anchor="middle" font-size="9" fill="var(--muted)">SettingsViewModel</text>
@@ -962,7 +944,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 8: Permissions -->
 <!-- ================================================================ -->
 <section class="module" id="m8">
-<h2>Module 8: Android Permissions &amp; System Roles</h2>
+<div class="chapter-status">Chapter 08 done</div>
+<h2><span class="cn">08</span>Android Permissions &amp; System Roles</h2>
 <p>Request dangerous permissions at runtime, become the default phone app, and handle permission denial gracefully.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -970,10 +953,10 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <h3><span class="badge badge-b">Beginner</span> Permission types</h3>
 <table style="width:100%;border-collapse:collapse;margin:16px 0">
-<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Type</th><th style="text-align:left;padding:8px">How granted</th><th style="text-align:left;padding:8px">Example</th></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Normal</td><td style="padding:8px">Automatically at install</td><td style="padding:8px">INTERNET, ACCESS_NETWORK_STATE</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Dangerous</td><td style="padding:8px">Runtime dialog (user taps Allow/Deny)</td><td style="padding:8px">READ_CONTACTS, CALL_PHONE</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Signature</td><td style="padding:8px">Only if signed with same cert</td><td style="padding:8px">BIND_INCALL_SERVICE</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><th style="text-align:left;padding:8px">Type</th><th style="text-align:left;padding:8px">How granted</th><th style="text-align:left;padding:8px">Example</th></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Normal</td><td style="padding:8px">Automatically at install</td><td style="padding:8px">INTERNET, ACCESS_NETWORK_STATE</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Dangerous</td><td style="padding:8px">Runtime dialog (user taps Allow/Deny)</td><td style="padding:8px">READ_CONTACTS, CALL_PHONE</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Signature</td><td style="padding:8px">Only if signed with same cert</td><td style="padding:8px">BIND_INCALL_SERVICE</td></tr>
 <tr><td style="padding:8px">Role</td><td style="padding:8px">System role dialog</td><td style="padding:8px">ROLE_DIALER, ROLE_SMS</td></tr>
 </table>
 <p>Corta Spam needs three permissions: <b>READ_PHONE_STATE</b> (detect calls), <b>CALL_PHONE</b> (dial back), <b>READ_CONTACTS</b> (auto-allow). Plus <b>ROLE_DIALER</b> to become the default phone app.</p>
@@ -1018,7 +1001,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <figure class="diagram">
 <svg viewBox="0 0 500 180" xmlns="http://www.w3.org/2000/svg">
-<rect x="30" y="60" width="110" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="30" y="60" width="110" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="85" y="85" text-anchor="middle" font-size="11" fill="var(--text)">NOT_REQUESTED</text>
 <line x1="140" y1="80" x2="190" y2="50" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
 <text x="165" y="42" text-anchor="middle" font-size="8" fill="#059669">request</text>
@@ -1065,7 +1048,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 9: Telecom -->
 <!-- ================================================================ -->
 <section class="module" id="m9">
-<h2>Module 9: Telecom &amp; InCallService</h2>
+<div class="chapter-status">Chapter 09 done</div>
+<h2><span class="cn">09</span>Telecom &amp; InCallService</h2>
 <p>Intercept incoming calls, evaluate them against rules, and show custom ring/reject UI — all in real time.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1147,12 +1131,12 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <svg viewBox="0 0 580 190" xmlns="http://www.w3.org/2000/svg">
 <rect x="30" y="10" width="130" height="35" rx="6" fill="#EF6A5B" opacity="0.15" stroke="#EF6A5B"/>
 <text x="95" y="32" text-anchor="middle" font-size="11" fill="var(--text)">onCallAdded(call)</text>
-<line x1="160" y1="27" x2="210" y2="27" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a4)"/>
-<rect x="220" y="5" width="140" height="45" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<line x1="160" y1="27" x2="210" y2="27" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a4)"/>
+<rect x="220" y="5" width="140" height="45" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="290" y="22" text-anchor="middle" font-size="10" fill="var(--text)">Show InCallActivity</text>
 <text x="290" y="38" text-anchor="middle" font-size="8" fill="var(--muted)">(immediately, lock screen)</text>
-<line x1="160" y1="45" x2="210" y2="80" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a4)"/>
-<rect x="220" y="55" width="140" height="55" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<line x1="160" y1="45" x2="210" y2="80" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a4)"/>
+<rect x="220" y="55" width="140" height="55" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="290" y="72" text-anchor="middle" font-size="10" fill="var(--text)">evaluateCall(number)</text>
 <text x="290" y="88" text-anchor="middle" font-size="8" fill="var(--muted)">(async, coroutine)</text>
 <text x="290" y="104" text-anchor="middle" font-size="8" fill="var(--muted)">rule engine → decision</text>
@@ -1162,10 +1146,10 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <line x1="360" y1="100" x2="420" y2="135" stroke="#DC2626" stroke-width="1.5" marker-end="url(#a4r)"/>
 <rect x="430" y="118" width="130" height="35" rx="6" fill="#FEE2E2" stroke="#DC2626"/>
 <text x="495" y="140" text-anchor="middle" font-size="10" fill="var(--text)">Blocked → reject</text>
-<rect x="160" y="145" width="260" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<rect x="160" y="145" width="260" height="30" rx="4" fill="none" stroke="var(--line)"/>
 <text x="290" y="165" text-anchor="middle" font-size="9" fill="var(--muted)">call.reject(false, null) or call.answer() + auto-responder</text>
 <defs>
-<marker id="a4" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker>
+<marker id="a4" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--cyan)"/></marker>
 <marker id="a4g" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#059669"/></marker>
 <marker id="a4r" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#DC2626"/></marker>
 </defs>
@@ -1196,7 +1180,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 10: Rule Engine -->
 <!-- ================================================================ -->
 <section class="module" id="m10">
-<h2>Module 10: Rule Precedence Engine</h2>
+<div class="chapter-status">Chapter 10 done</div>
+<h2><span class="cn">10</span>Rule Precedence Engine</h2>
 <p>Design a decision system that evaluates every incoming call against 7 rule types in strict order — pure, testable, fast.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1247,7 +1232,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line">    <span class="tp">DefaultAction</span>.ALLOW -> <span class="tp">RuleDecision</span>.DefaultAllow</span>
 <span class="line">}</span></code></pre>
 <p><b>The call still goes through</b> — you can't interrupt a live ring to ask the user anything — but <code>PendingReview</code> is logged with its own <code>rule_type = 'REVIEW'</code> tag instead of blending into ordinary allowed calls. Home shows a "Pending review" count; Call Log gets a matching filter and a distinct amber "Needs review" state.</p>
-<p><b>An honest limitation, not a bug:</b> the call log is an immutable, append-only history (Module 6) — there's no "resolved" flag. If the user later blocks a number that generated a REVIEW entry, that old entry stays tagged REVIEW forever. This is a <i>filter over history</i>, not a stateful inbox with read/unread state. Don't oversell it in the UI as more than it is.</p>
+<p><b>An honest limitation, not a bug:</b> the call log is an immutable, append-only history (Chapter 06) — there's no "resolved" flag. If the user later blocks a number that generated a REVIEW entry, that old entry stays tagged REVIEW forever. This is a <i>filter over history</i>, not a stateful inbox with read/unread state. Don't oversell it in the UI as more than it is.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Phone number normalization</h3>
 <p><b>The problem:</b> A contact is stored as <code>"(555) 123-4567"</code>. The incoming call arrives as <code>"+15551234567"</code>. Direct string comparison fails — contacts aren't auto-allowed.</p>
@@ -1280,18 +1265,18 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <rect x="130" y="10" width="100" height="30" rx="4" fill="#059669" opacity="0.1" stroke="#059669"/>
 <text x="180" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Allowlist</text>
 <text x="180" y="50" text-anchor="middle" font-size="14" fill="#059669" font-weight="bold">2</text>
-<rect x="240" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="240" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="285" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Pattern</text>
 <text x="285" y="50" text-anchor="middle" font-size="14" fill="var(--text)" font-weight="bold">3</text>
-<rect x="340" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="340" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="385" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Country</text>
 <text x="385" y="50" text-anchor="middle" font-size="14" fill="var(--text)" font-weight="bold">4</text>
-<rect x="440" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="440" y="10" width="90" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="485" y="30" text-anchor="middle" font-size="9" fill="var(--text)">Spam</text>
 <text x="485" y="50" text-anchor="middle" font-size="14" fill="var(--text)" font-weight="bold">5</text>
-<rect x="75" y="75" width="400" height="25" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="75" y="75" width="400" height="25" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="275" y="92" text-anchor="middle" font-size="9" fill="var(--text)">Action (6) → Schedule (7) → Default (8)</text>
-<rect x="80" y="120" width="390" height="55" rx="4" fill="none" stroke="var(--accent)"/>
+<rect x="80" y="120" width="390" height="55" rx="4" fill="none" stroke="var(--cyan)"/>
 <text x="275" y="140" text-anchor="middle" font-size="11" fill="var(--text)">normalizeForComparison()</text>
 <text x="275" y="160" text-anchor="middle" font-size="9" fill="var(--muted)">Strips all non-digits from both sides before ANY comparison</text>
 </svg>
@@ -1327,7 +1312,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 11: i18n -->
 <!-- ================================================================ -->
 <section class="module" id="m11">
-<h2>Module 11: Internationalization &amp; Localization</h2>
+<div class="chapter-status">Chapter 11 done</div>
+<h2><span class="cn">11</span>Internationalization &amp; Localization</h2>
 <p>Support 4 languages with zero code changes — just add an XML file per locale.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1348,10 +1334,10 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <h3><span class="badge badge-i">Intermediate</span> Locale directory structure</h3>
 <p>The app supports 4 locales:</p>
 <table style="width:100%;border-collapse:collapse;margin:16px 0">
-<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:8px">Directory</th><th style="text-align:left;padding:8px">Language</th><th style="text-align:left;padding:8px">Speaker Base</th></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>values/</code></td><td style="padding:8px">English (default)</td><td style="padding:8px">~1.5B speakers</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>values-es/</code></td><td style="padding:8px">Spanish (LATAM)</td><td style="padding:8px">~500M speakers</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>values-pt/</code></td><td style="padding:8px">Portuguese (Brazil)</td><td style="padding:8px">~260M speakers</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><th style="text-align:left;padding:8px">Directory</th><th style="text-align:left;padding:8px">Language</th><th style="text-align:left;padding:8px">Speaker Base</th></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><code>values/</code></td><td style="padding:8px">English (default)</td><td style="padding:8px">~1.5B speakers</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><code>values-es/</code></td><td style="padding:8px">Spanish (LATAM)</td><td style="padding:8px">~500M speakers</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><code>values-pt/</code></td><td style="padding:8px">Portuguese (Brazil)</td><td style="padding:8px">~260M speakers</td></tr>
 <tr><td style="padding:8px"><code>values-hi/</code></td><td style="padding:8px">Hindi</td><td style="padding:8px">~600M speakers</td></tr>
 </table>
 <p>When a user's device is set to <code>es-PE</code> (Spanish Peru), the system falls back: <b>es-PE → es → en</b>. Since <code>values-es/</code> exists, Spanish strings are used. If we only had <code>values-es-rMX/</code> (Mexico), a Peruvian user would see English.</p>
@@ -1366,19 +1352,19 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <figure class="diagram">
 <svg viewBox="0 0 500 170" xmlns="http://www.w3.org/2000/svg">
-<rect x="30" y="20" width="440" height="40" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="30" y="20" width="440" height="40" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="250" y="36" text-anchor="middle" font-size="11" fill="var(--text)">Device locale: es-PE (Spanish, Peru)</text>
 <text x="250" y="52" text-anchor="middle" font-size="9" fill="var(--muted)">Android resource system fallback chain</text>
-<line x1="250" y1="60" x2="250" y2="80" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a5)"/>
+<line x1="250" y1="60" x2="250" y2="80" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a5)"/>
 <rect x="160" y="85" width="180" height="30" rx="4" fill="#059669" opacity="0.1" stroke="#059669"/>
 <text x="250" y="105" text-anchor="middle" font-size="11" fill="var(--text)">✅ values-es/ (Spanish match!)</text>
-<line x1="340" y1="100" x2="380" y2="100" stroke="var(--border)" stroke-width="1" stroke-dasharray="3"/>
-<line x1="160" y1="100" x2="120" y2="100" stroke="var(--border)" stroke-width="1" stroke-dasharray="3"/>
-<rect x="40" y="85" width="110" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<line x1="340" y1="100" x2="380" y2="100" stroke="var(--line)" stroke-width="1" stroke-dasharray="3"/>
+<line x1="160" y1="100" x2="120" y2="100" stroke="var(--line)" stroke-width="1" stroke-dasharray="3"/>
+<rect x="40" y="85" width="110" height="30" rx="4" fill="none" stroke="var(--line)"/>
 <text x="95" y="105" text-anchor="middle" font-size="9" fill="var(--muted)">values-es-rMX (no)</text>
-<rect x="390" y="85" width="80" height="30" rx="4" fill="none" stroke="var(--border)"/>
+<rect x="390" y="85" width="80" height="30" rx="4" fill="none" stroke="var(--line)"/>
 <text x="430" y="105" text-anchor="middle" font-size="9" fill="var(--muted)">values/ (EN)</text>
-<defs><marker id="a5" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker></defs>
+<defs><marker id="a5" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--cyan)"/></marker></defs>
 </svg>
 <figcaption>Locale fallback: es-PE → es → en. Adding values-es/ covers all Spanish variants.</figcaption>
 </figure>
@@ -1402,7 +1388,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 12: Testing -->
 <!-- ================================================================ -->
 <section class="module" id="m12">
-<h2>Module 12: Testing in KMP</h2>
+<div class="chapter-status">Chapter 12 done</div>
+<h2><span class="cn">12</span>Testing in KMP</h2>
 <p>Write unit tests with kotlin.test, test ViewModels with fakes, and run Compose UI tests on JVM via Robolectric.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1472,14 +1459,14 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <figure class="diagram">
 <svg viewBox="0 0 500 170" xmlns="http://www.w3.org/2000/svg">
-<rect x="30" y="10" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="30" y="10" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="250" y="30" text-anchor="middle" font-size="10" fill="var(--text)">commonTest (kotlin.test) — 18 files, ~120 tests</text>
-<rect x="30" y="50" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="30" y="50" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="250" y="70" text-anchor="middle" font-size="10" fill="var(--text)">androidUnitTest (Robolectric + Compose UI) — ~10 tests</text>
-<rect x="30" y="90" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="30" y="90" width="440" height="30" rx="6" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="250" y="110" text-anchor="middle" font-size="10" fill="var(--text)">Run both with: ./gradlew :shared:testDebugUnitTest</text>
-<line x1="250" y1="130" x2="250" y2="145" stroke="var(--accent)" stroke-width="1.5"/>
-<rect x="150" y="145" width="200" height="20" rx="4" fill="var(--accent)" opacity="0.15" stroke="var(--accent)"/>
+<line x1="250" y1="130" x2="250" y2="145" stroke="var(--cyan)" stroke-width="1.5"/>
+<rect x="150" y="145" width="200" height="20" rx="4" fill="var(--cyan)" opacity="0.15" stroke="var(--cyan)"/>
 <text x="250" y="160" text-anchor="middle" font-size="10" fill="var(--text)">All 158+ tests pass in under 10s</text>
 </svg>
 <figcaption>Two test source sets, one command, zero devices needed</figcaption>
@@ -1508,7 +1495,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 13: CI & Tooling -->
 <!-- ================================================================ -->
 <section class="module" id="m13">
-<h2>Module 13: CI &amp; Tooling</h2>
+<div class="chapter-status">Chapter 13 done</div>
+<h2><span class="cn">13</span>CI &amp; Tooling</h2>
 <p>Automate builds, enforce code style, generate icons, and install directly on a connected device.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1568,17 +1556,17 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <rect x="20" y="10" width="140" height="45" rx="6" fill="#DC2626" opacity="0.1" stroke="#DC2626"/>
 <text x="90" y="28" text-anchor="middle" font-size="10" fill="var(--text)">ktlint</text>
 <text x="90" y="44" text-anchor="middle" font-size="8" fill="var(--muted)">code style</text>
-<line x1="160" y1="32" x2="195" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a6)"/>
+<line x1="160" y1="32" x2="195" y2="32" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a6)"/>
 <rect x="205" y="10" width="140" height="45" rx="6" fill="#D97706" opacity="0.1" stroke="#D97706"/>
 <text x="275" y="28" text-anchor="middle" font-size="10" fill="var(--text)">Tests</text>
 <text x="275" y="44" text-anchor="middle" font-size="8" fill="var(--muted)">158+ unit tests</text>
-<line x1="345" y1="32" x2="380" y2="32" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#a6)"/>
+<line x1="345" y1="32" x2="380" y2="32" stroke="var(--cyan)" stroke-width="1.5" marker-end="url(#a6)"/>
 <rect x="390" y="10" width="110" height="45" rx="6" fill="#059669" opacity="0.1" stroke="#059669"/>
 <text x="445" y="28" text-anchor="middle" font-size="10" fill="var(--text)">Build</text>
 <text x="445" y="44" text-anchor="middle" font-size="8" fill="var(--muted)">assemble APK</text>
-<rect x="130" y="75" width="260" height="30" rx="4" fill="var(--code-bg)" stroke="var(--border)"/>
+<rect x="130" y="75" width="260" height="30" rx="4" fill="var(--code-bg)" stroke="var(--line)"/>
 <text x="260" y="95" text-anchor="middle" font-size="10" fill="var(--text)">Fail fast: stop at first error, don't cascade</text>
-<defs><marker id="a6" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--accent)"/></marker></defs>
+<defs><marker id="a6" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--cyan)"/></marker></defs>
 </svg>
 <figcaption>CI pipeline: lint → test → build. Fail early, fail fast.</figcaption>
 </figure>
@@ -1603,7 +1591,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 14: iOS Debugging -->
 <!-- ================================================================ -->
 <section class="module" id="m14">
-<h2>Module 14: iOS Debugging &amp; Troubleshooting</h2>
+<div class="chapter-status">Chapter 14 done</div>
+<h2><span class="cn">14</span>iOS Debugging &amp; Troubleshooting</h2>
 <p>Every real KMP project hits iOS-specific compilation errors and runtime crashes. Here's exactly what broke in Corta Spam and how each was diagnosed and fixed.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1690,12 +1679,12 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="callout"><h3>Debugging Toolkit Summary</h3>
 <table style="width:100%;border-collapse:collapse;margin:12px 0">
-<tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:6px">Tool</th><th style="text-align:left;padding:6px">Command</th><th style="text-align:left;padding:6px">Use When</th></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">iOS compilation</td><td style="padding:6px"><code>./gradlew :shared:compileKotlinIosSimulatorArm64</code></td><td style="padding:6px">Checking if code compiles for iOS</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Console launch</td><td style="padding:6px"><code>xcrun simctl launch --console DEVICE_UUID BUNDLE_ID</code></td><td style="padding:6px">Seeing Kotlin exception messages</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Crash reports</td><td style="padding:6px"><code>~/Library/Logs/DiagnosticReports/</code></td><td style="padding:6px">Post-mortem crash analysis (SIGABRT)</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Crash symbols</td><td style="padding:6px"><code>grep -o '"symbol":"[^"]*"' *.ips</code></td><td style="padding:6px">Quick stack trace extraction</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px">Process check</td><td style="padding:6px"><code>ps aux | grep APP_NAME</code></td><td style="padding:6px">App alive but frozen? (GPU hang)</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><th style="text-align:left;padding:6px">Tool</th><th style="text-align:left;padding:6px">Command</th><th style="text-align:left;padding:6px">Use When</th></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px">iOS compilation</td><td style="padding:6px"><code>./gradlew :shared:compileKotlinIosSimulatorArm64</code></td><td style="padding:6px">Checking if code compiles for iOS</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px">Console launch</td><td style="padding:6px"><code>xcrun simctl launch --console DEVICE_UUID BUNDLE_ID</code></td><td style="padding:6px">Seeing Kotlin exception messages</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px">Crash reports</td><td style="padding:6px"><code>~/Library/Logs/DiagnosticReports/</code></td><td style="padding:6px">Post-mortem crash analysis (SIGABRT)</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px">Crash symbols</td><td style="padding:6px"><code>grep -o '"symbol":"[^"]*"' *.ips</code></td><td style="padding:6px">Quick stack trace extraction</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px">Process check</td><td style="padding:6px"><code>ps aux | grep APP_NAME</code></td><td style="padding:6px">App alive but frozen? (GPU hang)</td></tr>
 <tr><td style="padding:6px">Simulator reset</td><td style="padding:6px"><code>xcrun simctl shutdown all && boot DEVICE</code></td><td style="padding:6px">Metal XPC hangs, stuck simulators</td></tr>
 </table></div>
 
@@ -1722,7 +1711,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 15: Call Notifications & Permission UX -->
 <!-- ================================================================ -->
 <section class="module" id="m15">
-<h2>Module 15: Call Notifications &amp; Permission UX</h2>
+<div class="chapter-status">Chapter 15 done</div>
+<h2><span class="cn">15</span>Call Notifications &amp; Permission UX</h2>
 <p>A default-dialer app has to show its own incoming-call UI — Android doesn't do it for you. Here's why the obvious approach silently fails on a locked phone, the notification design that actually works, and a real case study in a platform limitation no amount of app code can fix.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1807,7 +1797,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 16 -->
 <!-- ================================================================ -->
 <section class="module" id="m16">
-<h2>Module 16: Extending a Precedence Engine Safely</h2>
+<div class="chapter-status">Chapter 16 done</div>
+<h2><span class="cn">16</span>Extending a Precedence Engine Safely</h2>
 <p>A feature request that sounds like one sentence — "let repeated callers through" — touches the resolver, the database schema, an async-to-sync UI handoff, and a notification, and every one of those layers has a wrong place to put the change. This module is a single feature traced end-to-end through all four, including a real migration-tooling gap discovered along the way.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
@@ -1828,7 +1819,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line">    <span class="tp">DefaultAction</span>.ASK -> <span class="tp">RuleDecision</span>.PendingReview</span>
 <span class="line">    <span class="tp">DefaultAction</span>.ALLOW -> <span class="tp">RuleDecision</span>.DefaultAllow</span>
 <span class="line">}</span></code></pre>
-<p><b>Why step 8 and nowhere earlier:</b> manual block, pattern, country, spam, action-rule, and schedule checks (steps 1-7) all return before this code ever runs. That's not incidental — it's the entire point. Retrying is a robocall hallmark, so if the bypass were checked before the spam-pattern step, a number the app had already flagged as spam could talk its way back in just by calling more. Placing the new logic at the literal end of the existing chain, instead of threading a bypass check into every earlier branch, means the precedence order itself — not a separate flag on each rule type — is what protects real spam blocking. This mirrors <code>ActionRule</code>'s "block after N attempts" (Module 10) almost exactly, just inverted: same attempt-tracking table, opposite conclusion, and deliberately a different point in the chain.</p>
+<p><b>Why step 8 and nowhere earlier:</b> manual block, pattern, country, spam, action-rule, and schedule checks (steps 1-7) all return before this code ever runs. That's not incidental — it's the entire point. Retrying is a robocall hallmark, so if the bypass were checked before the spam-pattern step, a number the app had already flagged as spam could talk its way back in just by calling more. Placing the new logic at the literal end of the existing chain, instead of threading a bypass check into every earlier branch, means the precedence order itself — not a separate flag on each rule type — is what protects real spam blocking. This mirrors <code>ActionRule</code>'s "block after N attempts" (Chapter 10) almost exactly, just inverted: same attempt-tracking table, opposite conclusion, and deliberately a different point in the chain.</p>
 
 <h3><span class="badge badge-i">Intermediate</span> SQLite can't ALTER a CHECK constraint</h3>
 <p><code>CallLogEntry.rule_type</code> is constrained to a fixed list of tags. Adding <code>REPEATED_ALLOWED</code> to that list sounds like <code>ALTER TABLE ... ADD CONSTRAINT</code> — except SQLite has no such statement. The only way to change a <code>CHECK</code> is to rebuild the table:</p>
@@ -1855,7 +1846,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 </div>
 
 <h3><span class="badge badge-a">Advanced</span> Threading an async decision into UI that's already on screen</h3>
-<p>The rule decision resolves inside a coroutine, seconds after the ringing screen is already showing — there's no prop to just pass it in. <code>InCallState</code> already exists as exactly this kind of bridge (Module 9), so the fix is one more field and one more setter on a pattern already proven, not new plumbing:</p>
+<p>The rule decision resolves inside a coroutine, seconds after the ringing screen is already showing — there's no prop to just pass it in. <code>InCallState</code> already exists as exactly this kind of bridge (Chapter 09), so the fix is one more field and one more setter on a pattern already proven, not new plumbing:</p>
 <p class="file-label">InCallState.kt</p>
 <pre><code><span class="line"><span class="kw">data class</span> <span class="tp">UiState</span>(<span class="kw">val</span> number: <span class="tp">String</span>, <span class="kw">val</span> phase: <span class="tp">CallUiPhase</span>, <span class="kw">val</span> repeatedCallAttempts: <span class="tp">Int</span>? = <span class="kw">null</span>)</span>
 <span class="line">   </span>
@@ -1871,7 +1862,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line">        <span class="kw">this</span>, number, <span class="tp">R</span>.string.notification_repeated_caller_title, decision.blockReason,</span>
 <span class="line">    )</span>
 <span class="line">}</span></code></pre>
-<p><code>notifyCallResult()</code> already existed for post-call missed/blocked notifications (Module 15) — non-full-screen, auto-cancel, history channel. The repeated-caller notification needed exactly that shape, so it reuses the function verbatim with a new title string instead of a new method. Before writing a new notification builder, the question worth asking is whether an existing one already has the right shape — here it did.</p>
+<p><code>notifyCallResult()</code> already existed for post-call missed/blocked notifications (Chapter 15) — non-full-screen, auto-cancel, history channel. The repeated-caller notification needed exactly that shape, so it reuses the function verbatim with a new title string instead of a new method. Before writing a new notification builder, the question worth asking is whether an existing one already has the right shape — here it did.</p>
 
 <div class="callout"><h3>Case Study: When combine() Runs Out of Overloads</h3>
 <p><code>SettingsViewModel</code> already combined 5 flows of different types into one <code>UiState</code> — <code>kotlinx.coroutines.flow.combine()</code>'s typed overloads stop at 5. Adding a 6th setting doesn't mean switching to the untyped vararg <code>Array&lt;T&gt;</code> form (which needs every flow to share a type): chaining a plain two-argument <code>combine()</code> on top of the existing one composes cleanly instead —</p>
@@ -1902,8 +1893,9 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 17 -->
 <!-- ================================================================ -->
 <section class="module" id="m17">
-<h2>Module 17: State Management — MVVM + MVI Done Right</h2>
-<p>Module 3 taught <code>ViewModel + StateFlow&lt;UiState&gt;</code> as the state bridge and called it done. An architecture review of all 8 ViewModels in this app found that pattern held up as MVVM — but a second, separate pattern was missing entirely: MVI's single inbound dispatch point. Worse, 4 of the 8 ViewModels had quietly drifted from the "one UiState" rule Module 3 itself taught, in ways nothing had caught because nothing was checking for it. This module is that review, and the fix, traced through the two hardest cases it turned up.</p>
+<div class="chapter-status">Chapter 17 done</div>
+<h2><span class="cn">17</span>State Management — MVVM + MVI Done Right</h2>
+<p>Chapter 03 taught <code>ViewModel + StateFlow&lt;UiState&gt;</code> as the state bridge and called it done. An architecture review of all 8 ViewModels in this app found that pattern held up as MVVM — but a second, separate pattern was missing entirely: MVI's single inbound dispatch point. Worse, 4 of the 8 ViewModels had quietly drifted from the "one UiState" rule Chapter 03 itself taught, in ways nothing had caught because nothing was checking for it. This module is that review, and the fix, traced through the two hardest cases it turned up.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
 <ul><li>Name the difference between MVVM and MVI precisely enough to tell whether a codebase actually has both</li><li>Convert N public setter methods into one sealed Intent + one onIntent() dispatcher without touching leaf Composables</li><li>Recognize when a ViewModel genuinely needs an Intent type — and when adding one is pure ceremony</li><li>Handle a callback-shaped side effect (a platform share-sheet handoff) in an Intent-based world without breaking "intents are plain data"</li><li>Know when NOT to force a pattern: system callbacks are not user intents, even when they arrive on the same class</li></ul></div>
@@ -1925,7 +1917,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line">    }</span>
 <span class="line">}</span>
 <span class="line"><span class="cm">// refresh() and toggleBlocking() keep their exact original bodies -- just private now</span></span></code></pre>
-<p><b>Where the wiring changes, and where it deliberately doesn't:</b> <code>AppNavHost.kt</code>'s route wiring goes from a method reference (<code>homeViewModel::toggleBlocking</code>) to a lambda that builds and dispatches an intent (<code>{ homeViewModel.onIntent(HomeIntent.ToggleBlocking(it)) }</code>). <code>HomeScreen</code> itself — the leaf Composable — does not change at all. It still takes a plain <code>onToggleBlocking: (Boolean) -> Unit</code> callback, with no idea an <code>Intent</code> type exists. That's deliberate: leaking ViewModel-shaped types into leaf Composables is its own anti-pattern (Module 3's UI-layer boundary), and confining the whole refactor to ViewModel files plus one navigation file is what kept an 8-ViewModel, app-wide change from also touching ten screen files.</p>
+<p><b>Where the wiring changes, and where it deliberately doesn't:</b> <code>AppNavHost.kt</code>'s route wiring goes from a method reference (<code>homeViewModel::toggleBlocking</code>) to a lambda that builds and dispatches an intent (<code>{ homeViewModel.onIntent(HomeIntent.ToggleBlocking(it)) }</code>). <code>HomeScreen</code> itself — the leaf Composable — does not change at all. It still takes a plain <code>onToggleBlocking: (Boolean) -> Unit</code> callback, with no idea an <code>Intent</code> type exists. That's deliberate: leaking ViewModel-shaped types into leaf Composables is its own anti-pattern (Chapter 03's UI-layer boundary), and confining the whole refactor to ViewModel files plus one navigation file is what kept an 8-ViewModel, app-wide change from also touching ten screen files.</p>
 
 <h3><span class="badge badge-i">Intermediate</span> Case study: 11 StateFlows collapse into one UiState, 13 methods collapse into one onIntent()</h3>
 <p><code>BlockListViewModel</code> backs all 6 block-list screens (hub + manual + allowlist + patterns + countries + schedules) from a single Koin-scoped instance that doesn't know which screen is asking — so it had accumulated 5 list <code>StateFlow</code>s, 5 separately-collected count <code>StateFlow</code>s, and a <code>contactNames</code> flow, with no aggregate <code>UiState</code> tying them together. The counts were the tell: each one was a <code>MutableStateFlow</code> updated by its own <code>viewModelScope.launch { list.collect { ... } }</code> block in <code>init</code> — five nearly-identical collectors doing by hand what a derived property does for free.</p>
@@ -1937,7 +1929,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line">    <span class="kw">val</span> blockedCount: <span class="tp">Int</span> <span class="kw">get</span>() = blockedNumbers.size</span>
 <span class="line">    <span class="cm">// ...4 more derived counts...</span></span>
 <span class="line">}</span></code></pre>
-<p>The 5 list flows combine via the same chained-<code>combine()</code> pattern Module 16 already established for exceeding the 5-flow typed-overload ceiling. The 13 mutation methods (<code>addBlockedNumber</code>, <code>removeBlockedNumber</code>, <code>addPatternRule</code>...) collapse into one <code>BlockListIntent</code> sealed type and one <code>onIntent()</code> — the single biggest before/after in this pass, and the case where MVI's value is least debatable: 13 near-identical public entry points is exactly the surface area a single typed dispatcher exists to remove.</p>
+<p>The 5 list flows combine via the same chained-<code>combine()</code> pattern Chapter 16 already established for exceeding the 5-flow typed-overload ceiling. The 13 mutation methods (<code>addBlockedNumber</code>, <code>removeBlockedNumber</code>, <code>addPatternRule</code>...) collapse into one <code>BlockListIntent</code> sealed type and one <code>onIntent()</code> — the single biggest before/after in this pass, and the case where MVI's value is least debatable: 13 near-identical public entry points is exactly the surface area a single typed dispatcher exists to remove.</p>
 
 <h3><span class="badge badge-a">Advanced</span> When an Intent can't just carry a callback</h3>
 <p><code>BackupViewModel.exportJson(onResult: (String) -> Unit)</code> took a UI-supplied callback so the exported JSON could reach a platform share-sheet Compose can't invoke directly. A sealed Intent case holding a function type would technically compile, but it breaks the actual point of MVI — intents are supposed to be inert data you can log, replay, or test by equality; a lambda inside one is neither.</p>
@@ -1951,7 +1943,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <p><code>onIntent(BackupIntent.Export)</code> now sends <code>Exported(json)</code> down the same effect channel <code>Success</code>/<code>Failure</code> already used, and <code>BackupScreen</code> gained one more branch in its existing effect-collecting <code>LaunchedEffect</code> to call a new <code>onExportReady</code> callback. The general rule this generalizes to: when a mutation's "result" needs to reach something outside the state model — a share sheet, a file picker, a toast — that result is a one-time effect, not an intent parameter and not a UiState field.</p>
 
 <div class="callout"><h3>Case Study: The ViewModel That Deliberately Didn't Get an Intent Type</h3>
-<p><code>InCallState</code> — the Telecom bridge singleton from Module 9 and 16 — was reviewed for this same treatment and left alone on purpose. Its methods split into two categories that look identical in code but aren't: <code>answer()</code>/<code>decline()</code>/<code>hangUp()</code> are real user intents, dispatched from a tap in <code>CallScreen</code>. <code>attach()</code>/<code>detach()</code> are Android Telecom <b>system lifecycle callbacks</b>, invoked by <code>PassthroughInCallService</code> when the OS hands the app a call — no user asked for those to happen. Folding both into one <code>sealed interface CallIntent</code> would misrepresent a system event as something the user chose, which is a correctness problem in an MVI codebase, not just a style one: code reading "the user's intent was Attach" would be lying. <code>InCallState</code> already does the MVVM half correctly — one encapsulated <code>StateFlow&lt;UiState?&gt;</code> — and that's as far as this pattern should go here.</p>
+<p><code>InCallState</code> — the Telecom bridge singleton from Chapter 09 and 16 — was reviewed for this same treatment and left alone on purpose. Its methods split into two categories that look identical in code but aren't: <code>answer()</code>/<code>decline()</code>/<code>hangUp()</code> are real user intents, dispatched from a tap in <code>CallScreen</code>. <code>attach()</code>/<code>detach()</code> are Android Telecom <b>system lifecycle callbacks</b>, invoked by <code>PassthroughInCallService</code> when the OS hands the app a call — no user asked for those to happen. Folding both into one <code>sealed interface CallIntent</code> would misrepresent a system event as something the user chose, which is a correctness problem in an MVI codebase, not just a style one: code reading "the user's intent was Attach" would be lying. <code>InCallState</code> already does the MVVM half correctly — one encapsulated <code>StateFlow&lt;UiState?&gt;</code> — and that's as far as this pattern should go here.</p>
 <p><b>The same instinct killed a second, smaller addition:</b> <code>StatsViewModel</code> has exactly one method, <code>refresh()</code>, and zero external call sites dispatch it (it only ever runs from its own <code>init</code>). A <code>sealed interface StatsIntent { data object Refresh : StatsIntent }</code> would compile and look consistent with every other VM — and add nothing. It stayed a plain private-called method. MVI earns its ceremony when there's more than one thing to dispatch and more than one place dispatching it; a single VM-internal call isn't that.</p>
 </div>
 
@@ -1964,7 +1956,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <div class="answer">That pattern covers the outbound half only — state flowing from ViewModel to UI, which is the MVVM contract. MVI additionally requires the inbound half (user actions flowing from UI to ViewModel) to be a single typed sealed value dispatched through one function. This app had the first half everywhere and the second half nowhere — every VM took N separate public methods instead of one Intent type.</div></div>
 <div class="quiz-item"><p>2. Why didn't HomeScreen's parameters change when HomeViewModel got an onIntent() dispatcher?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
-<div class="answer">HomeScreen still takes a plain onToggleBlocking: (Boolean) -&gt; Unit callback, same as before. Only AppNavHost.kt's wiring changed, from a method reference to a lambda that constructs and dispatches an Intent. Leaf Composables staying ignorant of ViewModel-shaped types (Intent classes included) is a separate, still-enforced rule from Module 3 — MVI changes how the ViewModel is driven, not what the screen's function signature looks like.</div></div>
+<div class="answer">HomeScreen still takes a plain onToggleBlocking: (Boolean) -&gt; Unit callback, same as before. Only AppNavHost.kt's wiring changed, from a method reference to a lambda that constructs and dispatches an Intent. Leaf Composables staying ignorant of ViewModel-shaped types (Intent classes included) is a separate, still-enforced rule from Chapter 03 — MVI changes how the ViewModel is driven, not what the screen's function signature looks like.</div></div>
 <div class="quiz-item"><p>3. BackupViewModel's exportJson used to take an onResult: (String) -&gt; Unit callback parameter. Why not just make that a field on a BackupIntent.Export(val onResult: (String) -&gt; Unit) case instead of adding a new BackupEffect.Exported?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
 <div class="answer">Intents are meant to be inert data — safe to log, compare, or replay in a test. A lambda inside one can't be compared for equality and can't be logged meaningfully, which defeats the point. The exported JSON is a one-time result the UI needs to hand off to a platform share sheet, which is exactly what an Effect channel is for — so it became a third BackupEffect case instead, delivered alongside the existing Success/Failure effects.</div></div>
@@ -1978,8 +1970,9 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 18 -->
 <!-- ================================================================ -->
 <section class="module" id="m18">
-<h2>Module 18: Test Doubles at Scale — One Fake per Interface</h2>
-<p>Module 12 chose hand-written fakes over MockK, for a good reason: MockK doesn't run on Kotlin/Native, and this project's tests have to pass on both Android and the iOS simulator. That decision was right, and it has a bill that arrives later. By the time this app had 176 tests, <b>470 of its 3061 test source lines — 15% — were <code>Fake*</code> class bodies</b>, and three of those fakes existed in two, three, and four near-identical copies. This module is the cleanup: what to consolidate, what to deliberately leave duplicated, and the two surprises that fell out of doing it.</p>
+<div class="chapter-status">Chapter 18 done</div>
+<h2><span class="cn">18</span>Test Doubles at Scale — One Fake per Interface</h2>
+<p>Chapter 12 chose hand-written fakes over MockK, for a good reason: MockK doesn't run on Kotlin/Native, and this project's tests have to pass on both Android and the iOS simulator. That decision was right, and it has a bill that arrives later. By the time this app had 176 tests, <b>470 of its 3061 test source lines — 15% — were <code>Fake*</code> class bodies</b>, and three of those fakes existed in two, three, and four near-identical copies. This module is the cleanup: what to consolidate, what to deliberately leave duplicated, and the two surprises that fell out of doing it.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
 <ul><li>Decide which test doubles are worth consolidating and which are cheaper left duplicated</li><li>Place a shared fake so both <code>commonTest</code> and <code>androidUnitTest</code> can use it, and know why <code>internal</code> works there</li><li>Explain the Kotlin "private top-level class" redeclaration trap that duplicate fakes hit in KMP test source sets</li><li>Design one fake that satisfies call sites which previously needed different fakes, without silently changing what a test asserts</li><li>Recognize a test that only exercises its own fake and asserts nothing about production code</li></ul></div>
@@ -1987,10 +1980,10 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <h3><span class="badge badge-b">Beginner</span> Duplication in tests is real duplication — with one exception</h3>
 <p>The usual defense of copy-pasted test helpers is that tests should be readable in isolation. That holds for small doubles. It stops holding when the interface is big: <code>RuleRepository</code> has 64 members, so each copy of <code>FakeRuleRepository</code> was ~115 lines of <code>override fun ... {}</code>, and adding one method to the interface meant editing both copies to keep the build green. The measured split before this pass:</p>
 <table style="width:100%;border-collapse:collapse;margin:16px 0">
-<tr style="border-bottom:2px solid var(--accent)"><th style="text-align:left;padding:8px">Fake</th><th style="text-align:left;padding:8px">Copies</th><th style="text-align:left;padding:8px">Lines</th><th style="text-align:left;padding:8px">Verdict</th></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>FakeRuleRepository</code></td><td style="padding:8px">2</td><td style="padding:8px">229</td><td style="padding:8px">Consolidate</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>FakeSettingsRepository</code></td><td style="padding:8px">5</td><td style="padding:8px">104</td><td style="padding:8px">Consolidate</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px"><code>FakeCallLogRepository</code></td><td style="padding:8px">3</td><td style="padding:8px">76</td><td style="padding:8px">Consolidate</td></tr>
+<tr style="border-bottom:2px solid var(--cyan)"><th style="text-align:left;padding:8px">Fake</th><th style="text-align:left;padding:8px">Copies</th><th style="text-align:left;padding:8px">Lines</th><th style="text-align:left;padding:8px">Verdict</th></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><code>FakeRuleRepository</code></td><td style="padding:8px">2</td><td style="padding:8px">229</td><td style="padding:8px">Consolidate</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><code>FakeSettingsRepository</code></td><td style="padding:8px">5</td><td style="padding:8px">104</td><td style="padding:8px">Consolidate</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><code>FakeCallLogRepository</code></td><td style="padding:8px">3</td><td style="padding:8px">76</td><td style="padding:8px">Consolidate</td></tr>
 <tr><td style="padding:8px"><code>FakeContactsGateway</code>, <code>FakeGateway</code></td><td style="padding:8px">3 + 2</td><td style="padding:8px">5–10 each</td><td style="padding:8px">Leave alone</td></tr>
 </table>
 <p>The exception is the bottom row. A <code>ContactsGateway</code> fake is three one-line overrides; a reader scanning the test file sees exactly what it returns without opening another file, and the interface is stable enough that a shared copy would rarely save an edit. <b>Consolidation is justified by edit-point count and body size, not by the mere fact that two files declare the same name.</b></p>
@@ -2059,8 +2052,9 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- MODULE 19 -->
 <!-- ================================================================ -->
 <section class="module" id="m19">
-<h2>Module 19: Testing Persistence Against a Real Database</h2>
-<p>Module 18 consolidated the fakes and, in passing, exposed something the fakes had been hiding: <b>not one <code>Sql*</code> repository in this app had a dedicated test.</b> Five classes held every byte that survives an app restart — settings, call log, auto-responder, spam flag, and the key-value store beneath them — and all five were untested. This module is that gap being closed, and the user-visible bug the very first pass of tests uncovered.</p>
+<div class="chapter-status">Chapter 19 done</div>
+<h2><span class="cn">19</span>Testing Persistence Against a Real Database</h2>
+<p>Chapter 18 consolidated the fakes and, in passing, exposed something the fakes had been hiding: <b>not one <code>Sql*</code> repository in this app had a dedicated test.</b> Five classes held every byte that survives an app restart — settings, call log, auto-responder, spam flag, and the key-value store beneath them — and all five were untested. This module is that gap being closed, and the user-visible bug the very first pass of tests uncovered.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
 <ul><li>Decide when a fake is the wrong test double and only a real database engine will do</li><li>Place SQLite-backed tests correctly in a KMP module, and know why they can't be shared with iOS</li><li>Test a repository that hydrates once at construction — where "does this survive a restart?" needs a second instance</li><li>Use a test to prove every branch of a sealed decision type satisfies a database CHECK constraint</li><li>Handle the moment a new test disagrees with shipped behaviour: pin it, judge it, then fix it</li></ul></div>
@@ -2073,7 +2067,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <span class="line">    <span class="tp">AppDatabase</span>.Schema.<span class="fn">create</span>(driver)</span>
 <span class="line">    <span class="kw">return</span> <span class="fn">AppDatabase</span>(driver)</span>
 <span class="line">}</span></code></pre>
-<p><b>Why <code>androidUnitTest</code> and not <code>commonTest</code>:</b> <code>JdbcSqliteDriver</code> is JVM-only. There is no Kotlin/Native equivalent that runs in the shared test source set, so these tests are deliberately excluded from the iOS simulator run — the opposite of Module 12's default, and a real limit of the approach. The rule of thumb: logic tests go in <code>commonTest</code> and run everywhere; engine tests go in <code>androidUnitTest</code> and run on the JVM only.</p>
+<p><b>Why <code>androidUnitTest</code> and not <code>commonTest</code>:</b> <code>JdbcSqliteDriver</code> is JVM-only. There is no Kotlin/Native equivalent that runs in the shared test source set, so these tests are deliberately excluded from the iOS simulator run — the opposite of Chapter 12's default, and a real limit of the approach. The rule of thumb: logic tests go in <code>commonTest</code> and run everywhere; engine tests go in <code>androidUnitTest</code> and run on the JVM only.</p>
 
 <h3><span class="badge badge-i">Intermediate</span> Testing a repository that hydrates once</h3>
 <p><code>SqlSettingsRepository</code> reads the database exactly once, in <code>init</code>, into <code>MutableStateFlow</code>s. Its flows are <b>not</b> backed by live queries. That single design fact dictates how it must be tested: calling a setter and reading the flow back only proves the in-memory field moved. Proving the value reached <i>disk</i> takes a second repository over the same database — which is exactly what an app restart is.</p>
@@ -2087,7 +2081,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <p>The same structure makes a subtler property testable: two live instances over one database <i>disagree</i>, because neither observes the other's writes. That isn't a bug — it's safe only because <code>SharedModule</code> binds the repository as <code>single&lt;SettingsRepository&gt;</code>. A test asserting the disagreement documents the constraint, so a future change to <code>factory { }</code> fails loudly instead of producing a screen showing stale settings.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Proving a sealed type satisfies a CHECK constraint</h3>
-<p>Module 16 added <code>REPEATED_ALLOWED</code> to the <code>CallLogEntry.rule_type</code> CHECK constraint via a rebuild-table migration. That constraint and the <code>RuleDecision</code> sealed hierarchy are two lists that must stay in lockstep — and nothing enforced it. A new decision variant whose <code>ruleTypeTag</code> isn't in the constraint compiles cleanly and throws at runtime, on a real user's phone, at the moment a call is being logged.</p>
+<p>Chapter 16 added <code>REPEATED_ALLOWED</code> to the <code>CallLogEntry.rule_type</code> CHECK constraint via a rebuild-table migration. That constraint and the <code>RuleDecision</code> sealed hierarchy are two lists that must stay in lockstep — and nothing enforced it. A new decision variant whose <code>ruleTypeTag</code> isn't in the constraint compiles cleanly and throws at runtime, on a real user's phone, at the moment a call is being logged.</p>
 <p class="file-label">SqlCallLogRepositoryTest.kt — one test covers the whole hierarchy</p>
 <pre><code><span class="line"><span class="kw">val</span> decisions = <span class="fn">listOf</span>(</span>
 <span class="line">    <span class="tp">RuleDecision</span>.<span class="fn">Allowlist</span>(ruleId = 1, label = <span class="st">"Mom"</span>) to (<span class="st">"ALLOWED"</span> to <span class="st">"CONTACTS"</span>),</span>
@@ -2123,7 +2117,7 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <ul><li>Fakes are for collaborators you aren't testing; a persistence class has no collaborator left to fake, so it needs a real engine</li><li><code>JdbcSqliteDriver</code> is JVM-only — database tests live in <code>androidUnitTest</code> and knowingly skip the iOS run</li><li>A repository that hydrates in <code>init</code> can only be proven durable by constructing a second instance over the same database</li><li>Two live instances disagreeing is a DI constraint worth asserting, not just a quirk to remember</li><li>Round-trip every branch of a sealed type through the database when a CHECK constraint mirrors it — the insert is the assertion</li><li>When a new test disagrees with shipped behaviour, pin it with a comment naming the suspicion, then fix it in the next commit — never silently</li><li>Not every finding has to be fixed in the same pass; a shared primitive's semantics deserve their own decision</li></ul></div>
 
 <details class="quiz"><summary>Check your understanding (4 questions)</summary>
-<div class="quiz-item"><p>1. This app's ViewModel tests use fakes, and Module 12 recommended exactly that. Why do the <code>Sql*</code> repository tests use a real SQLite database instead?</p>
+<div class="quiz-item"><p>1. This app's ViewModel tests use fakes, and Chapter 12 recommended exactly that. Why do the <code>Sql*</code> repository tests use a real SQLite database instead?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Reveal</button>
 <div class="answer">A fake stands in for a collaborator you are not testing — correct for a ViewModel, which shouldn't need SQLite to prove it maps data into a UiState. For a persistence class, the persistence IS the thing under test, and the behaviour that matters lives in the engine: CHECK constraints, strftime date arithmetic, INSERT OR REPLACE semantics, and what a value looks like when read back. A fake reproduces none of that.</div></div>
 <div class="quiz-item"><p>2. <code>SqlSettingsRepository.setBlockingEnabled(false)</code> followed by <code>assertFalse(repo.blockingEnabled.first())</code> passes. Why is that not enough to prove the setting persists?</p>
@@ -2141,32 +2135,195 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 <!-- ================================================================ -->
 <!-- CONCLUSION -->
 <!-- ================================================================ -->
+
+<!-- ================================================================ -->
+<!-- CHAPTER 20 -->
+<!-- ================================================================ -->
+<section class="module" id="m20">
+<div class="chapter-status">Chapter 20 done</div>
+<h2><span class="cn">20</span>Code That Ships But Never Runs</h2>
+<p>A full-codebase audit found eighteen defects. Six of them shared a shape worth naming, because it is the shape that unit tests are worst at catching: a feature with a schema, a repository, a resolver branch, and passing tests, none of which execute in the shipping app.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul>
+<li>Recognise the "implemented, tested, inert" failure mode and why component tests miss it</li>
+<li>Understand why normalising data early can destroy the information a later step needs</li>
+<li>See how a declaration in a manifest becomes a promise the code has to keep</li>
+<li>Write persistence that can be restored without corrupting what is already there</li>
+<li>Tell the difference between a toolchain problem and a code problem</li>
+</ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Six features that existed and did nothing</h3>
+<p>Each of these had code, tests, and in most cases a database table. None of them ran:</p>
+<table>
+<tr><th>Feature</th><th>Why it never fired</th></tr>
+<tr><td>Bundled spam list</td><td>Every entry is stored as <code>+234</code>; the resolver handed it digits with the <code>+</code> stripped</td></tr>
+<tr><td>Pattern-scoped repeat-caller rules</td><td>Scope resolved against <em>enabled</em> patterns, which already block those numbers two steps earlier</td></tr>
+<tr><td>Repeat-caller rules generally</td><td>No UI existed; the only way in was hand-editing a backup JSON</td></tr>
+<tr><td>The ringtone</td><td>Manifest claimed the app rings for itself; nothing ever played a sound</td></tr>
+<tr><td><code>DriverFactory.databaseDispatcher</code></td><td>Declared, implemented on both platforms, read by nobody</td></tr>
+<tr><td>Four country codes</td><td>Duplicated in the list; <code>UNIQUE</code> + <code>INSERT OR IGNORE</code> made the second unaddable</td></tr>
+</table>
+
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">The spam provider had a dedicated test file asserting that <code>lookup("+2348012345678")</code> returns a spam verdict — and it passed. It tested the provider directly. Production never calls it that way. A component test proves a component works; it says nothing about whether anything calls it correctly.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> Normalising away the information you need</h3>
+<p>The resolver reduced every incoming number to bare digits before consulting any rule:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../rules/RulePrecedenceResolver.kt</div>
+<pre><code><span class="line">// before</span>
+<span class="line">val normalized = PhoneNumberParser.normalizeForComparison(number)  // digits only</span>
+<span class="line">val countryCode = parseCountryCode(normalized)</span>
+<span class="line">val result = context.spamProvider.lookup(normalized)</span></code></pre>
+<p>That is right for comparing against a number the user typed, where <code>+34 600 123 456</code> and <code>0034600123456</code> should match. It is wrong for anything that needs to know whether the number was <em>international at all</em>.</p>
+<p>Without the <code>+</code>, a national number is indistinguishable from an international one. <code>2125551234</code> is a Manhattan landline; its first three digits are also Morocco's country code. <code>912345678</code> is a Madrid landline; its first two are India's. Blocking either country quietly blocked an unrelated city.</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../rules/PhoneNumberParser.kt</div>
+<pre><code><span class="line">fun toE164OrNull(number: String): String? {</span>
+<span class="line">    val trimmed = number.trim()</span>
+<span class="line">    val digits = when {</span>
+<span class="line">        trimmed.startsWith("+")  -&gt; normalizeForComparison(trimmed)</span>
+<span class="line">        trimmed.startsWith("00") -&gt; normalizeForComparison(trimmed).drop(2)</span>
+<span class="line">        else -&gt; return null      // national format carries no country at all</span>
+<span class="line">    }</span>
+<span class="line">    if (digits.isEmpty() || digits.length &gt; MAX_E164_DIGITS) return null</span>
+<span class="line">    return "+$digits"</span>
+<span class="line">}</span></code></pre>
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">Returning <code>null</code> rather than guessing is the whole fix. "I do not know which country this is" is a true and useful answer; "probably Morocco" is neither.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> A pattern that matched every number alive</h3>
+<p>Patterns are compared on digits, so a pattern containing none has an empty core — and an empty core satisfies <code>startsWith</code>, <code>endsWith</code> and <code>contains</code> for every number in existence. Typing <code>*</code> into the add-pattern dialog blocked the user's entire phone.</p>
+<pre><code><span class="line">fun isUsablePattern(pattern: String): Boolean =</span>
+<span class="line">    PhoneNumberParser.normalizeForComparison(pattern.trim().trim('*')).isNotEmpty()</span></code></pre>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">There was already a test covering this, named <code>patternMatch_caseInsensitive</code>. It asserted that the pattern <code>"ABC*"</code> matches <code>"abc123"</code> — and it passed, because <code>"ABC*"</code> matched <em>everything</em>. The test was observing the bug and calling it a feature. Pattern matching has no notion of case; there was nothing to be insensitive about.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> Restoring a backup by disabling the wrong rule</h3>
+<p>The importer wrote a default row, then went looking for the row it had just written:</p>
+<pre><code><span class="line">queries.insertPatternRule(entry.pattern, entry.label)</span>
+<span class="line">if (!entry.enabled) {</span>
+<span class="line">    val inserted = queries.selectAllPatternRules().executeAsList().lastOrNull()</span>
+<span class="line">    if (inserted != null) queries.togglePatternRule(0, inserted.id)</span>
+<span class="line">}</span></code></pre>
+<p>Read the query it calls: <code>SELECT * FROM PatternRule ORDER BY created_at DESC, id DESC</code>. Newest first. So <code>lastOrNull()</code> is the <em>oldest</em> row, not the newest. Every restore containing a disabled rule switched off an unrelated rule the user still wanted, silently.</p>
+<p>The fix is to stop having a second step at all — insert the row with its real state in one statement:</p>
+<div class="filepath">shared/src/commonMain/sqldelight/.../AppDatabase.sq</div>
+<pre><code><span class="line">insertPatternRuleFull:</span>
+<span class="line">INSERT INTO PatternRule(pattern, label, enabled, created_at) VALUES (?, ?, ?, ?);</span></code></pre>
+<div class="note contrast"><span class="tag">Contrast</span>
+<p style="margin-bottom:0">The obvious fix is <code>firstOrNull()</code>. It would have worked here and broken on <code>CountryRule</code>, which orders by <code>country_name ASC</code> — neither end of that list is the row you just inserted. "Find what I wrote" is the wrong question; not needing to ask it is the fix.</p></div>
+<p>Three more problems fell out of the same rewrite. Counts came from a loop counter rather than affected rows, so re-importing your own backup — legitimately a no-op against <code>INSERT OR IGNORE</code> on a <code>UNIQUE</code> column — claimed it had added everything twice. <code>created_at</code> was parsed out of the file and then discarded, so restored rules came back in an order they had never been in. And an action rule's <code>patternId</code> pointed at an id from the exporting device, which on the importing device belongs to somebody else's pattern.</p>
+
+<h3><span class="badge badge-a">Advanced</span> A manifest entry is a promise</h3>
+<div class="filepath">androidApp/src/main/AndroidManifest.xml</div>
+<pre><code><span class="line">&lt;meta-data</span>
+<span class="line">    android:name="android.telecom.IN_CALL_SERVICE_RINGING"</span>
+<span class="line">    android:value="true" /&gt;</span></code></pre>
+<p>That tells Telecom the app plays the ringtone itself, so Telecom stops playing one. Nothing in the source ever did — no <code>Ringtone</code>, no <code>MediaPlayer</code> on the ring stream, no <code>Vibrator</code>. As the user's default dialer the app took every incoming call in silence.</p>
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">The declaration was kept rather than removed, because it is what makes a <em>blocked</em> call silent. Handing ringing back to the system would mean every spam call rings before it is rejected. Owning the ringer is the feature; not implementing it was the bug.</p></div>
+<p>Order matters on this path. The ringer starts as soon as the call is ringing and stops when a block decision lands, not the other way round:</p>
+<pre><code><span class="line">// Ring first, decide second. Evaluation touches the database and the contacts</span>
+<span class="line">// provider, and a caller must never be dropped into silence because that was slow.</span>
+<span class="line">ringer.start()</span>
+<span class="line">state.evaluation = serviceScope.launch { /* ...decide, then ringer.stop() */ }</span></code></pre>
+
+<h3><span class="badge badge-a">Advanced</span> When lint has never run, "no lint errors" means nothing</h3>
+<p>Adding Android Lint to CI failed immediately, and not because of the code:</p>
+<pre><code><span class="line">Module was compiled with an incompatible version of Kotlin.</span>
+<span class="line">The binary version of its metadata is 2.2.0, expected version is 2.0.0.</span>
+<span class="line">Unexpected failure during lint analysis</span></code></pre>
+<p>AGP 8.7.3 bundles a UAST frontend that reads Kotlin 2.0 metadata. The project compiles with 2.2.20. Every lint task had been failing this way since the day the project moved to Kotlin 2.2 — which is exactly why lint was not in CI, and why nobody had noticed.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">The tempting fix is <code>lint { abortOnError = false }</code> or dropping the task. Both convert a toolchain mismatch into a permanent blind spot. The fix is to raise AGP — which, as a bonus, retired two workarounds the old version had forced.</p></div>
+<p>On its first successful run lint found three <code>notify()</code> calls with no permission guard it could see, a dead pre-API-26 branch, <code>StateFlow.value</code> read inside composition, plural forms that are wrong in Hindi and Portuguese, and an adaptive-icon monochrome layer that had been drawn, committed, and never referenced.</p>
+<div class="note verified"><span class="tag">Verified</span>
+<p style="margin-bottom:0">339 JVM tests and 227 of the same tests on the iOS simulator, plus <code>ktlintCheck</code>, both <code>lintDebug</code> tasks, <code>verifySqlDelightMigration</code>, <code>compileKotlinIosSimulatorArm64</code> and <code>assembleRelease</code>. Then installed on a Motorola razr 50 ultra, where the database came back reporting <code>user_version: 3</code> for a schema with two states.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> The bug the device found and the tests could not</h3>
+<p>A SQLDelight migration file <code>N.sqm</code> takes the schema from version <code>N</code> to <code>N+1</code>. The squashed baseline in <code>databases/1.db</code> is version 1, so the first migration on top of it is <code>1.sqm</code>. It was named <code>2.sqm</code>.</p>
+<p>That generated <code>Schema.version = 3</code> with nothing implementing the 1 → 2 step. It <em>worked</em> — the generated guard is <code>oldVersion &lt;= 2 &amp;&amp; newVersion &gt; 2</code>, which a device at version 1 satisfies — so the index was created, the rows survived, and <code>verifySqlDelightMigration</code> stayed green.</p>
+<div class="note verified"><span class="tag">Verified</span>
+<p style="margin-bottom:0">Pulling the database off the phone and running <code>PRAGMA user_version</code> is what exposed it. Every automated check in the project passed with a schema whose version number did not describe how many migrations exist.</p></div>
+<div class="note scope"><span class="tag">Scope</span>
+<p style="margin-bottom:0">Left deliberately unfixed: <code>InCallState</code> still tracks a single call. Multi-call UI is a feature, not a defect. What mattered was that a second call could no longer cancel the first call's in-flight blocking decision — which it could, because <code>onCallAdded</code> cancelled the entire service coroutine scope on every new call.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> Text that was English in a four-locale app</h3>
+<p><code>RuleDecision</code> built its reason as an English sentence and wrote it straight into the database:</p>
+<pre><code><span class="line">is CountryBlock -&gt; "Country: $countryName ($countryCode)"</span></code></pre>
+<p>So it was not merely untranslated — it was <em>persisted</em> untranslated. Translating it later would still leave every historical call-log row frozen in the language it was created in. The fix stores structured data and chooses words at display time, with a codec that degrades an unrecognised row to its raw text rather than showing a blank cell.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">The recording-consent check required the script to contain the English phrase "This call may be recorded". A user writing their greeting in Spanish could never enable recording — the only way through was pasting an English sentence into a greeting the caller would hear in Spanish. A compliance gate implemented as a substring match is a gate against your own users.</p></div>
+<p>A new test walks all three resource trees in both directions. It immediately found eleven real gaps, including the in-app privacy policy — which additionally described behaviour the app does not have, claiming the spam check uploads numbers to a public database when the list ships inside the APK and makes no network calls at all.</p>
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">Android Lint has a <code>MissingTranslation</code> check. It is disabled here, because this project has two independent string systems and lint can only see one of them — a green lint run would have been actively misleading.</p></div>
+
+<div class="donewhen">
+<h4>Done when</h4>
+<ul>
+<li>Every rule that can fire, does fire, proven through <code>evaluate()</code> rather than against the component</li>
+<li>A backup can be restored twice without changing anything the second time</li>
+<li>An incoming call rings, and a blocked one stops ringing without the user hearing it</li>
+<li>Android Lint runs in CI and the build fails on its errors</li>
+<li><code>PRAGMA user_version</code> on a real device equals the number of migrations plus one</li>
+</ul>
+</div>
+
+<div class="quiz">
+<h3>Check yourself</h3>
+<div class="quiz-item"><p>1. A component test for the spam provider passed while the feature was completely dead in production. What kind of test would have caught it?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">A test through the real entry point — <code>RulePrecedenceResolver.evaluate()</code> with the provider wired in — rather than calling <code>provider.lookup()</code> directly. The bug was not in the provider or in the resolver; it was in the shape of the value passed between them, which only an integration-level test observes.</div></div>
+
+<div class="quiz-item"><p>2. Why does <code>toE164OrNull</code> return null for a national-format number instead of assuming a default country?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because the information genuinely is not there. Assuming the device's own country would be right most of the time and silently wrong while roaming or for a ported number — and this value decides whether a call is rejected. "Unknown" is a correct answer that the caller can handle; a confident guess is not.</div></div>
+
+<div class="quiz-item"><p>3. The importer used <code>lastOrNull()</code> on a <code>created_at DESC, id DESC</code> query to find the row it had just inserted. Why is <code>firstOrNull()</code> not the fix?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">It works for that one query and breaks on <code>CountryRule</code>, which orders by <code>country_name ASC</code> — the row just inserted is at neither end. The real fix is to insert the row in its final state so there is nothing to find afterwards.</div></div>
+
+<div class="quiz-item"><p>4. Why keep <code>IN_CALL_SERVICE_RINGING</code> and write a ringer, rather than removing the declaration and letting the system ring?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because owning the ringer is what allows a blocked call to be silent. If the system rings, every spam call audibly rings before it is rejected — which is most of what the app exists to prevent.</div></div>
+
+<div class="quiz-item"><p>5. Android Lint failed with a Kotlin metadata version error. Why is disabling lint the wrong response?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The message is not a finding about the code, it is AGP's bundled analyser being older than the compiler. Disabling it converts a fixable toolchain mismatch into a permanent blind spot — and on the first run after the AGP bump, lint found five real defects that had been invisible for the project's whole life.</div></div>
+
+<div class="quiz-item"><p>6. Every automated check passed on a migration numbered <code>2.sqm</code> when it should have been <code>1.sqm</code>. Why?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because the migration still ran: the generated guard is <code>oldVersion &lt;= 2 &amp;&amp; newVersion &gt; 2</code>, and a device at version 1 satisfies it. <code>verifySqlDelightMigration</code> checks that replaying the files reaches the current schema, which it did. What was wrong was the version <em>number</em> — visible only by reading <code>PRAGMA user_version</code> off a real device.</div></div>
+</div>
+</section>
+
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>19 Modules, One Production App</h3>
+<div class="callout"><h3>20 Chapters, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
-<tr style="border-bottom:2px solid var(--accent)"><th style="text-align:left;padding:8px">Layer</th><th style="text-align:left;padding:8px">Technology</th><th style="text-align:left;padding:8px">Module</th></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Build</td><td style="padding:8px">Gradle KTS, version catalogs</td><td style="padding:8px">1</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Architecture</td><td style="padding:8px">KMP, expect/actual, source sets</td><td style="padding:8px">2</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">UI</td><td style="padding:8px">Compose Multiplatform, StateFlow</td><td style="padding:8px">3</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Navigation</td><td style="padding:8px">Navigation Compose, routes</td><td style="padding:8px">4</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Layout</td><td style="padding:8px">WindowSizeClass, adaptive scaffold</td><td style="padding:8px">5</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Data</td><td style="padding:8px">SQLDelight, repositories, migrations</td><td style="padding:8px">6</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">DI</td><td style="padding:8px">Koin, platform modules</td><td style="padding:8px">7</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Platform</td><td style="padding:8px">Permissions, RoleManager, onboarding</td><td style="padding:8px">8</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Telecom</td><td style="padding:8px">InCallService, call screening, lock screen</td><td style="padding:8px">9</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Domain</td><td style="padding:8px">Rule engine, normalization, patterns</td><td style="padding:8px">10</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">i18n</td><td style="padding:8px">Compose resources, 4 locales</td><td style="padding:8px">11</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Quality</td><td style="padding:8px">kotlin.test, fakes, Robolectric</td><td style="padding:8px">12</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">State management</td><td style="padding:8px">MVVM + MVI, sealed Intents, effect channels</td><td style="padding:8px">17</td></tr>
-<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px">Test doubles</td><td style="padding:8px">Shared fakes, internal visibility across source sets</td><td style="padding:8px">18</td></tr>
-<tr><td style="padding:8px">Persistence testing</td><td style="padding:8px">In-memory SQLite, restart hydration, CHECK round-trips</td><td style="padding:8px">19</td></tr>
+<tr style="border-bottom:2px solid var(--cyan)"><th style="text-align:left;padding:8px">Layer</th><th style="text-align:left;padding:8px">Technology</th><th style="text-align:left;padding:8px">Chapter</th></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Build</td><td style="padding:8px">Gradle KTS, version catalogs</td><td style="padding:8px">1</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Architecture</td><td style="padding:8px">KMP, expect/actual, source sets</td><td style="padding:8px">2</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">UI</td><td style="padding:8px">Compose Multiplatform, StateFlow</td><td style="padding:8px">3</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Navigation</td><td style="padding:8px">Navigation Compose, routes</td><td style="padding:8px">4</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Layout</td><td style="padding:8px">WindowSizeClass, adaptive scaffold</td><td style="padding:8px">5</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Data</td><td style="padding:8px">SQLDelight, repositories, migrations</td><td style="padding:8px">6</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">DI</td><td style="padding:8px">Koin, platform modules</td><td style="padding:8px">7</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Platform</td><td style="padding:8px">Permissions, RoleManager, onboarding</td><td style="padding:8px">8</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Telecom</td><td style="padding:8px">InCallService, call screening, lock screen</td><td style="padding:8px">9</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Domain</td><td style="padding:8px">Rule engine, normalization, patterns</td><td style="padding:8px">10</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">i18n</td><td style="padding:8px">Compose resources, 4 locales</td><td style="padding:8px">11</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Quality</td><td style="padding:8px">kotlin.test, fakes, Robolectric</td><td style="padding:8px">12</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">DevOps</td><td style="padding:8px">GitHub Actions, ktlint, scripts</td><td style="padding:8px">13</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">iOS Debugging</td><td style="padding:8px">Kotlin/Native errors, crash reports, GPU hangs</td><td style="padding:8px">14</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Notifications</td><td style="padding:8px">CallStyle, full-screen intent, permission UX</td><td style="padding:8px">15</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Cross-cutting feature</td><td style="padding:8px">Precedence extension, SQLite migration, state threading</td><td style="padding:8px">16</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">State management</td><td style="padding:8px">MVVM + MVI, sealed Intents, effect channels</td><td style="padding:8px">17</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Test doubles</td><td style="padding:8px">Shared fakes, internal visibility across source sets</td><td style="padding:8px">18</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Persistence testing</td><td style="padding:8px">In-memory SQLite, restart hydration, CHECK round-trips</td><td style="padding:8px">19</td></tr>
+<tr><td style="padding:8px">Auditing</td><td style="padding:8px">Code that ships but never runs; integration-level tests; toolchain vs code failures</td><td style="padding:8px">20</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2177,8 +2334,8 @@ figure.diagram figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>273 automated tests · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-04 — added Module 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p>339 automated tests (227 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>
@@ -2187,44 +2344,45 @@ function toggleTheme(){
   var h=document.documentElement,t=h.getAttribute('data-theme');
   h.setAttribute('data-theme',t==='dark'?'light':'dark');
   var b=document.querySelector('.theme-btn');
-  b.innerHTML=t==='dark'?'☀️ Light Mode':'🌙 Dark Mode';
+  b.innerHTML=t==='dark'?'Dark':'Light';
   localStorage.setItem('theme',t==='dark'?'light':'dark');
 }
 (function(){
   var s=localStorage.getItem('theme');
   if(s){document.documentElement.setAttribute('data-theme',s);
-  document.querySelector('.theme-btn').innerHTML=s==='dark'?'☀️ Light Mode':'🌙 Dark Mode';}
+  document.querySelector('.theme-btn').innerHTML=s==='dark'?'Light':'Dark';}
 })();
 
-// ========== TOC GENERATION ==========
+// ========== CHAPTER RAIL ==========
 (function(){
-  var grid=document.getElementById('toc-grid'),html='';
-  var modules=document.querySelectorAll('.module[id^="m"]');
-  var count=0;
-  modules.forEach(function(m){
-    count++;
-    var id=m.id,h=m.querySelector('h2');
-    var title=h?h.textContent.replace('Module '+count+': ','') : 'Module '+count;
-    html+='<a href="#'+id+'" onclick="markVisited('+count+')">'+count+'. '+title+'</a>';
+  var rail=document.getElementById('toc-rail'),html='';
+  document.querySelectorAll('.module[id^="m"]').forEach(function(m,i){
+    var n=i+1, h=m.querySelector('h2');
+    var title=h?h.textContent.replace(/^\s*\d+\s*/,'').trim():'Chapter '+n;
+    var pad=(n<10?'0':'')+n;
+    html+='<a href="#'+m.id+'" onclick="markVisited('+n+')"><span class="n">'+pad+'</span>'+title+'</a>';
   });
-  grid.innerHTML=html;
+  rail.innerHTML=html;
+  document.getElementById('progress-total').textContent=document.querySelectorAll('.module[id^="m"]').length;
+  var t=document.querySelectorAll('.module[id^="m"]').length;
+  document.getElementById('progress-written').textContent=t+' / '+t+' chapters written';
 })();
 
-// ========== PROGRESS TRACKING ==========
+// ========== PROGRESS ==========
 function markVisited(n){
-  var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  if(visited.indexOf(n)===-1){visited.push(n);}
-  localStorage.setItem('course_progress',JSON.stringify(visited));
+  var v=JSON.parse(localStorage.getItem('course_progress')||'[]');
+  if(v.indexOf(n)===-1){v.push(n);}
+  localStorage.setItem('course_progress',JSON.stringify(v));
   updateProgress();
 }
 function updateProgress(){
-  var visited=JSON.parse(localStorage.getItem('course_progress')||'[]');
-  var total=19,pct=Math.round(visited.length/total*100);
+  var v=JSON.parse(localStorage.getItem('course_progress')||'[]');
+  var total=document.querySelectorAll('.module[id^="m"]').length;
+  var pct=total?Math.round(v.length/total*100):0;
   document.getElementById('progress-fill').style.width=pct+'%';
-  document.getElementById('progress-text').textContent=visited.length+' / '+total+' modules';
-  var links=document.querySelectorAll('#toc-grid a');
-  links.forEach(function(a,i){
-    if(visited.indexOf(i+1)>-1)a.classList.add('visited');
+  document.getElementById('progress-count').textContent=v.length;
+  document.querySelectorAll('#toc-rail a').forEach(function(a,i){
+    if(v.indexOf(i+1)>-1)a.classList.add('visited');
   });
 }
 updateProgress();
