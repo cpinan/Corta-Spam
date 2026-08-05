@@ -125,8 +125,13 @@ class RulePrecedenceResolverTest {
         }
 
     @Test
-    fun patternMatch_caseInsensitive() =
+    fun patternMatch_aPatternWithNoDigitsIsInertNotUniversal() =
         runTest {
+            // Matching compares digits only, so a pattern made of letters has an empty core.
+            // An empty core used to satisfy startsWith/endsWith/contains for *every* number,
+            // which meant a single "*" typed into the add dialog blocked the whole phone. This
+            // test previously asserted the opposite under the name "caseInsensitive" -- pattern
+            // matching has no notion of case, it was just observing the match-everything bug.
             val ctx =
                 emptyContext.copy(
                     enabledPatterns =
@@ -134,9 +139,36 @@ class RulePrecedenceResolverTest {
                             PatternRule(id = 4, pattern = "ABC*", label = null, enabled = true),
                         ),
                 )
-            assertTrue(RulePrecedenceResolver.evaluate("abc123", ctx) is RuleDecision.PatternBlock)
-            assertTrue(RulePrecedenceResolver.evaluate("ABC123", ctx) is RuleDecision.PatternBlock)
+            assertTrue(RulePrecedenceResolver.evaluate("abc123", ctx) is RuleDecision.DefaultAllow)
+            assertTrue(RulePrecedenceResolver.evaluate("+34600123456", ctx) is RuleDecision.DefaultAllow)
         }
+
+    @Test
+    fun patternMatch_aBareStarBlocksNothing() =
+        runTest {
+            for (pattern in listOf("*", "**", "*abc*", "   *   ")) {
+                val ctx =
+                    emptyContext.copy(
+                        enabledPatterns = listOf(PatternRule(id = 4, pattern = pattern, label = null, enabled = true)),
+                    )
+                assertTrue(
+                    RulePrecedenceResolver.evaluate("+34600123456", ctx) is RuleDecision.DefaultAllow,
+                    "pattern \"$pattern\" must not match every number",
+                )
+            }
+        }
+
+    @Test
+    fun isUsablePattern_rejectsExactlyThePatternsThatWouldMatchEverything() {
+        assertTrue(RulePrecedenceResolver.isUsablePattern("+34900*"))
+        assertTrue(RulePrecedenceResolver.isUsablePattern("*1234"))
+        assertTrue(RulePrecedenceResolver.isUsablePattern("*900*"))
+        assertFalse(RulePrecedenceResolver.isUsablePattern("*"))
+        assertFalse(RulePrecedenceResolver.isUsablePattern("**"))
+        assertFalse(RulePrecedenceResolver.isUsablePattern("*abc*"))
+        assertFalse(RulePrecedenceResolver.isUsablePattern(""))
+        assertFalse(RulePrecedenceResolver.isUsablePattern("   "))
+    }
 
     @Test
     fun countryBlock_matchesParsedCode() =

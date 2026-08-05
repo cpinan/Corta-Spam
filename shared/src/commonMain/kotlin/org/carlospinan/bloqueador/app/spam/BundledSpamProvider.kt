@@ -1,13 +1,19 @@
 package org.carlospinan.bloqueador.app.spam
 
 /**
- * Bundled local spam heuristics — a small on-device list of known spam prefixes
- * and patterns shipped with the app. The only [SpamProviderClient] implementation
- * bound today. No network — all local.
+ * Bundled local spam heuristics — a small on-device list of known high-volume scam-origin
+ * country codes shipped with the app. The only [SpamProviderClient] implementation bound
+ * today. No network — all local.
  *
- * SPAM_PREFIXES covers known high-spam country/area codes and common scam prefixes.
- * SPAM_PATTERNS are glob-style patterns checked via the same [matchesPattern] logic
- * as the resolver uses.
+ * Entries are stored in `+E.164` form and matched with `startsWith`, which is exactly the form
+ * [SpamProviderClient.lookup] promises for an international handle. A national-format handle
+ * reaches here as-is and matches nothing, which is correct: it carries no country to match.
+ *
+ * There is deliberately no shape-based pattern list. The one that used to be here (`"+*000*"`,
+ * meant to catch numbers padded with zeros) was unreachable dead code, and re-implementing it
+ * live would have blocked real subscribers whose numbers happen to contain a run of zeros —
+ * a heuristic that has never been measured against real traffic doesn't belong on a path that
+ * silently rejects calls.
  */
 class BundledSpamProvider : SpamProviderClient {
     override suspend fun lookup(number: String): SpamResult? {
@@ -15,11 +21,6 @@ class BundledSpamProvider : SpamProviderClient {
         for (prefix in SPAM_PREFIXES) {
             if (cleaned.startsWith(prefix)) {
                 return SpamResult(isSpam = true, confidence = 0.7f, source = "bundled")
-            }
-        }
-        for (pattern in SPAM_PATTERNS) {
-            if (matchesPattern(cleaned, pattern)) {
-                return SpamResult(isSpam = true, confidence = 0.65f, source = "bundled")
             }
         }
         return null
@@ -61,27 +62,5 @@ class BundledSpamProvider : SpamProviderClient {
                 "+375", // Belarus
                 "+7", // Russia/Kazakhstan
             )
-
-        private val SPAM_PATTERNS =
-            setOf(
-                "+*000*", // Toll-free service calls pretending to be real numbers
-            )
-    }
-}
-
-private fun matchesPattern(
-    number: String,
-    pattern: String,
-): Boolean {
-    val trimmed = pattern.trim()
-    if (trimmed.isEmpty()) return false
-    val startsWithStar = trimmed.startsWith('*')
-    val endsWithStar = trimmed.endsWith('*')
-    val core = trimmed.trim('*')
-    return when {
-        startsWithStar && endsWithStar -> number.contains(core, ignoreCase = true)
-        startsWithStar -> number.endsWith(core, ignoreCase = true)
-        endsWithStar -> number.startsWith(core, ignoreCase = true)
-        else -> number.equals(core, ignoreCase = true)
     }
 }

@@ -84,6 +84,7 @@ class EvaluateIncomingCallUseCase(
                 blockedNumbers = blockedEntries.map { it.number }.toSet(),
                 blockedNumberDetails = blockedEntries.associateBy { it.number },
                 enabledPatterns = ruleRepository.enabledPatterns(),
+                allPatterns = ruleRepository.allPatterns(),
                 enabledCountryCodes = countryEntries.map { it.countryCode }.toSet(),
                 countryRuleDetails = countryEntries.associateBy { it.countryCode },
                 spamProvider = spamProvider,

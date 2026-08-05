@@ -5,6 +5,18 @@ data class Country(
     val name: String,
 )
 
+/**
+ * Every dialling code the country-rule picker offers, exactly once.
+ *
+ * The uniqueness is load-bearing, not tidiness. `CountryRule` has `UNIQUE(country_code)` and the
+ * insert is `INSERT OR IGNORE`, so when two rows shared a code the second one silently did
+ * nothing when the user tapped it — the country appeared in the picker and then never appeared
+ * in the list. Codes covering more than one territory are named for all of them
+ * ("United States / Canada") instead of being listed twice.
+ *
+ * [CountriesTest] pins this; adding a duplicate code fails the build's tests, not a user's.
+ */
+
 val COUNTRIES: List<Country> =
     listOf(
         Country("93", "Afghanistan"),
@@ -43,7 +55,6 @@ val COUNTRIES: List<Country> =
         Country("257", "Burundi"),
         Country("855", "Cambodia"),
         Country("237", "Cameroon"),
-        Country("1", "Canada"),
         Country("238", "Cape Verde"),
         Country("1345", "Cayman Islands"),
         Country("236", "Central African Republic"),
@@ -88,7 +99,7 @@ val COUNTRIES: List<Country> =
         Country("30", "Greece"),
         Country("299", "Greenland"),
         Country("1473", "Grenada"),
-        Country("590", "Guadeloupe"),
+        Country("590", "Guadeloupe / Saint Martin"),
         Country("1671", "Guam"),
         Country("502", "Guatemala"),
         Country("224", "Guinea"),
@@ -109,7 +120,6 @@ val COUNTRIES: List<Country> =
         Country("1876", "Jamaica"),
         Country("81", "Japan"),
         Country("962", "Jordan"),
-        Country("7", "Kazakhstan"),
         Country("254", "Kenya"),
         Country("686", "Kiribati"),
         Country("965", "Kuwait"),
@@ -142,7 +152,7 @@ val COUNTRIES: List<Country> =
         Country("976", "Mongolia"),
         Country("382", "Montenegro"),
         Country("1664", "Montserrat"),
-        Country("212", "Morocco"),
+        Country("212", "Morocco / Western Sahara"),
         Country("258", "Mozambique"),
         Country("95", "Myanmar"),
         Country("264", "Namibia"),
@@ -172,11 +182,10 @@ val COUNTRIES: List<Country> =
         Country("974", "Qatar"),
         Country("262", "Réunion"),
         Country("40", "Romania"),
-        Country("7", "Russia"),
+        Country("7", "Russia / Kazakhstan"),
         Country("250", "Rwanda"),
         Country("1869", "Saint Kitts and Nevis"),
         Country("1758", "Saint Lucia"),
-        Country("590", "Saint Martin"),
         Country("508", "Saint Pierre and Miquelon"),
         Country("1784", "Saint Vincent and the Grenadines"),
         Country("685", "Samoa"),
@@ -221,7 +230,7 @@ val COUNTRIES: List<Country> =
         Country("380", "Ukraine"),
         Country("971", "United Arab Emirates"),
         Country("44", "United Kingdom"),
-        Country("1", "United States"),
+        Country("1", "United States / Canada"),
         Country("598", "Uruguay"),
         Country("1340", "US Virgin Islands"),
         Country("998", "Uzbekistan"),
@@ -230,7 +239,6 @@ val COUNTRIES: List<Country> =
         Country("58", "Venezuela"),
         Country("84", "Vietnam"),
         Country("681", "Wallis and Futuna"),
-        Country("212", "Western Sahara"),
         Country("967", "Yemen"),
         Country("260", "Zambia"),
         Country("263", "Zimbabwe"),

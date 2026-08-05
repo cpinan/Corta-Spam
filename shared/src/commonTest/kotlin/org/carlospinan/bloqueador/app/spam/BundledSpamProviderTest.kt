@@ -47,25 +47,22 @@ class BundledSpamProviderTest {
         }
 
     @Test
-    fun aNumberWithoutTheLeadingPlusIsNotMatched() =
+    fun aNationalFormatNumberIsNotMatched() =
         runTest {
-            // Every entry in the list is stored in +E.164 form and matching is a raw startsWith,
-            // so a nationally-formatted number never hits the list.
+            // Every entry is stored in +E.164 form and matching is a raw startsWith. The
+            // resolver is what guarantees this method actually receives that form -- see
+            // SpamProviderClient.lookup's contract and RulePrecedenceResolverSpamTest.
             assertNull(provider.lookup("2348012345678"))
-            assertNull(provider.lookup("002348012345678"))
         }
 
     @Test
-    fun theBundledPatternListCannotMatchAnything() =
+    fun aNumberIsNeverFlaggedOnItsDigitShapeAlone() =
         runTest {
-            // Documents dead code rather than asserting intent. The one SPAM_PATTERNS entry is
-            // "+*000*", but this matcher (like RulePrecedenceResolver's) only understands a
-            // leading and/or trailing star: it strips the outer stars and compares the remainder
-            // literally, so the pattern becomes startsWith("+*000") -- which needs a literal '*'
-            // inside a phone number. The 0.65-confidence branch is therefore unreachable, and no
-            // "contains 000" number is flagged.
+            // There is no shape-based pattern list any more. The one that used to exist was
+            // unreachable dead code, and a live "contains a run of zeros" rule would reject real
+            // subscribers -- these three are ordinary numbers and must all come back clean.
             assertNull(provider.lookup("+34000123456"))
             assertNull(provider.lookup("+34600000123"))
-            assertNull(provider.lookup("+1000000000"))
+            assertNull(provider.lookup("+15550000000"))
         }
 }

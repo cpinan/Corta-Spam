@@ -34,6 +34,12 @@ interface RuleRepository {
     /** Snapshot of enabled pattern rules (for resolver). */
     suspend fun enabledPatterns(): List<PatternRule>
 
+    /**
+     * Snapshot of *every* pattern rule, enabled or not. The resolver needs the disabled ones to
+     * resolve an action rule's `patternId` scope — see [ResolveContext.allPatterns].
+     */
+    suspend fun allPatterns(): List<PatternRule>
+
     /** Snapshot of enabled country rules with full metadata (for resolver). */
     suspend fun enabledCountryRules(): List<CountryRuleEntry>
 

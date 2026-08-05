@@ -121,4 +121,82 @@ class ActionRuleResolverTest {
             assertTrue(decision is RuleDecision.ActionBlock)
             assertEquals(1L, (decision as RuleDecision.ActionBlock).ruleId)
         }
+
+    // ---- patternId scoping ----
+    //
+    // patternId narrows *which callers a rule counts*, so it is resolved against every pattern,
+    // not just the enabled ones. Scoping to an enabled pattern is self-defeating: step 3 returns
+    // a PatternBlock for those numbers, so step 6 never sees them. Looking the scope up in
+    // `enabledPatterns` therefore made the entire branch unreachable — any rule with a patternId
+    // set was dead code, whatever its threshold.
+
+    @Test
+    fun patternScopedRule_firesForANumberMatchingItsDisabledScopePattern() =
+        runTest {
+            val scope = PatternRule(id = 7, pattern = "+34900*", label = "Spanish 900s", enabled = false)
+            val ctx =
+                emptyContext.copy(
+                    allPatterns = listOf(scope),
+                    enabledActionRules =
+                        listOf(ActionRule(id = 1, label = "900 repeats", attempts = 2, windowMinutes = 5, patternId = 7, enabled = true)),
+                    attemptCountsByWindowMinutes = mapOf(5 to 3),
+                )
+
+            val decision = RulePrecedenceResolver.evaluate("+34900123456", ctx)
+
+            assertTrue(decision is RuleDecision.ActionBlock)
+            assertEquals(1L, decision.ruleId)
+        }
+
+    @Test
+    fun patternScopedRule_doesNotFireForANumberOutsideItsScope() =
+        runTest {
+            val scope = PatternRule(id = 7, pattern = "+34900*", label = null, enabled = false)
+            val ctx =
+                emptyContext.copy(
+                    allPatterns = listOf(scope),
+                    enabledActionRules =
+                        listOf(ActionRule(id = 1, label = null, attempts = 2, windowMinutes = 5, patternId = 7, enabled = true)),
+                    attemptCountsByWindowMinutes = mapOf(5 to 99),
+                )
+
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+
+            assertTrue(decision is RuleDecision.DefaultAllow)
+        }
+
+    @Test
+    fun patternScopedRule_withAnUnresolvableScopeDoesNotFire() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    allPatterns = emptyList(),
+                    enabledActionRules =
+                        listOf(ActionRule(id = 1, label = null, attempts = 2, windowMinutes = 5, patternId = 404, enabled = true)),
+                    attemptCountsByWindowMinutes = mapOf(5 to 99),
+                )
+
+            // Fail open: a scope we can't resolve means we don't know who the rule was for, and
+            // guessing "everyone" would block the whole phone.
+            assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.DefaultAllow)
+        }
+
+    @Test
+    fun anEnabledScopePatternStillBlocksAtStepThreeFirst() =
+        runTest {
+            val scope = PatternRule(id = 7, pattern = "+34900*", label = null, enabled = true)
+            val ctx =
+                emptyContext.copy(
+                    enabledPatterns = listOf(scope),
+                    allPatterns = listOf(scope),
+                    enabledActionRules =
+                        listOf(ActionRule(id = 1, label = null, attempts = 2, windowMinutes = 5, patternId = 7, enabled = true)),
+                    attemptCountsByWindowMinutes = mapOf(5 to 99),
+                )
+
+            // Documented, not a bug: the pattern already blocks these numbers outright, so the
+            // action rule has nothing left to do. This is why scopes are useful only when the
+            // pattern is disabled as a block rule.
+            assertTrue(RulePrecedenceResolver.evaluate("+34900123456", ctx) is RuleDecision.PatternBlock)
+        }
 }

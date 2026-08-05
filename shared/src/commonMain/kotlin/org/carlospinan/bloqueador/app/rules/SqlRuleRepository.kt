@@ -155,6 +155,18 @@ class SqlRuleRepository(
             }
         }
 
+    override suspend fun allPatterns(): List<PatternRule> =
+        withContext(Dispatchers.Default) {
+            queries.selectAllPatternRules().executeAsList().map {
+                PatternRule(
+                    id = it.id,
+                    pattern = it.pattern,
+                    label = it.label,
+                    enabled = it.enabled == 1L,
+                )
+            }
+        }
+
     override suspend fun enabledCountryRules(): List<CountryRuleEntry> =
         withContext(Dispatchers.Default) {
             queries

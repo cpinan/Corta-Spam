@@ -36,6 +36,13 @@ internal class FakeRuleRepository : RuleRepository {
     val scheduleRulesFlow = MutableStateFlow(emptyList<ScheduleRuleEntry>())
 
     var enabledPatternRules = emptyList<PatternRule>()
+
+    /**
+     * Backs [allPatterns]. Defaults to null so a test that only sets [enabledPatternRules] keeps
+     * the two agreeing; set it explicitly when the test needs a *disabled* pattern to exist
+     * (the only case where the two snapshots differ, e.g. an action rule scoped to one).
+     */
+    var allPatternRules: List<PatternRule>? = null
     var enabledActionRuleList = emptyList<ActionRule>()
     var enabledScheduleRuleList = emptyList<ScheduleRule>()
 
@@ -72,6 +79,8 @@ internal class FakeRuleRepository : RuleRepository {
     override suspend fun allowlistedNumberEntries() = allowlistedNumbersFlow.value
 
     override suspend fun enabledPatterns(): List<PatternRule> = enabledPatternRules
+
+    override suspend fun allPatterns(): List<PatternRule> = allPatternRules ?: enabledPatternRules
 
     override suspend fun enabledCountryRules(): List<CountryRuleEntry> = countryRulesFlow.value.filter { it.enabled }
 
