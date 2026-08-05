@@ -12,6 +12,12 @@ settings:
     FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
     OTHER_LDFLAGS: "$(inherited) -lsqlite3"
     TARGETED_DEVICE_FAMILY: "1"
+    # shared/build.gradle.kts declares iosArm64 + iosSimulatorArm64 only — there is no
+    # iosX64 Kotlin target. A generic 'iOS Simulator' destination otherwise resolves ARCHS
+    # to "arm64 x86_64", and embedAndSignAppleFrameworkForXcode fails the build with
+    # "Unknown iOS simulator arch: 'x86_64'". Excluding it here keeps the Xcode project
+    # and the Kotlin targets describing the same set of architectures.
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 
 targets:
   iosApp:
