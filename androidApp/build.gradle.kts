@@ -21,6 +21,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests {
+            // Robolectric needs the merged resources/manifest to build a real Context.
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -30,4 +37,12 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.kotlinx.datetime)
+
+    // This module had no test source set at all until 2026-08-05. Its Android-only classes
+    // (telecom bridge, notifications, contact lookup) need a Context, so they run under
+    // Robolectric on the JVM -- same setup the :shared androidUnitTest source set uses.
+    testImplementation(kotlin("test"))
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.ext.junit)
 }

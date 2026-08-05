@@ -50,6 +50,11 @@ jobs:
       - name: Run shared module unit tests (JVM)
         run: ./gradlew :shared:testDebugUnitTest
 
+      # androidApp gained a test source set on 2026-08-05; without this its tests exist but
+      # never run in CI, which is the same silent gap verifySqlDelightMigration used to have.
+      - name: Run androidApp unit tests (Robolectric)
+        run: ./gradlew :androidApp:testDebugUnitTest
+
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v6
