@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.rules
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOne
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -28,29 +29,38 @@ class SqlCallLogRepository(
             .mapToList(dispatcher)
             .map { list -> list.map { it.toData() } }
 
-    override suspend fun blockedCountToday(): Int =
-        withContext(dispatcher) {
-            queries.countBlockedCallsToday().executeAsOne().toInt()
-        }
+    // An indexed COUNT over a since-0 window: cheap to run, and SQLDelight re-runs it on every
+    // CallLogEntry write, which is the notification we actually want. Collecting allEntries()
+    // for the same purpose would materialise the whole log on each new call.
+    override fun changes(): Flow<Unit> =
+        queries
+            .countBlockedCallsSince(0L)
+            .asFlow()
+            .mapToOne(dispatcher)
+            .map { }
 
-    override suspend fun blockedCountThisWeek(): Int =
-        withContext(dispatcher) {
-            queries.countBlockedCallsThisWeek().executeAsOne().toInt()
-        }
+    override suspend fun blockedCountToday(): Int = blockedCountSince(StatsWindows.startOfToday(currentTimeMillis()))
 
-    override suspend fun blockedCountThisMonth(): Int =
-        withContext(dispatcher) {
-            queries.countBlockedCallsThisMonth().executeAsOne().toInt()
-        }
+    override suspend fun blockedCountThisWeek(): Int = blockedCountSince(StatsWindows.startOfWeek(currentTimeMillis()))
+
+    override suspend fun blockedCountThisMonth(): Int = blockedCountSince(StatsWindows.startOfMonth(currentTimeMillis()))
 
     override suspend fun blockedStats(): BlockedStats =
         withContext(dispatcher) {
+            // One "now" for all four, so the counters can't straddle a midnight that falls
+            // between two of the queries and report a week smaller than the day inside it.
+            val now = currentTimeMillis()
             BlockedStats(
-                today = queries.countBlockedCallsToday().executeAsOne().toInt(),
-                thisWeek = queries.countBlockedCallsThisWeek().executeAsOne().toInt(),
-                thisMonth = queries.countBlockedCallsThisMonth().executeAsOne().toInt(),
+                today = queries.countBlockedCallsSince(StatsWindows.startOfToday(now)).executeAsOne().toInt(),
+                thisWeek = queries.countBlockedCallsSince(StatsWindows.startOfWeek(now)).executeAsOne().toInt(),
+                thisMonth = queries.countBlockedCallsSince(StatsWindows.startOfMonth(now)).executeAsOne().toInt(),
                 pendingReview = queries.countPendingReview().executeAsOne().toInt(),
             )
+        }
+
+    private suspend fun blockedCountSince(sinceMillis: Long): Int =
+        withContext(dispatcher) {
+            queries.countBlockedCallsSince(sinceMillis).executeAsOne().toInt()
         }
 
     override suspend fun logCall(
@@ -78,39 +88,29 @@ class SqlCallLogRepository(
     }
 
     /**
-     * Blocked-call counts for the last [daysBack] calendar days, newest first.
+     * Blocked-call counts for the last [daysBack] **local** calendar days, newest first.
      *
-     * Buckets align to UTC midnight — the same boundary [countBlockedCallsToday] uses — so
-     * the first bucket's count always equals [BlockedStats.today]. Anchoring them to `now`
-     * instead would make the newest bucket a rolling 24h window whose label ("Yesterday",
-     * derived from its start) contradicted the calls inside it.
+     * Buckets are consecutive local midnights, the same boundary [blockedStats] uses, so the
+     * first bucket's count always equals [BlockedStats.today]. They are not `now` minus a
+     * multiple of 86 400 000 ms: that both drifts off local midnight and mis-sizes the 23- and
+     * 25-hour days around a DST change, putting calls in the wrong bucket twice a year.
+     *
+     * Only blocked timestamps back to the oldest bucket are read; this used to load every
+     * column of every row the call log had ever held in order to count seven days.
      */
     override suspend fun blockedByDay(daysBack: Int): List<DayStat> =
         withContext(dispatcher) {
-            val entries = queries.selectAllCallLogEntries().executeAsList()
-            val dayMillis = 86_400_000L
-            val todayStart = (currentTimeMillis() / dayMillis) * dayMillis
-            (0 until daysBack).map { dayOffset ->
-                val dayStart = todayStart - dayOffset * dayMillis
-                val dayEnd = dayStart + dayMillis
-                val count =
-                    entries.count {
-                        it.action == "BLOCKED" && it.timestamp >= dayStart && it.timestamp < dayEnd
-                    }
-                DayStat(dateLabel = dayLabel(dayStart / dayMillis), count = count, cutoffEpochMillis = dayStart)
+            val buckets = StatsWindows.dayBuckets(currentTimeMillis(), daysBack)
+            val oldest = buckets.lastOrNull()?.startMillis ?: return@withContext emptyList()
+            val timestamps = queries.selectBlockedTimestampsSince(oldest).executeAsList()
+            buckets.map { bucket ->
+                DayStat(
+                    daysAgo = bucket.daysAgo,
+                    count = timestamps.count { it >= bucket.startMillis && it < bucket.endMillis },
+                    cutoffEpochMillis = bucket.startMillis,
+                )
             }
         }
-
-    private fun dayLabel(epochDay: Long): String {
-        val now = currentTimeMillis()
-        val today = now / 86_400_000L
-        val diff = today - epochDay
-        return when (diff) {
-            0L -> "Today"
-            1L -> "Yesterday"
-            else -> "${diff}d ago"
-        }
-    }
 
     private fun org.carlospinan.bloqueador.app.db.CallLogEntry.toData() =
         CallLogEntryData(

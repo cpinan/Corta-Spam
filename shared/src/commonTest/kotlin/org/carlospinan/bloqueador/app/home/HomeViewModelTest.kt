@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.carlospinan.bloqueador.app.rules.BlockedStats
+import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
 import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import kotlin.test.AfterTest
@@ -94,5 +95,35 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertTrue(vm.state.value.blockingEnabled)
+        }
+
+    @Test
+    fun `stats update when a call is logged while home is on screen`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeCallLogRepository(stats = BlockedStats(today = 1, thisWeek = 1, thisMonth = 1))
+            val vm = HomeViewModel(callLogRepository = repo, settingsRepository = FakeSettingsRepository())
+            advanceUntilIdle()
+            assertEquals(1, vm.state.value.blockedToday)
+
+            // A call comes in while the dashboard is visible. Home used to read the counters
+            // once at construction and then never again without an explicit Refresh, so the
+            // number sat stale until the screen was recreated.
+            repo.stats = BlockedStats(today = 2, thisWeek = 2, thisMonth = 2)
+            repo.entriesFlow.value =
+                listOf(
+                    CallLogEntryData(
+                        id = 1,
+                        number = "+34600123456",
+                        timestamp = 0L,
+                        action = "BLOCKED",
+                        ruleType = "MANUAL",
+                        ruleId = 1,
+                        ruleDetail = null,
+                    ),
+                )
+            advanceUntilIdle()
+
+            assertEquals(2, vm.state.value.blockedToday)
         }
 }

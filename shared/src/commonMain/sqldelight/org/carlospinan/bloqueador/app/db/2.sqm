@@ -1,0 +1,9 @@
+-- Every blocked-call statistic filters on (action, timestamp): the three Home counters, the
+-- seven-day chart, and the call-log screens. Without an index each is a full scan of a table
+-- that only grows (nothing prunes it but the user's own "clear log"), so the cost climbs with
+-- every call the app ever handles.
+--
+-- Index-only migration: no table is rebuilt and no data moves, so this is safe to apply to a
+-- populated database and needs none of the rename-copy-drop dance a CHECK-constraint change
+-- would (see corta-spam-sqldelight-check-migration).
+CREATE INDEX idx_call_log_action_time ON CallLogEntry(action, timestamp DESC);

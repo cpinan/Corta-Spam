@@ -1,6 +1,8 @@
 package org.carlospinan.bloqueador.app.testing
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import org.carlospinan.bloqueador.app.rules.BlockedStats
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
@@ -22,6 +24,13 @@ internal class FakeCallLogRepository(
     override fun allEntries() = entriesFlow
 
     override fun recentEntries(limit: Int) = entriesFlow
+
+    /**
+     * Mirrors the real implementation's contract: emits once immediately, then again on every
+     * call-log change. Driven off [entriesFlow] so a test can trigger a Home refresh by pushing
+     * a new list into it.
+     */
+    override fun changes(): Flow<Unit> = entriesFlow.map { }
 
     override suspend fun blockedCountToday(): Int = stats.today
 

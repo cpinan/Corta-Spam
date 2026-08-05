@@ -140,22 +140,26 @@ SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT ?;
 selectAllCallLogEntries:
 SELECT * FROM CallLogEntry ORDER BY timestamp DESC;
 
--- timestamp is stored in Unix millis (see insertCallLogEntry callers); strftime('%s', ...)
--- returns seconds, so boundaries below are scaled to millis to match. strftime is used instead
--- of the newer unixepoch() function because unixepoch() needs SQLite 3.38+ and isn't present in
--- the SQLite bundled with older Android versions (confirmed crash on an API 33 emulator) —
--- strftime has been available since SQLite 3.0 and accepts the same date modifiers.
-countBlockedCallsToday:
-SELECT count(*) AS count FROM CallLogEntry
-WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of day') AS INTEGER) * 1000;
+-- Serves every "blocked calls in a window" query. Without it each one is a full table scan of
+-- the call log, which grows unbounded (only the user's own "clear log" ever shrinks it), and the
+-- Home screen runs three of them plus a seven-day chart on every visit.
+CREATE INDEX idx_call_log_action_time ON CallLogEntry(action, timestamp DESC);
 
-countBlockedCallsThisWeek:
+-- Window boundaries are computed by the caller (StatsWindows) rather than in SQL. SQLite's
+-- strftime('%s','now','start of day') is midnight *UTC*, so "blocked today" used to reset at
+-- 19:00 local time in New York; and its date modifiers can't express a DST-aware day length.
+-- kotlinx-datetime can, and gets unit-tested on the way through. timestamp is Unix millis.
+countBlockedCallsSince:
 SELECT count(*) AS count FROM CallLogEntry
-WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of day', 'weekday 0', '-6 days') AS INTEGER) * 1000;
+WHERE action = 'BLOCKED' AND timestamp >= ?;
 
-countBlockedCallsThisMonth:
-SELECT count(*) AS count FROM CallLogEntry
-WHERE action = 'BLOCKED' AND timestamp >= CAST(strftime('%s', 'now', 'start of month') AS INTEGER) * 1000;
+-- Only the timestamps, only the blocked ones, only back to the oldest bucket the chart shows.
+-- blockedByDay used to pull every column of every row ever logged into memory to count seven
+-- days' worth.
+selectBlockedTimestampsSince:
+SELECT timestamp FROM CallLogEntry
+WHERE action = 'BLOCKED' AND timestamp >= ?
+ORDER BY timestamp DESC;
 
 clearCallLog:
 DELETE FROM CallLogEntry;

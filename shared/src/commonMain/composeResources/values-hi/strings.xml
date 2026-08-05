@@ -225,4 +225,7 @@
 
     <!-- के बारे में -->
     <string name="about_open_source">ओपन सोर्स · MIT लाइसेंस</string>
+    <string name="stats_day_today">आज</string>
+    <string name="stats_day_yesterday">कल</string>
+    <string name="stats_day_n_days_ago">%1$d दिन पहले</string>
 </resources>

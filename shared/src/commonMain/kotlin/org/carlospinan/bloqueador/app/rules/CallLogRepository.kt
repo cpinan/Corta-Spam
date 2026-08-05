@@ -28,6 +28,17 @@ interface CallLogRepository {
     /** Count blocked calls per day for the last [daysBack] days. Returns ordered by date descending. */
     suspend fun blockedByDay(daysBack: Int): List<DayStat>
 
+    /**
+     * Emits once on collection and again every time the call log changes.
+     *
+     * A change signal rather than the data itself: the Home screen's counters are three
+     * aggregate queries plus a pending-review count, and re-running those on demand is cheaper
+     * than keeping four reactive queries alive. Without it Home only recomputed on creation and
+     * on an explicit Refresh, so a call blocked while the app sat in the foreground didn't move
+     * the "blocked today" number until the user navigated away and back.
+     */
+    fun changes(): Flow<Unit>
+
     /** Log a call screening decision. */
     suspend fun logCall(
         number: String,
@@ -57,8 +68,17 @@ data class BlockedStats(
     val pendingReview: Int = 0,
 )
 
+/**
+ * Blocked-call count for one local calendar day.
+ *
+ * Carries [daysAgo] rather than a rendered label: the label used to be built here as
+ * "Today"/"Yesterday"/"3d ago", which is English regardless of the four locales the app ships,
+ * and the data layer has no access to string resources. Formatting happens at the presentation
+ * edge, where `stringResource` is available.
+ */
 data class DayStat(
-    val dateLabel: String,
+    /** 0 = today, 1 = yesterday, and so on. */
+    val daysAgo: Int,
     val count: Int,
     val cutoffEpochMillis: Long,
 )

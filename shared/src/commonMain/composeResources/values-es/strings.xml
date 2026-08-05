@@ -223,4 +223,7 @@
 
     <!-- Acerca de -->
     <string name="onboarding_dialer_icon">📞</string>
+    <string name="stats_day_today">Hoy</string>
+    <string name="stats_day_yesterday">Ayer</string>
+    <string name="stats_day_n_days_ago">Hace %1$d días</string>
 </resources>

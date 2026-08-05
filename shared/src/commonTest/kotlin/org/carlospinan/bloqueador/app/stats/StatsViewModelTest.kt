@@ -31,8 +31,8 @@ class StatsViewModelTest {
                 FakeCallLogRepository(
                     dailyStats =
                         listOf(
-                            DayStat("Mon", 5, 1000L),
-                            DayStat("Tue", 3, 2000L),
+                            DayStat(daysAgo = 0, count = 5, cutoffEpochMillis = 1000L),
+                            DayStat(daysAgo = 1, count = 3, cutoffEpochMillis = 2000L),
                         ),
                 )
             val vm = StatsViewModel(repo)
@@ -40,7 +40,7 @@ class StatsViewModelTest {
 
             val state = vm.state.first { !it.isLoading }
             assertEquals(2, state.dailyStats.size)
-            assertEquals("Mon", state.dailyStats[0].dateLabel)
+            assertEquals(0, state.dailyStats[0].daysAgo)
             assertEquals(5, state.dailyStats[0].count)
         }
 

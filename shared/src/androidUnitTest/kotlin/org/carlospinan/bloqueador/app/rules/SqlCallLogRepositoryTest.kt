@@ -181,7 +181,7 @@ class SqlCallLogRepositoryTest {
         }
 
     @Test
-    fun blockedByDayLabelsTheNewestBucketToday() =
+    fun blockedByDayNumbersTheNewestBucketAsToday() =
         runTest {
             val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
             repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
@@ -189,10 +189,13 @@ class SqlCallLogRepositoryTest {
 
             val stats = repo.blockedByDay(daysBack = 7)
 
-            assertEquals("Today", stats[0].dateLabel)
+            // The bucket carries how many days back it is; the *words* "Today"/"Yesterday"
+            // are chosen at the presentation edge, where the user's locale is available.
+            assertEquals(0, stats[0].daysAgo)
             assertEquals(1, stats[0].count)
-            assertEquals("Yesterday", stats[1].dateLabel)
+            assertEquals(1, stats[1].daysAgo)
             assertEquals(1, stats[1].count)
+            assertEquals(List(7) { it }, stats.map { it.daysAgo }, "newest bucket first, one per day")
         }
 
     @Test

@@ -18,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.stats_blocked_label
+import cortaspam.shared.generated.resources.stats_day_n_days_ago
+import cortaspam.shared.generated.resources.stats_day_today
+import cortaspam.shared.generated.resources.stats_day_yesterday
 import cortaspam.shared.generated.resources.stats_empty
 import cortaspam.shared.generated.resources.stats_loading
 import cortaspam.shared.generated.resources.stats_title
@@ -57,7 +60,7 @@ fun StatsScreen(
                     )
                 } else {
                     LazyColumn {
-                        items(state.dailyStats, key = { it.dateLabel }) { day ->
+                        items(state.dailyStats, key = { it.daysAgo }) { day ->
                             DayStatCard(day)
                         }
                     }
@@ -77,7 +80,7 @@ private fun DayStatCard(day: DayStat) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = day.dateLabel,
+                text = dayLabel(day.daysAgo),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -90,3 +93,17 @@ private fun DayStatCard(day: DayStat) {
         }
     }
 }
+
+/**
+ * "Today" / "Yesterday" / "N days ago" for a bucket [daysAgo] days back.
+ *
+ * Lives here, not in the repository, because only a Composable can reach `stringResource` --
+ * the repository used to hardcode the English words for all four shipped locales.
+ */
+@Composable
+private fun dayLabel(daysAgo: Int): String =
+    when (daysAgo) {
+        0 -> stringResource(Res.string.stats_day_today)
+        1 -> stringResource(Res.string.stats_day_yesterday)
+        else -> stringResource(Res.string.stats_day_n_days_ago, daysAgo)
+    }

@@ -225,4 +225,7 @@
 
     <!-- Sobre -->
     <string name="about_open_source">Open source · Licença MIT</string>
+    <string name="stats_day_today">Hoje</string>
+    <string name="stats_day_yesterday">Ontem</string>
+    <string name="stats_day_n_days_ago">Há %1$d dias</string>
 </resources>
