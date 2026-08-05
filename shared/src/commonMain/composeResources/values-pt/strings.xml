@@ -228,4 +228,18 @@
     <string name="stats_day_today">Hoje</string>
     <string name="stats_day_yesterday">Ontem</string>
     <string name="stats_day_n_days_ago">Há %1$d dias</string>
+    <string name="hub_action_rules">Chamadas repetidas</string>
+    <string name="action_rule_title">Regras de chamadas repetidas</string>
+    <string name="action_rule_add_title">Bloquear chamadas repetidas</string>
+    <string name="action_rule_empty_hint">Nenhuma regra de chamadas repetidas. Adicione uma para bloquear um número que liga vezes demais em pouco tempo.</string>
+    <string name="action_rule_attempts_hint">Chamadas</string>
+    <string name="action_rule_window_hint">Em (minutos)</string>
+    <string name="action_rule_label_hint">Rótulo (opcional)</string>
+    <string name="action_rule_summary">Bloquear após %1$d chamadas em %2$d minutos</string>
+    <string name="action_rule_needs_positive">Chamadas e minutos precisam ser pelo menos 1.</string>
+    <string name="action_rule_scope_title">Apenas para números que correspondam a</string>
+    <string name="action_rule_scope_none">Qualquer número</string>
+    <string name="action_rule_scope_label">Apenas: %1$s</string>
+    <string name="action_rule_scope_hint">Um padrão de escopo limita quais chamadas são contadas. Desative esse padrão como regra de bloqueio; caso contrário ele bloqueia esses números diretamente e esta regra nunca se aplica.</string>
+    <string name="pattern_needs_digits">Um padrão precisa conter ao menos um dígito. Um padrão feito apenas de curingas bloquearia todas as chamadas.</string>
 </resources>

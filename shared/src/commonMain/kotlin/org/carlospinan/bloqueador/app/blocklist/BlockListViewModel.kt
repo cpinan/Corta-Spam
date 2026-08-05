@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
+import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 
@@ -22,6 +24,7 @@ data class BlockListUiState(
     val patternRules: List<PatternRuleEntry> = emptyList(),
     val countryRules: List<CountryRuleEntry> = emptyList(),
     val scheduleRules: List<ScheduleRuleEntry> = emptyList(),
+    val actionRules: List<ActionRuleEntry> = emptyList(),
     val contactNames: Map<String, String> = emptyMap(),
 ) {
     val blockedCount: Int get() = blockedNumbers.size
@@ -29,6 +32,7 @@ data class BlockListUiState(
     val patternCount: Int get() = patternRules.size
     val countryCount: Int get() = countryRules.size
     val scheduleCount: Int get() = scheduleRules.size
+    val actionCount: Int get() = actionRules.size
 }
 
 sealed interface BlockListIntent {
@@ -92,6 +96,27 @@ sealed interface BlockListIntent {
     data class RemoveScheduleRule(
         val id: Long,
     ) : BlockListIntent
+
+    /**
+     * @param patternId optional scope: only count attempts from numbers matching that pattern.
+     *   Scoping to a pattern that is still *enabled* as a block rule has no effect — those
+     *   numbers are blocked outright before any attempt counting happens.
+     */
+    data class AddActionRule(
+        val label: String?,
+        val attempts: Int,
+        val windowMinutes: Int,
+        val patternId: Long? = null,
+    ) : BlockListIntent
+
+    data class ToggleActionRule(
+        val id: Long,
+        val enabled: Boolean,
+    ) : BlockListIntent
+
+    data class RemoveActionRule(
+        val id: Long,
+    ) : BlockListIntent
 }
 
 /** Backs all 6 block-list screens (hub + 5 detail screens) -- a single instance doesn't know
@@ -113,6 +138,8 @@ class BlockListViewModel(
             PartialBlockListState(blocked, allowlisted, patterns, countries, schedules)
             // kotlinx.coroutines' typed combine() overloads top out at 5 flows; chaining a plain
             // 2-arg combine on top avoids forcing the mixed-type set into the vararg Array<T> form.
+        }.combine(ruleRepository.actionRules()) { partial, actionRules ->
+            partial.copy(actionRules = actionRules)
         }.combine(contactNamesFlow) { partial, contactNames ->
             BlockListUiState(
                 blockedNumbers = partial.blockedNumbers,
@@ -120,6 +147,7 @@ class BlockListViewModel(
                 patternRules = partial.patternRules,
                 countryRules = partial.countryRules,
                 scheduleRules = partial.scheduleRules,
+                actionRules = partial.actionRules,
                 contactNames = contactNames,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BlockListUiState())
@@ -147,6 +175,10 @@ class BlockListViewModel(
             is BlockListIntent.AddScheduleRule -> addScheduleRule(intent.label, intent.startMinute, intent.endMinute)
             is BlockListIntent.ToggleScheduleRule -> toggleScheduleRule(intent.id, intent.enabled)
             is BlockListIntent.RemoveScheduleRule -> removeScheduleRule(intent.id)
+            is BlockListIntent.AddActionRule ->
+                addActionRule(intent.label, intent.attempts, intent.windowMinutes, intent.patternId)
+            is BlockListIntent.ToggleActionRule -> toggleActionRule(intent.id, intent.enabled)
+            is BlockListIntent.RemoveActionRule -> removeActionRule(intent.id)
         }
     }
 
@@ -186,6 +218,10 @@ class BlockListViewModel(
         pattern: String,
         label: String?,
     ) {
+        // The dialog already disables its confirm button for these, but the rule set is the
+        // thing that must never hold a pattern that matches every number -- one saved "*" blocks
+        // the user's entire phone with no obvious cause.
+        if (!RulePrecedenceResolver.isUsablePattern(pattern)) return
         viewModelScope.launch {
             ruleRepository.addPatternRule(pattern, label)
         }
@@ -254,6 +290,36 @@ class BlockListViewModel(
             ruleRepository.removeScheduleRule(id)
         }
     }
+
+    private fun addActionRule(
+        label: String?,
+        attempts: Int,
+        windowMinutes: Int,
+        patternId: Long?,
+    ) {
+        // attempts <= 0 satisfies "count >= attempts" for every caller and would block the whole
+        // phone; a zero-length window can never contain an attempt, so the rule is inert. The
+        // dialog rejects both, and so does backup restore -- see BackupEntryValidator.
+        if (attempts < 1 || windowMinutes < 1) return
+        viewModelScope.launch {
+            ruleRepository.addActionRule(label, attempts, windowMinutes, patternId)
+        }
+    }
+
+    private fun toggleActionRule(
+        id: Long,
+        enabled: Boolean,
+    ) {
+        viewModelScope.launch {
+            ruleRepository.toggleActionRule(id, enabled)
+        }
+    }
+
+    private fun removeActionRule(id: Long) {
+        viewModelScope.launch {
+            ruleRepository.removeActionRule(id)
+        }
+    }
 }
 
 private data class PartialBlockListState(
@@ -262,4 +328,5 @@ private data class PartialBlockListState(
     val patternRules: List<PatternRuleEntry>,
     val countryRules: List<CountryRuleEntry>,
     val scheduleRules: List<ScheduleRuleEntry>,
+    val actionRules: List<ActionRuleEntry> = emptyList(),
 )

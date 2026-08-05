@@ -225,4 +225,16 @@
     <string name="stats_day_today">Today</string>
     <string name="stats_day_yesterday">Yesterday</string>
     <string name="stats_day_n_days_ago">%1$d days ago</string>
+    <string name="hub_action_rules">Repeat callers</string>
+    <string name="action_rule_empty_hint">No repeat-caller rules. Add one to block a number that calls too many times in a short window.</string>
+    <string name="action_rule_attempts_hint">Calls</string>
+    <string name="action_rule_window_hint">Within (minutes)</string>
+    <string name="action_rule_label_hint">Label (optional)</string>
+    <string name="action_rule_summary">Block after %1$d calls in %2$d minutes</string>
+    <string name="action_rule_needs_positive">Calls and minutes must both be at least 1.</string>
+    <string name="action_rule_scope_title">Only for numbers matching</string>
+    <string name="action_rule_scope_none">Any number</string>
+    <string name="action_rule_scope_label">Only: %1$s</string>
+    <string name="action_rule_scope_hint">A scope pattern narrows which callers are counted. Turn that pattern off as a block rule, otherwise it blocks those numbers outright and this rule never applies.</string>
+    <string name="pattern_needs_digits">A pattern must contain at least one digit. A pattern made only of wildcards would block every call.</string>
 </resources>

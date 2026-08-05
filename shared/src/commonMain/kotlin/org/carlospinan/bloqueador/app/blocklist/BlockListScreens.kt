@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +43,18 @@ import cortaspam.shared.generated.resources.action_add
 import cortaspam.shared.generated.resources.action_cancel
 import cortaspam.shared.generated.resources.action_ok
 import cortaspam.shared.generated.resources.action_remove
+import cortaspam.shared.generated.resources.action_rule_add_title
+import cortaspam.shared.generated.resources.action_rule_attempts_hint
+import cortaspam.shared.generated.resources.action_rule_empty_hint
+import cortaspam.shared.generated.resources.action_rule_label_hint
+import cortaspam.shared.generated.resources.action_rule_needs_positive
+import cortaspam.shared.generated.resources.action_rule_scope_hint
+import cortaspam.shared.generated.resources.action_rule_scope_label
+import cortaspam.shared.generated.resources.action_rule_scope_none
+import cortaspam.shared.generated.resources.action_rule_scope_title
+import cortaspam.shared.generated.resources.action_rule_summary
+import cortaspam.shared.generated.resources.action_rule_title
+import cortaspam.shared.generated.resources.action_rule_window_hint
 import cortaspam.shared.generated.resources.action_skip
 import cortaspam.shared.generated.resources.allowlist_add_hint
 import cortaspam.shared.generated.resources.allowlist_add_title
@@ -64,9 +78,11 @@ import cortaspam.shared.generated.resources.country_add_title
 import cortaspam.shared.generated.resources.country_empty_hint
 import cortaspam.shared.generated.resources.country_search_hint
 import cortaspam.shared.generated.resources.country_title
+import cortaspam.shared.generated.resources.hub_action_rules
 import cortaspam.shared.generated.resources.hub_countries
 import cortaspam.shared.generated.resources.hub_patterns
 import cortaspam.shared.generated.resources.hub_schedules
+import cortaspam.shared.generated.resources.ic_action_rules
 import cortaspam.shared.generated.resources.ic_allowlist
 import cortaspam.shared.generated.resources.ic_blocked_number
 import cortaspam.shared.generated.resources.ic_countries
@@ -79,6 +95,7 @@ import cortaspam.shared.generated.resources.pattern_android_only
 import cortaspam.shared.generated.resources.pattern_empty_hint
 import cortaspam.shared.generated.resources.pattern_examples
 import cortaspam.shared.generated.resources.pattern_label_hint
+import cortaspam.shared.generated.resources.pattern_needs_digits
 import cortaspam.shared.generated.resources.pattern_title
 import cortaspam.shared.generated.resources.schedule_empty_hint
 import cortaspam.shared.generated.resources.schedule_end_hint
@@ -94,10 +111,12 @@ import cortaspam.shared.generated.resources.schedule_start_hint
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.COUNTRIES
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
+import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -542,11 +561,13 @@ fun BlockListHubScreen(
     patternCount: Int,
     countryCount: Int,
     scheduleCount: Int,
+    actionCount: Int,
     onNavigateToManual: () -> Unit,
     onNavigateToAllowlist: () -> Unit,
     onNavigateToPatterns: () -> Unit,
     onNavigateToCountries: () -> Unit,
     onNavigateToSchedules: () -> Unit,
+    onNavigateToActionRules: () -> Unit,
     onBack: () -> Unit,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
@@ -603,6 +624,12 @@ fun BlockListHubScreen(
                         count = scheduleCount,
                         icon = Res.drawable.ic_quiet_hours,
                         onClick = onNavigateToSchedules,
+                    )
+                    HubCard(
+                        title = stringResource(Res.string.hub_action_rules),
+                        count = actionCount,
+                        icon = Res.drawable.ic_action_rules,
+                        onClick = onNavigateToActionRules,
                     )
                 }
             }
@@ -732,6 +759,9 @@ private fun AddPatternDialog(
 ) {
     var pattern by remember { mutableStateOf("") }
     var label by remember { mutableStateOf("") }
+    // A pattern is matched on its digits alone, so one made only of stars and punctuation
+    // matches every number alive -- typing "*" here would block the user's entire phone.
+    val usable = remember(pattern) { RulePrecedenceResolver.isUsablePattern(pattern) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -742,8 +772,17 @@ private fun AddPatternDialog(
                     value = pattern,
                     onValueChange = { pattern = it },
                     label = { Text(stringResource(Res.string.pattern_add_hint)) },
+                    isError = pattern.isNotBlank() && !usable,
                     singleLine = true,
                 )
+                if (pattern.isNotBlank() && !usable) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(Res.string.pattern_needs_digits),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = label,
@@ -762,11 +801,11 @@ private fun AddPatternDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (pattern.isNotBlank()) {
+                    if (usable) {
                         onConfirm(pattern.trim(), label.trim().ifBlank { null })
                     }
                 },
-                enabled = pattern.isNotBlank(),
+                enabled = usable,
             ) {
                 Text(stringResource(Res.string.action_add))
             }
@@ -1131,6 +1170,219 @@ private fun TimePickerDialog(
         confirmButton = {
             TextButton(onClick = { onConfirm(state.hour, state.minute) }) {
                 Text(stringResource(Res.string.action_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.action_cancel))
+            }
+        },
+    )
+}
+
+/**
+ * Repeat-caller ("action") rules: block a number after it has tried N times inside a window.
+ *
+ * These rules existed in the schema, the repository, the resolver and the backup format from
+ * M2 onwards, but there was no way to create one -- the only route in was hand-editing a backup
+ * JSON. This screen is that missing route.
+ */
+@Composable
+fun ActionRuleScreen(
+    rules: List<ActionRuleEntry>,
+    patterns: List<PatternRuleEntry>,
+    onAdd: (String?, Int, Int, Long?) -> Unit,
+    onToggle: (Long, Boolean) -> Unit,
+    onRemove: (Long) -> Unit,
+    onBack: () -> Unit,
+) {
+    var showAddDialog by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
+
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            AdaptiveContent(windowSizeClass = windowSizeClass) {
+                Text(
+                    text = stringResource(Res.string.action_rule_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = { showAddDialog = true }) {
+                    Text(text = stringResource(Res.string.action_add))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (rules.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.action_rule_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn {
+                        items(rules, key = { it.id }) { entry ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text =
+                                                stringResource(
+                                                    Res.string.action_rule_summary,
+                                                    entry.attempts,
+                                                    entry.windowMinutes,
+                                                ),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                        if (entry.label != null) {
+                                            Text(
+                                                text = entry.label,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                        val scope = patterns.firstOrNull { it.id == entry.patternId }
+                                        if (scope != null) {
+                                            Text(
+                                                text = stringResource(Res.string.action_rule_scope_label, scope.pattern),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    androidx.compose.material3.Switch(
+                                        checked = entry.enabled,
+                                        onCheckedChange = { onToggle(entry.id, it) },
+                                    )
+                                    IconButton(onClick = { onRemove(entry.id) }) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_delete),
+                                            contentDescription = stringResource(Res.string.action_remove),
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AddActionRuleDialog(
+            patterns = patterns,
+            onConfirm = { label, attempts, windowMinutes, patternId ->
+                onAdd(label, attempts, windowMinutes, patternId)
+                showAddDialog = false
+            },
+            onDismiss = { showAddDialog = false },
+        )
+    }
+}
+
+@Composable
+private fun AddActionRuleDialog(
+    patterns: List<PatternRuleEntry>,
+    onConfirm: (String?, Int, Int, Long?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var attemptsText by remember { mutableStateOf("3") }
+    var windowText by remember { mutableStateOf("5") }
+    var label by remember { mutableStateOf("") }
+    var scopePatternId by remember { mutableStateOf<Long?>(null) }
+
+    val attempts = attemptsText.toIntOrNull()
+    val windowMinutes = windowText.toIntOrNull()
+    // attempts < 1 makes "count >= attempts" true for every caller -- the rule would block the
+    // whole phone. A zero-minute window can never contain an attempt, so the rule is inert.
+    val valid = attempts != null && windowMinutes != null && attempts >= 1 && windowMinutes >= 1
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.action_rule_add_title)) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = attemptsText,
+                    onValueChange = { attemptsText = it.filter(Char::isDigit).take(3) },
+                    label = { Text(stringResource(Res.string.action_rule_attempts_hint)) },
+                    isError = attemptsText.isNotEmpty() && (attempts == null || attempts < 1),
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = windowText,
+                    onValueChange = { windowText = it.filter(Char::isDigit).take(4) },
+                    label = { Text(stringResource(Res.string.action_rule_window_hint)) },
+                    isError = windowText.isNotEmpty() && (windowMinutes == null || windowMinutes < 1),
+                    singleLine = true,
+                )
+                if (!valid) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(Res.string.action_rule_needs_positive),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text(stringResource(Res.string.action_rule_label_hint)) },
+                    singleLine = true,
+                )
+
+                if (patterns.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(Res.string.action_rule_scope_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    FilterChip(
+                        selected = scopePatternId == null,
+                        onClick = { scopePatternId = null },
+                        label = { Text(stringResource(Res.string.action_rule_scope_none)) },
+                    )
+                    patterns.forEach { pattern ->
+                        FilterChip(
+                            selected = scopePatternId == pattern.id,
+                            onClick = { scopePatternId = if (scopePatternId == pattern.id) null else pattern.id },
+                            label = { Text(pattern.pattern) },
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = stringResource(Res.string.action_rule_scope_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (valid) {
+                        onConfirm(label.trim().ifBlank { null }, attempts, windowMinutes, scopePatternId)
+                    }
+                },
+                enabled = valid,
+            ) {
+                Text(stringResource(Res.string.action_add))
             }
         },
         dismissButton = {

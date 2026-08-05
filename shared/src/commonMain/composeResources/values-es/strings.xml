@@ -226,4 +226,18 @@
     <string name="stats_day_today">Hoy</string>
     <string name="stats_day_yesterday">Ayer</string>
     <string name="stats_day_n_days_ago">Hace %1$d días</string>
+    <string name="hub_action_rules">Llamadas repetidas</string>
+    <string name="action_rule_title">Reglas de llamadas repetidas</string>
+    <string name="action_rule_add_title">Bloquear llamadas repetidas</string>
+    <string name="action_rule_empty_hint">No hay reglas de llamadas repetidas. Añade una para bloquear un número que llama demasiadas veces en poco tiempo.</string>
+    <string name="action_rule_attempts_hint">Llamadas</string>
+    <string name="action_rule_window_hint">En (minutos)</string>
+    <string name="action_rule_label_hint">Etiqueta (opcional)</string>
+    <string name="action_rule_summary">Bloquear tras %1$d llamadas en %2$d minutos</string>
+    <string name="action_rule_needs_positive">Las llamadas y los minutos deben ser al menos 1.</string>
+    <string name="action_rule_scope_title">Solo para números que coincidan con</string>
+    <string name="action_rule_scope_none">Cualquier número</string>
+    <string name="action_rule_scope_label">Solo: %1$s</string>
+    <string name="action_rule_scope_hint">Un patrón de alcance limita qué llamadas se cuentan. Desactiva ese patrón como regla de bloqueo; si no, bloquea esos números directamente y esta regla nunca se aplica.</string>
+    <string name="pattern_needs_digits">Un patrón debe contener al menos un dígito. Un patrón formado solo por comodines bloquearía todas las llamadas.</string>
 </resources>

@@ -26,6 +26,7 @@ class RouteSectionTest {
         assertEquals(2, routeSection(AdaptiveRoutes.PATTERNS))
         assertEquals(2, routeSection(AdaptiveRoutes.COUNTRIES))
         assertEquals(2, routeSection(AdaptiveRoutes.SCHEDULES))
+        assertEquals(2, routeSection(AdaptiveRoutes.ACTION_RULES))
     }
 
     @Test

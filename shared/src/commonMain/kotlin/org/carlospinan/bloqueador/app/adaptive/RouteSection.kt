@@ -10,6 +10,7 @@ object AdaptiveRoutes {
     const val PATTERNS = "patterns"
     const val COUNTRIES = "countries"
     const val SCHEDULES = "schedules"
+    const val ACTION_RULES = "action_rules"
     const val SETTINGS = "settings"
     const val AUTO_RESPONDER = "auto_responder"
     const val BACKUP = "backup"
@@ -31,6 +32,7 @@ val blockListSectionRoutes =
         AdaptiveRoutes.PATTERNS,
         AdaptiveRoutes.COUNTRIES,
         AdaptiveRoutes.SCHEDULES,
+        AdaptiveRoutes.ACTION_RULES,
     )
 val settingsSectionRoutes =
     setOf(

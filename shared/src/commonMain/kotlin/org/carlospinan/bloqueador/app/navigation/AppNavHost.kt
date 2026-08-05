@@ -17,6 +17,7 @@ import cortaspam.shared.generated.resources.privacy_policy_body
 import cortaspam.shared.generated.resources.settings_privacy_title
 import cortaspam.shared.generated.resources.settings_terms_title
 import cortaspam.shared.generated.resources.terms_conditions_body
+import org.carlospinan.bloqueador.app.adaptive.AdaptiveRoutes
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.routeSection
@@ -27,6 +28,7 @@ import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
 import org.carlospinan.bloqueador.app.backup.BackupIntent
 import org.carlospinan.bloqueador.app.backup.BackupScreen
 import org.carlospinan.bloqueador.app.backup.BackupViewModel
+import org.carlospinan.bloqueador.app.blocklist.ActionRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.AllowlistScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListHubScreen
 import org.carlospinan.bloqueador.app.blocklist.BlockListIntent
@@ -50,23 +52,31 @@ import org.carlospinan.bloqueador.app.stats.StatsViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
+/**
+ * Route names for the NavHost. Every value is delegated to [AdaptiveRoutes] rather than
+ * re-spelled: the adaptive scaffold decides which navigation-bar section is highlighted by
+ * looking the current route up in [AdaptiveRoutes]' section sets, so two independent copies of
+ * the same strings would silently disagree the moment one of them gained a route the other
+ * didn't — the new destination would render with the wrong section selected.
+ */
 object Routes {
-    const val HOME = "home"
-    const val CALL_LOG = "call_log/{filter}"
-    const val STATS = "stats"
-    const val BLOCK_LIST = "block_list"
-    const val MANUAL_BLOCK_LIST = "manual_block_list"
-    const val ALLOWLIST = "allowlist"
-    const val PATTERNS = "patterns"
-    const val COUNTRIES = "countries"
-    const val SCHEDULES = "schedules"
-    const val SETTINGS = "settings"
-    const val AUTO_RESPONDER = "auto_responder"
-    const val BACKUP = "backup"
-    const val PRIVACY_POLICY = "privacy_policy"
-    const val TERMS_CONDITIONS = "terms_conditions"
+    const val HOME = AdaptiveRoutes.HOME
+    const val CALL_LOG = AdaptiveRoutes.CALL_LOG
+    const val STATS = AdaptiveRoutes.STATS
+    const val BLOCK_LIST = AdaptiveRoutes.BLOCK_LIST
+    const val MANUAL_BLOCK_LIST = AdaptiveRoutes.MANUAL_BLOCK_LIST
+    const val ALLOWLIST = AdaptiveRoutes.ALLOWLIST
+    const val PATTERNS = AdaptiveRoutes.PATTERNS
+    const val COUNTRIES = AdaptiveRoutes.COUNTRIES
+    const val SCHEDULES = AdaptiveRoutes.SCHEDULES
+    const val ACTION_RULES = AdaptiveRoutes.ACTION_RULES
+    const val SETTINGS = AdaptiveRoutes.SETTINGS
+    const val AUTO_RESPONDER = AdaptiveRoutes.AUTO_RESPONDER
+    const val BACKUP = AdaptiveRoutes.BACKUP
+    const val PRIVACY_POLICY = AdaptiveRoutes.PRIVACY_POLICY
+    const val TERMS_CONDITIONS = AdaptiveRoutes.TERMS_CONDITIONS
 
-    fun callLogRoute(filter: String = "all"): String = "call_log/$filter"
+    fun callLogRoute(filter: String = "all"): String = AdaptiveRoutes.callLogRoute(filter)
 }
 
 @Composable
@@ -173,11 +183,13 @@ fun AppNavHost(
                     patternCount = state.patternCount,
                     countryCount = state.countryCount,
                     scheduleCount = state.scheduleCount,
+                    actionCount = state.actionCount,
                     onNavigateToManual = { navController.navigate(Routes.MANUAL_BLOCK_LIST) { launchSingleTop = true } },
                     onNavigateToAllowlist = { navController.navigate(Routes.ALLOWLIST) { launchSingleTop = true } },
                     onNavigateToPatterns = { navController.navigate(Routes.PATTERNS) { launchSingleTop = true } },
                     onNavigateToCountries = { navController.navigate(Routes.COUNTRIES) { launchSingleTop = true } },
                     onNavigateToSchedules = { navController.navigate(Routes.SCHEDULES) { launchSingleTop = true } },
+                    onNavigateToActionRules = { navController.navigate(Routes.ACTION_RULES) { launchSingleTop = true } },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -240,6 +252,21 @@ fun AppNavHost(
                     onAdd = { label, start, end -> blockListViewModel.onIntent(BlockListIntent.AddScheduleRule(label, start, end)) },
                     onToggle = { id, enabled -> blockListViewModel.onIntent(BlockListIntent.ToggleScheduleRule(id, enabled)) },
                     onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveScheduleRule(id)) },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+
+            composable(Routes.ACTION_RULES) {
+                val blockListViewModel = koinViewModel<BlockListViewModel>()
+                val state by blockListViewModel.state.collectAsState()
+                ActionRuleScreen(
+                    rules = state.actionRules,
+                    patterns = state.patternRules,
+                    onAdd = { label, attempts, window, patternId ->
+                        blockListViewModel.onIntent(BlockListIntent.AddActionRule(label, attempts, window, patternId))
+                    },
+                    onToggle = { id, enabled -> blockListViewModel.onIntent(BlockListIntent.ToggleActionRule(id, enabled)) },
+                    onRemove = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveActionRule(id)) },
                     onBack = { navController.popBackStack() },
                 )
             }

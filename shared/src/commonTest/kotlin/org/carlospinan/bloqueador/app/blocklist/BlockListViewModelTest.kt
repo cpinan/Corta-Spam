@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
@@ -127,5 +128,100 @@ class BlockListViewModelTest {
 
             assertEquals(1, repo.addBlockedNumberCalls.size)
             assertEquals("+34611223344" to "Spam", repo.addBlockedNumberCalls[0])
+        }
+
+    // ---- patterns ----
+
+    @Test
+    fun `onIntent AddPatternRule rejects a pattern that would match every number`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeRuleRepository()
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
+
+            // Matching compares digits only, so "*" has an empty core and matches everything.
+            // Persisting one would block the user's whole phone with no visible cause.
+            vm.onIntent(BlockListIntent.AddPatternRule("*", null))
+            vm.onIntent(BlockListIntent.AddPatternRule("*abc*", null))
+            advanceUntilIdle()
+
+            assertEquals(0, repo.addPatternRuleCalls.size)
+        }
+
+    @Test
+    fun `onIntent AddPatternRule accepts a pattern with digits`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeRuleRepository()
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
+
+            vm.onIntent(BlockListIntent.AddPatternRule("+34900*", "Spanish 900s"))
+            advanceUntilIdle()
+
+            assertEquals(1, repo.addPatternRuleCalls.size)
+        }
+
+    // ---- action rules ----
+    //
+    // These had no UI at all until now: the schema, repository, resolver branch and backup
+    // fields all existed, but nothing in the app could create one.
+
+    @Test
+    fun `actionRules reflects repository`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeRuleRepository()
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
+            advanceUntilIdle()
+            assertEquals(0, vm.state.first().actionCount)
+
+            repo.actionRulesFlow.value =
+                listOf(
+                    ActionRuleEntry(
+                        id = 1,
+                        label = "repeats",
+                        attempts = 3,
+                        windowMinutes = 5,
+                        patternId = null,
+                        enabled = true,
+                        createdAt = 0L,
+                    ),
+                )
+            advanceUntilIdle()
+
+            assertEquals(1, vm.state.first { it.actionCount == 1 }.actionCount)
+        }
+
+    @Test
+    fun `onIntent AddActionRule delegates to repository`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeRuleRepository()
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
+
+            vm.onIntent(BlockListIntent.AddActionRule("repeats", attempts = 3, windowMinutes = 5, patternId = 7L))
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(FakeRuleRepository.AddActionRuleCall("repeats", 3, 5, 7L)),
+                repo.addActionRuleCalls,
+            )
+        }
+
+    @Test
+    fun `onIntent AddActionRule rejects thresholds that would block every caller`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val repo = FakeRuleRepository()
+            val vm = BlockListViewModel(repo, FakeContactsGateway())
+
+            // attempts < 1 makes "count >= attempts" true for everyone; a 0-minute window can
+            // never contain an attempt, so that rule is inert clutter.
+            vm.onIntent(BlockListIntent.AddActionRule(null, attempts = 0, windowMinutes = 5))
+            vm.onIntent(BlockListIntent.AddActionRule(null, attempts = -1, windowMinutes = 5))
+            vm.onIntent(BlockListIntent.AddActionRule(null, attempts = 3, windowMinutes = 0))
+            advanceUntilIdle()
+
+            assertEquals(0, repo.addActionRuleCalls.size)
         }
 }

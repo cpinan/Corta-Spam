@@ -19,7 +19,7 @@ class BlockListHubUiTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `all 5 hub cards render with counts`() {
+    fun `all 6 hub cards render with counts`() {
         composeTestRule.setContent {
             BlockListHubScreen(
                 blockedCount = 5,
@@ -27,11 +27,13 @@ class BlockListHubUiTest {
                 patternCount = 2,
                 countryCount = 1,
                 scheduleCount = 4,
+                actionCount = 6,
                 onNavigateToManual = {},
                 onNavigateToAllowlist = {},
                 onNavigateToPatterns = {},
                 onNavigateToCountries = {},
                 onNavigateToSchedules = {},
+                onNavigateToActionRules = {},
                 onBack = {},
             )
         }
@@ -40,6 +42,7 @@ class BlockListHubUiTest {
         composeTestRule.onNodeWithText("Pattern Rules").assertExists()
         composeTestRule.onNodeWithText("Country Rules").assertExists()
         composeTestRule.onNodeWithText("Quiet Hours").assertExists()
+        composeTestRule.onNodeWithText("Repeat callers").assertExists()
         composeTestRule.onNodeWithText("5").assertExists()
         composeTestRule.onNodeWithText("3").assertExists()
     }
@@ -53,15 +56,17 @@ class BlockListHubUiTest {
                 patternCount = 0,
                 countryCount = 0,
                 scheduleCount = 0,
+                actionCount = 0,
                 onNavigateToManual = {},
                 onNavigateToAllowlist = {},
                 onNavigateToPatterns = {},
                 onNavigateToCountries = {},
                 onNavigateToSchedules = {},
+                onNavigateToActionRules = {},
                 onBack = {},
             )
         }
-        composeTestRule.onAllNodesWithText("0").assertCountEquals(5)
+        composeTestRule.onAllNodesWithText("0").assertCountEquals(6)
     }
 
     @Test
@@ -73,11 +78,13 @@ class BlockListHubUiTest {
                 patternCount = 0,
                 countryCount = 0,
                 scheduleCount = 0,
+                actionCount = 0,
                 onNavigateToManual = {},
                 onNavigateToAllowlist = {},
                 onNavigateToPatterns = {},
                 onNavigateToCountries = {},
                 onNavigateToSchedules = {},
+                onNavigateToActionRules = {},
                 onBack = {},
             )
         }

@@ -228,4 +228,18 @@
     <string name="stats_day_today">आज</string>
     <string name="stats_day_yesterday">कल</string>
     <string name="stats_day_n_days_ago">%1$d दिन पहले</string>
+    <string name="hub_action_rules">बार-बार कॉल करने वाले</string>
+    <string name="action_rule_title">बार-बार कॉल करने के नियम</string>
+    <string name="action_rule_add_title">बार-बार कॉल करने वालों को ब्लॉक करें</string>
+    <string name="action_rule_empty_hint">कोई नियम नहीं है। कम समय में बहुत बार कॉल करने वाले नंबर को ब्लॉक करने के लिए एक नियम जोड़ें।</string>
+    <string name="action_rule_attempts_hint">कॉल</string>
+    <string name="action_rule_window_hint">इतने मिनट में</string>
+    <string name="action_rule_label_hint">लेबल (वैकल्पिक)</string>
+    <string name="action_rule_summary">%2$d मिनट में %1$d कॉल के बाद ब्लॉक करें</string>
+    <string name="action_rule_needs_positive">कॉल और मिनट दोनों कम से कम 1 होने चाहिए।</string>
+    <string name="action_rule_scope_title">केवल इनसे मेल खाते नंबरों के लिए</string>
+    <string name="action_rule_scope_none">कोई भी नंबर</string>
+    <string name="action_rule_scope_label">केवल: %1$s</string>
+    <string name="action_rule_scope_hint">स्कोप पैटर्न तय करता है कि कौन-सी कॉल गिनी जाएँ। उस पैटर्न को ब्लॉक नियम के रूप में बंद कर दें, वरना वह उन नंबरों को सीधे ब्लॉक कर देगा और यह नियम कभी लागू नहीं होगा।</string>
+    <string name="pattern_needs_digits">पैटर्न में कम से कम एक अंक होना चाहिए। केवल वाइल्डकार्ड वाला पैटर्न हर कॉल को ब्लॉक कर देगा।</string>
 </resources>

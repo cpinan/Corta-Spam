@@ -118,10 +118,15 @@ internal class FakeRuleRepository : RuleRepository {
 
     override suspend fun removeAllowlistedNumber(id: Long) {}
 
+    /** Recorded (pattern, label) pairs passed to [addPatternRule]. */
+    val addPatternRuleCalls = mutableListOf<Pair<String, String?>>()
+
     override suspend fun addPatternRule(
         pattern: String,
         label: String?,
-    ) {}
+    ) {
+        addPatternRuleCalls += pattern to label
+    }
 
     override suspend fun togglePatternRule(
         id: Long,
@@ -142,12 +147,24 @@ internal class FakeRuleRepository : RuleRepository {
 
     override suspend fun removeCountryRule(id: Long) {}
 
+    /** Recorded (label, attempts, windowMinutes, patternId) tuples passed to [addActionRule]. */
+    val addActionRuleCalls = mutableListOf<AddActionRuleCall>()
+
+    data class AddActionRuleCall(
+        val label: String?,
+        val attempts: Int,
+        val windowMinutes: Int,
+        val patternId: Long?,
+    )
+
     override suspend fun addActionRule(
         label: String?,
         attempts: Int,
         windowMinutes: Int,
         patternId: Long?,
-    ) {}
+    ) {
+        addActionRuleCalls += AddActionRuleCall(label, attempts, windowMinutes, patternId)
+    }
 
     override suspend fun toggleActionRule(
         id: Long,
