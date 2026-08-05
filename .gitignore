@@ -35,3 +35,14 @@ graphify-out/
 
 # macOS
 .DS_Store
+
+# Signing material. Added before any key exists, deliberately — docs/PLAY_INTERNAL_TESTING.md
+# tells you to create corta-spam-upload.jks and keystore.properties in this directory, and a
+# committed upload key cannot be un-published from a public repo's history.
+*.jks
+*.keystore
+keystore.properties
+androidApp/keystore.properties
+*.p12
+*.pepk
+play-service-account*.json

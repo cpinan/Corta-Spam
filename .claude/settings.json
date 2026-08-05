@@ -32,7 +32,17 @@
       "Bash(grep*)",
       "Bash(rg*)",
       "Bash(mkdir*)",
-      "Bash(touch*)"
+      "Bash(touch*)",
+      "Bash(./scripts/verify.sh*)",
+      "Bash(adb devices*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(diff*)",
+      "Bash(sed -n*)",
+      "Bash(awk*)",
+      "Bash(basename*)",
+      "Bash(dirname*)",
+      "Bash(which*)"
     ],
     "deny": [
       "Edit(*.env)",

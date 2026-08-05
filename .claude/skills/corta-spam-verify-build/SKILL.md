@@ -13,10 +13,25 @@ Run this after every batch of code changes, before committing. Skipping the iOS 
 ## 1. Always run (any change)
 
 ```
-./gradlew :shared:compileDebugKotlinAndroid :androidApp:compileDebugKotlin ktlintCheck :shared:testDebugUnitTest
+./scripts/verify.sh
 ```
 
-All four must pass. `ktlintCheck` catches import-ordering issues often introduced when adding new resource/string imports (e.g. `Res.string.foo_bar` inserted out of alphabetical order) — if it fails, fix the import position, don't disable the rule.
+That is the whole sequence, in one place, so it cannot drift between this skill, CI and whoever
+is typing. It runs: both compiles, `ktlintCheck`, both test modules, `verifySqlDelightMigration`,
+**both Android Lint tasks**, and the iOS compile.
+
+`--fast` skips iOS and release for a tight edit loop; `--release` adds `assembleRelease`. Neither
+is acceptable as the final check before a commit that touches `commonMain`.
+
+Everything must pass. `ktlintCheck` catches import-ordering issues often introduced when adding new resource/string imports (e.g. `Res.string.foo_bar` inserted out of alphabetical order) — if it fails, fix the import position, don't disable the rule. `./gradlew ktlintFormat` fixes ordering automatically.
+
+**Android Lint is in the sequence and is not optional.** It could not run at all until 2026-08-05
+— AGP 8.7.3's bundled UAST frontend reads Kotlin 2.0 metadata and died on this project's 2.2.20
+output with `Module was compiled with an incompatible version of Kotlin`. That is a toolchain
+mismatch, **not** something to suppress: if it ever reappears after a Kotlin bump, raise AGP
+rather than disabling lint. On its first working run it found three missing permission guards, a
+dead pre-API-26 branch, a `StateFlow.value` read inside composition, and plural forms that are
+wrong specifically in Hindi and Portuguese — none of which ktlint or the tests look for.
 
 ## 2. If the change touched anything under `shared/src/commonMain`
 
@@ -30,13 +45,26 @@ Non-optional. `commonMain` code that only ever ran on Android historically compi
 
 Unless the user has explicitly asked for a device/simulator run in *this* turn, stop at compile/test/lint. This project has a standing "do not install until I say it" instruction — code, build, test, lint only. See project memory `user-preferences` if unsure whether that's still in effect.
 
+When the user *has* asked, use `./scripts/device_check.sh` rather than a bare install: it also
+pulls the database back off the phone and asserts the schema version and indexes. A green test
+suite says the code is self-consistent; it does not say the database on a real phone is the shape
+you think it is. That distinction has already cost this project one bad commit — see
+`corta-spam-sqldelight-check-migration`.
+
 ## 4. If the change touched the SQLDelight schema or migrations
+
+`./scripts/verify.sh` already includes it, precisely because it is **not** in the normal
+`build`/`check` graph and nothing else triggers it. To run it alone:
 
 ```
 ./gradlew :shared:verifySqlDelightMigration
 ```
 
-Replays every `.sqm` on top of the baseline snapshot `shared/src/commonMain/sqldelight/databases/1.db` and diffs against `AppDatabase.sq`. It is **not** in the normal `build`/`check` graph, so step 1 will not catch a schema mismatch — run it explicitly. It is wired into the `jvm-android` CI job, so a mismatch fails the pipeline.
+Replays every `.sqm` on top of the baseline snapshot `shared/src/commonMain/sqldelight/databases/1.db` and diffs against `AppDatabase.sq`.
+
+It proves the migration chain reaches the right *schema*. It does **not** prove the migration
+files are numbered correctly — a mis-numbered `.sqm` whose migration still runs passes this
+check. `./scripts/device_check.sh` is what covers that. It is wired into the `jvm-android` CI job, so a mismatch fails the pipeline.
 
 Never make a failure here disappear by regenerating the baseline (`generateCommonMainAppDatabaseSchema` rewrites it from the current `.sq`, hiding any diff). See `corta-spam-sqldelight-check-migration` for the migration rules.
 
