@@ -10,6 +10,9 @@
          default-dialer full-screen-intent launch actually reach the lock screen. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- IN_CALL_SERVICE_RINGING below makes this app responsible for ringing, which includes
+         the vibration the platform dialer would otherwise have produced. See CallRinger. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".CortaSpamApp"

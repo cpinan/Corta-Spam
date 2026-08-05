@@ -31,6 +31,7 @@ object IncomingCallNotifier {
     private const val ONGOING_NOTIFICATION_ID = 1002
     private const val HISTORY_CHANNEL_ID = "call_history"
     private const val HISTORY_NOTIFICATION_ID_BASE = 2_000_000
+    private const val HISTORY_ID_RANGE = 1_000_000L
 
     fun createChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
@@ -180,8 +181,18 @@ object IncomingCallNotifier {
                 .setAutoCancel(true)
                 .build()
 
-        NotificationManagerCompat.from(context).notify(HISTORY_NOTIFICATION_ID_BASE + number.hashCode(), notification)
+        NotificationManagerCompat.from(context).notify(historyNotificationId(number), notification)
     }
+
+    /**
+     * A stable id per number, guaranteed to stay inside the history block.
+     *
+     * This was `HISTORY_NOTIFICATION_ID_BASE + number.hashCode()`, which for a negative hash
+     * lands anywhere in Int -- including on the ringing-call id (1001) and the ongoing-call id
+     * (1002), where posting a "missed call" would have replaced the live call's notification.
+     */
+    internal fun historyNotificationId(number: String): Int =
+        HISTORY_NOTIFICATION_ID_BASE + (number.hashCode().toLong().let { if (it < 0) -it else it } % HISTORY_ID_RANGE).toInt()
 
     private fun canPostNotifications(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
