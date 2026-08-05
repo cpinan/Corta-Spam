@@ -333,6 +333,23 @@ Uses Compose Multiplatform resource system: `stringResource(Res.string.key_name)
 
 Fail-fast ordering: lint → test → build.
 
+**Simulator architecture must match the declared Kotlin targets.** `shared/build.gradle.kts` declares `iosArm64` and
+`iosSimulatorArm64` only — there is no `iosX64`. A build with `-destination 'generic/platform=iOS Simulator'` resolves
+`ARCHS` to `arm64 x86_64`, so `embedAndSignAppleFrameworkForXcode` is asked for a slice that was never configured and
+fails the whole build with `error: Unknown iOS simulator arch: 'x86_64'` (exit 65). `iosApp/project.yml` therefore sets
+`EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64`. Keep that in step with the target list: adding an `iosX64` target means
+removing the exclusion, and dropping one means adding it back.
+
+**The iOS job needs the iOS 26 SDK.** Compose Multiplatform 1.11.1 references `UIViewLayoutRegion` from
+`CMPLayoutRegion.o`, and that UIKit class only exists in the iOS 26 SDK. On an older SDK the shared framework fails to
+link with `Undefined symbols: _OBJC_CLASS_$_UIViewLayoutRegion` — so the job runs on `macos-26` (Xcode 26.6), not
+`macos-15` (Xcode 16.4 / iOS 18.5 SDK). The deployment target stays at iOS 16.0; only the *build* SDK has to be new.
+
+**Why both of these were found the hard way:** a local `xcodebuild` on Xcode 26 passes even when CI is broken, because
+the local SDK has the symbol. When an iOS CI failure can't be reproduced locally, compare
+`xcrun --sdk iphonesimulator --show-sdk-version` against the runner's before assuming the workflow is at fault — the CI
+job now prints both so the comparison is one glance.
+
 ---
 
 ## Build Commands
