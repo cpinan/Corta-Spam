@@ -59,7 +59,11 @@ jobs:
 
   ios:
     name: Shared (Kotlin/Native) + iOS
-    runs-on: macos-15
+    # macos-26 (default Xcode 26.6) and not macos-15 (Xcode 16.4, iOS 18.5 SDK):
+    # Compose Multiplatform 1.11.1's CMPLayoutRegion.o references UIViewLayoutRegion,
+    # a UIKit class that only exists in the iOS 26 SDK. On an older SDK the shared
+    # framework links with "Undefined symbols: _OBJC_CLASS_$_UIViewLayoutRegion".
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -69,6 +73,13 @@ jobs:
           java-version: "17"
 
       - uses: gradle/actions/setup-gradle@v4
+
+      # Printed so an image default moving out from under us is visible in the log
+      # rather than showing up as an unexplained linker error.
+      - name: Show selected Xcode and iOS SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphonesimulator --show-sdk-version
 
       - name: Run shared module unit tests (Kotlin/Native, iOS simulator)
         run: ./gradlew :shared:iosSimulatorArm64Test
