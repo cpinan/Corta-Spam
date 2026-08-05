@@ -1,5 +1,9 @@
 # Play Store internal testing — what Corta Spam needs
 
+> **Sequence lives in [`PLAY_RELEASE_PLAN.md`](PLAY_RELEASE_PLAN.md).** This document is the
+> reference for *what* Play requires — asset specs, Data Safety answers, permission
+> declarations. Read that one for the order to do it in.
+
 Everything required to get an internal-testing track live, in the order it has to happen.
 Written for this app specifically: open source, no analytics, no ads, no accounts, no network.
 
@@ -17,8 +21,8 @@ Start the declaration work early; the listing takes an afternoon.
 
 | # | Item | Where | Status |
 |---|------|-------|--------|
-| 0.1 | An upload keystore, backed up somewhere you will still have in five years | local / password manager | **missing** |
-| 0.2 | `signingConfig` wired into the release build, reading from `keystore.properties` (gitignored) | `androidApp/build.gradle.kts` | **missing** — deliberately omitted, no key exists yet |
+| 0.1 | An upload keystore, backed up somewhere you will still have in five years | local / password manager | **missing** — the only real blocker |
+| 0.2 | `signingConfig` wired into the release build, reading from `keystore.properties` (gitignored) | `androidApp/build.gradle.kts` | **done** — reads the file if present, skips signing if absent; both paths verified |
 | 0.3 | `versionCode` / `versionName` strategy | `androidApp/build.gradle.kts` | currently `1` / `0.1.0` — fine for the first upload, needs to increment every upload after |
 | 0.4 | An `.aab`, not an `.apk` — Play requires App Bundles | `./gradlew :androidApp:bundleRelease` | **works** — verified 2026-08-05, 5.0 MB, but debug-signed until 0.1/0.2 are done |
 | 0.5 | A Google Play Console developer account (one-off USD 25) with identity verification completed | Play Console | **check** — verification can take days |
@@ -64,7 +68,7 @@ Internal testing still requires a complete listing.
 | 7" / 10" tablet screenshots | required only if you declare tablet support | app *is* adaptive — worth including |
 | Category | Tools (not Communication — this is a utility, and Communication invites stricter dialer scrutiny) | decide |
 | Contact email | must be a real monitored address | decide |
-| Privacy policy URL | **publicly hosted**, not the in-app screen | **to publish** |
+| Privacy policy URL | **publicly hosted**, not the in-app screen | text written (`docs/PRIVACY.md`); **still needs hosting** |
 
 **Screenshots to take** (all four locales exist, so consider one set per locale later — English
 only is acceptable to start):
@@ -81,10 +85,10 @@ awkward aspect ratios and its displays are hard to screencap.
 
 ### Privacy policy hosting
 
-The in-app policy is not enough; Play needs a URL. Cheapest correct option: publish
-`docs/PRIVACY.md` to GitHub Pages on the existing `cpinan.github.io` setup, matching the text
-now in `values/strings.xml` (`privacy_policy_body`). **Keep the two in sync** — the in-app copy
-was recently corrected because it described a network call the app does not make.
+The in-app policy is not enough; Play needs a URL. `docs/PRIVACY.md` is written and matches the
+in-app text in `values/strings.xml` (`privacy_policy_body`). Publish it to GitHub Pages on the
+existing `cpinan.github.io` setup. **Keep the two in sync** — the in-app copy was recently
+corrected because it described a network call the app does not make.
 
 ---
 
@@ -175,6 +179,10 @@ Before the first upload:
       `bundletool build-apks` or Play Console's post-upload language list.
 - [ ] Set `versionCode 1`, `versionName "0.1.0"` for the first upload; increment `versionCode`
       on **every** subsequent upload, even a re-upload of the same code.
+- [ ] Confirm the artifact carries *your* certificate, not a debug one:
+      `apksigner verify --print-certs androidApp/build/outputs/apk/release/androidApp-release.apk`.
+      With no `keystore.properties` present AGP emits `androidApp-release-unsigned.apk` — unsigned,
+      not debug-signed, and Play rejects it.
 
 ---
 

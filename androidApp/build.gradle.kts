@@ -1,9 +1,23 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
 }
+
+// Signing material is read from a properties file that is NOT in the repository (see
+// .gitignore). Absent, the release build still assembles -- debug-signed, which is fine for
+// verifying R8 locally and in CI, and rejected by Play, which is the correct failure.
+val keystorePropertiesFile = rootProject.file("androidApp/keystore.properties")
+val keystoreProperties =
+    Properties().apply {
+        if (keystorePropertiesFile.exists()) {
+            keystorePropertiesFile.inputStream().use { load(it) }
+        }
+    }
+val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 
 android {
     namespace = "org.carlospinan.bloqueador.app"
@@ -17,6 +31,18 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        // Only registered when the properties file is present, so a clean checkout still builds.
+        if (hasUploadKey) {
+            create("upload") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             // The module had no buildTypes block at all, so `release` was AGP's default:
@@ -24,8 +50,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // No signingConfig here on purpose: the upload key is not in this repository. Wire
-            // one in from a local keystore or the CI secret store before publishing.
+            // Signed only when a keystore.properties exists. Deliberately not an error when it
+            // doesn't: CI has to be able to run assembleRelease to exercise R8 without holding
+            // the signing key. Without it AGP emits androidApp-release-unsigned.apk, which Play
+            // rejects -- the correct failure, and not the same as "debug-signed".
+            signingConfig = if (hasUploadKey) signingConfigs.getByName("upload") else null
         }
         debug {
             // R8 changes behaviour (reflection, serialization, Telecom callbacks); leaving it off
