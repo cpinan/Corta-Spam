@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es-419">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de Privacidad — Corta Spam</title>
+<meta name="description" content="Corta Spam no recopila, transmite ni comparte ningún dato personal. Sin analítica, sin rastreo, sin acceso a la red.">
+<link rel="icon" href="store/ic_play_512.png">
+<style>
+  :root{
+    --cream:#FFF4E6; --ink:#17233C; --coral:#EF6A5B;
+    --panel:#FFFFFF; --line:#E8DFCE; --muted:#5C6880;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --cream:#141C2E; --ink:#EDE6DA; --panel:#1B2438; --line:#2A3550; --muted:#95A2BC; }
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    background:var(--cream); color:var(--ink); line-height:1.7;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px}
+
+  header{padding:52px 0 34px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:18px;margin-bottom:26px}
+  .brand svg{flex:0 0 auto}
+  .brand h1{font-size:1.55rem;letter-spacing:-.02em;font-weight:700;line-height:1.1}
+  .brand .tag{color:var(--muted);font-size:.95rem;margin-top:3px}
+  .rule{width:78px;height:5px;background:var(--coral);border-radius:3px;margin-top:22px}
+
+  .langs{display:flex;gap:8px;margin-top:26px}
+  .langs button{
+    font:inherit;font-size:.82rem;font-weight:600;letter-spacing:.03em;
+    padding:7px 15px;border-radius:999px;cursor:pointer;
+    background:transparent;color:var(--muted);border:1px solid var(--line);transition:.15s;
+  }
+  .langs button:hover{color:var(--ink);border-color:var(--coral)}
+  .langs button[aria-pressed="true"]{background:var(--coral);color:#fff;border-color:var(--coral)}
+
+  main{padding:38px 0 20px}
+  h2{font-size:1.18rem;margin:38px 0 12px;letter-spacing:-.01em}
+  h2:first-child{margin-top:0}
+  p{margin-bottom:15px}
+  ul{margin:0 0 15px 22px}
+  li{margin-bottom:7px}
+  a{color:var(--coral);text-decoration:none;border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--coral)}
+  strong{font-weight:650}
+
+  .lede{
+    background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--coral);
+    border-radius:10px;padding:20px 24px;margin-bottom:8px;font-size:1.04rem;
+  }
+  .lede p:last-child{margin-bottom:0}
+
+  .table-scroll{overflow-x:auto;margin:16px 0 20px}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:520px}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top}
+  th{background:var(--panel);font-weight:650}
+  td code{font-size:.86em}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:var(--panel);border:1px solid var(--line);
+    padding:1px 6px;border-radius:4px;font-size:.88em;
+  }
+
+  .updated{color:var(--muted);font-size:.88rem;margin-top:6px}
+  footer{border-top:1px solid var(--line);margin-top:46px;padding:24px 0 60px;color:var(--muted);font-size:.88rem}
+
+  [data-lang]{display:none}
+  [data-lang].active{display:block}
+
+  @media(max-width:560px){
+    header{padding:36px 0 26px}
+    .brand h1{font-size:1.3rem}
+  }
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="brand">
+    <svg width="62" height="62" viewBox="0 0 108 108" aria-hidden="true">
+      <rect width="108" height="108" rx="24" fill="#FFF4E6"/>
+      <g transform="translate(27,28) scale(2.25)">
+        <path fill="#17233C" d="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1C10.61,21 3,13.39 3,4c0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02z"/>
+      </g>
+      <path fill="none" stroke="#17233C" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" d="M65,51h8m-3,-3 3,3 -3,3"/>
+      <path fill="#EF6A5B" d="M77,35h5a2,2 0,0 1,2 2v34a2,2 0,0 1,-2 2h-5z"/>
+    </svg>
+    <div>
+      <h1>Corta Spam</h1>
+      <div class="tag" data-lang="es">Política de Privacidad</div>
+      <div class="tag" data-lang="en">Privacy Policy</div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <div class="langs" role="group" aria-label="Idioma / Language">
+    <button type="button" data-set="es" aria-pressed="true">Español</button>
+    <button type="button" data-set="en" aria-pressed="false">English</button>
+  </div>
+  <p class="updated" data-lang="es">Última actualización: 5 de agosto de 2026</p>
+  <p class="updated" data-lang="en">Last updated: 5 August 2026</p>
+</div></header>
+
+<main><div class="wrap">
+
+<!-- ==================== ESPAÑOL ==================== -->
+<section data-lang="es">
+  <div class="lede"><p><strong>Corta Spam no recopila, transmite ni comparte ningún dato personal.</strong> Sin analítica, sin telemetría, sin publicidad y sin ningún acceso a la red.</p></div>
+
+  <h2>Qué guarda la app, y dónde</h2>
+  <p>Todas las reglas, los ajustes y el registro de llamadas se guardan localmente en una base de datos SQLite de tu dispositivo. Puedes borrarlos cuando quieras vaciando los datos de la aplicación o desinstalándola. El registro de llamadas también tiene una acción para borrarlo desde la propia app.</p>
+  <p>Esa base de datos está excluida de la copia de seguridad en la nube de Android y de la transferencia entre dispositivos, así que no sale de tu teléfono ni siquiera cuando el resto del dispositivo se respalda. Si quieres tus reglas en un teléfono nuevo, la app tiene una exportación explícita en Ajustes que tú activas y cuyo contenido puedes leer antes de compartirlo.</p>
+
+  <h2>Permisos, y por qué existe cada uno</h2>
+  <div class="table-scroll"><table>
+    <tr><th>Permiso</th><th>Para qué</th><th>Qué sale del dispositivo</th></tr>
+    <tr><td><code>READ_PHONE_STATE</code>, <code>CALL_PHONE</code></td><td>Necesarios para ser la app de teléfono predeterminada de Android, la única forma de que una app filtre una llamada antes de que suene</td><td>Nada</td></tr>
+    <tr><td><code>READ_CONTACTS</code></td><td>Reconocer a quienes están en tus contactos y dejarles pasar</td><td>Nada. Los contactos se leen en el dispositivo y se mantienen en memoria cinco minutos como máximo</td></tr>
+    <tr><td><code>POST_NOTIFICATIONS</code>, <code>USE_FULL_SCREEN_INTENT</code></td><td>Mostrar la pantalla de llamada entrante y las notificaciones de llamadas bloqueadas o perdidas</td><td>Nada</td></tr>
+    <tr><td><code>VIBRATE</code></td><td>La app reproduce su propio tono y vibración, porque como marcador predeterminado es responsable de hacer sonar el teléfono</td><td>Nada</td></tr>
+  </table></div>
+  <p>La app <strong>no</strong> pide acceso al registro de llamadas del sistema, ni a SMS, almacenamiento, ubicación, cámara o micrófono.</p>
+
+  <h2>La lista de spam</h2>
+  <p>El proveedor de spam opcional es una lista de códigos de marcación asociados a estafas incluida dentro de la propia aplicación. Activarlo no contacta con ningún servidor: la comprobación ocurre por completo en tu dispositivo, y nunca se transmite ningún número, contacto, identificador del dispositivo ni audio de las llamadas.</p>
+
+  <h2>Grabación de llamadas</h2>
+  <p>El auto-respondedor puede grabar de forma opcional. Está desactivado por defecto, y la app exige que tu saludo indique que la llamada puede ser grabada antes de permitir activarlo. Las grabaciones, si las hay, se quedan en tu dispositivo como todo lo demás.</p>
+
+  <h2>Informes de fallos</h2>
+  <p>La app no incluye ningún SDK de informes de fallos. Si la instalas desde Google Play, es Google quien recopila informes de fallos y ANR como función de la plataforma; eso es recopilación de Google bajo <a href="https://policies.google.com/privacy">su política de privacidad</a>, no de la app, y la app ni contribuye a ella ni recibe su contenido.</p>
+
+  <h2>Menores</h2>
+  <p>La app no está dirigida a menores y no recopila datos de nadie.</p>
+
+  <h2>Cambios</h2>
+  <p>Esta política está versionada en el repositorio público de la app, junto al código que describe. Su historial es el registro de cambios.</p>
+
+  <h2>Contacto y verificación</h2>
+  <p>La app es totalmente de código abierto. Cada línea puede auditarse de forma independiente en <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a>, incluidas las afirmaciones de esta página. Si encuentras una discrepancia entre esta política y el código, eso es un error: por favor abre un issue.</p>
+</section>
+
+<!-- ==================== ENGLISH ==================== -->
+<section data-lang="en">
+  <div class="lede"><p><strong>Corta Spam does not collect, transmit, or share any personal data.</strong> No analytics, no telemetry, no advertising, and no network access at all.</p></div>
+
+  <h2>What the app stores, and where</h2>
+  <p>All rules, settings, and call logs are stored locally in a SQLite database on your device. You can delete them at any time by clearing the app data or uninstalling the app. The in-app call log also has a “clear log” action.</p>
+  <p>That database is excluded from Android's cloud backup and from device-to-device transfer, so it does not leave your phone even when the rest of your device is backed up. If you want your rules on a new phone, the app has an explicit export in Settings that you trigger yourself and can read the contents of before sharing.</p>
+
+  <h2>Permissions, and why each one exists</h2>
+  <div class="table-scroll"><table>
+    <tr><th>Permission</th><th>Why</th><th>What leaves the device</th></tr>
+    <tr><td><code>READ_PHONE_STATE</code>, <code>CALL_PHONE</code></td><td>Required to be Android's default phone app, which is the only way an app can screen a call before it rings</td><td>Nothing</td></tr>
+    <tr><td><code>READ_CONTACTS</code></td><td>To recognise callers who are in your contacts and let them through</td><td>Nothing. Contacts are read on-device and held in memory for at most five minutes</td></tr>
+    <tr><td><code>POST_NOTIFICATIONS</code>, <code>USE_FULL_SCREEN_INTENT</code></td><td>To show the incoming-call screen and blocked/missed-call notifications</td><td>Nothing</td></tr>
+    <tr><td><code>VIBRATE</code></td><td>The app plays its own ringtone and vibration, because as the default dialer it is responsible for ringing</td><td>Nothing</td></tr>
+  </table></div>
+  <p>The app requests <strong>no</strong> access to your system call log, SMS, storage, location, camera or microphone.</p>
+
+  <h2>The spam list</h2>
+  <p>The optional spam provider is a list of known scam dialling codes bundled inside the app itself. Turning it on does not contact any server: the check happens entirely on your device, and no number, contact, device identifier or call audio is ever transmitted.</p>
+
+  <h2>Call recording</h2>
+  <p>The auto-responder can optionally record. It is off by default, and the app requires your greeting to state that the call may be recorded before it will let you enable it. Recordings, if any, stay on your device like everything else.</p>
+
+  <h2>Crash reporting</h2>
+  <p>The app contains no crash-reporting SDK. If you install from Google Play, Google itself collects crash and ANR reports as a platform feature; that is Google's collection under <a href="https://policies.google.com/privacy">their privacy policy</a>, not the app's, and the app neither adds to it nor receives the contents.</p>
+
+  <h2>Children</h2>
+  <p>The app is not directed at children and collects no data from anyone.</p>
+
+  <h2>Changes</h2>
+  <p>This policy is versioned in the app's public repository alongside the code it describes. Its history is the change log.</p>
+
+  <h2>Contact and verification</h2>
+  <p>The app is fully open source. Every line of code can be audited independently at <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a> — including the claims on this page. If you find a discrepancy between this policy and the code, that is a bug: please open an issue.</p>
+</section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <span data-lang="es">Corta Spam · Código abierto, licencia MIT · <a href="https://github.com/cpinan/Corta-Spam">Ver el código</a></span>
+  <span data-lang="en">Corta Spam · Open source, MIT licence · <a href="https://github.com/cpinan/Corta-Spam">View the code</a></span>
+</div></footer>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.langs button');
+  function apply(lang) {
+    document.querySelectorAll('[data-lang]').forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-lang') === lang);
+    });
+    buttons.forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-set') === lang));
+    });
+    document.documentElement.lang = (lang === 'es') ? 'es-419' : 'en';
+    try { localStorage.setItem('cs_privacy_lang', lang); } catch (e) {}
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { apply(b.getAttribute('data-set')); });
+  });
+  // Spanish is the default: it is the app's default store language. A visitor whose browser
+  // asks for English gets English, and an explicit choice wins over both.
+  var stored = null;
+  try { stored = localStorage.getItem('cs_privacy_lang'); } catch (e) {}
+  var guess = (navigator.language || '').toLowerCase().indexOf('en') === 0 ? 'en' : 'es';
+  apply(stored || guess);
+})();
+</script>
+
+</body>
+</html>
