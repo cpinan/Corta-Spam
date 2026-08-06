@@ -165,11 +165,17 @@ The auto-responder is experimental. It answers a blocked call and plays a greeti
 |---|---|---|---|
 | App icon | `store/ic_play_512.png` | 512×512 PNG | ✅ 512×512 |
 | Feature graphic | `store/feature_1024x500.png` | 1024×500, no alpha | ✅ no alpha |
-| Screenshot 1 | `store/01_home.png` | phone, 9:16 | ✅ 1344×2992 |
-| Screenshot 2 | `store/02_lists.png` | | ✅ |
-| Screenshot 3 | `store/03_patterns.png` | | ✅ |
-| Screenshot 4 | `store/04_calllog.png` | | ✅ |
-| Screenshot 5 | `store/05_settings.png` | | ✅ |
+| Screenshot 1 | `store/play/01_home.png` | phone, **exactly 9:16** | ✅ 1683×2992 |
+| Screenshot 2 | `store/play/02_lists.png` | | ✅ 1683×2992 |
+| Screenshot 3 | `store/play/03_patterns.png` | | ✅ 1683×2992 |
+| Screenshot 4 | `store/play/04_calllog.png` | | ✅ 1683×2992 |
+| Screenshot 5 | `store/play/05_settings.png` | | ✅ 1683×2992 |
+
+**Upload the files in `store/play/`, not `store/`.** The raw captures are 1344×2992 — a 9:20
+ratio, more extreme than the 1:2 floor Play accepts, and it rejects them. `store/play/` holds the
+same images padded to exactly 1683×2992 (9:16) by replicating the outermost pixel column
+outward, so the status bar and navigation bar extend into the padding instead of sitting inside a
+visible box. `store/` keeps the unpadded originals for reference.
 
 Captured on the `Pixel_8_Pro_API_33` AVD with seeded demo data. Every phone number shown is from
 a range that cannot be a real subscriber (`+34 900` is Spanish premium-rate/service) — these
