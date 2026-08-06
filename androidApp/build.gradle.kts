@@ -19,6 +19,17 @@ val keystoreProperties =
     }
 val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 
+// Single source of truth for the version, so the artifact filename and defaultConfig can never
+// disagree. Uploading the wrong build is easy when every bundle is called androidApp-release.aab.
+val appVersionName = "0.1.0"
+val appVersionCode = 1
+
+// Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
+// androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
+base {
+    archivesName = "corta-spam-$appVersionName-$appVersionCode"
+}
+
 android {
     namespace = "org.carlospinan.bloqueador.app"
     compileSdk = 36
@@ -32,8 +43,8 @@ android {
         applicationId = "org.carlospinan.cortaspam"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     signingConfigs {

@@ -208,8 +208,14 @@ a blocked call, the auto-responder, and backup export/import.
 
 ```bash
 ./gradlew :androidApp:bundleRelease
-# androidApp/build/outputs/bundle/release/androidApp-release.aab
+# androidApp/build/outputs/bundle/release/corta-spam-<versionName>-<versionCode>-release.aab
 ```
+
+The artifact carries its version in the filename, from `base.archivesName` in
+`androidApp/build.gradle.kts`. `androidApp-release.aab` told you nothing once it had been
+dragged to Downloads, and uploading the wrong build is a mistake you only notice after it is
+live. **Bump `appVersionName`/`appVersionCode` at the top of that file** — they feed both
+`defaultConfig` and the filename, so the two cannot drift.
 
 Console → **Internal testing → Create new release** → upload the `.aab` → release notes → roll out.
 
