@@ -161,10 +161,17 @@ The auto-responder is experimental. It answers a blocked call and plays a greeti
 
 ## Assets
 
+Graphics are **common assets**: Play falls back to the *default language's* graphics for every
+translation that doesn't supply its own. Since the default is es-419, the plain
+`feature_1024x500.png` carries Spanish text, and the `_en` variant exists only to attach to an
+English translation. Uploading the English one as the default would show English marketing copy
+to Spanish users.
+
 | Asset | File | Spec | Status |
 |---|---|---|---|
 | App icon | `store/ic_play_512.png` | 512×512 PNG | ✅ 512×512 |
-| Feature graphic | `store/feature_1024x500.png` | 1024×500, no alpha | ✅ no alpha |
+| Feature graphic | `store/play/feature_1024x500.png` | 1024×500, no alpha | ✅ **Spanish** |
+| Feature graphic (en) | `store/play/feature_1024x500_en.png` | only for the en-US translation | ✅ |
 | Screenshot 1 | `store/play/01_home.png` | phone, **exactly 9:16** | ✅ 1683×2992 |
 | Screenshot 2 | `store/play/02_lists.png` | | ✅ 1683×2992 |
 | Screenshot 3 | `store/play/03_patterns.png` | | ✅ 1683×2992 |
