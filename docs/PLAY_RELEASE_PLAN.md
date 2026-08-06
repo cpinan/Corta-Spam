@@ -172,6 +172,7 @@ All of these gate release. `PLAY_INTERNAL_TESTING.md` §2–3 has the exact answ
 - Target audience — **not** child-directed
 - Government apps, financial features, health — **No**
 - **Permissions declaration** — this is the one that matters. See 4.3.
+- **Full-screen intent declaration** — separate form, separate rejection. See 4.4.
 
 ### 4.3 The dialer permission declaration
 
@@ -189,6 +190,13 @@ questionnaire. Answers that are true and help you:
   (Currently: no matches. It keeps its own log rather than reading the system one.)
 - Record the demo video (§3.2 of the other doc): default-dialer setup → an incoming call ringing
   → a blocked call rejected → the call log entry with its reason. Unlisted YouTube, ~60s.
+
+### 4.4 The full-screen intent declaration
+
+A separate form from 4.3, and the one that rejected version code 1 with *"Permission use is not
+directly related to your app's core purpose."* Submit it; do not assume the manifest argues for
+itself. Full evidence table and the wording to use: §3.3 of `PLAY_INTERNAL_TESTING.md`. The
+standing appeal text is in `PLAY_FSI_APPEAL.md`.
 
 **Done when:** App Content shows no outstanding items.
 

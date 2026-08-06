@@ -66,8 +66,8 @@ Internal testing still requires a complete listing.
 | Feature graphic | 1024×500 PNG/JPG, no alpha | **to make** |
 | Phone screenshots | 2–8, min 320px, max 3840px, 16:9 or 9:16 | **to capture** |
 | 7" / 10" tablet screenshots | required only if you declare tablet support | app *is* adaptive — worth including |
-| Category | Tools (not Communication — this is a utility, and Communication invites stricter dialer scrutiny) | decide |
-| Contact email | must be a real monitored address | decide |
+| Category | **Communication**, tags `Caller ID, Communication` | set in Console |
+| Contact email | must be a real monitored address | `carlos.pinan@gmail.com` |
 | Privacy policy URL | **publicly hosted**, not the in-app screen | text written (`docs/PRIVACY.md`); **still needs hosting** |
 
 **Screenshots to take** (all four locales exist, so consider one set per locale later — English
@@ -139,7 +139,39 @@ Reviewers assessing a dialer will ask for one. Record a ~60s screen capture show
 setting the app as default dialer → an incoming call ringing → a blocked call being rejected →
 the call log entry with its reason. Upload unlisted to YouTube; the Console wants a URL.
 
-### 3.3 Other declarations
+### 3.3 Full-screen intent (`USE_FULL_SCREEN_INTENT`)
+
+**This is the one that got rejected.** Version code 1 was flagged: *"Permission use is not
+directly related to your app's core purpose."*
+
+The policy auto-grants this permission only to apps whose **core functionality** is *setting an
+alarm* or *receiving phone or video calls*
+([policy](https://support.google.com/googleplay/android-developer/answer/16558241#full_screen_intent)).
+This app is the second category, and the APK says so unambiguously — but Play evaluates the
+**declaration form and the listing**, not the manifest, and neither of those said "phone app"
+loudly enough.
+
+- Targeting Android 14+ (this app targets 36), submit the **full-screen intent declaration form**
+  in Play Console → App content. Do not skip it and hope the manifest speaks for itself; it does
+  not.
+- Answer with the *receiving phone or video calls* category. The supporting evidence:
+
+  | Claim | Where a reviewer can verify it |
+  |---|---|
+  | The app is the default phone app | `AndroidManifest.xml` — `InCallService` with `IN_CALL_SERVICE_UI` **and** `IN_CALL_SERVICE_RINGING` metadata |
+  | It is responsible for ringing | `IN_CALL_SERVICE_RINGING` means Telecom stops ringing and this app must; see `CallRinger` |
+  | It supplies the incoming-call UI | `telecom/InCallActivity` — `showWhenLocked`, `turnScreenOn` |
+  | The full-screen intent *is* that UI | `IncomingCallNotifier.notifyIncomingCall` — `setFullScreenIntent` targeting `InCallActivity` |
+  | Nothing else uses the permission | one `setFullScreenIntent` call in the whole codebase: `grep -rn 'setFullScreenIntent' androidApp/src` |
+
+- The listing copy must corroborate it. `STORE_LISTING.md` now opens with "Corta Spam is your
+  phone app" and carries a **WHEN A CALL COMES IN** section describing the full-screen ringing
+  screen. A listing that leads with *call blocking* invites exactly the rejection above.
+- Category stays **Communication**. See the note in `STORE_LISTING.md`.
+- If the appeal fails, the fallback is removing the permission: the `CallStyle` notification stays
+  and degrades to a heads-up with Answer/Decline, losing the lock-screen takeover.
+
+### 3.4 Other declarations
 
 - **Ads**: No.
 - **Content rating** questionnaire (IARC): answer honestly; this lands at Everyone / PEGI 3.

@@ -1,7 +1,12 @@
 # Release status — Corta Spam internal testing
 
-**As of 2026-08-05.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
+**As of 2026-08-06.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
 `PLAY_INTERNAL_TESTING.md` is the requirements reference.
+
+> **Blocked:** version code 1 was rejected under the Full-Screen Intent policy — *"Permission use
+> is not directly related to your app's core purpose."* The app qualifies (core function is
+> receiving phone calls); the declaration form is what was missing. See `PLAY_FSI_APPEAL.md` and
+> §3.3 of `PLAY_INTERNAL_TESTING.md`. Permission and code are unchanged and staying.
 
 ---
 
@@ -50,15 +55,18 @@
 
 ## ⬜ Remaining — you only
 
-- [ ] **Contact email** for the store listing (public on the page)
-- [ ] Play Console: create app with package `org.carlospinan.cortaspam`, es-419, App, Free
+- [x] **Contact email** for the store listing — `carlos.pinan@gmail.com`
+- [x] Play Console: app created; Category **Communication**, tags `Caller ID, Communication`
 - [ ] Play Console: **App content** — every section green
       - [ ] Privacy policy URL
       - [ ] Data safety → *collects no data*
       - [ ] Ads → No · Content rating (IARC) · Target audience (not child-directed)
       - [ ] **Permissions declaration** for the dialer role
-      - [ ] **Demo video** (~60s, unlisted YouTube) — reviewers ask for one on dialer apps
-- [ ] Play Console: Store listing — paste copy, upload `docs/store/play/` assets
+      - [ ] **Full-screen intent declaration** — the form the version-code-1 rejection came from
+      - [ ] **Demo video** (~60s, unlisted YouTube) — reviewers ask for one on dialer apps, and
+            it is the single strongest exhibit for the full-screen intent appeal
+- [ ] Play Console: Store listing — **re-paste** the copy; it was rewritten 2026-08-06 to lead
+      with "phone app" rather than call blocking
 - [ ] Play Console: upload `corta-spam-0.1.0-1-release.aab`
 - [ ] **Accept Play App Signing** when offered (one-way; declining makes a lost key fatal)
 - [ ] Add testers, send them the **opt-in link** (they cannot install without it)

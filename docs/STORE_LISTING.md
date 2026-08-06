@@ -6,9 +6,19 @@ about the store page, not about the strings in the APK.
 
 Paste-ready. Assets live in [`store/`](store/).
 
-Two rules applied to both languages: **do not promise detection accuracy** (this app blocks by
-*your* rules plus a small bundled list — it is not a crowd-sourced spam database), and **do not
-describe the auto-responder as reliable** (it reaches the caller only by acoustic coupling).
+Three rules applied to both languages: **do not promise detection accuracy** (this app blocks by
+*your* rules plus a small bundled list — it is not a crowd-sourced spam database), **do not
+describe the auto-responder as reliable** (it reaches the caller only by acoustic coupling), and
+**the short description must describe function and nothing else**.
+
+That last one has its own
+[guideline](https://support.google.com/googleplay/android-developer/answer/9866151): the short
+description may not carry *"language that is not related to the function or purpose of your app,
+including… price and promotional information"*. Play flagged an earlier short description reading
+`Open source, no ads, no tracking` — an ad-free claim is monetization information, and licensing
+is not a function. Being flagged does not block publishing, it makes the app **ineligible for
+Play promotion**. The full description is not bound by this rule, so the privacy and open-source
+positioning lives there instead.
 
 ---
 
@@ -24,16 +34,20 @@ Corta Spam
 ## Descripción corta (≤80 caracteres)
 
 ```
-Bloquea llamadas con tus reglas. Código abierto, sin anuncios ni rastreo.
+App de teléfono que filtra cada llamada con tus reglas, antes de que suene.
 ```
-*73 caracteres.*
+*75 caracteres.* Solo función: ver la regla de la descripción corta más arriba.
 
 ## Descripción completa (≤4000 caracteres)
 
 ```
-Corta Spam filtra las llamadas entrantes antes de que suene tu teléfono, con reglas que escribes tú.
+Corta Spam es tu app de teléfono. Sustituye al marcador predeterminado, recibe todas tus llamadas entrantes y las filtra con reglas que escribes tú, antes de que el teléfono suene.
 
 Sin anuncios. Sin rastreo. Sin cuentas. Sin acceso a la red: cada regla y cada registro se quedan en una base de datos dentro de tu dispositivo, y la app no tiene código capaz de enviarlos a ningún lado.
+
+CUANDO ENTRA UNA LLAMADA
+
+Corta Spam es la app que suena. Muestra a quien llama a pantalla completa, con Contestar y Rechazar, encima de la pantalla de bloqueo cuando el teléfono está bloqueado, y con el nombre del contacto si lo tienes guardado. Mientras hablas puedes salir de la app y volver a la llamada desde la notificación.
 
 QUÉ PUEDES BLOQUEAR
 
@@ -68,11 +82,13 @@ Español, inglés, portugués e hindi.
 
 NOTA SOBRE LOS PERMISOS
 
-Corta Spam debe ser tu app de teléfono predeterminada. Es la única forma en que Android permite filtrar una llamada antes de que suene: así es como funciona el bloqueo, no es un permiso extra.
+Corta Spam es una app de teléfono, así que debe ser tu app de teléfono predeterminada. Es la única forma en que Android permite recibir una llamada, mostrarla y filtrarla antes de que suene: así es como funciona la app, no es un permiso extra.
+
+Por la misma razón muestra la llamada entrante a pantalla completa sobre la pantalla de bloqueo, como haría cualquier app de teléfono. Sin eso, una llamada que llega con el teléfono bloqueado no se podría contestar.
 
 El auto-respondedor es experimental. Contesta una llamada bloqueada y reproduce un saludo, pero en versiones recientes de Android puede que quien llama no lo escuche bien; tómalo como un extra, no como una función en la que confiar.
 ```
-*~2.100 caracteres.*
+*3.165 caracteres.*
 
 ## Notas de la versión
 
@@ -93,16 +109,20 @@ Corta Spam
 ## Short description (≤80 chars)
 
 ```
-Block calls by your own rules. Open source, no ads, nothing leaves your phone.
+Phone app that screens every call by your rules, before your phone rings.
 ```
-*77 characters.*
+*73 characters.* Function only — see the short-description rule above.
 
 ## Full description (≤4000 chars)
 
 ```
-Corta Spam screens incoming calls before your phone rings, using rules you write yourself.
+Corta Spam is your phone app. It replaces the default dialer, receives every incoming call, and screens it against rules you write yourself, before your phone rings.
 
 No ads. No tracking. No accounts. No network access at all — every rule and every log entry stays in a database on your device, and the app has no code that could send it anywhere.
+
+WHEN A CALL COMES IN
+
+Corta Spam is the app that rings. It shows the caller full-screen with Answer and Decline, over the lock screen when your phone is locked, and names the caller from your contacts. While you are on a call you can leave the app and get back to it from the notification.
 
 WHAT YOU CAN BLOCK
 
@@ -137,11 +157,13 @@ English, Spanish, Portuguese and Hindi.
 
 NOTE ON PERMISSIONS
 
-Corta Spam must be set as your default phone app. That is the only way Android lets an app screen a call before it rings — it is how the blocking works, not an extra request.
+Corta Spam is a phone app, so it must be set as your default phone app. That is the only way Android lets an app receive a call, show it, and screen it before it rings — it is how the app works, not an extra request.
+
+For the same reason it shows the incoming call full-screen over the lock screen, the way any phone app does. Without that, a call arriving while your phone is locked could not be answered.
 
 The auto-responder is experimental. It answers a blocked call and plays a greeting, but on modern Android the caller may not hear it clearly; treat it as a bonus, not a feature to rely on.
 ```
-*~2,050 characters.*
+*2,889 characters.*
 
 ---
 
@@ -150,8 +172,8 @@ The auto-responder is experimental. It answers a blocked call and plays a greeti
 | Field | Value |
 |---|---|
 | Default language | **Español (es-419)** — English added as a translation |
-| Category | **Tools** — not Communication. It is a utility, and Communication draws stricter dialer scrutiny. |
-| Tags | Call blocking, Privacy, Open source |
+| Category | **Communication** — matches what the APK is (an `InCallService` holding `ROLE_DIALER`). An earlier draft of this doc said Tools, on the theory that Communication draws stricter dialer scrutiny; that is backwards. `USE_FULL_SCREEN_INTENT` is auto-granted only to apps whose core function is *receiving phone or video calls*, and a Tools app is not one. Do not change this back. |
+| Tags | Caller ID, Communication |
 | Contact email | *(a monitored address — required and shown publicly)* |
 | Website | `https://github.com/cpinan/Corta-Spam` |
 | Privacy policy | `https://cpinan.github.io/Corta-Spam/PRIVACY` |
