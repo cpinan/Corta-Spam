@@ -24,7 +24,12 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.carlospinan.bloqueador.app"
+        // The Play-facing identity, and permanent after the first upload -- it appears in
+        // every store link. Deliberately different from `namespace` above, which stays
+        // org.carlospinan.bloqueador.app: namespace drives the R class and resolves relative
+        // manifest component names, so changing it would move every source package for no
+        // user-visible gain. applicationId is the one users can actually see.
+        applicationId = "org.carlospinan.cortaspam"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

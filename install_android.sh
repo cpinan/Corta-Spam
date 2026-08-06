@@ -117,7 +117,10 @@ adb -s "$DEVICE" install -r "$APK" 2>&1
 # — Launch —
 if [ "$LAUNCH" = true ]; then
     echo -e "${YELLOW}Launching...${NC}"
-    adb -s "$DEVICE" shell am start -n org.carlospinan.bloqueador.app/.MainActivity 2>&1
+    # Read both from the built APK rather than hardcoding: applicationId (org.carlospinan.cortaspam)
+    # and the activity's own package (org.carlospinan.bloqueador.app, the module namespace) are
+    # deliberately different, so "<applicationId>/.MainActivity" does not resolve.
+    adb -s "$DEVICE" shell am start -n org.carlospinan.cortaspam/org.carlospinan.bloqueador.app.MainActivity 2>&1
 fi
 
 echo -e "${GREEN}Done.${NC}"

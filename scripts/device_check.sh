@@ -14,7 +14,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PKG=org.carlospinan.bloqueador.app
+# applicationId, which is what adb/run-as key off. Not the same as the code namespace.
+PKG=org.carlospinan.cortaspam
 DB=cortaspam.db
 DEVICE=""
 CLEAR=false
