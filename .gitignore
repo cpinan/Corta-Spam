@@ -30,6 +30,11 @@ node_modules/
 # IDE
 .idea/
 
+# Per-machine Claude Code permissions. settings.json is the shared, reviewed
+# allowlist; .local.json is whatever this machine has approved and should not be
+# published -- on a public repo it advertises which commands run unprompted.
+.claude/settings.local.json
+
 # Tool configs (local only)
 .codex/
 AGENTS.md
