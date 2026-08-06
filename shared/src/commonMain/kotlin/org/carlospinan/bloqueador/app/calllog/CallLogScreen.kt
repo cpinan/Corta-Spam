@@ -41,8 +41,12 @@ import cortaspam.shared.generated.resources.call_log_action_copy
 import cortaspam.shared.generated.resources.call_log_action_label
 import cortaspam.shared.generated.resources.call_log_allowed_label
 import cortaspam.shared.generated.resources.call_log_blocked_label
+import cortaspam.shared.generated.resources.call_log_delete_recording
+import cortaspam.shared.generated.resources.call_log_delete_recording_confirm
 import cortaspam.shared.generated.resources.call_log_detail_placeholder
 import cortaspam.shared.generated.resources.call_log_empty_hint
+import cortaspam.shared.generated.resources.call_log_play_recording
+import cortaspam.shared.generated.resources.call_log_recording_label
 import cortaspam.shared.generated.resources.call_log_review_label
 import cortaspam.shared.generated.resources.call_log_rule_label
 import cortaspam.shared.generated.resources.call_log_time_label
@@ -77,6 +81,8 @@ fun CallLogScreen(
     onCopyNumber: (String) -> Unit = {},
     onCallBack: (String) -> Unit = {},
     onBack: () -> Unit,
+    onPlayRecording: (String) -> Unit = {},
+    onDeleteRecording: (Long) -> Unit = {},
 ) {
     var selectedNumber by remember { mutableStateOf<String?>(null) }
     var selectedEntry by remember { mutableStateOf<CallLogEntryData?>(null) }
@@ -104,6 +110,8 @@ fun CallLogScreen(
                         selectedEntry = selected,
                         onEntryTap = { selectedEntry = it },
                         modifier = Modifier.width(340.dp).fillMaxHeight(),
+                        onPlayRecording = onPlayRecording,
+                        onDeleteRecording = onDeleteRecording,
                     )
                     CallLogDetailPane(
                         entry = selected,
@@ -149,6 +157,8 @@ fun CallLogScreen(
                                     entry = entry,
                                     contactNames = contactNames,
                                     onTap = { selectedNumber = entry.number },
+                                    onPlayRecording = onPlayRecording,
+                                    onDeleteRecording = onDeleteRecording,
                                 )
                             }
                         }
@@ -223,6 +233,8 @@ private fun CallLogListPane(
     selectedEntry: CallLogEntryData?,
     onEntryTap: (CallLogEntryData) -> Unit,
     modifier: Modifier = Modifier,
+    onPlayRecording: (String) -> Unit = {},
+    onDeleteRecording: (Long) -> Unit = {},
 ) {
     Column(modifier = modifier.padding(16.dp)) {
         Text(
@@ -255,6 +267,8 @@ private fun CallLogListPane(
                             } else {
                                 Modifier
                             },
+                        onPlayRecording = onPlayRecording,
+                        onDeleteRecording = onDeleteRecording,
                     )
                 }
             }
@@ -398,6 +412,8 @@ private fun CallLogEntryRow(
     contactNames: Map<String, String>,
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
+    onPlayRecording: (String) -> Unit = {},
+    onDeleteRecording: (Long) -> Unit = {},
 ) {
     val isBlocked = entry.action == "BLOCKED"
     val isReview = entry.ruleType == "REVIEW"
@@ -460,6 +476,71 @@ private fun CallLogEntryRow(
                 color = actionColor,
             )
         }
+
+        // Rendered on the row rather than in the tap dialog because that dialog is keyed by
+        // phone number, and a recording belongs to one specific call, not to every call from
+        // that number. It also means a recording is visible without tapping anything.
+        entry.recordingPath?.let { path ->
+            RecordingControls(
+                onPlay = { onPlayRecording(path) },
+                onDelete = { onDeleteRecording(entry.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecordingControls(
+    onPlay: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var confirmingDelete by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.call_log_recording_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = onPlay) {
+            Text(stringResource(Res.string.call_log_play_recording))
+        }
+        TextButton(onClick = { confirmingDelete = true }) {
+            Text(
+                text = stringResource(Res.string.call_log_delete_recording),
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+    }
+
+    // Deleting audio of a person's voice is not undoable and there is no trash to recover it
+    // from, so it asks first -- unlike the other row actions, which are all reversible.
+    if (confirmingDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            title = { Text(stringResource(Res.string.call_log_delete_recording)) },
+            text = { Text(stringResource(Res.string.call_log_delete_recording_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmingDelete = false
+                    onDelete()
+                }) {
+                    Text(
+                        text = stringResource(Res.string.call_log_delete_recording),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingDelete = false }) {
+                    Text(stringResource(Res.string.action_cancel))
+                }
+            },
+        )
     }
 }
 

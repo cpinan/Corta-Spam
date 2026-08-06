@@ -4,8 +4,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.testing.createTestDatabase
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -18,6 +21,108 @@ import kotlin.test.assertTrue
 class SqlCallLogRepositoryTest {
     private val now = System.currentTimeMillis()
     private val dayMillis = 86_400_000L
+
+    @Test
+    fun logCallReturnsTheIdOfTheRowItJustWrote() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+
+            val first = repo.logCall("+34600000001", now, RuleDecision.DefaultBlock)
+            val second = repo.logCall("+34600000002", now + 1, RuleDecision.DefaultBlock)
+
+            // The recorder attaches audio by this id after the call has ended, so a wrong id
+            // silently files a caller's recording under a different caller's log entry.
+            assertEquals(
+                listOf(first, second),
+                repo
+                    .allEntries()
+                    .first()
+                    .map { it.id }
+                    .sorted(),
+            )
+            assertTrue(second > first)
+        }
+
+    @Test
+    fun attachRecordingPointsTheEntryAtTheFile() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+            val id = repo.logCall("+34600123456", now, RuleDecision.DefaultBlock)
+            assertNull(
+                repo
+                    .allEntries()
+                    .first()
+                    .single()
+                    .recordingPath,
+            )
+
+            repo.attachRecording(id, "/data/app/recordings/call_$id.m4a")
+
+            assertEquals(
+                "/data/app/recordings/call_$id.m4a",
+                repo
+                    .allEntries()
+                    .first()
+                    .single()
+                    .recordingPath,
+            )
+        }
+
+    @Test
+    fun deleteRecordingClearsThePathEvenWhenTheFileIsAlreadyGone() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+            val id = repo.logCall("+34600123456", now, RuleDecision.DefaultBlock)
+            // A path that was never written: RecordingStore.delete treats a missing file as
+            // success, so the column must still end up null rather than stranding the UI with a
+            // play button for audio the user asked to destroy.
+            repo.attachRecording(id, "/nonexistent/call_$id.m4a")
+
+            repo.deleteRecording(id)
+
+            assertNull(
+                repo
+                    .allEntries()
+                    .first()
+                    .single()
+                    .recordingPath,
+            )
+        }
+
+    @Test
+    fun deleteRecordingOnAnEntryWithNoRecordingIsANoOp() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+            val id = repo.logCall("+34600123456", now, RuleDecision.DefaultBlock)
+
+            repo.deleteRecording(id)
+
+            assertEquals(1, repo.allEntries().first().size)
+            assertNull(
+                repo
+                    .allEntries()
+                    .first()
+                    .single()
+                    .recordingPath,
+            )
+        }
+
+    @Test
+    fun clearAllDeletesTheRecordingFilesAndNotJustTheRows() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+            val file = File.createTempFile("corta-spam-recording", ".m4a")
+            val id = repo.logCall("+34600123456", now, RuleDecision.DefaultBlock)
+            repo.attachRecording(id, file.absolutePath)
+            assertTrue(file.exists())
+
+            repo.clearAll()
+
+            // The rows are what the UI reads, so a surviving file is invisible -- audio of a
+            // real person's voice left on disk after the user pressed "clear log".
+            assertTrue(repo.allEntries().first().isEmpty())
+            assertFalse(file.exists())
+        }
 
     @Test
     fun logCallPersistsAManualBlockWithItsRuleIdAndLabel() =

@@ -1,0 +1,16 @@
+-- Auto-responder call recording: the file path for a call whose caller message was recorded.
+--
+-- Named 2.sqm because 1.sqm already takes the squashed databases/1.db baseline from version 1
+-- to version 2; this one takes 2 to 3. See the numbering note in 1.sqm -- getting this wrong
+-- generates a Schema.version with a migration gap that verifySqlDelightMigration does not
+-- catch, and only PRAGMA user_version on a real device exposes.
+--
+-- Plain ADD COLUMN: nullable, no default, no CHECK constraint and no foreign key, so none of
+-- the rename-copy-drop dance a CHECK change needs applies here (contrast
+-- corta-spam-sqldelight-check-migration). Existing rows get NULL, which is exactly right --
+-- they predate recording and have no audio.
+--
+-- SQLite cannot attach a foreign key via ALTER TABLE, but there is no table to reference: the
+-- audio lives on the filesystem, not in the database. That split is deliberate (audio does not
+-- belong in a SQLite row) and it is why deleting a log entry has to delete a file as well.
+ALTER TABLE CallLogEntry ADD COLUMN recording_path TEXT;

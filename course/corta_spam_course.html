@@ -2297,9 +2297,118 @@ th{background:var(--panel-2);font-weight:600}
 </div>
 </section>
 
+<section class="module" id="m21">
+<div class="chapter-status">Chapter 21 done</div>
+<h2><span class="cn">21</span>When the Platform Says No</h2>
+<p>Two things collided in one day: a Google Play policy rejection that was wrong, and a feature that four different user-facing surfaces claimed to have and no line of code implemented. Both are about the same discipline — checking whether the thing you assert is actually true.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul>
+<li>Verify a platform policy against your own manifest before complying with a rejection</li>
+<li>Recognise a claim in a privacy policy as a promise the code must keep</li>
+<li>Understand which audio sources Android reserves for privileged apps, and design honestly around that</li>
+<li>Attach a file to a database row without leaking it when the row is deleted</li>
+<li>Return an inserted row id safely when concurrent writes are possible</li>
+</ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> A rejection that was wrong</h3>
+<p>Play rejected version code 1: <em>"Full-Screen Intent Permission policy: Permission use is not directly related to your app's core purpose."</em> The prescribed fix was to remove <code>USE_FULL_SCREEN_INTENT</code> from every version code.</p>
+<p>Reading the actual policy changed the answer. It auto-grants the permission when core functionality is <em>setting an alarm</em> or <em>receiving phone or video calls</em>. The manifest already settles which of those applies:</p>
+<div class="filepath">androidApp/src/main/AndroidManifest.xml</div>
+<pre><code><span class="line">&lt;service android:name=".telecom.PassthroughInCallService"</span>
+<span class="line">    android:permission="android.permission.BIND_INCALL_SERVICE"&gt;</span>
+<span class="line">    &lt;meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" /&gt;</span>
+<span class="line">    &lt;meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" /&gt;</span>
+<span class="line">&lt;/service&gt;</span></code></pre>
+<p><code>IN_CALL_SERVICE_RINGING</code> is not a preference. It tells Telecom to stop ringing because this app has taken that responsibility. An app the OS has made responsible for presenting incoming calls is, definitionally, an app whose core function is receiving calls.</p>
+
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">A store's "How to fix" section describes the compliance path. It is not a finding that you are guilty. Following it <em>and</em> appealing at the same time destroys the appeal — you would be conceding the permission is not core while arguing that it is.</p></div>
+
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">The real defect was elsewhere: the Play Console full-screen-intent declaration form had never been submitted, so review judged the permission against the store listing alone — and the listing led with "Block calls by your own rules", naming the dialer role once, in a closing caveat about permissions. The APK said phone app; the listing said utility. Review trusts the listing.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> A privacy policy that promised a feature</h3>
+<p>The same audit found a "Record caller message" switch. It persisted its flag, validated a consent phrase, rendered as a <code>Switch</code>, and had a passing repository test. Nothing recorded. No <code>RECORD_AUDIO</code> permission, no <code>MediaRecorder</code>, no <code>AudioRecord</code> anywhere in the source.</p>
+<p>That is Chapter 20's failure mode again, with a sharper edge: the published privacy policy carried an entire <em>Call recording</em> section, in both languages, describing the capability. A privacy policy is a legally operative document, and call recording is one of the most scrutinised areas in app review. The app was volunteering the topic for a feature it did not have.</p>
+
+<div class="note contrast"><span class="tag">Contrast</span>
+<p style="margin-bottom:0">A dead code path is a bug. A dead code path that a legal document describes to users is a misrepresentation. The remedy is the same either way — make the claim and the code agree — but only one of them can cost you the listing.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> What Android will and will not let you record</h3>
+<p>Implementing it honestly meant learning what is actually available. Android reserves the real call-audio sources behind a permission third-party apps cannot hold:</p>
+<table>
+<tr><th>Source</th><th>Available to this app?</th></tr>
+<tr><td><code>VOICE_CALL</code>, <code>VOICE_DOWNLINK</code>, <code>VOICE_UPLINK</code></td><td>No — needs <code>CAPTURE_AUDIO_OUTPUT</code>, which is <code>signature|privileged</code></td></tr>
+<tr><td><code>AudioPlaybackCapture</code> (API 29+)</td><td>No — cannot capture voice calls</td></tr>
+<tr><td>Accessibility API</td><td>No — Play has prohibited its use for call recording since 2022</td></tr>
+<tr><td><code>MediaRecorder.AudioSource.MIC</code></td><td>Yes, but it is acoustic pickup through the earpiece</td></tr>
+</table>
+<p>Holding <code>ROLE_DIALER</code> does not change any row of that table. So the feature was built on <code>MIC</code>, and every failure is treated as ordinary rather than exceptional:</p>
+<div class="filepath">androidApp/src/main/kotlin/.../telecom/AutoResponderRecorder.kt</div>
+<pre><code><span class="line">} catch (e: IllegalStateException) {</span>
+<span class="line">    // start() on a mic the platform would not hand over -- the common OEM case.</span>
+<span class="line">    Log.w(TAG, "Microphone unavailable during the call", e)</span>
+<span class="line">    cleanUpAfterFailure(file)</span>
+<span class="line">    false</span>
+<span class="line">}</span></code></pre>
+<p>Several manufacturers give the telephony stack exclusive ownership of the microphone during a call, as an anti-wiretapping measure. A <code>false</code> return means the caller is disconnected exactly as it was before recording existed — the blocked call must always end, and must never stay open because recording failed.</p>
+
+<div class="note scope"><span class="tag">Scope</span>
+<p style="margin-bottom:0">The README, the privacy policy and the in-app toggle description all say the same sentence in four languages: it records through the microphone, so some phones capture nothing. Shipping a feature that may not work is fine. Shipping one while implying it will is not.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> Tying a file to a row without leaking it</h3>
+<p>Audio belongs on the filesystem; the call log lives in SQLite. That split creates two failure modes, and the schema comment names both:</p>
+<div class="filepath">shared/src/commonMain/sqldelight/.../AppDatabase.sq</div>
+<pre><code><span class="line">-- The file lives in app-internal storage; clearCallLog cannot delete it, so the caller that</span>
+<span class="line">-- clears the log must delete the files too -- see CallLogRepository.clearAll.</span>
+<span class="line">recording_path TEXT</span></code></pre>
+<p>Deleting rows before files strands the audio: nothing points at it, no UI can reach it, and it survives a "clear log" the user believed destroyed it. So <code>clearAll</code> deletes files first, and deleting a single recording clears the column even when the file delete failed — a row pointing at a file that still exists is worse than an orphan, because the UI keeps offering playback of a recording the user asked to destroy.</p>
+<p>The other trap is finding the row at all. The entry is written while the call is still live (the decision must be logged even if everything after it fails), but the recording only exists once the call has ended:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../rules/SqlCallLogRepository.kt</div>
+<pre><code><span class="line">// The insert and the id read share one transaction: last_insert_rowid() is</span>
+<span class="line">// connection-scoped, so a concurrent insert between the two -- two calls arriving</span>
+<span class="line">// together, which call waiting makes real -- would otherwise hand back the wrong row.</span>
+<span class="line">queries.transactionWithResult {</span>
+<span class="line">    queries.insertCallLogEntry(...).value</span>
+<span class="line">    queries.lastInsertRowId().executeAsOne()</span>
+<span class="line">}</span></code></pre>
+
+<div class="note verified"><span class="tag">Verified</span>
+<p style="margin-bottom:0">346 JVM tests, including one that writes a real temp file, attaches it, calls <code>clearAll</code>, and asserts the file is gone. That failure is invisible through the UI — the rows vanish either way — so only a test that looks at the filesystem can catch it.</p></div>
+
+<div class="callout"><h3>Case Study: the appeal that changed nothing in the code</h3>
+<p>The first response to the Play rejection was to start deleting: six files edited, the permission stripped from the manifest, the <code>setFullScreenIntent</code> call removed. It was the wrong instinct, and it was caught by reading the policy the rejection linked to.</p>
+<p>The final change set contained <strong>no</strong> code at all for that issue — a declaration form, a category already set correctly, and rewritten listing copy. The lesson is not "appeal everything". It is that a rejection is a claim, claims can be checked, and the manifest is usually a better witness than the reviewer's summary.</p></div>
+
+<div class="callout"><h3>Done when</h3>
+<ul>
+<li>Every user-facing claim about a feature — UI, privacy policy, store listing, onboarding — is backed by code that runs</li>
+<li>A platform rejection has been checked against the platform's own policy text before you comply with it</li>
+<li>Deleting a database row deletes whatever it points at outside the database</li>
+<li>A feature that can fail on some devices says so, in every language you ship</li>
+</ul></div>
+
+<div class="quiz">
+<h3>Check Yourself</h3>
+<div class="quiz-item"><p><strong>1.</strong> The app holds <code>ROLE_DIALER</code>. Does that let it record call audio with <code>AudioSource.VOICE_CALL</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">No. <code>VOICE_CALL</code> requires <code>CAPTURE_AUDIO_OUTPUT</code>, which is <code>signature|privileged</code> — granted only to apps signed with the platform key or installed on the privileged partition. The dialer role grants nothing here. The only option left is <code>MIC</code>, which picks the caller up acoustically and is blocked outright on some OEM builds.</div></div>
+<div class="quiz-item"><p><strong>2.</strong> Why does <code>clearAll</code> delete the recording files before deleting the rows, rather than after?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The rows hold the paths. Delete them first and the audio is unreachable but still on disk — invisible to the UI, undeletable by the user, and left over from a "clear log" they believed destroyed it.</div></div>
+<div class="quiz-item"><p><strong>3.</strong> Why must <code>insertCallLogEntry</code> and <code>lastInsertRowId()</code> run in the same transaction?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer"><code>last_insert_rowid()</code> is scoped to the connection, not to your insert. Another insert landing in between returns that row's id instead. Call waiting makes two simultaneous calls real, and the consequence is one caller's recording filed under a different caller's log entry.</div></div>
+<div class="quiz-item"><p><strong>4.</strong> A store rejection tells you to remove a permission. What do you check first?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The policy text the rejection links to, against your own manifest. Here the policy auto-granted the permission to apps whose core function is receiving calls, and <code>IN_CALL_SERVICE_RINGING</code> proved that is what the app is. The real gap was an unsubmitted declaration form, which no amount of deleting code would have fixed.</div></div>
+</div>
+</section>
+
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>20 Chapters, One Production App</h3>
+<div class="callout"><h3>21 Chapters, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -2324,6 +2433,7 @@ th{background:var(--panel-2);font-weight:600}
 <tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Test doubles</td><td style="padding:8px">Shared fakes, internal visibility across source sets</td><td style="padding:8px">18</td></tr>
 <tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Persistence testing</td><td style="padding:8px">In-memory SQLite, restart hydration, CHECK round-trips</td><td style="padding:8px">19</td></tr>
 <tr><td style="padding:8px">Auditing</td><td style="padding:8px">Code that ships but never runs; integration-level tests; toolchain vs code failures</td><td style="padding:8px">20</td></tr>
+<tr><td style="padding:8px">Policy &amp; Claims</td><td style="padding:8px">Play permission policy, privileged audio sources, file-backed rows</td><td style="padding:8px">21</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2334,8 +2444,8 @@ th{background:var(--panel-2);font-weight:600}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>339 automated tests (227 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p>346 automated tests (227 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-06 — added Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>

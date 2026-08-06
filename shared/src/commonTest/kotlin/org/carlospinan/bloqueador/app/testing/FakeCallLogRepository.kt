@@ -42,11 +42,33 @@ internal class FakeCallLogRepository(
 
     override suspend fun blockedByDay(daysBack: Int): List<DayStat> = dailyStats
 
+    /** Ids handed out by [logCall], in order, so a test can assert what the caller was given. */
+    val loggedIds = mutableListOf<Long>()
+
+    /** Recordings attached via [attachRecording], keyed by entry id. */
+    val attachedRecordings = mutableMapOf<Long, String>()
+
+    private var nextId = 1L
+
     override suspend fun logCall(
         number: String,
         timestamp: Long,
         decision: RuleDecision,
-    ) {}
+    ): Long = nextId++.also { loggedIds += it }
 
-    override suspend fun clearAll() {}
+    override suspend fun attachRecording(
+        entryId: Long,
+        path: String,
+    ) {
+        attachedRecordings[entryId] = path
+    }
+
+    override suspend fun deleteRecording(entryId: Long) {
+        attachedRecordings.remove(entryId)
+    }
+
+    override suspend fun clearAll() {
+        attachedRecordings.clear()
+        entriesFlow.value = emptyList()
+    }
 }

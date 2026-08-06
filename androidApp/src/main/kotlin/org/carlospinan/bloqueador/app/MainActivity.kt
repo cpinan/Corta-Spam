@@ -28,6 +28,7 @@ import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingIntent
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
 import org.carlospinan.bloqueador.app.telecom.AutoResponderAudio
+import org.carlospinan.bloqueador.app.telecom.RecordingPlayer
 import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
 import org.koin.android.ext.android.inject
 
@@ -37,6 +38,10 @@ class MainActivity : ComponentActivity() {
     /** Lazily created so a plain app launch (no auto-responder test tapped) never touches TTS/MediaPlayer. */
     private val testAudioLazy = lazy { AutoResponderAudio(this) }
     private val testAudio get() = testAudioLazy.value
+
+    /** Same reasoning: nothing is constructed until a recording is actually played. */
+    private val recordingPlayerLazy = lazy { RecordingPlayer() }
+    private val recordingPlayer get() = recordingPlayerLazy.value
 
     private val roleRequestLauncher =
         registerForActivityResult(
@@ -92,10 +97,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    private val micPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { _ -> refreshPermissionStatus() }
+
     private var notificationsPermissionGranted by mutableStateOf(true)
     private var fullScreenIntentAllowed by mutableStateOf(true)
     private var callPhonePermissionGranted by mutableStateOf(true)
     private var contactsPermissionGranted by mutableStateOf(true)
+
+    /**
+     * Only consulted once the user turns auto-responder recording on. Deliberately never
+     * requested at launch: a dialer asking for the microphone on first run, for a feature that
+     * is off by default, reads as overreach and gets denied permanently.
+     */
+    private var micPermissionGranted by mutableStateOf(true)
 
     private fun refreshPermissionStatus() {
         contactsPermissionGranted =
@@ -109,6 +126,8 @@ class MainActivity : ComponentActivity() {
             getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
         callPhonePermissionGranted =
             ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
+        micPermissionGranted =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -194,6 +213,11 @@ class MainActivity : ComponentActivity() {
                                     Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
                                 )
                             },
+                            micPermissionGranted = micPermissionGranted,
+                            onRequestMicPermission = {
+                                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            },
+                            onPlayRecording = { path -> recordingPlayer.play(path) },
                         )
                     },
                 )
@@ -211,6 +235,9 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         if (testAudioLazy.isInitialized()) {
             testAudio.release()
+        }
+        if (recordingPlayerLazy.isInitialized()) {
+            recordingPlayer.stop()
         }
     }
 

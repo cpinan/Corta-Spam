@@ -27,10 +27,15 @@ sealed interface CallLogIntent {
     data class SetFilter(
         val filter: String,
     ) : CallLogIntent
+
+    /** Destroy the auto-responder recording attached to a call-log entry. */
+    data class DeleteRecording(
+        val entryId: Long,
+    ) : CallLogIntent
 }
 
 class CallLogViewModel(
-    callLogRepository: CallLogRepository,
+    private val callLogRepository: CallLogRepository,
     private val contactsGateway: ContactsGateway,
 ) : ViewModel() {
     private val filterFlow = MutableStateFlow("all")
@@ -56,6 +61,8 @@ class CallLogViewModel(
     fun onIntent(intent: CallLogIntent) {
         when (intent) {
             is CallLogIntent.SetFilter -> filterFlow.value = intent.filter
+            is CallLogIntent.DeleteRecording ->
+                viewModelScope.launch { callLogRepository.deleteRecording(intent.entryId) }
         }
     }
 }

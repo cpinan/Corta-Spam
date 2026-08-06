@@ -176,7 +176,9 @@
     <string name="autoresponder_pick_audio">Selecionar arquivo</string>
     <string name="autoresponder_clear_audio">Usar texto para voz</string>
     <string name="autoresponder_recording">Gravar mensagem do chamador</string>
-    <string name="autoresponder_recording_desc">Desativado por padrão. Não confiável em Android moderno.</string>
+    <string name="autoresponder_recording_desc">Desativado por padrão. Grava pelo microfone, por isso alguns telefones não captam nada.</string>
+    <string name="autoresponder_mic_permission_required">É necessário acesso ao microfone para gravar.</string>
+    <string name="autoresponder_grant_mic">Conceder acesso ao microfone</string>
     <string name="autoresponder_consent_hint">Roteiro deve incluir: "Esta chamada pode ser gravada"</string>
     <string name="autoresponder_error_empty">Roteiro ou áudio necessário quando ativado.</string>
     <string name="autoresponder_error_too_long">Roteiro muito longo (máx. 500 caracteres).</string>
@@ -223,6 +225,10 @@
     <string name="call_log_just_now">Agora mesmo</string>
     <string name="call_log_action_label">Ação</string>
     <string name="call_log_rule_label">Regra</string>
+    <string name="call_log_recording_label">Gravação</string>
+    <string name="call_log_play_recording">Reproduzir</string>
+    <string name="call_log_delete_recording">Excluir gravação</string>
+    <string name="call_log_delete_recording_confirm">Isto apaga o ficheiro de áudio permanentemente. Não pode ser desfeito.</string>
 
     <!-- Sobre -->
     <string name="about_open_source">Código aberto · Licença MIT</string>

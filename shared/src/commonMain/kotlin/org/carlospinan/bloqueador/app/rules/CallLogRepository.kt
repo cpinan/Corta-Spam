@@ -39,14 +39,30 @@ interface CallLogRepository {
      */
     fun changes(): Flow<Unit>
 
-    /** Log a call screening decision. */
+    /**
+     * Log a call screening decision, returning the new row's id.
+     *
+     * The id matters because the row is written while the call is still live -- the decision
+     * has to be logged even if everything after it fails -- so an auto-responder recording,
+     * which only exists once the call has ended, has to find its row again afterwards via
+     * [attachRecording].
+     */
     suspend fun logCall(
         number: String,
         timestamp: Long,
         decision: RuleDecision,
+    ): Long
+
+    /** Point [entryId] at a finished recording. */
+    suspend fun attachRecording(
+        entryId: Long,
+        path: String,
     )
 
-    /** Clear all call log entries. */
+    /** Delete [entryId]'s recording file and clear the column. Safe to call when there is none. */
+    suspend fun deleteRecording(entryId: Long)
+
+    /** Clear all call log entries, deleting every recording they reference. */
     suspend fun clearAll()
 }
 
@@ -58,6 +74,8 @@ data class CallLogEntryData(
     val ruleType: String?,
     val ruleId: Long?,
     val ruleDetail: String?,
+    /** Auto-responder recording for this call, or null -- which is the case for almost every row. */
+    val recordingPath: String? = null,
 )
 
 data class BlockedStats(

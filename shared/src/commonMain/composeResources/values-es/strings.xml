@@ -119,6 +119,10 @@
     <string name="call_log_just_now">Ahora mismo</string>
     <string name="call_log_action_label">Acción</string>
     <string name="call_log_rule_label">Regla</string>
+    <string name="call_log_recording_label">Grabación</string>
+    <string name="call_log_play_recording">Reproducir</string>
+    <string name="call_log_delete_recording">Eliminar grabación</string>
+    <string name="call_log_delete_recording_confirm">Esto borra el archivo de audio de forma permanente. No se puede deshacer.</string>
 
     <!-- Ajustes -->
     <string name="settings_title">Ajustes</string>
@@ -185,7 +189,9 @@
     <string name="autoresponder_pick_audio">Seleccionar archivo</string>
     <string name="autoresponder_clear_audio">Usar texto a voz</string>
     <string name="autoresponder_recording">Grabar mensaje del llamante</string>
-    <string name="autoresponder_recording_desc">Desactivado por defecto. No compatible de forma fiable en Android moderno.</string>
+    <string name="autoresponder_recording_desc">Desactivado por defecto. Graba por el micrófono, así que algunos teléfonos no captan nada.</string>
+    <string name="autoresponder_mic_permission_required">Se necesita acceso al micrófono para grabar.</string>
+    <string name="autoresponder_grant_mic">Conceder acceso al micrófono</string>
     <string name="autoresponder_consent_hint">El guion debe incluir: "Esta llamada puede ser grabada"</string>
     <string name="autoresponder_error_empty">Se requiere guion o archivo de audio cuando está activado.</string>
     <string name="autoresponder_error_too_long">El guion es demasiado largo (máx. 500 caracteres).</string>

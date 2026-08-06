@@ -176,7 +176,9 @@
     <string name="autoresponder_pick_audio">ऑडियो फ़ाइल चुनें</string>
     <string name="autoresponder_clear_audio">TTS का उपयोग करें</string>
     <string name="autoresponder_recording">कॉलर का संदेश रिकॉर्ड करें</string>
-    <string name="autoresponder_recording_desc">डिफ़ॉल्ट रूप से बंद। आधुनिक Android पर विश्वसनीय रूप से समर्थित नहीं।</string>
+    <string name="autoresponder_recording_desc">डिफ़ॉल्ट रूप से बंद। माइक्रोफ़ोन से रिकॉर्ड करता है, इसलिए कुछ फ़ोन कुछ भी कैप्चर नहीं करते।</string>
+    <string name="autoresponder_mic_permission_required">रिकॉर्ड करने के लिए माइक्रोफ़ोन एक्सेस चाहिए।</string>
+    <string name="autoresponder_grant_mic">माइक्रोफ़ोन एक्सेस दें</string>
     <string name="autoresponder_consent_hint">स्क्रिप्ट में शामिल होना चाहिए: "यह कॉल रिकॉर्ड की जा सकती है"</string>
     <string name="autoresponder_error_empty">सक्षम होने पर स्क्रिप्ट या ऑडियो फ़ाइल आवश्यक है।</string>
     <string name="autoresponder_error_too_long">स्क्रिप्ट बहुत लंबी है (अधिकतम 500 अक्षर)।</string>
@@ -223,6 +225,10 @@
     <string name="call_log_just_now">अभी-अभी</string>
     <string name="call_log_action_label">कार्रवाई</string>
     <string name="call_log_rule_label">नियम</string>
+    <string name="call_log_recording_label">रिकॉर्डिंग</string>
+    <string name="call_log_play_recording">चलाएँ</string>
+    <string name="call_log_delete_recording">रिकॉर्डिंग हटाएँ</string>
+    <string name="call_log_delete_recording_confirm">इससे ऑडियो फ़ाइल हमेशा के लिए मिट जाएगी। इसे पहले जैसा नहीं किया जा सकता।</string>
 
     <!-- के बारे में -->
     <string name="about_open_source">ओपन सोर्स · MIT लाइसेंस</string>

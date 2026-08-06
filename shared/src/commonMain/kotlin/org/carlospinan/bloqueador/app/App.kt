@@ -20,6 +20,9 @@ fun App(
     onOpenNotificationSettings: (() -> Unit)? = null,
     onOpenFullScreenIntentSettings: (() -> Unit)? = null,
     onOpenAppSettings: (() -> Unit)? = null,
+    micPermissionGranted: Boolean = true,
+    onRequestMicPermission: (() -> Unit)? = null,
+    onPlayRecording: ((String) -> Unit)? = null,
 ) {
     val navController = rememberNavController()
     AppNavHost(
@@ -38,5 +41,8 @@ fun App(
         onOpenNotificationSettings = onOpenNotificationSettings,
         onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
         onOpenAppSettings = onOpenAppSettings,
+        micPermissionGranted = micPermissionGranted,
+        onRequestMicPermission = onRequestMicPermission,
+        onPlayRecording = onPlayRecording,
     )
 }

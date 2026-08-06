@@ -13,6 +13,22 @@ Corta Spam requests `ROLE_DIALER` (default phone app) to screen incoming calls b
 - `CALL_PHONE` — required by Android for dialer role eligibility
 - `READ_CONTACTS` — optional: auto-allow contacts (user must grant explicitly)
 - `BIND_INCALL_SERVICE` — handle incoming calls via `InCallService`
+- `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT` — the ringing-call screen. See
+  `PLAY_FSI_APPEAL.md`; the full-screen intent declaration form is mandatory targeting API 34+.
+- `RECORD_AUDIO` — optional auto-responder recording, off by default. Needs its own answer on the
+  sensitive-permissions questionnaire; see below.
+
+### Call recording (`RECORD_AUDIO`)
+
+Off by default and gated twice: the user's greeting must contain a consent phrase, and Android's
+runtime microphone permission must be granted. Recording only ever runs on a call the user's own
+rules blocked and the app auto-answered — never on a call the user answers.
+
+It records `MediaRecorder.AudioSource.MIC`. It does **not** use `VOICE_CALL`, `VOICE_DOWNLINK` or
+`VOICE_UPLINK`, which require `CAPTURE_AUDIO_OUTPUT` (`signature|privileged`, unavailable to
+third-party apps), and it does **not** use the Accessibility API, whose use for call recording
+Play prohibits. Audio is written to app-internal storage, capped at 60s, never transmitted, and
+deletable per-entry or via "clear log".
 
 ### Accessibility / Default Apps
 
@@ -51,6 +67,7 @@ All user data stays on the device in a local SQLite database:
 | Action rules (attempt thresholds) | Frequency-based blocking | User can add/remove at any time |
 | Call log (number, timestamp, outcome) | Show call history and stats | No export; cleared when app is uninstalled |
 | Auto-responder script and audio | Custom greeting for blocked callers | User can edit or disable at any time |
+| Auto-responder recordings (`filesDir/recordings/`) | The caller's message on an auto-answered blocked call; off by default | Played and deleted per call-log entry; "clear log" deletes every file |
 | Settings (toggles, preferences) | App configuration | User can change at any time |
 
 ### Network access

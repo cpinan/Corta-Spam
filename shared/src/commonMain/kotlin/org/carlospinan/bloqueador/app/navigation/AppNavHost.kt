@@ -96,6 +96,9 @@ fun AppNavHost(
     onOpenNotificationSettings: (() -> Unit)? = null,
     onOpenFullScreenIntentSettings: (() -> Unit)? = null,
     onOpenAppSettings: (() -> Unit)? = null,
+    micPermissionGranted: Boolean = true,
+    onRequestMicPermission: (() -> Unit)? = null,
+    onPlayRecording: ((String) -> Unit)? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -162,6 +165,8 @@ fun AppNavHost(
                     onCopyNumber = onCopyNumber ?: {},
                     onCallBack = onCallBack ?: {},
                     onBack = { navController.popBackStack() },
+                    onPlayRecording = onPlayRecording ?: {},
+                    onDeleteRecording = { entryId -> callLogViewModel.onIntent(CallLogIntent.DeleteRecording(entryId)) },
                 )
             }
 
@@ -314,6 +319,8 @@ fun AppNavHost(
                         onTestGreeting?.invoke(autoResponderUiState.config.script, autoResponderUiState.config.audioUri)
                     },
                     onBack = { navController.popBackStack() },
+                    micPermissionGranted = micPermissionGranted,
+                    onRequestMicPermission = onRequestMicPermission ?: {},
                 )
             }
 

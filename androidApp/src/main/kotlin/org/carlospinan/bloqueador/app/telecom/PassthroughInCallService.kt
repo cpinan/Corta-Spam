@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.R
@@ -55,11 +56,26 @@ class PassthroughInCallService :
      */
     private var autoResponderAudio: AutoResponderAudio? = null
 
+    /**
+     * Built only once a greeting has finished on a call the user asked to record. Kept at
+     * service scope, not per call, because only one call is ever auto-answered at a time.
+     */
+    private var autoResponderRecorder: AutoResponderRecorder? = null
+
     private val callStates = mutableMapOf<Call, CallState>()
 
     private class CallState {
         var blockedByRules = false
         var evaluation: Job? = null
+
+        /**
+         * Row id from [CallLogRepository.logCall], so a recording finished after the call ends
+         * can still find the entry it belongs to. Null until the evaluation coroutine logs.
+         */
+        var logEntryId: Long? = null
+
+        /** Disconnects the call once the recording hits its cap; cancelled if the caller hangs up first. */
+        var recordingTimeout: Job? = null
     }
 
     private val autoResponderCallback =
@@ -78,7 +94,13 @@ class PassthroughInCallService :
                     autoResponderAudio?.play(
                         script = config.script,
                         audioUri = config.audioUri.ifBlank { null },
-                        onComplete = { call.disconnect() },
+                        onComplete = {
+                            if (config.recordingEnabled) {
+                                startRecordingAfterGreeting(call)
+                            } else {
+                                call.disconnect()
+                            }
+                        },
                     )
                 }
             }
@@ -136,11 +158,12 @@ class PassthroughInCallService :
             serviceScope.launch {
                 try {
                     val decision = evaluateIncomingCall.evaluate(number)
-                    callLogRepository.logCall(
-                        number = number,
-                        timestamp = currentTimestamp(),
-                        decision = decision,
-                    )
+                    state.logEntryId =
+                        callLogRepository.logCall(
+                            number = number,
+                            timestamp = currentTimestamp(),
+                            decision = decision,
+                        )
                     if (decision.isBlocked) {
                         state.blockedByRules = true
                         ringer.stop()
@@ -184,10 +207,59 @@ class PassthroughInCallService :
             }
     }
 
+    /**
+     * Starts recording the caller once the greeting has played, and arms the disconnect.
+     *
+     * When the microphone cannot be acquired -- no grant, or an OEM that reserves it for the
+     * telephony stack -- this falls through to the same immediate disconnect the non-recording
+     * path uses. A blocked call must always end; it must never be left open because recording
+     * failed. See [AutoResponderRecorder] for why failure is expected on some devices.
+     */
+    private fun startRecordingAfterGreeting(call: Call) {
+        val state = callStates[call]
+        val entryId = state?.logEntryId
+        if (entryId == null) {
+            // Evaluation logged nothing, so there is no row to attach audio to. Recording
+            // anyway would orphan the file the moment the call ended.
+            call.disconnect()
+            return
+        }
+
+        val recorder = AutoResponderRecorder(this).also { autoResponderRecorder = it }
+        if (!recorder.start(entryId)) {
+            autoResponderRecorder = null
+            call.disconnect()
+            return
+        }
+
+        state.recordingTimeout =
+            serviceScope.launch {
+                // MediaRecorder's own setMaxDuration stops the capture but leaves the call up;
+                // this is what actually hangs up on a caller who never does.
+                delay(AutoResponderRecorder.MAX_DURATION_MILLIS.toLong())
+                call.disconnect()
+            }
+    }
+
+    /**
+     * Finalises a recording and points its call-log row at the file.
+     *
+     * Runs on call removal rather than when the recorder hits its cap: the caller can hang up
+     * at any point, and either way the file is only complete once `stop()` has returned.
+     */
+    private fun finishRecording(entryId: Long?) {
+        val path = autoResponderRecorder?.stop()
+        autoResponderRecorder = null
+        if (path == null || entryId == null) return
+        serviceScope.launch { callLogRepository.attachRecording(entryId, path) }
+    }
+
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
         val state = callStates.remove(call)
         state?.evaluation?.cancel()
+        state?.recordingTimeout?.cancel()
+        finishRecording(state?.logEntryId)
         call.unregisterCallback(autoResponderCallback)
         call.unregisterCallback(stateCallback)
 
@@ -222,6 +294,11 @@ class PassthroughInCallService :
         ringer.stop()
         autoResponderAudio?.release()
         autoResponderAudio = null
+        // cancel(), not stop(): the service is going away, so nothing is left to write the path
+        // into the call log. Keeping the file would leave audio on disk that no row references
+        // and no UI can reach or delete.
+        autoResponderRecorder?.cancel()
+        autoResponderRecorder = null
         callStates.clear()
         serviceScope.cancel()
     }

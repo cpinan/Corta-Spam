@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.carlospinan.bloqueador.app.calllog.RecordingStore
 import org.carlospinan.bloqueador.app.db.AppDatabase
 
 class SqlCallLogRepository(
@@ -67,22 +68,56 @@ class SqlCallLogRepository(
         number: String,
         timestamp: Long,
         decision: RuleDecision,
+    ): Long =
+        withContext(dispatcher) {
+            // The insert and the id read share one transaction: last_insert_rowid() is
+            // connection-scoped, so a concurrent insert between the two -- two calls arriving
+            // together, which call waiting makes real -- would otherwise hand back the wrong row.
+            queries.transactionWithResult {
+                queries
+                    .insertCallLogEntry(
+                        number = number,
+                        timestamp = timestamp,
+                        action = if (decision.isBlocked) "BLOCKED" else "ALLOWED",
+                        rule_type = decision.ruleTypeTag,
+                        rule_id = decision.loggedRuleId,
+                        rule_detail = decision.loggedDetail,
+                    ).value
+                queries.lastInsertRowId().executeAsOne()
+            }
+        }
+
+    override suspend fun attachRecording(
+        entryId: Long,
+        path: String,
     ) {
         withContext(dispatcher) {
-            queries
-                .insertCallLogEntry(
-                    number = number,
-                    timestamp = timestamp,
-                    action = if (decision.isBlocked) "BLOCKED" else "ALLOWED",
-                    rule_type = decision.ruleTypeTag,
-                    rule_id = decision.loggedRuleId,
-                    rule_detail = decision.loggedDetail,
-                ).value
+            queries.updateCallLogRecordingPath(recording_path = path, id = entryId).value
+        }
+    }
+
+    override suspend fun deleteRecording(entryId: Long) {
+        withContext(dispatcher) {
+            // executeAsOneOrNull() collapses "no such row" and "row whose path is null" into the
+            // same null, which is fine -- both mean there is nothing to delete.
+            val path = queries.selectRecordingPathById(entryId).executeAsOneOrNull()?.recording_path
+            if (path != null) RecordingStore.delete(path)
+            // Clear the column even when the file delete failed. A row pointing at a file that
+            // is still on disk is worse than an orphan: the UI would keep offering playback of
+            // a recording the user asked to destroy.
+            queries.clearCallLogRecordingPath(entryId).value
         }
     }
 
     override suspend fun clearAll() {
         withContext(dispatcher) {
+            // Files first: once clearCallLog runs, the paths are gone and the audio is
+            // unreachable but still on disk. "Clear log" that leaves recorded callers behind is
+            // exactly the promise this app's privacy policy makes and would be breaking.
+            // SQLDelight narrows this to Query<String> off the IS NOT NULL predicate, so no
+            // null check is needed here -- unlike selectRecordingPathById above, which has no
+            // such predicate and comes back wrapped with a nullable column.
+            queries.selectAllRecordingPaths().executeAsList().forEach { RecordingStore.delete(it) }
             queries.clearCallLog().value
         }
     }
@@ -121,5 +156,6 @@ class SqlCallLogRepository(
             ruleType = rule_type,
             ruleId = rule_id,
             ruleDetail = rule_detail,
+            recordingPath = recording_path,
         )
 }

@@ -121,14 +121,18 @@
     <tr><td><code>READ_CONTACTS</code></td><td>Reconocer a quienes están en tus contactos y dejarles pasar</td><td>Nada. Los contactos se leen en el dispositivo y se mantienen en memoria cinco minutos como máximo</td></tr>
     <tr><td><code>POST_NOTIFICATIONS</code>, <code>USE_FULL_SCREEN_INTENT</code></td><td>Mostrar la pantalla de llamada entrante y las notificaciones de llamadas bloqueadas o perdidas</td><td>Nada</td></tr>
     <tr><td><code>VIBRATE</code></td><td>La app reproduce su propio tono y vibración, porque como marcador predeterminado es responsable de hacer sonar el teléfono</td><td>Nada</td></tr>
+    <tr><td><code>RECORD_AUDIO</code></td><td>Solo para grabar el mensaje del llamante cuando activas la grabación del auto-respondedor, que viene desactivada. Si no la activas, la app nunca pide este permiso ni abre el micrófono</td><td>Nada</td></tr>
   </table></div>
-  <p>La app <strong>no</strong> pide acceso al registro de llamadas del sistema, ni a SMS, almacenamiento, ubicación, cámara o micrófono.</p>
+  <p>La app <strong>no</strong> pide acceso al registro de llamadas del sistema, ni a SMS, almacenamiento, ubicación ni cámara.</p>
 
   <h2>La lista de spam</h2>
   <p>El proveedor de spam opcional es una lista de códigos de marcación asociados a estafas incluida dentro de la propia aplicación. Activarlo no contacta con ningún servidor: la comprobación ocurre por completo en tu dispositivo, y nunca se transmite ningún número, contacto, identificador del dispositivo ni audio de las llamadas.</p>
 
   <h2>Grabación de llamadas</h2>
-  <p>El auto-respondedor puede grabar de forma opcional. Está desactivado por defecto, y la app exige que tu saludo indique que la llamada puede ser grabada antes de permitir activarlo. Las grabaciones, si las hay, se quedan en tu dispositivo como todo lo demás.</p>
+  <p><strong>Desactivada por defecto.</strong> El auto-respondedor puede grabar el mensaje que deja quien llama, y solo eso: se activa después de que suene tu saludo, en una llamada que tus reglas ya han bloqueado y que la app ha contestado automáticamente. Nunca graba una llamada que contestas tú.</p>
+  <p>Antes de dejarte activarla, la app exige que tu propio saludo incluya una frase de consentimiento («Esta llamada puede ser grabada» o equivalente), para que quien llama lo sepa antes de hablar. Además tienes que conceder el permiso de micrófono de Android.</p>
+  <p>Las grabaciones se guardan en el almacenamiento interno privado de la app, se limitan a un minuto cada una, nunca se transmiten y quedan excluidas de la copia de seguridad en la nube igual que el resto de los datos. Cada grabación se puede reproducir y borrar desde su entrada en el registro de llamadas, y «borrar registro» elimina también los archivos de audio.</p>
+  <p><strong>Limitación técnica, dicha con honestidad:</strong> Android no permite a ninguna app de terceros capturar el audio de la línea telefónica. La grabación se hace por el micrófono del teléfono, así que en bastantes dispositivos no captará nada — varios fabricantes reservan el micrófono para el sistema durante una llamada. Trátala como un extra que puede no funcionar, no como una función fiable.</p>
 
   <h2>Informes de fallos</h2>
   <p>La app no incluye ningún SDK de informes de fallos. Si la instalas desde Google Play, es Google quien recopila informes de fallos y ANR como función de la plataforma; eso es recopilación de Google bajo <a href="https://policies.google.com/privacy">su política de privacidad</a>, no de la app, y la app ni contribuye a ella ni recibe su contenido.</p>
@@ -158,14 +162,18 @@
     <tr><td><code>READ_CONTACTS</code></td><td>To recognise callers who are in your contacts and let them through</td><td>Nothing. Contacts are read on-device and held in memory for at most five minutes</td></tr>
     <tr><td><code>POST_NOTIFICATIONS</code>, <code>USE_FULL_SCREEN_INTENT</code></td><td>To show the incoming-call screen and blocked/missed-call notifications</td><td>Nothing</td></tr>
     <tr><td><code>VIBRATE</code></td><td>The app plays its own ringtone and vibration, because as the default dialer it is responsible for ringing</td><td>Nothing</td></tr>
+    <tr><td><code>RECORD_AUDIO</code></td><td>Only to record the caller's message when you switch auto-responder recording on, which ships off. Leave it off and the app never requests this permission and never opens the microphone</td><td>Nothing</td></tr>
   </table></div>
-  <p>The app requests <strong>no</strong> access to your system call log, SMS, storage, location, camera or microphone.</p>
+  <p>The app requests <strong>no</strong> access to your system call log, SMS, storage, location or camera.</p>
 
   <h2>The spam list</h2>
   <p>The optional spam provider is a list of known scam dialling codes bundled inside the app itself. Turning it on does not contact any server: the check happens entirely on your device, and no number, contact, device identifier or call audio is ever transmitted.</p>
 
   <h2>Call recording</h2>
-  <p>The auto-responder can optionally record. It is off by default, and the app requires your greeting to state that the call may be recorded before it will let you enable it. Recordings, if any, stay on your device like everything else.</p>
+  <p><strong>Off by default.</strong> The auto-responder can record the message a caller leaves, and nothing else: it starts after your greeting has played, on a call your own rules already blocked and the app answered automatically. It never records a call you answer yourself.</p>
+  <p>Before it will let you turn this on, the app requires your own greeting to contain a consent line ("This call may be recorded", or the equivalent in your language) so the caller is told before they speak. You must also grant Android's microphone permission.</p>
+  <p>Recordings are written to the app's private internal storage, capped at one minute each, never transmitted, and excluded from cloud backup like the rest of the app's data. Each one can be played and deleted from its call-log entry, and "clear log" deletes the audio files too.</p>
+  <p><strong>An honest technical limit:</strong> Android does not let any third-party app capture the audio of the phone line itself. Recording goes through the phone's microphone, so on a good number of devices it will capture nothing at all — several manufacturers reserve the microphone for the system during a call. Treat it as a bonus that may not work, not as a feature to rely on.</p>
 
   <h2>Crash reporting</h2>
   <p>The app contains no crash-reporting SDK. If you install from Google Play, Google itself collects crash and ANR reports as a platform feature; that is Google's collection under <a href="https://policies.google.com/privacy">their privacy policy</a>, not the app's, and the app neither adds to it nor receives the contents.</p>

@@ -41,7 +41,12 @@ CREATE TABLE CallLogEntry (
     action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
     rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', 'REVIEW', 'REPEATED_ALLOWED', NULL)),
     rule_id INTEGER,
-    rule_detail TEXT
+    rule_detail TEXT,
+    -- Absolute path to this call's auto-responder recording, or NULL (the overwhelming majority
+    -- of rows: recording is off by default and only ever runs on an auto-answered blocked call).
+    -- The file lives in app-internal storage; clearCallLog cannot delete it, so the caller that
+    -- clears the log must delete the files too -- see CallLogRepository.clearAll.
+    recording_path TEXT
 );
 
 -- BlockedNumber queries
@@ -136,6 +141,23 @@ VALUES (?, ?, ?, ?, ?, ?);
 
 selectRecentCallLogEntries:
 SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT ?;
+
+-- Set once, after the recording is finalised. The row is inserted while the call is still
+-- ringing (fail-open: the decision must be logged even if the call or the recorder dies), so
+-- the path cannot be part of the insert.
+updateCallLogRecordingPath:
+UPDATE CallLogEntry SET recording_path = ? WHERE id = ?;
+
+clearCallLogRecordingPath:
+UPDATE CallLogEntry SET recording_path = NULL WHERE id = ?;
+
+-- Every recording still referenced by the log; the caller deletes these files before
+-- clearCallLog drops the rows that point at them.
+selectAllRecordingPaths:
+SELECT recording_path FROM CallLogEntry WHERE recording_path IS NOT NULL;
+
+selectRecordingPathById:
+SELECT recording_path FROM CallLogEntry WHERE id = ?;
 
 selectAllCallLogEntries:
 SELECT * FROM CallLogEntry ORDER BY timestamp DESC;

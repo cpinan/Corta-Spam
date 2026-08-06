@@ -33,6 +33,8 @@ import cortaspam.shared.generated.resources.autoresponder_error_consent
 import cortaspam.shared.generated.resources.autoresponder_error_empty
 import cortaspam.shared.generated.resources.autoresponder_error_too_long
 import cortaspam.shared.generated.resources.autoresponder_experimental_badge
+import cortaspam.shared.generated.resources.autoresponder_grant_mic
+import cortaspam.shared.generated.resources.autoresponder_mic_permission_required
 import cortaspam.shared.generated.resources.autoresponder_pick_audio
 import cortaspam.shared.generated.resources.autoresponder_recording
 import cortaspam.shared.generated.resources.autoresponder_recording_desc
@@ -53,6 +55,10 @@ fun AutoResponderScreen(
     onClearAudio: () -> Unit,
     onTest: () -> Unit = {},
     onBack: () -> Unit,
+    // Defaults to true so the warning is invisible on platforms with no microphone permission
+    // to grant (iOS builds this screen too) rather than showing a fix button that does nothing.
+    micPermissionGranted: Boolean = true,
+    onRequestMicPermission: () -> Unit = {},
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
@@ -201,6 +207,20 @@ fun AutoResponderScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary,
                                     )
+                                    // Only shown once recording is actually on. Warning about a
+                                    // microphone the user has not asked to use would be the same
+                                    // permanent nag the contacts button used to be.
+                                    if (!micPermissionGranted) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = stringResource(Res.string.autoresponder_mic_permission_required),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                        TextButton(onClick = onRequestMicPermission) {
+                                            Text(stringResource(Res.string.autoresponder_grant_mic))
+                                        }
+                                    }
                                 }
                             }
                             Switch(
