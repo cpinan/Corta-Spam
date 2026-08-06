@@ -20,7 +20,7 @@ Four choices that cannot be changed later. Make them deliberately. One is alread
 
 | Decision | Options | Recommendation for this app |
 |---|---|---|
-| **Package name** | **Decided: `org.carlospinan.cortaspam`** (changed 2026-08-05, commit `d5ee3b2`) | Done. Only `applicationId` moved; `namespace` stays `org.carlospinan.bloqueador.app`, so no source packages shifted. It cannot change after the first upload — a new package name is a new app with zero installs. |
+| **Package name** | **Decided: `org.carlospinan.cortaspam`** (changed 2026-08-05, commit `4ef92dc`) | Done. Only `applicationId` moved; `namespace` stays `org.carlospinan.bloqueador.app`, so no source packages shifted. It cannot change after the first upload — a new package name is a new app with zero installs. |
 | **Free or paid** | Free / Paid | **Free.** A free app can never become paid. |
 | **Play App Signing** | Enrol / opt out | **Enrol** (the default). Google holds the release key; your `.jks` is only the *upload* key and can be rotated by support if lost. Opting out means losing that file ends the app permanently. |
 | **Developer account type** | Personal / Organisation | Personal is fine for an individual open-source project. Organisation needs a D-U-N-S number and takes longer. |

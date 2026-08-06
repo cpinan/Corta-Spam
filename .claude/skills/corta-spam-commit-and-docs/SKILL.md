@@ -15,6 +15,29 @@ This user's standing expectations (see project memory `user-preferences`), conde
 1. Run `corta-spam-verify-build` — never commit on a red or unverified build.
 2. `git status` — confirm nothing extraneous is staged and nothing intended is left out. If a prior batch's edits (e.g. a doc fixed after an earlier commit in the same turn) are still sitting uncommitted, check whether they belong in this commit or a separate one.
 
+## Not every commit is a feature commit
+
+The rules below (verify-build, README parity, a course module) are written for changes that ship
+**app behaviour**. Applying them to a commit that touches no compiled source wastes a build cycle
+and pads the course with modules about nothing.
+
+A commit qualifies for the short path when `git diff --cached --name-only` contains no
+`.kt`, `.kts`, `.swift`, `.sq`, `.sqm`, `.xml` or manifest file — i.e. `.gitignore`,
+`.claude/**`, `scripts/**`, `package.json`, or a docs-only change.
+
+Short path: skip `verify-build` (state in the report that you skipped it and why), skip the
+README changelog, skip the course. **Keep** one-purpose-per-commit and keep the why-focused
+message. Confirm the build genuinely cannot be affected rather than assuming — on 2026-08-05,
+before untracking `node_modules`, this proved it:
+
+```bash
+git grep -nI 'node_modules' -- '*.kts' '*.gradle' '*.yml' '*.sh'   # no hits => Gradle unaffected
+```
+
+Five commits that day (untracking `node_modules` and `.codex`, gitignore entries, the permission
+deny-list widening, a new script) correctly took the short path. Do not retro-add course modules
+for them.
+
 ## Splitting commits
 
 **One logical purpose per commit.** If a turn produced both a feature and an unrelated fix noticed along the way (e.g. a branding typo spotted while building a feature), commit them separately with distinct messages — don't bundle. This has been the norm across 15+ commits in this project without correction.
@@ -45,7 +68,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 This skill previously pinned "Claude Sonnet 5", which was wrong for any other model and made the
 history claim authorship that did not happen. Check the environment, don't copy a literal.
 
-Body should explain **why**, not just what — this project's commit messages consistently name the actual bug/user pain being addressed and, when something adjacent was deliberately left alone, say so and why (see commit `d519d69` for the pattern: what changed, plus an explicit "left unchanged: X, because Y" paragraph).
+Body should explain **why**, not just what — this project's commit messages consistently name the actual bug/user pain being addressed and, when something adjacent was deliberately left alone, say so and why (see commit `1578c0a` for the pattern: what changed, plus an explicit "left unchanged: X, because Y" paragraph).
 
 ## After committing
 
