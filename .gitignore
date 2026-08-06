@@ -22,7 +22,9 @@ xcuserdata/
 # Kotlin/Native
 .konan/
 
-# Node
+# Node. package.json/package-lock.json ARE tracked — they are the only reproducible
+# record of the sharp version that renders design/iconography. The tree itself was
+# committed once by accident and carried a 17 MB arm64-only .dylib.
 node_modules/
 
 # IDE

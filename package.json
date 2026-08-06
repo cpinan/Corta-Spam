@@ -1,0 +1,12 @@
+{
+  "name": "corta-spam-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Node tooling for Corta Spam. Not part of the Gradle build — only design/iconography/render_ui_icons.mjs needs this.",
+  "scripts": {
+    "render-icons": "node design/iconography/render_ui_icons.mjs"
+  },
+  "devDependencies": {
+    "sharp": "0.35.3"
+  }
+}
