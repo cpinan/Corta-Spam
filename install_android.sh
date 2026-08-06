@@ -104,11 +104,17 @@ VARIANT_LOWER=$(echo "$VARIANT" | tr '[:upper:]' '[:lower:]')
 # cannot detect that and would silently install stale code.
 echo -e "${YELLOW}Building $VARIANT APK...${NC}"
 ./gradlew :androidApp:assemble${VARIANT} -q
-APK=$(find androidApp/build/outputs/apk -name "androidApp-${VARIANT_LOWER}.apk" 2>/dev/null | head -1)
+# Matched by directory, not by filename. `archivesName` in androidApp/build.gradle.kts names
+# outputs corta-spam-<versionName>-<versionCode>-<variant>.apk so a file sitting in Downloads
+# says which release it is -- this script still looked for androidApp-debug.apk and had been
+# failing with "APK not found" ever since. Globbing the variant directory survives the next
+# version bump too, which a hardcoded name would not.
+APK=$(find "androidApp/build/outputs/apk/${VARIANT_LOWER}" -name '*.apk' 2>/dev/null | head -1)
 if [ -z "$APK" ]; then
     echo -e "${RED}Error: APK not found after build.${NC}"
     exit 1
 fi
+echo -e "${YELLOW}APK: $(basename "$APK")${NC}"
 
 # — Install —
 echo -e "${YELLOW}Installing...${NC}"
