@@ -1,9 +1,9 @@
 ---
 name: corta-spam-sqldelight-check-migration
-description: Use when adding a new value to a CHECK-constrained column in Corta Spam's SQLDelight schema (e.g. a new rule_type tag on CallLogEntry). SQLite can't ALTER a CHECK constraint — this is the rebuild-table migration pattern this project already uses.
+description: Use when changing Corta Spam's SQLDelight schema — adding a value to a CHECK-constrained column, adding a column, or adding queries against one. Covers migration numbering (silent when wrong), the rebuild-table pattern SQLite forces for a CHECK change, and the generated-API typing that trips up single-column selects.
 metadata:
   type: project-runbook
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # SQLite CHECK-constraint migration — Corta Spam
@@ -89,6 +89,50 @@ Two rules that matter:
   version numbering is sane** — it will happily accept a mis-numbered file whose migration still
   runs. Only `device_check.sh` (or a manual `PRAGMA user_version`) covers that.
 - **Do not regenerate the baseline to make a failure go away.** `./gradlew :shared:generateCommonMainAppDatabaseSchema` rewrites `databases/1.db` from the *current* `.sq`, which makes any diff vanish without fixing anything. Only regenerate when deliberately cutting a new squashed baseline.
+
+## 4b. Adding a plain column — and the query typing that will not compile
+
+A nullable `ADD COLUMN` with no CHECK, no default and no foreign key needs none of the
+rebuild-table dance above. `2.sqm` (`recording_path` on `CallLogEntry`, 2026-08-06) is one line:
+
+```sql
+ALTER TABLE CallLogEntry ADD COLUMN recording_path TEXT;
+```
+
+Existing rows get `NULL`, which is what you want — they predate the feature.
+
+**The part that costs compile cycles is the generated API for single-column selects, which is not
+consistent.** Two queries against the same nullable column produce two different Kotlin types:
+
+```sql
+-- narrowed by the predicate -> Query<String>, the value itself, non-null
+selectAllRecordingPaths:
+SELECT recording_path FROM CallLogEntry WHERE recording_path IS NOT NULL;
+
+-- no predicate -> Query<SelectRecordingPathById>, a wrapper with a nullable field
+selectRecordingPathById:
+SELECT recording_path FROM CallLogEntry WHERE id = ?;
+```
+
+So:
+
+```kotlin
+queries.selectAllRecordingPaths().executeAsList().forEach { RecordingStore.delete(it) }   // String
+queries.selectRecordingPathById(id).executeAsOneOrNull()?.recording_path                  // wrapper
+```
+
+Symptoms if you guess: `Unresolved reference 'recording_path'` on the narrowed one, and
+`Argument type mismatch: actual type is 'SelectRecordingPathById', but 'String' was expected` on
+the other. Do not guess — read the generated signature:
+
+```bash
+find shared/build -name AppDatabaseQueries.kt | head -1 | xargs grep -n "yourQueryName"
+```
+
+**If the column points at a file, deletion is your problem.** `DELETE FROM` drops the row and the
+path with it, leaving the file orphaned — unreachable by the UI and undeletable by the user.
+Delete files *before* the rows, and see the `RecordingStore` expect/actual: `commonMain` cannot
+touch the filesystem, so this needs a platform actual, not a helper function.
 
 ## 5. Add the RuleDecision variant (if this migration is backing a new decision type)
 

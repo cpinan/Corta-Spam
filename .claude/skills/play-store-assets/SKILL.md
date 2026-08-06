@@ -1,9 +1,9 @@
 ---
 name: play-store-assets
-description: Use when preparing Google Play store listing assets — screenshots, icon, feature graphic — or when Play rejects an upload for aspect ratio or shows the wrong language's graphics. Covers the traps that only surface after the listing form is already filled in.
+description: Use when preparing Google Play store listing assets and copy — screenshots, icon, feature graphic, short/full description, category — or when Play rejects an upload or flags a permission as unrelated to the app's core purpose. Covers the traps that only surface after the listing form is already filled in.
 metadata:
   type: release-runbook
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Preparing Play store assets without a rejected upload
@@ -93,6 +93,59 @@ Keeps the store icon in step with the launcher icon instead of drifting into a s
 The feature graphic must have **no alpha**; the app icon may be 24-bit RGB (Play accepts it
 despite the "32-bit" wording in older docs).
 
+## 6. The short description may only describe **function**
+
+Play flags a short description carrying *"language that is not related to the function or purpose
+of your app, including… price and promotional information"*
+([guideline](https://support.google.com/googleplay/android-developer/answer/9866151)). Named
+examples: *Best, #1, Top, New, Discount, Sale, Million Downloads*.
+
+The rule is broader than price. Corta Spam was flagged for:
+
+```
+Block calls by your own rules. Open source, no ads, no tracking.
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+"no ads" is monetization information and "open source" is licensing — neither says what the app
+*does*. Fixed by making it purely functional:
+
+```
+Phone app that screens every call by your rules, before your phone rings.
+```
+
+It does **not** block publishing — it forfeits eligibility for Play promotion, which is easy to
+never notice. The full description is *not* governed by this rule, so privacy and licensing
+positioning belongs there instead. Count characters programmatically; the limit is 80 and é is
+one character:
+
+```bash
+python3 -c "print(len(open('/dev/stdin').read().rstrip()))" <<< "your short description"
+```
+
+## 7. The listing is what a permission review reads — not your manifest
+
+If Play flags a permission as *"not directly related to your app's core purpose"*, check the
+policy before deleting anything. Corta Spam was flagged for `USE_FULL_SCREEN_INTENT` while being
+a default dialer declaring `IN_CALL_SERVICE_UI` **and** `IN_CALL_SERVICE_RINGING` — the policy
+auto-grants that permission when core functionality is *receiving phone or video calls*, so the
+rejection was wrong.
+
+Two things caused it, and neither was in the code:
+
+1. **The declaration form was never submitted.** Targeting API 34+, a separate form under App
+   content establishes pre-grant eligibility. Skip it and review judges the permission against
+   your listing text alone.
+2. **The listing described a different app.** It led with "Block calls by your own rules" and
+   named the dialer role once, in a closing permissions caveat. The APK said phone app; the
+   listing said utility.
+
+**Rule:** every permission a reviewer could question must have a corresponding sentence in the
+*first paragraph* of the full description. Do not choose a category to dodge scrutiny either — an
+earlier draft picked Tools "because Communication invites stricter dialer scrutiny", which is
+backwards: a Tools app is not a calling app, and calling-app classification was the whole
+argument.
+
 ## Checklist
 
 - [ ] Screenshots exactly 9:16, padded by edge replication, 2–8 per language
@@ -100,3 +153,8 @@ despite the "32-bit" wording in older docs).
 - [ ] No real phone numbers, no real contacts, no share sheets in any capture
 - [ ] Icon 512×512, feature graphic 1024×500 with no alpha
 - [ ] Every visible string read for untranslated leftovers
+- [ ] Short description ≤80 chars and describes **function only** — no price, promo, accolades or licensing
+- [ ] Full description's opening paragraph names what the app *is*, in the words the permissions depend on
+- [ ] Category matches what the manifest declares, not what seems least risky
+- [ ] Every sensitive-permission declaration form under App content is **submitted**, not just drafted
+- [ ] Pending changes sent for review **once**, from Publishing overview, after all edits — sending twice costs two review cycles

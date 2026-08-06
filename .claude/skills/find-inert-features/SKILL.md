@@ -91,6 +91,49 @@ never reached the list.
 **Probe:** for every `UNIQUE` column fed from a static list, assert the list has no duplicates —
 in a test, not by eye.
 
+### 6. Prose that promises a feature — what do the docs claim the code does?
+
+The probes above all search code. This one does not, and it is the one that carries legal and
+store-review consequence.
+
+On 2026-08-06 Corta Spam had a **"Record caller message"** switch. It persisted its flag,
+validated a consent phrase, rendered as a `Switch`, and had a passing repository test asserting
+the flag round-tripped. Nothing recorded: no `RECORD_AUDIO` permission, no `MediaRecorder`, no
+`AudioRecord` anywhere in the source. That is probe 4, and probe 4 would have found it.
+
+What probe 4 would **not** have found is the rest of the blast radius. Four separate user-facing
+surfaces asserted the feature:
+
+| Surface | What it claimed |
+|---|---|
+| `AutoResponderScreen.kt` | a live toggle |
+| `strings.xml` ×4 locales | the toggle, its description, a consent hint |
+| `onboarding_never_do_record` | "we will never record any call *unless you separately turn that on*" |
+| **`docs/PRIVACY.html`, both languages** | a whole `<h2>Call recording</h2>` section describing it |
+
+The privacy policy is the dangerous one. It is publicly hosted, linked from the Play listing,
+legally operative, and it was volunteering *call recording* — among the most scrutinised topics
+in app review — for a capability the binary did not have.
+
+**Probe:** take each feature named in your user-facing prose and grep for the API that would have
+to exist.
+
+```bash
+# every capability the privacy policy / store listing / onboarding claims
+grep -oiE "record|location|camera|upload|sync|cloud|backup" docs/PRIVACY.html docs/STORE_LISTING.md | sort -u
+
+# then, per claim, the API that would implement it
+grep -rn "MediaRecorder\|AudioRecord\|RECORD_AUDIO" --include=*.kt --include=*.xml androidApp/src shared/src
+```
+
+Zero hits against a documented capability is the finding. Run it the other way too — a permission
+in the manifest with no prose explaining it is the same defect inverted, and reviewers ask about
+exactly that.
+
+**Why this ranks above the code probes:** a dead code path is a bug you fix on your own schedule.
+A dead code path that a legal document describes to users is a misrepresentation, and it is
+discovered by someone who can pull your listing.
+
 ## Confirm before reporting
 
 Do not report any of these from reading alone. Write a throwaway test that calls the **real entry
