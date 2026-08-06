@@ -27,7 +27,16 @@ The app declares itself eligible for the default dialer role via the standard `a
 Corta Spam does **not** collect, transmit, or share any personal data. Specifically:
 
 - **No analytics or telemetry.** The app includes no analytics SDKs, no crash reporters, and no usage tracking of any kind.
-- **No phone-home behavior.** The app never contacts any server except when the user explicitly enables the optional spam provider (see below). Even then, only the dialed/ringing number is sent to check against a public spam database — no contact data, no device identifiers, no call audio.
+- **No phone-home behavior. The app has no network code at all.** There is no HTTP client in the
+  dependency graph (no Ktor, OkHttp or Retrofit) and no `INTERNET` permission in the manifest.
+  Verify before filing the Data Safety form, which is legally binding:
+  ```bash
+  grep -rniE "ktor|okhttp|retrofit|firebase|INTERNET" gradle/libs.versions.toml androidApp/src/main/AndroidManifest.xml
+  ```
+  An earlier version of this document claimed the optional spam provider sent numbers to a public
+  database. That was never true of the shipped code — `SpamProviderClient`'s only bound
+  implementation is `BundledSpamProvider`, an on-device list — and the privacy policy was
+  corrected for the same error on 2026-08-05.
 - **No advertising.** The app has no ads and no ad SDKs.
 
 ### Data stored locally
@@ -46,10 +55,9 @@ All user data stays on the device in a local SQLite database:
 
 ### Network access
 
-The app accesses the network only when:
-
-1. **Spam provider is enabled** (off by default). The app queries a public, community-maintained spam-number database. Only the calling number is sent in the request. No other data leaves the device. The user can disable this at any time in Settings.
-2. **No other network requests.** The app does not download content, check for updates, or connect to any other service.
+The app never accesses the network. It holds no `INTERNET` permission and contains no HTTP client,
+so it cannot download content, check for updates, or reach any service — including the optional
+spam provider, whose only implementation is a list bundled inside the APK.
 
 ### Data sharing
 
