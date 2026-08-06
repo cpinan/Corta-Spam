@@ -34,11 +34,16 @@ Update **both** `README.md` and `README_ES.md` (this project maintains Spanish p
 
 ## Commit message
 
-End every commit with:
+End every commit with the trailer for **the model actually writing the commit**, which the
+harness states in its environment block — not a name hardcoded here. All 21 commits of the
+2026-08-05 audit read:
 
 ```
-Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 ```
+
+This skill previously pinned "Claude Sonnet 5", which was wrong for any other model and made the
+history claim authorship that did not happen. Check the environment, don't copy a literal.
 
 Body should explain **why**, not just what — this project's commit messages consistently name the actual bug/user pain being addressed and, when something adjacent was deliberately left alone, say so and why (see commit `d519d69` for the pattern: what changed, plus an explicit "left unchanged: X, because Y" paragraph).
 

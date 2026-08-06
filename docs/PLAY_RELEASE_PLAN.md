@@ -121,6 +121,18 @@ adb -s <serial> pull /sdcard/s.png ./shot.png
 Six screens, listed in `PLAY_INTERNAL_TESTING.md` §1. Use the `Pixel_8_Pro_API_33` AVD rather
 than the razr — a foldable produces awkward aspect ratios.
 
+Then run them through:
+
+```bash
+./scripts/play_assets.sh
+```
+
+Raw captures are 1344×2992 — a 9:20 ratio that Play rejects. The script pads to exactly 9:16 by
+replicating the edge column, so the status and navigation bars stay continuous. See the
+`play-store-assets` skill for the two other traps: graphics fall back to the *default language*,
+and screenshotting in a non-default locale is the cheapest localization audit there is (it found
+a shipping bug the day it was first done).
+
 ### 3.3 Make the icon and feature graphic
 
 512×512 icon (no alpha) and a 1024×500 feature graphic. The adaptive launcher icon is not a
