@@ -40,7 +40,7 @@ class CallLogScreenUiTest {
         )
 
     @Test
-    fun `blocked entry shows number and action`() {
+    fun `blocked entry shows number and the localized status`() {
         composeTestRule.setContent {
             CallLogScreen(
                 entries = listOf(blockedEntry),
@@ -48,11 +48,11 @@ class CallLogScreenUiTest {
             )
         }
         composeTestRule.onNodeWithText("+34611223344").assertExists()
-        composeTestRule.onNodeWithText("BLOCKED").assertExists()
+        composeTestRule.onNodeWithText("Blocked call", substring = true).assertExists()
     }
 
     @Test
-    fun `allowed entry shows number and action`() {
+    fun `allowed entry shows number and the localized status`() {
         composeTestRule.setContent {
             CallLogScreen(
                 entries = listOf(allowedEntry),
@@ -60,7 +60,7 @@ class CallLogScreenUiTest {
             )
         }
         composeTestRule.onNodeWithText("+34600987654").assertExists()
-        composeTestRule.onNodeWithText("ALLOWED").assertExists()
+        composeTestRule.onNodeWithText("Allowed call", substring = true).assertExists()
     }
 
     @Test

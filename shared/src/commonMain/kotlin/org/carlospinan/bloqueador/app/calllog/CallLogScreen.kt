@@ -329,7 +329,7 @@ private fun CallLogDetailPane(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            CallLogDetailRow(stringResource(Res.string.call_log_action_label), entry.action, actionColor)
+            CallLogDetailRow(stringResource(Res.string.call_log_action_label), statusLabel, actionColor)
             // rule_detail is stored as structured data, not prose, so the log re-renders in
             // whatever locale the reader is using now rather than the one it was written in.
             val reasonText = storedBlockReasonText(entry.ruleDetail)
@@ -455,7 +455,7 @@ private fun CallLogEntryRow(
                 )
             }
             Text(
-                text = if (isReview) statusLabel else entry.action,
+                text = statusLabel,
                 style = MaterialTheme.typography.labelMedium,
                 color = actionColor,
             )

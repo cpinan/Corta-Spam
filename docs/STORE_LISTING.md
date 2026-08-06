@@ -1,12 +1,90 @@
 # Play Store listing copy — Corta Spam
 
+**Default language: Español (es-419).** English is added as a translation, not the default.
+The *app's* own fallback locale is unchanged and remains English — this is a Console setting
+about the store page, not about the strings in the APK.
+
 Paste-ready. Assets live in [`store/`](store/).
 
-Two rules applied throughout: **do not promise detection accuracy** (this app blocks by *your*
-rules plus a small bundled list — it is not a crowd-sourced spam database), and **do not describe
-the auto-responder as reliable** (it reaches the caller only by acoustic coupling).
+Two rules applied to both languages: **do not promise detection accuracy** (this app blocks by
+*your* rules plus a small bundled list — it is not a crowd-sourced spam database), and **do not
+describe the auto-responder as reliable** (it reaches the caller only by acoustic coupling).
 
 ---
+
+# Español (es-419) — idioma predeterminado
+
+## Nombre de la app (≤30 caracteres)
+
+```
+Corta Spam
+```
+*10 caracteres.*
+
+## Descripción corta (≤80 caracteres)
+
+```
+Bloquea llamadas con tus reglas. Código abierto, sin anuncios ni rastreo.
+```
+*73 caracteres.*
+
+## Descripción completa (≤4000 caracteres)
+
+```
+Corta Spam filtra las llamadas entrantes antes de que suene tu teléfono, con reglas que escribes tú.
+
+Sin anuncios. Sin rastreo. Sin cuentas. Sin acceso a la red: cada regla y cada registro se quedan en una base de datos dentro de tu dispositivo, y la app no tiene código capaz de enviarlos a ningún lado.
+
+QUÉ PUEDES BLOQUEAR
+
+• Números concretos, con una etiqueta para que el registro te diga por qué
+• Patrones: bloquea un rango entero con comodines, como +34900* o *1234
+• Países: bloquea un código de país del que nunca esperas una llamada
+• Horas de silencio: silencia todo según un horario, salvo tu lista de permitidos
+• Llamadas repetidas: bloquea un número tras demasiados intentos en poco tiempo
+• Una lista de spam incluida: códigos de marcación asociados a estafas, dentro de la app
+
+Tus contactos y tu lista de permitidos siempre pasan, y un número que bloqueas a mano sigue bloqueado aunque esté en tus contactos. Tú decides qué manda.
+
+QUÉ PASA CON UNA LLAMADA BLOQUEADA
+
+Tu teléfono no suena. El registro guarda qué ocurrió y qué regla tomó la decisión, en tu idioma. Puedes devolver la llamada o copiar cualquier número desde el propio registro.
+
+Tú eliges qué hacer con un número que no coincide con ninguna regla: dejarlo pasar, bloquearlo, o dejarlo pasar marcado para revisarlo después. También hay una opción para dejar pasar a un desconocido que ya ha insistido varias veces, porque una persona real que llama repetidamente casi nunca es una robollamada.
+
+PRIVACIDAD
+
+La app no pide acceso al registro de llamadas del sistema, ni a SMS, almacenamiento, ubicación, cámara o micrófono. Lee tus contactos solo para reconocer a quien ya conoces, y eso nunca sale del dispositivo.
+
+No incluye ningún SDK de analítica ni de informes de fallos. La política de privacidad completa se publica junto al código fuente, y puedes comprobar cada afirmación contra el código.
+
+CÓDIGO ABIERTO
+
+Cada línea es pública y auditable en github.com/cpinan/Corta-Spam, con licencia MIT.
+
+IDIOMAS
+
+Español, inglés, portugués e hindi.
+
+NOTA SOBRE LOS PERMISOS
+
+Corta Spam debe ser tu app de teléfono predeterminada. Es la única forma en que Android permite filtrar una llamada antes de que suene: así es como funciona el bloqueo, no es un permiso extra.
+
+El auto-respondedor es experimental. Contesta una llamada bloqueada y reproduce un saludo, pero en versiones recientes de Android puede que quien llama no lo escuche bien; tómalo como un extra, no como una función en la que confiar.
+```
+*~2.100 caracteres.*
+
+## Notas de la versión — primera build interna
+
+```
+Primera build interna.
+
+Por favor comprueba: pon Corta Spam como tu app de teléfono predeterminada y confirma que el teléfono suena de verdad con una llamada normal, y que no suena con un número que hayas bloqueado. El registro debería indicarte qué regla tomó cada decisión.
+```
+
+---
+
+# English (en-US) — added translation
 
 ## App name (≤30 chars)
 
@@ -74,6 +152,7 @@ The auto-responder is experimental. It answers a blocked call and plays a greeti
 
 | Field | Value |
 |---|---|
+| Default language | **Español (es-419)** — English added as a translation |
 | Category | **Tools** — not Communication. It is a utility, and Communication draws stricter dialer scrutiny. |
 | Tags | Call blocking, Privacy, Open source |
 | Contact email | *(a monitored address — required and shown publicly)* |

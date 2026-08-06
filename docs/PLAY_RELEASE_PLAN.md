@@ -16,11 +16,11 @@ slow one.
 
 ## Phase 0 — Decisions to make before anything is irreversible
 
-Four choices that cannot be changed later. Make them deliberately.
+Four choices that cannot be changed later. Make them deliberately. One is already settled.
 
 | Decision | Options | Recommendation for this app |
 |---|---|---|
-| **Package name** | `org.carlospinan.bloqueador.app` is already published in the APK | Keep. It cannot change after the first upload — a new package name is a new app with zero installs. Note it still says `bloqueador`, the pre-rename name; that is cosmetic and not worth the cost of never being able to update. |
+| **Package name** | **Decided: `org.carlospinan.cortaspam`** (changed 2026-08-05, commit `d5ee3b2`) | Done. Only `applicationId` moved; `namespace` stays `org.carlospinan.bloqueador.app`, so no source packages shifted. It cannot change after the first upload — a new package name is a new app with zero installs. |
 | **Free or paid** | Free / Paid | **Free.** A free app can never become paid. |
 | **Play App Signing** | Enrol / opt out | **Enrol** (the default). Google holds the release key; your `.jks` is only the *upload* key and can be rotated by support if lost. Opting out means losing that file ends the app permanently. |
 | **Developer account type** | Personal / Organisation | Personal is fine for an individual open-source project. Organisation needs a D-U-N-S number and takes longer. |
@@ -141,7 +141,12 @@ listing is both a review risk and untrue.
 
 ### 4.1 Create the app
 
-Console → **Create app**. Name, default language English, type **App**, **Free**.
+Console → **Create app**. Name, **default language Español (es-419)**, type **App**, **Free**.
+
+The default language is the store page's, not the app's: the APK still falls back to English for
+a locale it doesn't ship. Add English (en-US) as a translation afterwards. Screenshots are
+per-language — `docs/store/` carries a Spanish set and an English set, and uploading the wrong
+one under the wrong language is the easy mistake here.
 
 ### 4.2 Work through every App Content section
 
@@ -300,7 +305,7 @@ Read this before Phase 5, not after.
 0. Decide: package name, free/paid, Play App Signing, account type    (irreversible)
 1. Create account, verify identity, payments profile                  (longest lead time)
 2. Generate upload key, back it up, wire keystore.properties, verify signature
-3. Host privacy policy; screenshots; icon; feature graphic; listing copy
+3. Host privacy policy; screenshots (es + en); icon; feature graphic; listing copy (es default)
 4. Create app; complete every App Content section; permissions declaration + demo video
 5. ./scripts/verify.sh --release; test the RELEASE build on a device; upload; add testers
 6. Closed testing for the required tester count / duration
