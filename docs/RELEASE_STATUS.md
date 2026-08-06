@@ -38,7 +38,7 @@
 - [x] 9 screenshots padded to exactly 9:16 (`docs/store/play/`) — raw captures were 9:20 and
       Play would have rejected them
 - [x] Listing copy, Spanish default + English translation, all within character limits
-- [x] Release notes for `es-419`
+- [x] Release notes, both languages, paste-ready → `docs/store/RELEASE_NOTES_0.1.0.md`
 
 ## ✅ Done — tooling
 

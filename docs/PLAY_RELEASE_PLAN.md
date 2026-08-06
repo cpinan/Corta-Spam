@@ -231,6 +231,11 @@ live. **Bump `appVersionName`/`appVersionCode` at the top of that file** — the
 
 Console → **Internal testing → Create new release** → upload the `.aab` → release notes → roll out.
 
+Release notes are per-release and Play caps them at **500 characters per language**. Keep one
+paste-ready file per version, both languages, in the `<es-419>…</es-419>` / `<en-US>…</en-US>`
+form the Console box expects — `docs/store/RELEASE_NOTES_0.1.0.md` is the current one. Copy it to
+a new `RELEASE_NOTES_<version>.md` rather than editing history.
+
 ### 5.4 Add testers
 
 Create an email list (up to 100). **Testers must open the opt-in URL before they can install** —

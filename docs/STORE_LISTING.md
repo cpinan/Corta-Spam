@@ -74,13 +74,10 @@ El auto-respondedor es experimental. Contesta una llamada bloqueada y reproduce 
 ```
 *~2.100 caracteres.*
 
-## Notas de la versión — primera build interna
+## Notas de la versión
 
-```
-Primera build interna.
-
-Por favor comprueba: pon Corta Spam como tu app de teléfono predeterminada y confirma que el teléfono suena de verdad con una llamada normal, y que no suena con un número que hayas bloqueado. El registro debería indicarte qué regla tomó cada decisión.
-```
+Cambian en cada release, así que no viven aquí. Copia paste-ready, en los dos idiomas y con las
+etiquetas que pide la Consola: [`store/RELEASE_NOTES_0.1.0.md`](store/RELEASE_NOTES_0.1.0.md).
 
 ---
 
@@ -188,10 +185,7 @@ Captured on the `Pixel_8_Pro_API_33` AVD with seeded demo data. Every phone numb
 a range that cannot be a real subscriber (`+34 900` is Spanish premium-rate/service) — these
 images are public once uploaded.
 
-## Release notes — first internal release
+## Release notes
 
-```
-First internal build.
-
-Please check: set Corta Spam as your default phone app, then confirm the phone actually rings for a normal call, and stays silent for a number you have blocked. The call log should tell you which rule made each decision.
-```
+Per-release, so they do not live here. Paste-ready in both languages, tagged the way the Console
+asks for them: [`store/RELEASE_NOTES_0.1.0.md`](store/RELEASE_NOTES_0.1.0.md).
