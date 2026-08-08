@@ -38,6 +38,9 @@ node_modules/
 # Tool configs (local only)
 .codex/
 AGENTS.md
+
+# Personal scratch list carried between sessions. Not a project doc — docs/ holds those.
+TODO_TOMORROW.md
 graphify-out/
 
 # macOS
