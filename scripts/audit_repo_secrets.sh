@@ -103,6 +103,6 @@ printf '\n'
 if [ "$FINDINGS" -eq 0 ]; then
   printf '\033[32m✓ clean\033[0m\n'; exit 0
 else
-  printf '\033[31m✗ %d finding(s)\033[0m — see .claude/skills/git-history-rewrite for the purge procedure\n' "$FINDINGS"
+  printf '\033[31m✗ %d finding(s)\033[0m — deleting at HEAD is not enough; the history has to be rewritten and any real secret rotated\n' "$FINDINGS"
   exit 1
 fi

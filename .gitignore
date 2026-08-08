@@ -43,6 +43,11 @@ AGENTS.md
 TODO_TOMORROW.md
 graphify-out/
 
+# General Kotlin/KMP skills are symlinks into a separate repo on this machine, so their
+# targets are absolute paths that resolve for nobody else. Only the corta-spam-* skills,
+# which are about this codebase, stay tracked.
+.claude/skills/kotlin-*
+
 # macOS
 .DS_Store
 
