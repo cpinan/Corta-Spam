@@ -34,6 +34,7 @@
     <string name="permissions_change_later">Mudou de ideia? Todas elas podem ser ativadas ou desativadas depois nos Ajustes.</string>
     <string name="permissions_continue">Continuar</string>
     <string name="permissions_continue_anyway">Continuar mesmo assim</string>
+    <string name="permissions_more_to_fix">Há mais permissões que precisam de atenção</string>
     <string name="permissions_dialer_role_missing">Não é seu app de telefone padrão</string>
     <string name="permissions_dialer_role_missing_desc">O filtro de chamadas fica desligado até o Corta Spam ser definido como seu app de telefone padrão.</string>
     <string name="permissions_set_as_default">Definir como padrão</string>
@@ -70,6 +71,7 @@
     <string name="home_title">Corta Spam</string>
     <string name="home_blocking_enabled">Bloqueio ativado — chamadas de spam e bloqueadas são filtradas</string>
     <string name="home_blocking_disabled">Bloqueio desativado — todas as chamadas são permitidas</string>
+    <string name="home_blocking_inert">O bloqueio está ativo, mas nenhuma chamada chega ao Corta Spam até que ele seja seu app de telefone padrão</string>
     <string name="home_blocked_today">Bloqueadas hoje</string>
     <string name="home_blocked_this_week">Esta semana</string>
     <string name="home_blocked_this_month">Este mês</string>

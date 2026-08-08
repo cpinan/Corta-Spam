@@ -17,6 +17,7 @@ import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_open_settings
 import cortaspam.shared.generated.resources.permissions_dialer_role_missing
 import cortaspam.shared.generated.resources.permissions_dialer_role_missing_desc
+import cortaspam.shared.generated.resources.permissions_more_to_fix
 import cortaspam.shared.generated.resources.permissions_set_as_default
 import cortaspam.shared.generated.resources.settings_call_permission_disabled
 import cortaspam.shared.generated.resources.settings_call_permission_disabled_desc
@@ -39,6 +40,13 @@ import org.jetbrains.compose.resources.stringResource
  *
  * Every parameter defaults to the non-warning value so iOS -- which builds these screens too but
  * has none of these concepts -- renders nothing instead of a fix button that does nothing.
+ *
+ * @param limit how many cards to render, most severe first. Home passes 1: on a fresh install
+ *   where the user granted nothing, four stacked error cards push the blocking toggle and the
+ *   counters off the bottom of the screen, and a wall of red reads as one broken thing rather
+ *   than four fixable ones. Settings, which is the screen you open to diagnose, shows them all.
+ * @param onSeeAll invoked from the "more to fix" row, shown only when [limit] actually hid
+ *   something. Omitting it hides the row -- there is no point pointing at Settings from Settings.
  */
 @Composable
 fun PermissionWarnings(
@@ -47,57 +55,92 @@ fun PermissionWarnings(
     notificationsPermissionGranted: Boolean = true,
     fullScreenIntentAllowed: Boolean = true,
     callPhonePermissionGranted: Boolean = true,
+    limit: Int = Int.MAX_VALUE,
     onRequestDialerRole: () -> Unit = {},
     onOpenNotificationSettings: () -> Unit = {},
     onOpenFullScreenIntentSettings: () -> Unit = {},
     onOpenAppSettings: () -> Unit = {},
+    onSeeAll: (() -> Unit)? = null,
 ) {
+    // Ordered by how much of the app each one breaks. Losing the dialer role stops every call
+    // from reaching the app at all, so it outranks a permission that degrades one feature.
+    val warnings =
+        buildList {
+            if (!dialerRoleHeld) {
+                add(
+                    PermissionWarning(
+                        title = stringResource(Res.string.permissions_dialer_role_missing),
+                        description = stringResource(Res.string.permissions_dialer_role_missing_desc),
+                        actionLabel = stringResource(Res.string.permissions_set_as_default),
+                        onFix = onRequestDialerRole,
+                    ),
+                )
+            }
+            if (!notificationsPermissionGranted) {
+                add(
+                    PermissionWarning(
+                        title = stringResource(Res.string.settings_notifications_disabled),
+                        description = stringResource(Res.string.settings_notifications_disabled_desc),
+                        actionLabel = stringResource(Res.string.action_open_settings),
+                        onFix = onOpenNotificationSettings,
+                    ),
+                )
+            }
+            if (!fullScreenIntentAllowed) {
+                add(
+                    PermissionWarning(
+                        title = stringResource(Res.string.settings_fullscreen_disabled),
+                        description = stringResource(Res.string.settings_fullscreen_disabled_desc),
+                        actionLabel = stringResource(Res.string.action_open_settings),
+                        onFix = onOpenFullScreenIntentSettings,
+                    ),
+                )
+            }
+            if (!callPhonePermissionGranted) {
+                add(
+                    PermissionWarning(
+                        title = stringResource(Res.string.settings_call_permission_disabled),
+                        description = stringResource(Res.string.settings_call_permission_disabled_desc),
+                        actionLabel = stringResource(Res.string.action_open_settings),
+                        onFix = onOpenAppSettings,
+                    ),
+                )
+            }
+        }
+
     Column(modifier = modifier) {
-        if (!dialerRoleHeld) {
+        warnings.take(limit).forEach { warning ->
             PermissionWarningCard(
-                title = stringResource(Res.string.permissions_dialer_role_missing),
-                description = stringResource(Res.string.permissions_dialer_role_missing_desc),
-                actionLabel = stringResource(Res.string.permissions_set_as_default),
-                onFix = onRequestDialerRole,
+                title = warning.title,
+                description = warning.description,
+                actionLabel = warning.actionLabel,
+                onFix = warning.onFix,
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        if (!notificationsPermissionGranted) {
-            PermissionWarningCard(
-                title = stringResource(Res.string.settings_notifications_disabled),
-                description = stringResource(Res.string.settings_notifications_disabled_desc),
-                onFix = onOpenNotificationSettings,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        if (!fullScreenIntentAllowed) {
-            PermissionWarningCard(
-                title = stringResource(Res.string.settings_fullscreen_disabled),
-                description = stringResource(Res.string.settings_fullscreen_disabled_desc),
-                onFix = onOpenFullScreenIntentSettings,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        if (!callPhonePermissionGranted) {
-            PermissionWarningCard(
-                title = stringResource(Res.string.settings_call_permission_disabled),
-                description = stringResource(Res.string.settings_call_permission_disabled_desc),
-                onFix = onOpenAppSettings,
-            )
+        if (onSeeAll != null && warnings.size > limit) {
+            TextButton(onClick = onSeeAll) {
+                Text(stringResource(Res.string.permissions_more_to_fix))
+            }
             Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
+private data class PermissionWarning(
+    val title: String,
+    val description: String,
+    val actionLabel: String,
+    val onFix: () -> Unit,
+)
+
 @Composable
 private fun PermissionWarningCard(
     title: String,
     description: String,
+    actionLabel: String,
     onFix: () -> Unit,
-    actionLabel: String = stringResource(Res.string.action_open_settings),
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),

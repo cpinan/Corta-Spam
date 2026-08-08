@@ -2511,7 +2511,28 @@ th{background:var(--panel-2);font-weight:600}
 <p>Three of the five new tests were watched failing against the old body before the fix was written. That step is what distinguishes a regression test from a test that merely agrees with the code in front of it.</p></div>
 
 <div class="note verified"><span class="tag">Verified</span>
-<p style="margin-bottom:0">368 JVM tests. The Home warnings are covered through the real <code>HomeScreen</code> composable under Robolectric — including a case asserting that a fully permitted app shows <em>no</em> banner at all, because a warning system that cannot be silent is one users learn to scroll past.</p></div>
+<p style="margin-bottom:0">373 JVM tests. The Home warnings are covered through the real <code>HomeScreen</code> composable under Robolectric — including a case asserting that a fully permitted app shows <em>no</em> banner at all, because a warning system that cannot be silent is one users learn to scroll past.</p></div>
+
+<div class="callout"><h3>Case Study: two bugs that only a real install could show</h3>
+<p>Everything above was green — 368 tests, lint, both platforms — when the release build went onto a razr 50 ultra and every permission was refused. Home then said two things at once:</p>
+<pre><code><span class="line">┌────────────────────────────────────────────┐</span>
+<span class="line">│ Not your default phone app                 │</span>
+<span class="line">│ Call screening is off until Corta Spam is  │</span>
+<span class="line">│ set as your default phone app.             │</span>
+<span class="line">└────────────────────────────────────────────┘</span>
+<span class="line">  Corta Spam                          [ ●━ ]</span>
+<span class="line">  Blocking is on — spam and blocked calls</span>
+<span class="line">  are filtered</span></code></pre>
+<p>Both lines were individually correct code. The banner reads the dialer role; the caption reads the <code>blockingEnabled</code> <em>setting</em>, which knows nothing about the role. Neither had a bug in isolation, which is exactly why no unit test and no component test flagged it — there was no single wrong function to catch. The screen as a whole told the user they were protected, and that was false.</p>
+<p>The caption now has a third state, and it is the state a user in trouble actually lands in:</p>
+<pre><code><span class="line">when {</span>
+<span class="line">    !state.blockingEnabled -&gt; Res.string.home_blocking_disabled</span>
+<span class="line">    !dialerRoleHeld        -&gt; Res.string.home_blocking_inert</span>
+<span class="line">    else                   -&gt; Res.string.home_blocking_enabled</span>
+<span class="line">}</span></code></pre>
+<p>The same screenshot showed the second bug. Four warning cards stacked to roughly 1400px on a 2640px display, pushing the toggle, all three counters and every quick link below the fold — the "put the warning where the user is" fix from earlier in this chapter had crowded out the thing the user came for. Home now renders only the most severe card and links to Settings for the rest, with severity meaning <em>how much of the app this breaks</em>: the dialer role stops every call reaching the app, so it outranks a permission that degrades one feature.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">Component tests assert one composable's contract. Contradictions live <em>between</em> components, and so does layout. Both of these needed the release build, a real screen size, and the least convenient state — nothing granted — which is the state a first-time user is in and the one nobody screenshots.</p></div></div>
 
 <div class="callout"><h3>Done when</h3>
 <ul>
@@ -2536,6 +2557,12 @@ th{background:var(--panel-2);font-weight:600}
 <div class="quiz-item"><p><strong>4.</strong> Why is <code>assertNotEquals(GRANTED, state)</code> a poor regression test for the revocation bug?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
 <div class="answer">It is an absence assertion. It passes when <code>refresh()</code> downgrades correctly <em>and</em> when <code>refresh()</code> does nothing at all — but "does nothing at all" is precisely the bug, so long as the state was not <code>GRANTED</code> to begin with. Naming the expected destination (<code>NOT_REQUESTED</code>) is the only version that fails on the broken code, which is why the tests were run against the old body first.</div></div>
+<div class="quiz-item"><p><strong>5.</strong> Home showed a banner saying screening was off and, directly beneath it, a caption saying blocked calls were being filtered. Which one had the bug?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Neither, taken alone. The banner correctly read the dialer role; the caption correctly read the <code>blockingEnabled</code> setting. The defect was that the caption described a setting as though it described an outcome, and the two are only the same thing while the app holds the role. That is why every unit and component test passed — there was no single wrong function, and a contradiction between two correct components is invisible to a test that renders one of them.</div></div>
+<div class="quiz-item"><p><strong>6.</strong> Home caps its permission warnings at one card while Settings shows all of them. Why the asymmetry?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">They answer different questions. Home answers "is something wrong, and what do I do first" — four stacked error cards pushed the toggle and every counter off a 2640px screen, and a wall of red reads as one broken app rather than four fixable settings. Settings is the screen you open to diagnose, so it lists everything. Same component, one <code>limit</code> parameter, one severity order shared by both.</div></div>
 </div>
 </section>
 
@@ -2578,8 +2605,8 @@ th{background:var(--panel-2);font-weight:600}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>368 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open). Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p>373 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>

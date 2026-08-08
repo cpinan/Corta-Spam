@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 368 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 373 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -84,7 +84,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 360 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 365 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 8 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ```
@@ -116,12 +116,13 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 A complete 22-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, and (newest) permission UX as a design problem — asking, explaining, and noticing when a permission is taken back.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 86 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 88 quiz questions included.
 
 ## Recent Fixes
 
 **2026-08-08:** the first thing a new user sees.
 
+- **Home told the user they were protected while telling them screening was off.** Found by installing the release build on a razr 50 ultra and refusing every permission — something no test looked at, because each half was individually correct. The banner said *"Call screening is off until Corta Spam is set as your default phone app"*, and the toggle caption directly beneath it said *"Blocking is on — spam and blocked calls are filtered"*. Without the dialer role no call reaches the app at all, so the second one was simply false, and it is the line a user reads to decide whether they are covered. There is now a third caption for "switched on, but inert", rendered in the error colour. The same install showed four stacked warning cards pushing the toggle and every counter below the fold, so Home now renders only the most severe one — the dialer role outranks a permission that degrades a single feature — followed by a link to Settings, which still lists them all.
 - **The warnings were on a screen nobody opens.** `PermissionWarnings` lived privately inside `SettingsScreen`, so an app that had silently stopped working looked identical to one that was working unless the user went looking. It is now shared, rendered on Home as well, and deliberately placed *above* the counters — someone whose blocking has stopped needs to see why before reading a "0 blocked today" that looks like good news. It also gained the warning that matters most, the missing dialer role, whose fix button re-runs the system role request rather than dumping the user in Settings. Contacts and microphone are deliberately still absent: both are optional and explained where the feature that needs them lives, and a banner for a permission you have not asked to use is a nag, not a warning.
 - **Giving the dialer role away left the app claiming it still had it.** `DialerOnboardingViewModel.refresh()` runs on every resume so that switching the default phone app from system Settings is picked up — but it only ever upgraded, to `ALREADY_DEFAULT`. Revoke the role and the state stayed `GRANTED` forever: a fully functional-looking app, blocking toggle on, that could no longer screen a single call, with nothing anywhere saying so. It now moves in both directions, and deliberately leaves `REQUESTING` alone, since the system role dialog is on screen and its result — not a resume poll — decides what happens next. Three of the five new tests were watched failing against the old body first.
 - **The app's first act was a permission dialog nobody had explained.** `MainActivity.onCreate` fired the `POST_NOTIFICATIONS` request unprompted, on top of a welcome screen that said nothing about permissions — indistinguishable from an app grabbing whatever it can, and the fastest possible way to earn a permanent "Deny". Onboarding now has a checklist step between the dialer explainer and the app: one row per permission, naming the single thing it is used for, with its system dialog behind an explicit **Allow**. Nothing is mandatory; the continue button is always enabled and only changes label. The microphone is listed but never requested there — it is asked for at the moment recording is switched on, because a dialer asking for the mic during onboarding, for a feature that ships off, reads as overreach. Below API 33 the notifications row is omitted entirely rather than shown as a button that opens nothing.

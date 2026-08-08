@@ -32,6 +32,7 @@ import cortaspam.shared.generated.resources.home_blocked_this_week
 import cortaspam.shared.generated.resources.home_blocked_today
 import cortaspam.shared.generated.resources.home_blocking_disabled
 import cortaspam.shared.generated.resources.home_blocking_enabled
+import cortaspam.shared.generated.resources.home_blocking_inert
 import cortaspam.shared.generated.resources.home_manage_block_list
 import cortaspam.shared.generated.resources.home_pending_review
 import cortaspam.shared.generated.resources.home_settings
@@ -84,16 +85,20 @@ fun HomeScreen(
 
                 // Above the stats deliberately: a user whose blocking has stopped working needs
                 // to see why before they read a "0 blocked today" that looks like good news.
+                // Capped at one card -- a fresh install that granted nothing produced four, which
+                // pushed the toggle and every counter below the fold on a 1080x2640 phone.
                 PermissionWarnings(
                     modifier = Modifier.fillMaxWidth(),
                     dialerRoleHeld = dialerRoleHeld,
                     notificationsPermissionGranted = notificationsPermissionGranted,
                     fullScreenIntentAllowed = fullScreenIntentAllowed,
                     callPhonePermissionGranted = callPhonePermissionGranted,
+                    limit = 1,
                     onRequestDialerRole = onRequestDialerRole,
                     onOpenNotificationSettings = onOpenNotificationSettings,
                     onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
                     onOpenAppSettings = onOpenAppSettings,
+                    onSeeAll = onNavigateToSettings,
                 )
 
                 if (isWide) {
@@ -104,6 +109,7 @@ fun HomeScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             HomeStatsSection(
                                 state = state,
+                                dialerRoleHeld = dialerRoleHeld,
                                 onToggleBlocking = onToggleBlocking,
                                 onNavigateToCallLogToday = onNavigateToCallLogToday,
                                 onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
@@ -121,6 +127,7 @@ fun HomeScreen(
                 } else {
                     HomeStatsSection(
                         state = state,
+                        dialerRoleHeld = dialerRoleHeld,
                         onToggleBlocking = onToggleBlocking,
                         onNavigateToCallLogToday = onNavigateToCallLogToday,
                         onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
@@ -152,6 +159,7 @@ fun HomeScreen(
 @Composable
 private fun HomeStatsSection(
     state: HomeUiState,
+    dialerRoleHeld: Boolean,
     onToggleBlocking: (Boolean) -> Unit,
     onNavigateToCallLogToday: () -> Unit,
     onNavigateToCallLogThisWeek: () -> Unit,
@@ -173,13 +181,25 @@ private fun HomeStatsSection(
         )
     }
 
+    // The switch reports the *setting*; without the dialer role no call ever reaches the app to
+    // be filtered, so saying "blocked calls are filtered" there would be a flat lie sitting
+    // directly under a banner saying screening is off.
     Text(
         text =
             stringResource(
-                if (state.blockingEnabled) Res.string.home_blocking_enabled else Res.string.home_blocking_disabled,
+                when {
+                    !state.blockingEnabled -> Res.string.home_blocking_disabled
+                    !dialerRoleHeld -> Res.string.home_blocking_inert
+                    else -> Res.string.home_blocking_enabled
+                },
             ),
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color =
+            if (state.blockingEnabled && !dialerRoleHeld) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
     )
 
     Spacer(modifier = Modifier.height(32.dp))

@@ -34,6 +34,7 @@
     <string name="permissions_change_later">Changed your mind either way? Every one of these can be turned on or off later from Settings.</string>
     <string name="permissions_continue">Continue</string>
     <string name="permissions_continue_anyway">Continue anyway</string>
+    <string name="permissions_more_to_fix">More permissions need attention</string>
     <string name="permissions_dialer_role_missing">Not your default phone app</string>
     <string name="permissions_dialer_role_missing_desc">Call screening is off until Corta Spam is set as your default phone app.</string>
     <string name="permissions_set_as_default">Set as default</string>
@@ -64,6 +65,7 @@
     <string name="home_title">Corta Spam</string>
     <string name="home_blocking_enabled">Blocking is on — spam and blocked calls are filtered</string>
     <string name="home_blocking_disabled">Blocking is off — all calls are allowed through</string>
+    <string name="home_blocking_inert">Blocking is on, but no calls reach Corta Spam until it is your default phone app</string>
     <string name="home_blocked_today">Blocked today</string>
     <string name="home_blocked_this_week">This week</string>
     <string name="home_blocked_this_month">This month</string>

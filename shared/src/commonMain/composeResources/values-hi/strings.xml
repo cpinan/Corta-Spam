@@ -34,6 +34,7 @@
     <string name="permissions_change_later">मन बदल गया? इनमें से हर एक को बाद में सेटिंग्स से चालू या बंद किया जा सकता है।</string>
     <string name="permissions_continue">जारी रखें</string>
     <string name="permissions_continue_anyway">फिर भी जारी रखें</string>
+    <string name="permissions_more_to_fix">और भी अनुमतियों पर ध्यान देना है</string>
     <string name="permissions_dialer_role_missing">आपका डिफ़ॉल्ट फ़ोन ऐप नहीं है</string>
     <string name="permissions_dialer_role_missing_desc">जब तक Corta Spam आपका डिफ़ॉल्ट फ़ोन ऐप नहीं बनता, कॉल स्क्रीनिंग बंद रहेगी।</string>
     <string name="permissions_set_as_default">डिफ़ॉल्ट बनाएँ</string>
@@ -70,6 +71,7 @@
     <string name="home_title">Corta Spam</string>
     <string name="home_blocking_enabled">ब्लॉकिंग चालू है — स्पैम और ब्लॉक की गई कॉल फ़िल्टर होती हैं</string>
     <string name="home_blocking_disabled">ब्लॉकिंग बंद है — सभी कॉल की अनुमति है</string>
+    <string name="home_blocking_inert">ब्लॉकिंग चालू है, लेकिन जब तक Corta Spam आपका डिफ़ॉल्ट फ़ोन ऐप नहीं बनता, कोई कॉल उस तक नहीं पहुँचती</string>
     <string name="home_blocked_today">आज ब्लॉक की गई</string>
     <string name="home_blocked_this_week">इस सप्ताह</string>
     <string name="home_blocked_this_month">इस महीने</string>
