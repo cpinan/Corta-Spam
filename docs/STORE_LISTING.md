@@ -176,7 +176,8 @@ The auto-responder is experimental. It answers a blocked call and plays a greeti
 | Tags | Caller ID, Communication |
 | Contact email | *(a monitored address — required and shown publicly)* |
 | Website | `https://github.com/cpinan/Corta-Spam` |
-| Privacy policy | `https://cpinan.github.io/Corta-Spam/PRIVACY` |
+| Privacy policy | `https://cpinan.github.io/corta-spam/privacy.html` |
+| Support / marketing site | `https://cpinan.github.io/corta-spam/` |
 
 ## Assets
 

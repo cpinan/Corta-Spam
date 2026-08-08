@@ -38,7 +38,13 @@
 
 ## ✅ Done — store assets
 
-- [x] Privacy policy hosted, styled, ES/EN toggle → `https://cpinan.github.io/Corta-Spam/PRIVACY`
+- [x] Privacy policy hosted, styled, bilingual ES/EN → `https://cpinan.github.io/corta-spam/privacy.html`
+      (canonical, on the `cpinan.github.io` site, folder-per-app like the other apps). A landing and
+      support page sits beside it at `https://cpinan.github.io/corta-spam/`.
+      **`docs/PRIVACY.html` in this repo is a second copy** still served at the old
+      `https://cpinan.github.io/Corta-Spam/PRIVACY`. Two copies of a legally operative document
+      drift — this policy already shipped one wrong claim about a network call that did not exist.
+      Give the Console the canonical URL, and fold the old one into a redirect when convenient.
 - [x] 512×512 icon, 1024×500 feature graphic **in Spanish** (+ `_en` variant)
 - [x] 9 screenshots padded to exactly 9:16 (`docs/store/play/`) — raw captures were 9:20 and
       Play would have rejected them
