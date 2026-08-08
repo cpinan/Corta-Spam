@@ -27,6 +27,9 @@ import androidx.core.net.toUri
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingIntent
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
+import org.carlospinan.bloqueador.app.permissions.AppPermission
+import org.carlospinan.bloqueador.app.permissions.PermissionsOnboardingScreen
+import org.carlospinan.bloqueador.app.permissions.permissionChecklist
 import org.carlospinan.bloqueador.app.telecom.AutoResponderAudio
 import org.carlospinan.bloqueador.app.telecom.RecordingPlayer
 import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
@@ -114,6 +117,24 @@ class MainActivity : ComponentActivity() {
      */
     private var micPermissionGranted by mutableStateOf(true)
 
+    /**
+     * Launches the system dialog for one row of the onboarding checklist. Microphone is absent
+     * on purpose: [AppPermission.MICROPHONE] is marked non-requestable there, so the screen
+     * never calls this for it -- it is asked for at the moment recording is switched on.
+     */
+    private fun requestPermission(permission: AppPermission) {
+        when (permission) {
+            AppPermission.NOTIFICATIONS ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationsPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+
+            AppPermission.CONTACTS -> contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            AppPermission.PHONE -> callPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE)
+            AppPermission.MICROPHONE -> micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     private fun refreshPermissionStatus() {
         contactsPermissionGranted =
             ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
@@ -135,10 +156,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         refreshPermissionStatus()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsPermissionGranted) {
-            notificationsPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
         setContent {
             val state by viewModel.state.collectAsState()
 
@@ -152,73 +169,93 @@ class MainActivity : ComponentActivity() {
                     onIntent = viewModel::onIntent,
                     onRequestRole = ::launchDefaultDialerRequest,
                     content = {
-                        App(
-                            onPickAudio = { onResult ->
-                                audioPickResultCallback = onResult
-                                audioPickerLauncher.launch("audio/*")
-                            },
-                            onTestGreeting = { script, audioUri ->
-                                testAudio.play(script, audioUri.ifBlank { null }, onComplete = {})
-                            },
-                            onRequestContactsPermission = {
-                                contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
-                            },
-                            onShareFile = { json ->
-                                val shareIntent =
-                                    Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, json)
-                                    }
-                                startActivity(Intent.createChooser(shareIntent, getString(R.string.share_backup_chooser_title)))
-                            },
-                            onPickImportFile = { onResult ->
-                                importResultCallback = onResult
-                                importFileLauncher.launch("application/json")
-                            },
-                            onCallBack = { number ->
-                                if (ContextCompat.checkSelfPermission(
-                                        this@MainActivity,
-                                        Manifest.permission.CALL_PHONE,
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    placeCall(number)
-                                } else {
-                                    pendingCallBackNumber = number
-                                    callPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE)
-                                }
-                            },
-                            onCopyNumber = { number ->
-                                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                clipboard.setPrimaryClip(ClipData.newPlainText("phone_number", number))
-                            },
-                            contactsPermissionGranted = contactsPermissionGranted,
-                            notificationsPermissionGranted = notificationsPermissionGranted,
-                            fullScreenIntentAllowed = fullScreenIntentAllowed,
-                            callPhonePermissionGranted = callPhonePermissionGranted,
-                            onOpenNotificationSettings = {
-                                startActivity(
-                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
-                                )
-                            },
-                            onOpenFullScreenIntentSettings = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        if (!state.permissionsPromptShown) {
+                            PermissionsOnboardingScreen(
+                                items =
+                                    permissionChecklist(
+                                        notificationsGranted = notificationsPermissionGranted,
+                                        contactsGranted = contactsPermissionGranted,
+                                        phoneGranted = callPhonePermissionGranted,
+                                        micGranted = micPermissionGranted,
+                                        notificationsApplicable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+                                    ),
+                                onRequest = ::requestPermission,
+                                onContinue = { viewModel.onIntent(DialerOnboardingIntent.PermissionsPromptShown) },
+                            )
+                        } else {
+                            App(
+                                onPickAudio = { onResult ->
+                                    audioPickResultCallback = onResult
+                                    audioPickerLauncher.launch("audio/*")
+                                },
+                                onTestGreeting = { script, audioUri ->
+                                    testAudio.play(script, audioUri.ifBlank { null }, onComplete = {})
+                                },
+                                onRequestContactsPermission = {
+                                    contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                                },
+                                onShareFile = { json ->
+                                    val shareIntent =
+                                        Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_TEXT, json)
+                                        }
                                     startActivity(
-                                        Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, "package:$packageName".toUri()),
+                                        Intent.createChooser(shareIntent, getString(R.string.share_backup_chooser_title)),
                                     )
-                                }
-                            },
-                            onOpenAppSettings = {
-                                startActivity(
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
-                                )
-                            },
-                            micPermissionGranted = micPermissionGranted,
-                            onRequestMicPermission = {
-                                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            },
-                            onPlayRecording = { path -> recordingPlayer.play(path) },
-                        )
+                                },
+                                onPickImportFile = { onResult ->
+                                    importResultCallback = onResult
+                                    importFileLauncher.launch("application/json")
+                                },
+                                onCallBack = { number ->
+                                    if (ContextCompat.checkSelfPermission(
+                                            this@MainActivity,
+                                            Manifest.permission.CALL_PHONE,
+                                        ) == PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        placeCall(number)
+                                    } else {
+                                        pendingCallBackNumber = number
+                                        callPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE)
+                                    }
+                                },
+                                onCopyNumber = { number ->
+                                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("phone_number", number))
+                                },
+                                contactsPermissionGranted = contactsPermissionGranted,
+                                notificationsPermissionGranted = notificationsPermissionGranted,
+                                fullScreenIntentAllowed = fullScreenIntentAllowed,
+                                callPhonePermissionGranted = callPhonePermissionGranted,
+                                onOpenNotificationSettings = {
+                                    startActivity(
+                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
+                                    )
+                                },
+                                onOpenFullScreenIntentSettings = {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                        startActivity(
+                                            Intent(
+                                                Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                                                "package:$packageName".toUri(),
+                                            ),
+                                        )
+                                    }
+                                },
+                                onOpenAppSettings = {
+                                    startActivity(
+                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),
+                                    )
+                                },
+                                micPermissionGranted = micPermissionGranted,
+                                onRequestMicPermission = {
+                                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                },
+                                onPlayRecording = { path -> recordingPlayer.play(path) },
+                            )
+                        }
                     },
                 )
             }

@@ -11,10 +11,13 @@ import org.carlospinan.bloqueador.app.settings.SettingsRepository
 data class DialerOnboardingUiState(
     val dialerState: DialerOnboardingState = DialerOnboardingState.NOT_REQUESTED,
     val welcomeShown: Boolean = false,
+    val permissionsPromptShown: Boolean = false,
 )
 
 sealed interface DialerOnboardingIntent {
     data object WelcomeShown : DialerOnboardingIntent
+
+    data object PermissionsPromptShown : DialerOnboardingIntent
 
     data object RequestStarted : DialerOnboardingIntent
 
@@ -44,6 +47,7 @@ class DialerOnboardingViewModel(
             DialerOnboardingUiState(
                 dialerState = if (gateway.isDefaultDialer()) DialerOnboardingState.ALREADY_DEFAULT else DialerOnboardingState.NOT_REQUESTED,
                 welcomeShown = settingsRepository.welcomeShown,
+                permissionsPromptShown = settingsRepository.permissionsPromptShown,
             ),
         )
     val state: StateFlow<DialerOnboardingUiState> = _state.asStateFlow()
@@ -51,6 +55,7 @@ class DialerOnboardingViewModel(
     fun onIntent(intent: DialerOnboardingIntent) {
         when (intent) {
             DialerOnboardingIntent.WelcomeShown -> setWelcomeShown()
+            DialerOnboardingIntent.PermissionsPromptShown -> setPermissionsPromptShown()
             DialerOnboardingIntent.RequestStarted -> onRequestStarted()
             is DialerOnboardingIntent.RequestResult -> onRequestResult(intent.granted)
             DialerOnboardingIntent.Refresh -> refresh()
@@ -61,6 +66,13 @@ class DialerOnboardingViewModel(
         viewModelScope.launch {
             settingsRepository.setWelcomeShown()
             _state.value = _state.value.copy(welcomeShown = true)
+        }
+    }
+
+    private fun setPermissionsPromptShown() {
+        viewModelScope.launch {
+            settingsRepository.setPermissionsPromptShown()
+            _state.value = _state.value.copy(permissionsPromptShown = true)
         }
     }
 

@@ -69,12 +69,22 @@ class SqlSettingsRepository(
     override val welcomeShown: Boolean
         get() = _welcomeShown
 
+    private var _permissionsPromptShown: Boolean = false
+    override val permissionsPromptShown: Boolean
+        get() = _permissionsPromptShown
+
     init {
         _welcomeShown = store.readBool("welcome_shown", false)
+        _permissionsPromptShown = store.readBool("permissions_prompt_shown", false)
     }
 
     override suspend fun setWelcomeShown() {
         store.writeBool("welcome_shown", true)
         _welcomeShown = true
+    }
+
+    override suspend fun setPermissionsPromptShown() {
+        store.writeBool("permissions_prompt_shown", true)
+        _permissionsPromptShown = true
     }
 }

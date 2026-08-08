@@ -11,8 +11,9 @@ import org.carlospinan.bloqueador.app.settings.SettingsRepository
  * keep a handle on it. Setters write through to those flows, so a test may assert on
  * either the flow or the setter's effect.
  *
- * [welcomeShown] is a plain `Boolean` in the interface, so [setWelcomeShown] cannot
- * flip it; pass the value the test needs at construction.
+ * [welcomeShown] and [permissionsPromptShown] are plain `Boolean`s in the interface, so
+ * [setWelcomeShown]/[setPermissionsPromptShown] cannot flip them; pass the value the test
+ * needs at construction.
  */
 internal class FakeSettingsRepository(
     override val blockingEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
@@ -21,6 +22,7 @@ internal class FakeSettingsRepository(
     override val notificationsEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val repeatedCallerBypassCount: MutableStateFlow<Int> = MutableStateFlow(0),
     override val welcomeShown: Boolean = false,
+    override val permissionsPromptShown: Boolean = false,
 ) : SettingsRepository {
     override suspend fun setBlockingEnabled(enabled: Boolean) {
         blockingEnabled.value = enabled
@@ -43,4 +45,6 @@ internal class FakeSettingsRepository(
     }
 
     override suspend fun setWelcomeShown() {}
+
+    override suspend fun setPermissionsPromptShown() {}
 }

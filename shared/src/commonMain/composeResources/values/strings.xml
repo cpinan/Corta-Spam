@@ -16,6 +16,24 @@
     <string name="onboarding_requesting_indicator">Waiting for the system dialog…</string>
     <string name="onboarding_denied_title">Not set as your default phone app</string>
     <string name="onboarding_denied_body">Without this, call screening and the auto-responder can't run. You can turn it on later from Settings.</string>
+
+    <!-- Permissions checklist -->
+    <string name="permissions_title">What we ask for, and why</string>
+    <string name="permissions_subtitle">Each permission below is used for one thing only. Nothing here is required — you can refuse any of them and the rest of the app still works.</string>
+    <string name="permissions_notifications_title">Notifications</string>
+    <string name="permissions_notifications_body">Show you who is calling, and what was blocked while you were away. Without it you get no incoming-call alert at all.</string>
+    <string name="permissions_contacts_title">Contacts</string>
+    <string name="permissions_contacts_body">Let people already in your contacts ring through, and show their name instead of a bare number. Contacts are read on this device and never sent anywhere.</string>
+    <string name="permissions_phone_title">Phone</string>
+    <string name="permissions_phone_body">See an incoming number before your phone rings, so it can be checked against your rules, and call a number back from the call log.</string>
+    <string name="permissions_microphone_title">Microphone (optional)</string>
+    <string name="permissions_microphone_body">Only used if you turn on recording for the auto-responder, which ships off.</string>
+    <string name="permissions_granted">Granted</string>
+    <string name="permissions_allow">Allow</string>
+    <string name="permissions_asked_later">Asked only if you turn recording on</string>
+    <string name="permissions_change_later">Changed your mind either way? Every one of these can be turned on or off later from Settings.</string>
+    <string name="permissions_continue">Continue</string>
+    <string name="permissions_continue_anyway">Continue anyway</string>
     <!-- Actions -->
     <string name="action_continue">Continue</string>
     <string name="action_not_now">Not now</string>

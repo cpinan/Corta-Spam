@@ -4,6 +4,8 @@ import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 private class FakeGateway(
     var isDefault: Boolean,
@@ -85,5 +87,17 @@ class DialerOnboardingViewModelTest {
     fun welcomeShownReflectsRepositoryInitialValue() {
         val viewModel = DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository(welcomeShown = true))
         assertEquals(true, viewModel.state.value.welcomeShown)
+    }
+
+    @Test
+    fun permissionsPromptShownReflectsRepositoryInitialValue() {
+        assertFalse(
+            DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository())
+                .state.value.permissionsPromptShown,
+        )
+        assertTrue(
+            DialerOnboardingViewModel(FakeGateway(isDefault = false), FakeSettingsRepository(permissionsPromptShown = true))
+                .state.value.permissionsPromptShown,
+        )
     }
 }

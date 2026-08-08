@@ -35,6 +35,7 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - **Avisos de duplicados** — advierte al agregar un número que ya está en la otra lista
 - **Motor de precedencia** — el bloqueo manual tiene prioridad sobre contactos y lista de permitidos
 - **Normalización de contactos** — compara números formateados de contactos con números entrantes sin formato
+- **Lista de permisos al primer arranque** — tras la explicación del rol de teléfono, una pantalla enumera cada permiso que pide la app y lo único para lo que se usa, con su diálogo del sistema detrás de un Permitir explícito. Nada en ella es obligatorio, y el micrófono se nombra pero solo se pide cuando se activa la grabación de llamadas
 - **Privacidad y Términos** — política de privacidad y licencia MIT dentro de la app
 - **Tono de llamada** — la app reproduce el tono y la vibración por sí misma (como exige el contrato de marcador predeterminado), respetando el modo de sonido del sistema, y lo silencia en cuanto llega una decisión de bloqueo
 - **Control de notificaciones** — un solo interruptor "Mostrar notificaciones" silencia todo lo que publique la app, incluida la alerta de llamada entrante
@@ -117,6 +118,10 @@ Un curso completo de 19 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 72 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-08:** lo primero que ve una persona nueva.
+
+- **El primer acto de la app era un diálogo de permiso que nadie había explicado.** `MainActivity.onCreate` lanzaba la petición de `POST_NOTIFICATIONS` sin previo aviso, encima de una pantalla de bienvenida que no mencionaba permisos — indistinguible de una app que agarra lo que puede, y la forma más rápida de ganarse un "Denegar" permanente. Ahora el onboarding tiene un paso de lista de comprobación entre la explicación del rol de teléfono y la app: una fila por permiso, nombrando lo único para lo que se usa, con su diálogo del sistema detrás de un **Permitir** explícito. Nada es obligatorio; el botón de continuar siempre está activo y solo cambia de texto. El micrófono aparece en la lista pero nunca se pide ahí — se pide en el momento en que se activa la grabación, porque una app de teléfono pidiendo el micrófono durante el onboarding, para una función que viene apagada, se lee como abuso. Por debajo de API 33 la fila de notificaciones se omite por completo en lugar de mostrarse como un botón que no abre nada.
 
 **2026-08-06:** consecuencias de una política de Play, y un interruptor de grabación que no grababa.
 

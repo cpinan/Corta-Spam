@@ -36,4 +36,13 @@ interface SettingsRepository {
     val welcomeShown: Boolean
 
     suspend fun setWelcomeShown()
+
+    /**
+     * True once the user has walked past the permission checklist step of onboarding.
+     * Plain `Boolean` for the same reason as [welcomeShown]: it is read once, at the
+     * root of the Android UI tree, to decide whether that step still needs showing.
+     */
+    val permissionsPromptShown: Boolean
+
+    suspend fun setPermissionsPromptShown()
 }

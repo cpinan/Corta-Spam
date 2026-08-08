@@ -35,6 +35,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Duplicate warnings** — warns when adding a number already present in the other list
 - **Precedence engine** — manual block overrides contacts and allowlist
 - **Contact normalization** — matches formatted contact numbers against raw incoming call numbers
+- **Permission checklist on first run** — after the default-dialer explainer, one screen lists every permission the app asks for and the single thing each is used for, with its system dialog behind an explicit Allow. Nothing on it is mandatory, and the microphone is named but only ever requested when call recording is switched on
 - **Privacy & Terms** — in-app privacy policy and MIT license terms
 - **Ringing** — the app plays the ringtone and vibration itself (as the default dialer contract requires), honouring the system ringer mode, and silences it the moment a block decision lands
 - **Notification control** — a single "Show notifications" switch mutes everything the app posts, including the incoming-call alert
@@ -117,6 +118,10 @@ A complete 19-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 72 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-08:** the first thing a new user sees.
+
+- **The app's first act was a permission dialog nobody had explained.** `MainActivity.onCreate` fired the `POST_NOTIFICATIONS` request unprompted, on top of a welcome screen that said nothing about permissions — indistinguishable from an app grabbing whatever it can, and the fastest possible way to earn a permanent "Deny". Onboarding now has a checklist step between the dialer explainer and the app: one row per permission, naming the single thing it is used for, with its system dialog behind an explicit **Allow**. Nothing is mandatory; the continue button is always enabled and only changes label. The microphone is listed but never requested there — it is asked for at the moment recording is switched on, because a dialer asking for the mic during onboarding, for a feature that ships off, reads as overreach. Below API 33 the notifications row is omitted entirely rather than shown as a button that opens nothing.
 
 **2026-08-06:** Play policy fallout, and a recording toggle that never recorded.
 

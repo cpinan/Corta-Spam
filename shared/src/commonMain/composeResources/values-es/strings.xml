@@ -17,6 +17,24 @@
     <string name="onboarding_denied_title">No se estableció como app de teléfono</string>
     <string name="onboarding_denied_body">Sin esto, el filtro de llamadas y el auto-respondedor no pueden funcionar. Puedes activarlo después desde Ajustes.</string>
 
+    <!-- Lista de permisos -->
+    <string name="permissions_title">Qué te pedimos, y para qué</string>
+    <string name="permissions_subtitle">Cada permiso se usa para una sola cosa. Ninguno es obligatorio: puedes rechazar cualquiera y el resto de la app sigue funcionando.</string>
+    <string name="permissions_notifications_title">Notificaciones</string>
+    <string name="permissions_notifications_body">Mostrarte quién llama y qué se bloqueó mientras no estabas. Sin esto no recibes ningún aviso de llamada entrante.</string>
+    <string name="permissions_contacts_title">Contactos</string>
+    <string name="permissions_contacts_body">Dejar pasar a quienes ya están en tus contactos y mostrar su nombre en vez del número. Tus contactos se leen en este dispositivo y nunca se envían a ninguna parte.</string>
+    <string name="permissions_phone_title">Teléfono</string>
+    <string name="permissions_phone_body">Ver el número entrante antes de que suene el teléfono, para poder contrastarlo con tus reglas, y devolver llamadas desde el registro.</string>
+    <string name="permissions_microphone_title">Micrófono (opcional)</string>
+    <string name="permissions_microphone_body">Solo se usa si activas la grabación del auto-respondedor, que viene desactivada.</string>
+    <string name="permissions_granted">Concedido</string>
+    <string name="permissions_allow">Permitir</string>
+    <string name="permissions_asked_later">Se pide solo si activas la grabación</string>
+    <string name="permissions_change_later">¿Cambiaste de opinión? Todos estos permisos se pueden activar o desactivar después desde Ajustes.</string>
+    <string name="permissions_continue">Continuar</string>
+    <string name="permissions_continue_anyway">Continuar de todos modos</string>
+
     <!-- Acciones -->
     <string name="action_continue">Continuar</string>
     <string name="action_not_now">Ahora no</string>
