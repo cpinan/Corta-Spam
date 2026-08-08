@@ -34,6 +34,9 @@
     <string name="permissions_change_later">¿Cambiaste de opinión? Todos estos permisos se pueden activar o desactivar después desde Ajustes.</string>
     <string name="permissions_continue">Continuar</string>
     <string name="permissions_continue_anyway">Continuar de todos modos</string>
+    <string name="permissions_dialer_role_missing">No es tu app de teléfono predeterminada</string>
+    <string name="permissions_dialer_role_missing_desc">El filtro de llamadas está inactivo hasta que Corta Spam sea tu app de teléfono predeterminada.</string>
+    <string name="permissions_set_as_default">Establecer como predeterminada</string>
 
     <!-- Acciones -->
     <string name="action_continue">Continuar</string>

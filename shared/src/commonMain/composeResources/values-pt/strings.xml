@@ -34,6 +34,9 @@
     <string name="permissions_change_later">Mudou de ideia? Todas elas podem ser ativadas ou desativadas depois nos Ajustes.</string>
     <string name="permissions_continue">Continuar</string>
     <string name="permissions_continue_anyway">Continuar mesmo assim</string>
+    <string name="permissions_dialer_role_missing">Não é seu app de telefone padrão</string>
+    <string name="permissions_dialer_role_missing_desc">O filtro de chamadas fica desligado até o Corta Spam ser definido como seu app de telefone padrão.</string>
+    <string name="permissions_set_as_default">Definir como padrão</string>
 
     <!-- Ações -->
     <string name="action_continue">Continuar</string>

@@ -90,9 +90,11 @@ fun AppNavHost(
     onCallBack: ((String) -> Unit)? = null,
     onCopyNumber: ((String) -> Unit)? = null,
     contactsPermissionGranted: Boolean = false,
+    dialerRoleHeld: Boolean = true,
     notificationsPermissionGranted: Boolean = true,
     fullScreenIntentAllowed: Boolean = true,
     callPhonePermissionGranted: Boolean = true,
+    onRequestDialerRole: (() -> Unit)? = null,
     onOpenNotificationSettings: (() -> Unit)? = null,
     onOpenFullScreenIntentSettings: (() -> Unit)? = null,
     onOpenAppSettings: (() -> Unit)? = null,
@@ -140,6 +142,14 @@ fun AppNavHost(
                     onNavigateToSettings = { navController.navigate(Routes.SETTINGS) { launchSingleTop = true } },
                     onNavigateToStats = { navController.navigate(Routes.STATS) { launchSingleTop = true } },
                     onToggleBlocking = { homeViewModel.onIntent(HomeIntent.ToggleBlocking(it)) },
+                    dialerRoleHeld = dialerRoleHeld,
+                    notificationsPermissionGranted = notificationsPermissionGranted,
+                    fullScreenIntentAllowed = fullScreenIntentAllowed,
+                    callPhonePermissionGranted = callPhonePermissionGranted,
+                    onRequestDialerRole = onRequestDialerRole ?: {},
+                    onOpenNotificationSettings = onOpenNotificationSettings ?: {},
+                    onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},
+                    onOpenAppSettings = onOpenAppSettings ?: {},
                 )
             }
 
@@ -282,9 +292,11 @@ fun AppNavHost(
                 SettingsScreen(
                     state = settingsUiState,
                     showGrantContacts = onRequestContactsPermission != null && !contactsPermissionGranted,
+                    dialerRoleHeld = dialerRoleHeld,
                     notificationsPermissionGranted = notificationsPermissionGranted,
                     fullScreenIntentAllowed = fullScreenIntentAllowed,
                     callPhonePermissionGranted = callPhonePermissionGranted,
+                    onRequestDialerRole = onRequestDialerRole ?: {},
                     onSetBlockingEnabled = { settingsViewModel.onIntent(SettingsIntent.SetBlockingEnabled(it)) },
                     onSetAutoAllowContacts = { settingsViewModel.onIntent(SettingsIntent.SetAutoAllowContacts(it)) },
                     onSetDefaultAction = { settingsViewModel.onIntent(SettingsIntent.SetDefaultAction(it)) },

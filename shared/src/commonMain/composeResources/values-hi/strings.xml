@@ -34,6 +34,9 @@
     <string name="permissions_change_later">मन बदल गया? इनमें से हर एक को बाद में सेटिंग्स से चालू या बंद किया जा सकता है।</string>
     <string name="permissions_continue">जारी रखें</string>
     <string name="permissions_continue_anyway">फिर भी जारी रखें</string>
+    <string name="permissions_dialer_role_missing">आपका डिफ़ॉल्ट फ़ोन ऐप नहीं है</string>
+    <string name="permissions_dialer_role_missing_desc">जब तक Corta Spam आपका डिफ़ॉल्ट फ़ोन ऐप नहीं बनता, कॉल स्क्रीनिंग बंद रहेगी।</string>
+    <string name="permissions_set_as_default">डिफ़ॉल्ट बनाएँ</string>
 
     <!-- कार्रवाइयाँ -->
     <string name="action_continue">जारी रखें</string>

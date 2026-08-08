@@ -225,9 +225,14 @@ class MainActivity : ComponentActivity() {
                                     clipboard.setPrimaryClip(ClipData.newPlainText("phone_number", number))
                                 },
                                 contactsPermissionGranted = contactsPermissionGranted,
+                                dialerRoleHeld = state.dialerRoleHeld,
                                 notificationsPermissionGranted = notificationsPermissionGranted,
                                 fullScreenIntentAllowed = fullScreenIntentAllowed,
                                 callPhonePermissionGranted = callPhonePermissionGranted,
+                                onRequestDialerRole = {
+                                    viewModel.onIntent(DialerOnboardingIntent.RequestStarted)
+                                    launchDefaultDialerRequest()
+                                },
                                 onOpenNotificationSettings = {
                                     startActivity(
                                         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)

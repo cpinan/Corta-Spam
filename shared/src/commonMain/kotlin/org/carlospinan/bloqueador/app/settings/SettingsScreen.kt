@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_cancel
-import cortaspam.shared.generated.resources.action_open_settings
 import cortaspam.shared.generated.resources.action_view
 import cortaspam.shared.generated.resources.autoresponder_experimental_badge
 import cortaspam.shared.generated.resources.ic_autoresponder
@@ -53,18 +52,12 @@ import cortaspam.shared.generated.resources.settings_backup
 import cortaspam.shared.generated.resources.settings_backup_desc
 import cortaspam.shared.generated.resources.settings_blocking_enabled
 import cortaspam.shared.generated.resources.settings_blocking_enabled_desc
-import cortaspam.shared.generated.resources.settings_call_permission_disabled
-import cortaspam.shared.generated.resources.settings_call_permission_disabled_desc
 import cortaspam.shared.generated.resources.settings_default_action
 import cortaspam.shared.generated.resources.settings_default_action_allow
 import cortaspam.shared.generated.resources.settings_default_action_ask
 import cortaspam.shared.generated.resources.settings_default_action_block
 import cortaspam.shared.generated.resources.settings_default_action_desc
-import cortaspam.shared.generated.resources.settings_fullscreen_disabled
-import cortaspam.shared.generated.resources.settings_fullscreen_disabled_desc
 import cortaspam.shared.generated.resources.settings_grant_contacts
-import cortaspam.shared.generated.resources.settings_notifications_disabled
-import cortaspam.shared.generated.resources.settings_notifications_disabled_desc
 import cortaspam.shared.generated.resources.settings_privacy_desc
 import cortaspam.shared.generated.resources.settings_privacy_title
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass
@@ -82,6 +75,7 @@ import cortaspam.shared.generated.resources.settings_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.permissions.PermissionWarnings
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -105,9 +99,11 @@ private enum class SettingsSection {
 fun SettingsScreen(
     state: SettingsUiState,
     showGrantContacts: Boolean,
+    dialerRoleHeld: Boolean = true,
     notificationsPermissionGranted: Boolean = true,
     fullScreenIntentAllowed: Boolean = true,
     callPhonePermissionGranted: Boolean = true,
+    onRequestDialerRole: () -> Unit = {},
     onSetBlockingEnabled: (Boolean) -> Unit,
     onSetAutoAllowContacts: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
@@ -153,9 +149,11 @@ fun SettingsScreen(
                         // they are app-level failures, and filing the notification warning under
                         // "Notifications" would make it findable only by accident.
                         PermissionWarnings(
+                            dialerRoleHeld = dialerRoleHeld,
                             notificationsPermissionGranted = notificationsPermissionGranted,
                             fullScreenIntentAllowed = fullScreenIntentAllowed,
                             callPhonePermissionGranted = callPhonePermissionGranted,
+                            onRequestDialerRole = onRequestDialerRole,
                             onOpenNotificationSettings = onOpenNotificationSettings,
                             onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
                             onOpenAppSettings = onOpenAppSettings,
@@ -202,9 +200,11 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     PermissionWarnings(
+                        dialerRoleHeld = dialerRoleHeld,
                         notificationsPermissionGranted = notificationsPermissionGranted,
                         fullScreenIntentAllowed = fullScreenIntentAllowed,
                         callPhonePermissionGranted = callPhonePermissionGranted,
+                        onRequestDialerRole = onRequestDialerRole,
                         onOpenNotificationSettings = onOpenNotificationSettings,
                         onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
                         onOpenAppSettings = onOpenAppSettings,
@@ -350,43 +350,6 @@ private fun SectionRow(
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
-    }
-}
-
-@Composable
-private fun PermissionWarnings(
-    notificationsPermissionGranted: Boolean,
-    fullScreenIntentAllowed: Boolean,
-    callPhonePermissionGranted: Boolean,
-    onOpenNotificationSettings: () -> Unit,
-    onOpenFullScreenIntentSettings: () -> Unit,
-    onOpenAppSettings: () -> Unit,
-) {
-    if (!notificationsPermissionGranted) {
-        PermissionWarningCard(
-            title = stringResource(Res.string.settings_notifications_disabled),
-            description = stringResource(Res.string.settings_notifications_disabled_desc),
-            onFix = onOpenNotificationSettings,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-    }
-
-    if (!fullScreenIntentAllowed) {
-        PermissionWarningCard(
-            title = stringResource(Res.string.settings_fullscreen_disabled),
-            description = stringResource(Res.string.settings_fullscreen_disabled_desc),
-            onFix = onOpenFullScreenIntentSettings,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-    }
-
-    if (!callPhonePermissionGranted) {
-        PermissionWarningCard(
-            title = stringResource(Res.string.settings_call_permission_disabled),
-            description = stringResource(Res.string.settings_call_permission_disabled_desc),
-            onFix = onOpenAppSettings,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
@@ -623,35 +586,6 @@ private fun SettingDropdown(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PermissionWarningCard(
-    title: String,
-    description: String,
-    onFix: () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = onFix) {
-                Text(stringResource(Res.string.action_open_settings))
             }
         }
     }

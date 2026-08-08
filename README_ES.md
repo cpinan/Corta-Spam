@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 273 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 368 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -36,6 +36,7 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - **Motor de precedencia** — el bloqueo manual tiene prioridad sobre contactos y lista de permitidos
 - **Normalización de contactos** — compara números formateados de contactos con números entrantes sin formato
 - **Lista de permisos al primer arranque** — tras la explicación del rol de teléfono, una pantalla enumera cada permiso que pide la app y lo único para lo que se usa, con su diálogo del sistema detrás de un Permitir explícito. Nada en ella es obligatorio, y el micrófono se nombra pero solo se pide cuando se activa la grabación de llamadas
+- **Avisos de permisos en Inicio** — si la app pierde el rol de teléfono, las notificaciones, el intent a pantalla completa o el permiso de llamada, una tarjeta lo dice encima de los contadores de llamadas bloqueadas, con un botón que arregla exactamente eso. Los mismos avisos aparecen en Ajustes
 - **Privacidad y Términos** — política de privacidad y licencia MIT dentro de la app
 - **Tono de llamada** — la app reproduce el tono y la vibración por sí misma (como exige el contrato de marcador predeterminado), respetando el modo de sonido del sistema, y lo silencia en cuanto llega una decisión de bloqueo
 - **Control de notificaciones** — un solo interruptor "Mostrar notificaciones" silencia todo lo que publique la app, incluida la alerta de llamada entrante
@@ -83,7 +84,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 265 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 360 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 8 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ```
@@ -113,14 +114,15 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 19 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), y (el más nuevo) cómo probar la capa de persistencia contra un motor SQLite real — incluido el error de etiquetado que esas pruebas detectaron.
+Un curso completo de 22 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, y (el más nuevo) la UX de permisos como problema de diseño: pedirlos, explicarlos y darse cuenta cuando te los quitan.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 72 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 86 preguntas de evaluación.
 
 ## Cambios recientes
 
 **2026-08-08:** lo primero que ve una persona nueva.
 
+- **Los avisos estaban en una pantalla que nadie abre.** `PermissionWarnings` vivía como componente privado dentro de `SettingsScreen`, así que una app que había dejado de funcionar en silencio se veía idéntica a una que funcionaba, salvo que la persona fuera a buscar. Ahora es compartido, se muestra también en Inicio y está colocado a propósito *encima* de los contadores: quien ha dejado de bloquear necesita ver por qué antes de leer un "0 bloqueadas hoy" que parece una buena noticia. También ganó el aviso que más importa, el del rol de teléfono ausente, cuyo botón relanza la petición de rol del sistema en vez de dejar a la persona tirada en los ajustes. Contactos y micrófono siguen ausentes a propósito: ambos son opcionales y se explican donde vive la función que los necesita, y un banner por un permiso que no has pedido usar es una molestia, no un aviso.
 - **Ceder el rol de teléfono dejaba a la app afirmando que aún lo tenía.** `DialerOnboardingViewModel.refresh()` se ejecuta en cada reanudación para detectar un cambio de app de teléfono hecho desde los ajustes del sistema — pero solo sabía subir, a `ALREADY_DEFAULT`. Al revocar el rol, el estado se quedaba en `GRANTED` para siempre: una app con aspecto de funcionar, con el interruptor de bloqueo encendido, que ya no podía filtrar ni una llamada, y sin nada en ninguna parte que lo dijera. Ahora se mueve en ambas direcciones, y deja `REQUESTING` intacto a propósito, porque el diálogo de rol del sistema está en pantalla y es su resultado — no un sondeo al reanudar — quien decide lo que pasa después. Tres de las cinco pruebas nuevas se vieron fallar contra el código antiguo antes de aplicar el arreglo.
 - **El primer acto de la app era un diálogo de permiso que nadie había explicado.** `MainActivity.onCreate` lanzaba la petición de `POST_NOTIFICATIONS` sin previo aviso, encima de una pantalla de bienvenida que no mencionaba permisos — indistinguible de una app que agarra lo que puede, y la forma más rápida de ganarse un "Denegar" permanente. Ahora el onboarding tiene un paso de lista de comprobación entre la explicación del rol de teléfono y la app: una fila por permiso, nombrando lo único para lo que se usa, con su diálogo del sistema detrás de un **Permitir** explícito. Nada es obligatorio; el botón de continuar siempre está activo y solo cambia de texto. El micrófono aparece en la lista pero nunca se pide ahí — se pide en el momento en que se activa la grabación, porque una app de teléfono pidiendo el micrófono durante el onboarding, para una función que viene apagada, se lee como abuso. Por debajo de API 33 la fila de notificaciones se omite por completo en lugar de mostrarse como un botón que no abre nada.
 

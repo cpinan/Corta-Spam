@@ -45,6 +45,7 @@ import cortaspam.shared.generated.resources.ic_stats
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.permissions.PermissionWarnings
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -62,6 +63,14 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToStats: () -> Unit,
     onToggleBlocking: (Boolean) -> Unit,
+    dialerRoleHeld: Boolean = true,
+    notificationsPermissionGranted: Boolean = true,
+    fullScreenIntentAllowed: Boolean = true,
+    callPhonePermissionGranted: Boolean = true,
+    onRequestDialerRole: () -> Unit = {},
+    onOpenNotificationSettings: () -> Unit = {},
+    onOpenFullScreenIntentSettings: () -> Unit = {},
+    onOpenAppSettings: () -> Unit = {},
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
@@ -72,6 +81,20 @@ fun HomeScreen(
                 contentModifier = Modifier.verticalScroll(rememberScrollState()),
             ) {
                 val isWide = windowSizeClass != WindowSizeClass.Compact
+
+                // Above the stats deliberately: a user whose blocking has stopped working needs
+                // to see why before they read a "0 blocked today" that looks like good news.
+                PermissionWarnings(
+                    modifier = Modifier.fillMaxWidth(),
+                    dialerRoleHeld = dialerRoleHeld,
+                    notificationsPermissionGranted = notificationsPermissionGranted,
+                    fullScreenIntentAllowed = fullScreenIntentAllowed,
+                    callPhonePermissionGranted = callPhonePermissionGranted,
+                    onRequestDialerRole = onRequestDialerRole,
+                    onOpenNotificationSettings = onOpenNotificationSettings,
+                    onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings,
+                    onOpenAppSettings = onOpenAppSettings,
+                )
 
                 if (isWide) {
                     Row(

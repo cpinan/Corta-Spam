@@ -2406,9 +2406,142 @@ th{background:var(--panel-2);font-weight:600}
 </div>
 </section>
 
+<section class="module" id="m22">
+<div class="chapter-status">Chapter 22 done</div>
+<h2><span class="cn">22</span>Permissions Are a Conversation</h2>
+<p>Every previous chapter treated a permission as a boolean: you have it or you don't. This one treats it as something you ask for, explain, and can lose — three separate design problems, each of which this app got wrong in a different way.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul>
+<li>Recognise why a permission dialog fired from <code>onCreate</code> is the worst possible ask</li>
+<li>Model permissions the way a user groups them, not the way the manifest lists them</li>
+<li>Handle a permission being <em>revoked</em>, not just granted</li>
+<li>Put a failure warning on the screen where it will actually be read</li>
+<li>Write positive assertions for state transitions instead of absence assertions</li>
+</ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> The ask that guarantees a "Deny"</h3>
+<p>This was the app's entire notification-permission strategy:</p>
+<div class="filepath">androidApp/src/main/kotlin/.../MainActivity.kt — before</div>
+<pre><code><span class="line">override fun <span class="fn">onCreate</span>(savedInstanceState: Bundle?) {</span>
+<span class="line">    super.<span class="fn">onCreate</span>(savedInstanceState)</span>
+<span class="line">    <span class="fn">enableEdgeToEdge</span>()</span>
+<span class="line">    <span class="fn">refreshPermissionStatus</span>()</span>
+<span class="line"></span>
+<span class="line">    <span class="cm">// Fires before the user has seen anything but a splash.</span></span>
+<span class="line">    if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.TIRAMISU &amp;&amp; !notificationsPermissionGranted) {</span>
+<span class="line">        notificationsPermissionLauncher.<span class="fn">launch</span>(Manifest.permission.POST_NOTIFICATIONS)</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    <span class="fn">setContent</span> { <span class="cm">/* welcome screen, which never mentioned permissions */</span> }</span>
+<span class="line">}</span></code></pre>
+<p>The dialog arrived over a welcome screen that said nothing about permissions. From the user's side that is indistinguishable from an app grabbing whatever it can reach on launch — and on Android 13+ a second denial is permanent. The app spent its single most valuable ask on the moment it had explained the least.</p>
+
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">The system dialog is a yes/no box with a one-line platform string. Everything persuasive you have to say — what the permission does, what breaks without it, what you will never do with it — has to be said <em>before</em> it opens, because there is no room inside it.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> A checklist modelled on the user, not the manifest</h3>
+<p>The replacement is an onboarding step listing each permission with the one thing it is used for. The tempting implementation is to enumerate <code>AndroidManifest.xml</code>. That produces a bad screen:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../permissions/PermissionChecklist.kt</div>
+<pre><code><span class="line"><span class="cm">// Deliberately *not* a mirror of AndroidManifest.xml. VIBRATE is a normal permission with</span></span>
+<span class="line"><span class="cm">// nothing to grant, READ_PHONE_STATE and CALL_PHONE are one thing from the user's point of</span></span>
+<span class="line"><span class="cm">// view ("Phone"), and USE_FULL_SCREEN_INTENT is an app-op the user can only reach from system</span></span>
+<span class="line"><span class="cm">// Settings -- it belongs in the warning banners, not in a checklist of things to tap Allow on.</span></span>
+<span class="line">enum class AppPermission { NOTIFICATIONS, CONTACTS, PHONE, MICROPHONE }</span></code></pre>
+<p>Two rows then behave differently on purpose. Microphone is listed but non-requestable — named so the user knows it exists, never asked for here:</p>
+<pre><code><span class="line"><span class="fn">add</span>(<span class="fn">PermissionUiItem</span>(AppPermission.MICROPHONE, micGranted, requestable = <span class="kw">false</span>))</span></code></pre>
+<p>And the notifications row disappears entirely below API 33, where <code>POST_NOTIFICATIONS</code> does not exist and an Allow button would open nothing:</p>
+<pre><code><span class="line">if (notificationsApplicable) {</span>
+<span class="line">    <span class="fn">add</span>(<span class="fn">PermissionUiItem</span>(AppPermission.NOTIFICATIONS, notificationsGranted, requestable = <span class="kw">true</span>))</span>
+<span class="line">}</span></code></pre>
+
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">A "required" checklist is the old dialog with extra steps. The continue button here is always enabled; it only changes label to <em>Continue anyway</em>. If refusing a permission cannot get the user into the app, the explanation screen was never an explanation — it was a gate.</p></div>
+
+<div class="note scope"><span class="tag">Scope</span>
+<p style="margin-bottom:0">The microphone rule generalises: ask for a sensitive permission at the moment the feature that needs it is switched on, not during onboarding. A dialer asking for the microphone on first run, for a feature that ships off, reads as overreach — and spends the ask before there is anything to show for it.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> A permission you can lose</h3>
+<p>Granting is the easy half. The default-dialer role can be handed to another app from system Settings at any time, and the app's resume hook only knew how to move one way:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../onboarding/DialerOnboardingViewModel.kt — before</div>
+<pre><code><span class="line">private fun <span class="fn">refresh</span>() {</span>
+<span class="line">    if (gateway.<span class="fn">isDefaultDialer</span>()) {</span>
+<span class="line">        _state.value = _state.value.<span class="fn">copy</span>(dialerState = DialerOnboardingState.ALREADY_DEFAULT)</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p>Revoke the role and nothing happened. The state stayed <code>GRANTED</code> for the life of the process: blocking toggle on, rules listed, stats counting, and Telecom no longer handing the app a single call. The fix recomputes in both directions, with one carve-out:</p>
+<pre><code><span class="line">private fun <span class="fn">refresh</span>() {</span>
+<span class="line">    <span class="cm">// The system role dialog is on screen; its result, not this poll, decides what happens.</span></span>
+<span class="line">    if (_state.value.dialerState == DialerOnboardingState.REQUESTING) return</span>
+<span class="line"></span>
+<span class="line">    val newState = when {</span>
+<span class="line">        gateway.<span class="fn">isDefaultDialer</span>() -&gt; DialerOnboardingState.ALREADY_DEFAULT</span>
+<span class="line">        _state.value.dialerRoleHeld -&gt; DialerOnboardingState.NOT_REQUESTED</span>
+<span class="line">        else -&gt; _state.value.dialerState</span>
+<span class="line">    }</span>
+<span class="line">    _state.value = _state.value.<span class="fn">copy</span>(dialerState = newState)</span>
+<span class="line">}</span></code></pre>
+<p>The <code>REQUESTING</code> guard is not defensive padding. An <code>onResume</code> fires when the system role dialog appears over the activity, so without it a refresh lands mid-request, moves the state, and <code>RequestResult</code>'s <code>check</code> then throws on a perfectly ordinary grant.</p>
+
+<h3><span class="badge badge-a">Advanced</span> Where a warning has to live</h3>
+<p>The app already had permission warning cards. They were a <code>private</code> composable inside <code>SettingsScreen</code> — a screen a user who is not looking for a problem never opens. So an app that had silently stopped screening calls looked, on the screen people actually use, exactly like one that was working.</p>
+<p><code>PermissionWarnings</code> moved to its own file in <code>commonMain</code>, and Home renders it above the counters:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../home/HomeScreen.kt</div>
+<pre><code><span class="line"><span class="cm">// Above the stats deliberately: a user whose blocking has stopped working needs</span></span>
+<span class="line"><span class="cm">// to see why before they read a "0 blocked today" that looks like good news.</span></span>
+<span class="line"><span class="fn">PermissionWarnings</span>(</span>
+<span class="line">    modifier = Modifier.<span class="fn">fillMaxWidth</span>(),</span>
+<span class="line">    dialerRoleHeld = dialerRoleHeld,</span>
+<span class="line">    ...</span>
+<span class="line">)</span></code></pre>
+<p>Two design constraints came with the move. Every parameter defaults to the non-warning value, so iOS — which builds these screens and has none of these concepts — renders nothing rather than a fix button that does nothing. And contacts and microphone are deliberately <em>not</em> shown: both are optional, both are explained where the feature that needs them lives, and a banner for a permission the user has not asked to use is a nag rather than a warning.</p>
+
+<div class="note contrast"><span class="tag">Contrast</span>
+<p style="margin-bottom:0">A warning for something broken belongs where the user already is. A warning for something optional belongs where that feature is. Putting both in the same list trains the user to ignore the list.</p></div>
+
+<div class="callout"><h3>Case Study: the assertion that would have passed anyway</h3>
+<p><code>DialerOnboardingViewModel</code> was not untested. It had coverage of the request flow, the denial path, and the welcome flag. The revocation bug survived because no test ever called <code>Refresh</code> while the role was <em>gone</em> — the only refresh test asserted that a granted role stayed granted.</p>
+<p>The obvious regression test is also the wrong one:</p>
+<pre><code><span class="line"><span class="cm">// Passes if refresh() downgrades correctly.</span></span>
+<span class="line"><span class="cm">// Also passes if refresh() does nothing at all -- which was the bug.</span></span>
+<span class="line"><span class="fn">assertNotEquals</span>(DialerOnboardingState.GRANTED, viewModel.state.value.dialerState)</span></code></pre>
+<p>The shipped test names the destination instead:</p>
+<pre><code><span class="line"><span class="fn">assertEquals</span>(DialerOnboardingState.NOT_REQUESTED, viewModel.state.value.dialerState)</span>
+<span class="line"><span class="fn">assertFalse</span>(viewModel.state.value.dialerRoleHeld)</span></code></pre>
+<p>Three of the five new tests were watched failing against the old body before the fix was written. That step is what distinguishes a regression test from a test that merely agrees with the code in front of it.</p></div>
+
+<div class="note verified"><span class="tag">Verified</span>
+<p style="margin-bottom:0">368 JVM tests. The Home warnings are covered through the real <code>HomeScreen</code> composable under Robolectric — including a case asserting that a fully permitted app shows <em>no</em> banner at all, because a warning system that cannot be silent is one users learn to scroll past.</p></div>
+
+<div class="callout"><h3>Done when</h3>
+<ul>
+<li>No permission dialog opens before the app has explained, in its own words, what the permission is for</li>
+<li>Refusing any permission still lets the user into the app</li>
+<li>Every permission the app can <em>lose</em> has a code path that notices the loss</li>
+<li>The warning for a broken permission is visible on a screen the user opens anyway</li>
+<li>State-transition tests assert the destination, not the absence of the old value</li>
+</ul></div>
+
+<div class="quiz">
+<h3>Check Yourself</h3>
+<div class="quiz-item"><p><strong>1.</strong> Why is firing <code>POST_NOTIFICATIONS</code> from <code>onCreate</code> worse than firing it one screen later?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The system dialog has no room to explain anything — it is a yes/no box with a platform string. Everything persuasive must be said before it opens. Fired from <code>onCreate</code> it lands over a screen that has explained nothing, so it reads as an app grabbing what it can. On Android 13+ the second denial is permanent, so this spends a one-shot ask at the moment of least trust.</div></div>
+<div class="quiz-item"><p><strong>2.</strong> The manifest declares seven permissions. Why does the onboarding checklist show four rows?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because it is modelled on what the user is being asked, not on what the manifest declares. <code>VIBRATE</code> is a normal permission with nothing to grant; <code>READ_PHONE_STATE</code> and <code>CALL_PHONE</code> are one concept ("Phone") to a user; and <code>USE_FULL_SCREEN_INTENT</code> is an app-op reachable only from system Settings, so it belongs in a warning banner rather than behind an Allow button.</div></div>
+<div class="quiz-item"><p><strong>3.</strong> Why does <code>refresh()</code> return early when the state is <code>REQUESTING</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The system role dialog appears over the activity, which triggers a resume and therefore a refresh. Without the guard the poll moves the state out from under the in-flight request, and <code>RequestResult</code>'s <code>check</code> then throws on an ordinary grant. The dialog's result — not a resume poll — is the authority while a request is open.</div></div>
+<div class="quiz-item"><p><strong>4.</strong> Why is <code>assertNotEquals(GRANTED, state)</code> a poor regression test for the revocation bug?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">It is an absence assertion. It passes when <code>refresh()</code> downgrades correctly <em>and</em> when <code>refresh()</code> does nothing at all — but "does nothing at all" is precisely the bug, so long as the state was not <code>GRANTED</code> to begin with. Naming the expected destination (<code>NOT_REQUESTED</code>) is the only version that fails on the broken code, which is why the tests were run against the old body first.</div></div>
+</div>
+</section>
+
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>21 Chapters, One Production App</h3>
+<div class="callout"><h3>22 Chapters, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -2434,6 +2567,7 @@ th{background:var(--panel-2);font-weight:600}
 <tr style="border-bottom:1px solid var(--line)"><td style="padding:8px">Persistence testing</td><td style="padding:8px">In-memory SQLite, restart hydration, CHECK round-trips</td><td style="padding:8px">19</td></tr>
 <tr><td style="padding:8px">Auditing</td><td style="padding:8px">Code that ships but never runs; integration-level tests; toolchain vs code failures</td><td style="padding:8px">20</td></tr>
 <tr><td style="padding:8px">Policy &amp; Claims</td><td style="padding:8px">Play permission policy, privileged audio sources, file-backed rows</td><td style="padding:8px">21</td></tr>
+<tr><td style="padding:8px">Permission UX</td><td style="padding:8px">Explaining before asking, revocation, warning placement, positive assertions</td><td style="padding:8px">22</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2444,8 +2578,8 @@ th{background:var(--panel-2);font-weight:600}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>346 automated tests (227 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-06 — added Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p>368 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open). Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>
