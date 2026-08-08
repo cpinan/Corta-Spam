@@ -21,8 +21,11 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 
 // Single source of truth for the version, so the artifact filename and defaultConfig can never
 // disagree. Uploading the wrong build is easy when every bundle is called androidApp-release.aab.
+// versionCode 1 is spent: it was submitted and rejected under the Full-Screen Intent policy, and
+// Play will not accept a re-upload of a version code it has already seen. versionName stays 0.1.0
+// because nothing has ever reached a tester under that name -- only the code had to move.
 val appVersionName = "0.1.0"
-val appVersionCode = 1
+val appVersionCode = 2
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
