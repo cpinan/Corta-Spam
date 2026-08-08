@@ -12,7 +12,13 @@ data class DialerOnboardingUiState(
     val dialerState: DialerOnboardingState = DialerOnboardingState.NOT_REQUESTED,
     val welcomeShown: Boolean = false,
     val permissionsPromptShown: Boolean = false,
-)
+) {
+    /** The role is what makes screening possible at all; without it the app is inert. */
+    val dialerRoleHeld: Boolean
+        get() =
+            dialerState == DialerOnboardingState.GRANTED ||
+                dialerState == DialerOnboardingState.ALREADY_DEFAULT
+}
 
 sealed interface DialerOnboardingIntent {
     data object WelcomeShown : DialerOnboardingIntent
@@ -97,10 +103,24 @@ class DialerOnboardingViewModel(
             )
     }
 
-    /** Re-check on resume, in case the user changed the default dialer from system Settings directly. */
+    /**
+     * Re-check on resume, in case the user changed the default dialer from system Settings
+     * directly. This has to work in *both* directions: an earlier version only ever upgraded
+     * to [DialerOnboardingState.ALREADY_DEFAULT], so a user who revoked the role kept seeing a
+     * fully functional-looking app that could no longer screen a single call.
+     *
+     * [DialerOnboardingState.REQUESTING] is left alone -- the system role dialog is on screen
+     * and its result, not this poll, decides what happens next.
+     */
     private fun refresh() {
-        if (gateway.isDefaultDialer()) {
-            _state.value = _state.value.copy(dialerState = DialerOnboardingState.ALREADY_DEFAULT)
-        }
+        if (_state.value.dialerState == DialerOnboardingState.REQUESTING) return
+
+        val newState =
+            when {
+                gateway.isDefaultDialer() -> DialerOnboardingState.ALREADY_DEFAULT
+                _state.value.dialerRoleHeld -> DialerOnboardingState.NOT_REQUESTED
+                else -> _state.value.dialerState
+            }
+        _state.value = _state.value.copy(dialerState = newState)
     }
 }
