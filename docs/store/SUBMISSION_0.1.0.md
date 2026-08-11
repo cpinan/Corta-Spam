@@ -155,16 +155,14 @@ owner and 404s for a reviewer.
 
 ## 5b. Publishing to Production instead
 
-Two gates decide whether this is even possible today. Check both **before** filling anything in.
+**The closed-testing requirement does not apply to this account** — 12 testers for 14 continuous
+days before production unlocks binds accounts registered after 13 Nov 2023, and this one predates
+it. Production releases directly, with no closed track and no two-week wait. Confirmed 2026-08-11.
+Do not re-check this before a release; it has been answered more than once.
 
-**Gate 1 — closed testing requirement.** A Play developer account registered as **personal** after
-13 Nov 2023 cannot publish to production until it has run a closed test with **at least 12 testers
-opted in continuously for 14 days**, and then been granted production access on application.
-**Organisation** accounts are exempt. If this account is personal and has never run that test, the
-14-day clock starts the day 12 testers are opted in — production is at minimum two weeks away, and
-nothing in this repo changes that.
+One real gate remains.
 
-**Gate 2 — the ringtone is unproven on OEM hardware.** The app declares `IN_CALL_SERVICE_RINGING`,
+**The ringtone is unproven on OEM hardware.** The app declares `IN_CALL_SERVICE_RINGING`,
 which means Telecom stops ringing and hands the job to this app. Verified working on an emulator
 only. If a manufacturer reserves audio during a call, that phone rings for nothing and **the user
 silently misses calls** — the worst failure a phone app has. In internal testing that costs a bug
@@ -189,15 +187,13 @@ first.
 
 ### Order for production
 
-1. Confirm Gate 1 by opening **Production → Country availability**; if production access is not
-   granted, the Console says so there and the rest is moot.
-2. Prove ringing on the razr with a real inbound call.
-3. Production → Create new release → upload the same `corta-spam-0.1.0-3-release.aab`.
-4. Accept Play App Signing if not already enrolled (one-way).
-5. Release notes — the same two blocks, but reword them: the current text asks testers to *check*
-   things, which is wrong copy for a public listing.
-6. Select countries, set a staged rollout percentage.
-7. Send for review once, from Publishing overview.
+1. Prove ringing on the razr with a real inbound call:
+   `./scripts/ring_test.sh watch --device ZY22JZJDNH`, then have someone call it.
+2. Production → Create new release → upload the same `corta-spam-0.1.0-3-release.aab`.
+3. Accept Play App Signing if not already enrolled (one-way).
+4. Release notes — use `RELEASE_NOTES_PROD_0.1.0.md`, not the tester file.
+5. Select countries, set a staged rollout percentage.
+6. Send for review once, from Publishing overview.
 
 **Release notes need rewriting for production.** `RELEASE_NOTES_0.1.0.md` is addressed to testers
 ("Please check: …"). Shipping that to the store tells the public the app is unverified.
