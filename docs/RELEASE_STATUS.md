@@ -104,12 +104,20 @@
       OEM, that phone rings for nothing and the user misses calls silently. Everything else in
       this document has been verified; this has not, and it cannot be verified from a build
       machine.
-- [ ] **Prove `Call.Details.handle` still arrives without `READ_PHONE_STATE`.**
-      The permission was removed on the reading that `ROLE_DIALER` eligibility comes from the
-      `ACTION_DIAL` activities alone. If that reading is wrong the handle comes back null, the app
-      screens nothing, and every test still passes — this project's signature failure mode. The
-      check is one simulated call on the `Pixel_8_Pro_API_33` AVD (`adb emu gsm call`): the call
-      log row must carry the **real number, not a blank**. Same run covers the ringtone.
+- [x] **`Call.Details.handle` still arrives without `READ_PHONE_STATE`** — verified 2026-08-11 on
+      the API 33 emulator. A simulated call from `+34900123456` logged `BLOCKED` / `MANUAL` /
+      `rule_id=1` carrying the real number, with a matching `CallAttempt` row. Had the reading of
+      `roles.xml` been wrong, the handle would have been null and no row would exist at all —
+      `PassthroughInCallService` skips recording a blank number — so this is a positive assertion,
+      not an absence one.
+- [x] **The ringtone rings** — verified 2026-08-11, first time. An unmatched number rang through
+      and Telecom logged `Ringer: Ending early -- letDialerHandleRinging=true`, standing down
+      because of `IN_CALL_SERVICE_RINGING`. `dumpsys audio` then showed the **app's own**
+      MediaPlayer (`uid 10180`) `state:started` with `usage=USAGE_NOTIFICATION_RINGTONE`, and
+      `dumpsys vibrator_manager` a running RINGTONE vibration with
+      `opPkg: org.carlospinan.cortaspam`. Both stopped when the call ended.
+      **This was on an emulator.** The OEM case — a razr reserving audio or vibration during a
+      call — is what actually decides whether users miss calls, and it is still unproven.
 - [ ] Confirm on a second manufacturer before leaving internal testing
 
 ## 🔵 Open decisions (not blockers)
