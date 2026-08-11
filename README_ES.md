@@ -84,10 +84,33 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 365 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 378 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 8 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
+./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
 ```
+
+### En un dispositivo
+
+Parte del comportamiento de esta app no la puede alcanzar ninguna prueba unitaria. Una llamada solo
+existe mientras Telecom la sostiene, y el motor de reglas puede ser perfectamente correcto sin que
+le llegue nada — que es como seis funcionalidades llegaron a publicarse, con sus pruebas en verde,
+sin ejecutarse nunca. Estos scripts comprueban lo que una prueba de JVM no puede ver. Todos aceptan
+`--device <serial>`.
+
+```sh
+./scripts/rule_matrix_test.sh    # 13 escenarios de bloqueo/permiso, cada uno con una llamada real (emulador)
+./scripts/ring_test.sh auto      # el teléfono suena de verdad, y calla cuando debe callar
+./scripts/ring_test.sh watch     # las mismas comprobaciones en hardware real, mientras alguien llama
+./scripts/call_test.sh preflight # ¿está este dispositivo listo para probar la grabación en vivo?
+./scripts/device_check.sh        # instalación, sin fatales, versión de esquema e índices en el teléfono
+```
+
+`rule_matrix_test.sh` necesita un emulador (él mismo lanza las llamadas con `adb emu gsm call`), una
+build de debug (siembra la base de datos con `run-as`) y el rol de marcador. **Reemplaza** las
+reglas, los ajustes y el registro de llamadas del dispositivo. Lo único que un emulador no puede
+resolver es si suena en hardware real de cada fabricante — para eso está `ring_test.sh watch`, y
+alguien tiene que llamar al teléfono.
 
 ## Regeneración de iconos
 

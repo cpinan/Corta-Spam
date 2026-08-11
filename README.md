@@ -84,10 +84,31 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 365 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 378 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 8 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
+./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
+
+### On a device
+
+Some of this app's behaviour has no unit test that can reach it. A call only exists while Telecom
+is holding one, and the rule engine can be perfectly correct while nothing arrives at it — which is
+how six features once shipped, passed their tests and never executed. These scripts assert the
+parts a JVM test cannot see. All of them take `--device <serial>`.
+
+```sh
+./scripts/rule_matrix_test.sh    # 13 block/allow scenarios, each driven by a real call (emulator)
+./scripts/ring_test.sh auto      # the phone actually rings, and stays silent when it should
+./scripts/ring_test.sh watch     # the same assertions on real hardware, while a person calls
+./scripts/call_test.sh preflight # is this device set up for a live auto-responder recording test?
+./scripts/device_check.sh        # install, no fatals, schema version and indexes on the phone
+```
+
+`rule_matrix_test.sh` needs an emulator (it places the calls itself with `adb emu gsm call`), a
+debug build (it seeds the app database through `run-as`) and the dialer role. It **replaces** the
+device's rules, settings and call log. Ringing on real OEM hardware is the one thing an emulator
+cannot settle — `ring_test.sh watch` is for that, and someone has to phone the handset.
 
 ## Icon regeneration
 
