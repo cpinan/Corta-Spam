@@ -120,7 +120,21 @@ Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualqui
 
 ## Cambios recientes
 
-**2026-08-11:** un permiso sin ningún uso, encontrado al auditar el paquete antes de enviarlo.
+**2026-08-11:** un permiso sin ningún uso, y un permiso que exigía hardware sin decirlo.
+
+- **Declarar `RECORD_AUDIO` estaba excluyendo dispositivos sin micrófono.** Play avisó de que la
+  versión 2 "ya no admite 6 dispositivos que sí admitía la versión anterior", y la causa no estaba
+  en el manifiesto tal y como se escribió: `aapt2 dump badging` mostraba
+  `uses-implied-feature: name='android.hardware.microphone' reason='requested
+  android.permission.RECORD_AUDIO permission'`. Un permiso implica su función de hardware como
+  **obligatoria** salvo que se declare de forma explícita, así que añadir la grabación opcional
+  redujo en silencio el catálogo de dispositivos. La grabación del auto-respondedor viene
+  desactivada, y `AutoResponderRecorder.start()` ya devuelve false si el micrófono falta o está
+  ocupado, capturando `IOException`, `IllegalStateException` y el `RuntimeException` pelado que
+  `MediaRecorder.start()` lanza en algunos dispositivos — la app funciona igual sin él. El
+  manifiesto ahora declara `android.hardware.microphone` con `required="false"`, y el artefacto lo
+  confirma: `uses-feature-not-required`. El versionCode pasa a 3, porque el 2 ya se había subido y
+  Play nunca acepta dos veces el mismo código.
 
 - **`READ_PHONE_STATE` estaba declarado en el manifiesto y no lo leía ni una línea de código.** Su única justificación era el comentario que tenía encima, que afirmaba que hacía falta para ser elegible como `RoleManager.ROLE_DIALER` — y eso no es lo que dice el `roles.xml` de AOSP. La elegibilidad viene de las dos actividades `ACTION_DIAL` que aparecen en `<required-components>`; el conjunto de permisos de teléfono está en `<permissions>`, que es lo que el rol *concede*, no lo que exige para concederse. Es decir, la app pedía un permiso al usuario para que le dieran un permiso que nunca leía. Eliminado, y el comentario sustituido por lo que sí es cierto. La fila **Teléfono** de la lista de comprobación no cambia: pese al nombre, `AppPermission.PHONE` comprueba `CALL_PHONE`, que se usa para devolver una llamada desde el registro. **Se deja a propósito:** `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, que añade `androidx.core` al fusionar manifiestos. Es privado de la app y no concede nada, y aunque esta app llama a `registerReceiver` cero veces, las librerías de androidx que incluye sí lo hacen — quitar un permiso que una librería necesita se manifiesta como un `SecurityException` en tiempo de ejecución en el teléfono de alguien, no como un fallo de compilación, así que no es algo que se elimine por lo que diga un grep.
 - **La ficha de la tienda afirmaba que la app no pide acceso al micrófono.** Era cierto en la versión 1 y dejó de serlo al día siguiente, cuando llegó la grabación del auto-respondedor: `RECORD_AUDIO` está en la versión 2. Ahora la descripción completa, en los dos idiomas, dice que el micrófono solo se pide si activas la grabación, que la función viene desactivada, y que las grabaciones se guardan en el almacenamiento privado de la app y nunca se transmiten — que es justo lo que ya decía la política de privacidad publicada. Una afirmación sobre permisos en la ficha se comprueba contra el paquete con un solo comando, y por eso tiene que ser verdad.

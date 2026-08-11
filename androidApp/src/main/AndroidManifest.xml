@@ -31,6 +31,15 @@
         android:name="android.hardware.telephony"
         android:required="true" />
 
+    <!-- Declaring RECORD_AUDIO makes Play imply android.hardware.microphone as REQUIRED, which
+         silently drops every device without one — 6 of them, reported as lost device support on
+         the versionCode 2 upload. Auto-responder recording is optional and ships off, and
+         AutoResponderRecorder.start() already returns false on a missing or busy microphone, so
+         requiring the hardware would exclude devices the app works fine on. -->
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+
     <application
         android:name=".CortaSpamApp"
         android:label="@string/app_name"

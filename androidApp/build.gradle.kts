@@ -21,11 +21,14 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 
 // Single source of truth for the version, so the artifact filename and defaultConfig can never
 // disagree. Uploading the wrong build is easy when every bundle is called androidApp-release.aab.
-// versionCode 1 is spent: it was submitted and rejected under the Full-Screen Intent policy, and
-// Play will not accept a re-upload of a version code it has already seen. versionName stays 0.1.0
-// because nothing has ever reached a tester under that name -- only the code had to move.
+// Version codes 1 and 2 are both spent, and Play will not accept a re-upload of a code it has
+// already seen. 1 was submitted and rejected under the Full-Screen Intent policy. 2 was uploaded
+// and never sent for review: it warned that 6 previously supported devices had been dropped,
+// because declaring RECORD_AUDIO makes Play imply android.hardware.microphone as required. The
+// manifest now declares that feature optional, which needs a new code to upload. versionName stays
+// 0.1.0 because nothing has ever reached a tester under that name -- only the code had to move.
 val appVersionName = "0.1.0"
-val appVersionCode = 2
+val appVersionCode = 3
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.

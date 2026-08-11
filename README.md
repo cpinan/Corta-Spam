@@ -120,7 +120,21 @@ Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any bro
 
 ## Recent Fixes
 
-**2026-08-11:** a permission with no caller, found while auditing the bundle for submission.
+**2026-08-11:** a permission with no caller, and a permission that quietly required hardware.
+
+- **Declaring `RECORD_AUDIO` was excluding devices that have no microphone.** Play reported that
+  versionCode 2 "no longer supports 6 devices that were supported in your previous release", and
+  the cause was not in the manifest as written — `aapt2 dump badging` showed
+  `uses-implied-feature: name='android.hardware.microphone' reason='requested
+  android.permission.RECORD_AUDIO permission'`. A permission implies its hardware feature as
+  **required** unless the feature is declared explicitly, so adding optional call recording silently
+  narrowed the app's device catalogue. Auto-responder recording ships off, and
+  `AutoResponderRecorder.start()` already returns false on a missing or busy microphone and catches
+  `IOException`, `IllegalStateException` and the bare `RuntimeException` that `MediaRecorder.start()`
+  throws on some devices — so the app runs fine without one. The manifest now declares
+  `android.hardware.microphone` with `required="false"`, and the artifact confirms it:
+  `uses-feature-not-required`. versionCode moved to 3, because 2 had already been uploaded and Play
+  never accepts a code twice.
 
 - **`READ_PHONE_STATE` was declared in the manifest and read by no code in the app.** Its only justification was the comment above it, claiming the permission was required to be eligible for `RoleManager.ROLE_DIALER` — which is not what AOSP's `roles.xml` says. Eligibility comes from the two `ACTION_DIAL` activities listed under `<required-components>`; the phone permission set sits under `<permissions>`, and that is what holding the role *grants*, not what qualifying for it demands. So the app was asking users for a permission in order to be given a permission it never read. Removed, and the comment replaced with what is actually true. The onboarding checklist's **Phone** row is unaffected: despite the name, `AppPermission.PHONE` checks `CALL_PHONE`, which is used to place a call back from the log. **Left in place deliberately:** `<applicationId>.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, contributed by `androidx.core` through manifest merging. It is app-private and grants nothing, and while this app calls `registerReceiver` zero times, the androidx libraries it ships do — removing a permission a library needs surfaces as a runtime `SecurityException` on a user's phone, not as a build failure, so it is not something to strip on the strength of a grep.
 - **The store listing claimed the app requests no microphone access.** True of versionCode 1, and false from the moment auto-responder recording shipped the next day — `RECORD_AUDIO` is in versionCode 2. Both language versions of the full description now say the microphone is requested only when recording is switched on, that the feature ships off, and that recordings stay in app-private storage and are never transmitted, which is what the published privacy policy already said. A listing claim about permissions is checkable against the bundle in one command, which is exactly why it has to be true.
