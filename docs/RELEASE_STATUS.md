@@ -1,12 +1,19 @@
 # Release status — Corta Spam internal testing
 
-**As of 2026-08-06.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
+**As of 2026-08-11.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
 `PLAY_INTERNAL_TESTING.md` is the requirements reference.
 
-> **Blocked:** version code 1 was rejected under the Full-Screen Intent policy — *"Permission use
-> is not directly related to your app's core purpose."* The app qualifies (core function is
-> receiving phone calls); the declaration form is what was missing. See `PLAY_FSI_APPEAL.md` and
-> §3.3 of `PLAY_INTERNAL_TESTING.md`. Permission and code are unchanged and staying.
+> **Version code 1 was rejected** under the Full-Screen Intent policy — *"Permission use is not
+> directly related to your app's core purpose."* The app qualifies (core function is receiving
+> phone calls); the missing declaration form is what caused it, not the permission. Decided
+> 2026-08-08: **no appeal, same Console entry, new version code.** The rejection was version-level,
+> not a suspension, and a new Console app would have forced an `applicationId` rename. Permission
+> and code are unchanged and staying. See `PLAY_FSI_APPEAL.md` and §3.3 of
+> `PLAY_INTERNAL_TESTING.md`.
+
+> **The bundle to upload is `corta-spam-0.1.0-2-release.aab`.**
+> `corta-spam-0.1.0-1-release.aab` sits in the same folder and is the **rejected** one — one digit
+> apart. Move it aside before upload day.
 
 ---
 
@@ -32,7 +39,13 @@
 - [x] `androidApp/keystore.properties` wired; gitignored
 - [x] Artifacts carry the version: `corta-spam-<versionName>-<versionCode>-release.aab`
 - [x] **Signature verified**: `CN=Carlos Pinan, OU=Casa, O=Casa, L=Lima, ST=Lima, C=PE`
-- [x] `org.carlospinan.cortaspam`, versionCode 1, versionName 0.1.0, targetSdk 36
+- [x] `org.carlospinan.cortaspam`, **versionCode 2**, versionName 0.1.0, targetSdk 36
+- [x] Permissions audited on the **built bundle**, not the source manifest: `CALL_PHONE`,
+      `READ_CONTACTS`, `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `RECORD_AUDIO`, `VIBRATE`.
+      `READ_PHONE_STATE` was declared with no caller and has been removed (2026-08-11).
+      `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` is androidx merge residue, kept deliberately.
+      `BIND_INCALL_SERVICE` and `DUMP` in a bundle dump are `android:permission` **guards** on a
+      service and on androidx's `ProfileInstallReceiver` — not requests.
 - [x] **R8 verified on-device** — app launches, Koin resolves, `kotlinx.serialization` works
       (export produced real JSON). This was the actual risk; the ProGuard rules hold.
 
@@ -63,17 +76,23 @@
 
 - [x] **Contact email** for the store listing — `carlos.pinan@gmail.com`
 - [x] Play Console: app created; Category **Communication**, tags `Caller ID, Communication`
-- [ ] Play Console: **App content** — every section green
-      - [ ] Privacy policy URL
-      - [ ] Data safety → *collects no data*
-      - [ ] Ads → No · Content rating (IARC) · Target audience (not child-directed)
-      - [ ] **Permissions declaration** for the dialer role
-      - [ ] **Full-screen intent declaration** — the form the version-code-1 rejection came from
-      - [ ] **Demo video** (~60s, unlisted YouTube) — reviewers ask for one on dialer apps, and
-            it is the single strongest exhibit for the full-screen intent appeal
-- [ ] Play Console: Store listing — **re-paste** the copy; it was rewritten 2026-08-06 to lead
-      with "phone app" rather than call blocking
-- [ ] Play Console: upload `corta-spam-0.1.0-1-release.aab`
+- [x] Play Console: **App content** (2026-08-11)
+      - [x] **Full-screen intent declaration** — submitted *first*, deliberately: its absence, not
+            the permission, is what the version-code-1 rejection came from
+      - [x] Privacy policy URL → `https://cpinan.github.io/corta-spam/privacy.html` (canonical)
+      - [x] Data safety → *collects no data*. True by construction: no `INTERNET` permission and
+            no HTTP client anywhere in the dependency graph, so nothing can leave the device
+      - [x] Ads → No · Content rating (IARC) · Target audience 13+, no band under 13
+      - [x] **Permissions declaration** — nothing to declare. That form is triggered by the Call
+            Log and SMS permission groups; this app declares neither, reading calls through
+            `InCallService` and keeping its own database
+- [ ] Play Console: Store listing — **re-paste** the copy. Rewritten 2026-08-06 to lead with
+      "phone app", and corrected 2026-08-11 (it claimed the app requests no microphone access,
+      which `RECORD_AUDIO` in versionCode 2 makes false). Screenshots are per-language: the `es_*`
+      set is the **default** listing, the unprefixed set is the en-US translation
+- [ ] **Demo video** (~60s, unlisted YouTube) — reviewers ask for one on dialer apps, and it is
+      the single strongest exhibit for the full-screen intent argument
+- [ ] Play Console: upload `corta-spam-0.1.0-2-release.aab`
 - [ ] **Accept Play App Signing** when offered (one-way; declining makes a lost key fatal)
 - [ ] Add testers, send them the **opt-in link** (they cannot install without it)
 
@@ -85,6 +104,12 @@
       OEM, that phone rings for nothing and the user misses calls silently. Everything else in
       this document has been verified; this has not, and it cannot be verified from a build
       machine.
+- [ ] **Prove `Call.Details.handle` still arrives without `READ_PHONE_STATE`.**
+      The permission was removed on the reading that `ROLE_DIALER` eligibility comes from the
+      `ACTION_DIAL` activities alone. If that reading is wrong the handle comes back null, the app
+      screens nothing, and every test still passes — this project's signature failure mode. The
+      check is one simulated call on the `Pixel_8_Pro_API_33` AVD (`adb emu gsm call`): the call
+      log row must carry the **real number, not a blank**. Same run covers the ringtone.
 - [ ] Confirm on a second manufacturer before leaving internal testing
 
 ## 🔵 Open decisions (not blockers)
