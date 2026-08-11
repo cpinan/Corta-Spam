@@ -16,6 +16,68 @@ class RulePrecedenceResolverTest {
             enabledCountryCodes = emptySet(),
         )
 
+    // --- Contacts saved the way they are dialled ------------------------------------------
+    // People store "611 99 88 77"; Telecom hands over "+34611998877". Comparing digits made
+    // those different subscribers, so a contact was NOT allowlisted and quiet hours, a country
+    // rule or the default action could block someone in the address book. Found on an emulator
+    // 2026-08-11; every existing test used one format on both sides, which is why none caught it.
+
+    @Test
+    fun contactSavedInNationalFormat_isAllowlistedWhenTheCallArrivesInE164() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    contactNumbers = setOf("611998877"),
+                    defaultAction = DefaultAction.BLOCK,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34611998877", ctx)
+            assertTrue(decision is RuleDecision.Allowlist, "expected Allowlist, got $decision")
+        }
+
+    @Test
+    fun contactSavedInNationalFormat_survivesACountryRuleForItsOwnCountry() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    contactNumbers = setOf("611998877"),
+                    enabledCountryCodes = setOf("34"),
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34611998877", ctx)
+            assertTrue(decision is RuleDecision.Allowlist, "expected Allowlist, got $decision")
+        }
+
+    @Test
+    fun allowlistSavedInNationalFormat_matchesAnInternationalCall() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    allowlistedNumbers = setOf("600123456"),
+                    defaultAction = DefaultAction.BLOCK,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.Allowlist, "expected Allowlist, got $decision")
+        }
+
+    @Test
+    fun blockSavedInNationalFormat_matchesAnInternationalCall() =
+        runTest {
+            val ctx = emptyContext.copy(blockedNumbers = setOf("600123456"))
+            val decision = RulePrecedenceResolver.evaluate("+34600123456", ctx)
+            assertTrue(decision is RuleDecision.ManualBlock, "expected ManualBlock, got $decision")
+        }
+
+    @Test
+    fun aDifferentNationalNumberInTheSameCountryIsStillNotAContact() =
+        runTest {
+            val ctx =
+                emptyContext.copy(
+                    contactNumbers = setOf("611998877"),
+                    defaultAction = DefaultAction.BLOCK,
+                )
+            val decision = RulePrecedenceResolver.evaluate("+34611998878", ctx)
+            assertTrue(decision is RuleDecision.DefaultBlock, "expected DefaultBlock, got $decision")
+        }
+
     @Test
     fun noRules_defaultsToAllow() =
         runTest {

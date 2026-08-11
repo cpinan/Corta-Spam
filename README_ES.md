@@ -120,7 +120,9 @@ Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualqui
 
 ## Cambios recientes
 
-**2026-08-11:** un permiso sin ningún uso, y un permiso que exigía hardware sin decirlo.
+**2026-08-11:** contactos que la lista de permitidos no veía, un permiso sin ningún uso, y un permiso que exigía hardware sin decirlo.
+
+- **Los contactos guardados tal y como se marcan no entraban en la lista de permitidos.** Todas las comparaciones del motor de reglas pasaban por `normalizeForComparison`, que es `filter { it.isDigit() }`. Un contacto guardado como `611 99 88 77` queda en `611998877`; esa misma persona llamando llega desde Telecom como `+34611998877`, que queda en `34611998877`. No son iguales — y como `RulePrecedenceResolver` fusiona los contactos con la lista de permitidos usando esa comparación, **un contacto real no quedaba permitido** y podían bloquearlo las horas de silencio, una regla de país o la acción por defecto, en silencio. La mayoría de la gente guarda los contactos en formato nacional, así que este era el caso común. Se reportó como un registro de llamadas que mostraba números en vez de nombres, que era solo la mitad visible: la notificación de llamada entrante llevaba todo el tiempo mostrando el nombre correcto, porque ese camino usa el `ContactsContract.PhoneLookup` de la plataforma. Ahora la comparación contrasta un número internacional con la forma nacional derivada de *su propio* código de país, así que no hay que adivinar ninguna región — adivinarla exigiría leer la SIM o el locale, una tabla ISO-a-código-de-país que esta app no tiene, y una regla de prefijo troncal distinta por país, porque quitar el cero inicial es correcto en Reino Unido e incorrecto en Italia. Dos números que declaran país siguen decidiéndose por su código, así que `+34611998877` y `+51611998877` siguen siendo personas distintas. Cuatro pruebas del resolver se vieron fallar contra la comparación antigua antes de aplicar el arreglo.
 
 - **Declarar `RECORD_AUDIO` estaba excluyendo dispositivos sin micrófono.** Play avisó de que la
   versión 2 "ya no admite 6 dispositivos que sí admitía la versión anterior", y la causa no estaba

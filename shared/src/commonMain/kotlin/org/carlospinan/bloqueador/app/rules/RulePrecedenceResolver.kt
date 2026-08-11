@@ -73,29 +73,28 @@ object RulePrecedenceResolver {
             }
         }
 
-        val normalizedAllowlist = context.allowlistedNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
-        val normalizedContacts = context.contactNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
-        val normalizedBlocked = context.blockedNumbers.map { PhoneNumberParser.normalizeForComparison(it) }.toSet()
-
-        val mergedAllowlist = normalizedAllowlist + normalizedContacts
+        // Membership is PhoneNumberParser.sameNumber, not digit equality: a contact saved the way
+        // it is dialled ("611998877") must meet the same subscriber arriving in E.164
+        // ("+34611998877"). Comparing pairwise rather than intersecting key sets is deliberate —
+        // whether the national form may bridge two numbers depends on whether *both* of them state
+        // a country, which a flat set of keys cannot express.
+        val mergedAllowlist = context.allowlistedNumbers + context.contactNumbers
 
         // 1. Manual block check (highest priority — overrides allowlist and contacts)
-        if (normalized in normalizedBlocked) {
+        if (context.blockedNumbers.any { PhoneNumberParser.sameNumber(it, number) }) {
             val entry =
                 context.blockedNumberDetails.entries
-                    .firstOrNull {
-                        PhoneNumberParser.normalizeForComparison(it.key) == normalized
-                    }?.value
+                    .firstOrNull { PhoneNumberParser.sameNumber(it.key, number) }
+                    ?.value
             return RuleDecision.ManualBlock(ruleId = entry?.id ?: -1, label = entry?.label)
         }
 
         // 2. Allowlist check (contacts + manual allowlist)
-        if (normalized in mergedAllowlist) {
+        if (mergedAllowlist.any { PhoneNumberParser.sameNumber(it, number) }) {
             val entry =
                 context.allowlistedNumberDetails.entries
-                    .firstOrNull {
-                        PhoneNumberParser.normalizeForComparison(it.key) == normalized
-                    }?.value
+                    .firstOrNull { PhoneNumberParser.sameNumber(it.key, number) }
+                    ?.value
             return RuleDecision.Allowlist(ruleId = entry?.id ?: -1, label = entry?.label)
         }
 

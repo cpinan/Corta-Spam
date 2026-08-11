@@ -70,12 +70,16 @@ class AndroidContactsGateway(
                     while (it.moveToNext()) {
                         val raw = it.getString(numberIndex)
                         if (raw.isNullOrBlank()) continue
-                        val normalized = PhoneNumberParser.normalizeForComparison(raw)
-                        if (normalized.isEmpty()) continue
-                        numbers.add(normalized)
+                        // Every form this contact may be recognised by, not just its digits: a
+                        // card saved "611 99 88 77" has to be found when "+34611998877" calls.
+                        val keys = PhoneNumberParser.comparisonKeys(raw)
+                        if (keys.isEmpty()) continue
+                        numbers.add(PhoneNumberParser.normalizeForComparison(raw))
                         val name = it.getString(nameIndex)
                         if (!name.isNullOrBlank()) {
-                            names[normalized] = name
+                            // putIfAbsent semantics: the first contact to claim a key keeps it, so
+                            // a later card sharing a national number cannot rename an exact match.
+                            keys.forEach { key -> names.getOrPut(key) { name } }
                         }
                     }
                 }

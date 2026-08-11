@@ -544,10 +544,23 @@ private fun RecordingControls(
     }
 }
 
+/**
+ * The contact's name, or the number when nobody in the address book claims it.
+ *
+ * Probes every form the number may be filed under rather than its digits alone. Contacts are
+ * saved the way they are dialled, calls arrive in E.164, and comparing digits meant a call log
+ * full of bare numbers for people who were in the address book all along — while the incoming-call
+ * notification showed the name correctly, because that path goes through the platform's own
+ * PhoneLookup. See PhoneNumberParser.comparisonKeys.
+ */
 private fun displayName(
     number: String,
     contactNames: Map<String, String>,
-): String = contactNames[PhoneNumberParser.normalizeForComparison(number)] ?: number
+): String =
+    PhoneNumberParser
+        .comparisonKeys(number)
+        .firstNotNullOfOrNull { contactNames[it] }
+        ?: number
 
 private fun formatTimestamp(epochMillis: Long): String {
     val now = currentTimeMillis()

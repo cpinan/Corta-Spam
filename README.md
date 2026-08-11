@@ -120,7 +120,9 @@ Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any bro
 
 ## Recent Fixes
 
-**2026-08-11:** a permission with no caller, and a permission that quietly required hardware.
+**2026-08-11:** contacts the allowlist could not see, a permission with no caller, and a permission that quietly required hardware.
+
+- **Contacts saved the way they are dialled were not allowlisted.** Every comparison in the rule engine ran through `normalizeForComparison`, which is `filter { it.isDigit() }`. A contact stored `611 99 88 77` normalises to `611998877`; the same person calling arrives from Telecom as `+34611998877` and normalises to `34611998877`. Not equal — and since `RulePrecedenceResolver` merges contacts into the allowlist by that comparison, **a real contact was not allowlisted** and could be blocked by quiet hours, a country rule or the default action, silently. Most people save contacts in national format, so this was the common case. Reported as a call log showing bare numbers, which was the visible half; the incoming-call notification had been showing the correct name all along because that path goes through the platform's own `ContactsContract.PhoneLookup`. Matching now compares an international number against the national form derived from *its own* country code, so no default region has to be guessed — a guess would need a SIM/locale lookup, an ISO-to-dialling-code table this app does not have, and a trunk-prefix rule that differs per country, since dropping a leading zero is right for the UK and wrong for Italy. Two numbers that both state a country are still decided by their country codes, so `+34611998877` and `+51611998877` remain different people. Four resolver tests were watched failing against the old comparison before the fix went in.
 
 - **Declaring `RECORD_AUDIO` was excluding devices that have no microphone.** Play reported that
   versionCode 2 "no longer supports 6 devices that were supported in your previous release", and
