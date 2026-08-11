@@ -68,7 +68,7 @@ Tú eliges qué hacer con un número que no coincide con ninguna regla: dejarlo 
 
 PRIVACIDAD
 
-La app no pide acceso al registro de llamadas del sistema, ni a SMS, almacenamiento, ubicación, cámara o micrófono. Lee tus contactos solo para reconocer a quien ya conoces, y eso nunca sale del dispositivo.
+La app no pide acceso al registro de llamadas del sistema, ni a SMS, almacenamiento, ubicación o cámara. Lee tus contactos solo para reconocer a quien ya conoces, y eso nunca sale del dispositivo. El micrófono solo se pide si activas la grabación del auto-respondedor, que viene desactivada; las grabaciones se guardan en el almacenamiento privado de la app y nunca se transmiten.
 
 No incluye ningún SDK de analítica ni de informes de fallos. La política de privacidad completa se publica junto al código fuente, y puedes comprobar cada afirmación contra el código.
 
@@ -86,9 +86,9 @@ Corta Spam es una app de teléfono, así que debe ser tu app de teléfono predet
 
 Por la misma razón muestra la llamada entrante a pantalla completa sobre la pantalla de bloqueo, como haría cualquier app de teléfono. Sin eso, una llamada que llega con el teléfono bloqueado no se podría contestar.
 
-El auto-respondedor es experimental. Contesta una llamada bloqueada y reproduce un saludo, pero en versiones recientes de Android puede que quien llama no lo escuche bien; tómalo como un extra, no como una función en la que confiar.
+El auto-respondedor es experimental. Contesta una llamada bloqueada y reproduce un saludo, pero en versiones recientes de Android puede que quien llama no lo escuche bien; tómalo como un extra, no como una función en la que confiar. Si quieres, puede grabar el mensaje que deje quien llama: para activarlo, tu saludo debe incluir una frase que avise de la grabación.
 ```
-*3.165 caracteres.*
+*3.472 caracteres.*
 
 ## Notas de la versión
 
@@ -143,7 +143,7 @@ You choose what happens to a number no rule matched: let it through, block it, o
 
 PRIVACY
 
-The app requests no access to your system call log, SMS, storage, location, camera or microphone. It reads your contacts only to recognise callers you know, and that never leaves the device.
+The app requests no access to your system call log, SMS, storage, location or camera. It reads your contacts only to recognise callers you know, and that never leaves the device. The microphone is requested only if you switch auto-responder recording on, which ships off; recordings stay in the app's private storage and are never transmitted.
 
 There is no analytics SDK and no crash-reporting SDK. The full privacy policy is published alongside the source code, and you can check every claim in it against the code.
 
@@ -161,9 +161,9 @@ Corta Spam is a phone app, so it must be set as your default phone app. That is 
 
 For the same reason it shows the incoming call full-screen over the lock screen, the way any phone app does. Without that, a call arriving while your phone is locked could not be answered.
 
-The auto-responder is experimental. It answers a blocked call and plays a greeting, but on modern Android the caller may not hear it clearly; treat it as a bonus, not a feature to rely on.
+The auto-responder is experimental. It answers a blocked call and plays a greeting, but on modern Android the caller may not hear it clearly; treat it as a bonus, not a feature to rely on. It can optionally record the message a caller leaves — to turn that on, your own greeting must contain a line telling the caller they are being recorded.
 ```
-*2,889 characters.*
+*3,196 characters.*
 
 ---
 
@@ -187,16 +187,18 @@ translation that doesn't supply its own. Since the default is es-419, the plain
 English translation. Uploading the English one as the default would show English marketing copy
 to Spanish users.
 
-| Asset | File | Spec | Status |
+**Screenshots are per-language too, and the `es_` prefix is the only thing marking them.** The
+default listing is es-419, so the **`es_*` set is the default** and the unprefixed `01`-`05` set
+belongs to the en-US translation. Attaching `01_home.png` to the default listing puts English
+screenshots in front of every Spanish user — the same fallback rule as the feature graphic.
+
+| Asset | File | Attach to | Status |
 |---|---|---|---|
-| App icon | `store/ic_play_512.png` | 512×512 PNG | ✅ 512×512 |
-| Feature graphic | `store/play/feature_1024x500.png` | 1024×500, no alpha | ✅ **Spanish** |
-| Feature graphic (en) | `store/play/feature_1024x500_en.png` | only for the en-US translation | ✅ |
-| Screenshot 1 | `store/play/01_home.png` | phone, **exactly 9:16** | ✅ 1683×2992 |
-| Screenshot 2 | `store/play/02_lists.png` | | ✅ 1683×2992 |
-| Screenshot 3 | `store/play/03_patterns.png` | | ✅ 1683×2992 |
-| Screenshot 4 | `store/play/04_calllog.png` | | ✅ 1683×2992 |
-| Screenshot 5 | `store/play/05_settings.png` | | ✅ 1683×2992 |
+| App icon | `store/ic_play_512.png` | both (common) | ✅ 512×512 |
+| Feature graphic | `store/play/feature_1024x500.png` | **default (es-419)** | ✅ **Spanish**, no alpha |
+| Feature graphic | `store/play/feature_1024x500_en.png` | en-US translation | ✅ English |
+| Screenshots ×4 | `store/play/es_01_home.png`, `es_02_calllog.png`, `es_03_lists.png`, `es_04_settings.png` | **default (es-419)** | ✅ 1683×2992, 9:16 |
+| Screenshots ×5 | `store/play/01_home.png`, `02_lists.png`, `03_patterns.png`, `04_calllog.png`, `05_settings.png` | en-US translation | ✅ 1683×2992, 9:16 |
 
 **Upload the files in `store/play/`, not `store/`.** The raw captures are 1344×2992 — a 9:20
 ratio, more extreme than the 1:2 floor Play accepts, and it rejects them. `store/play/` holds the
