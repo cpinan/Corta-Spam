@@ -7,6 +7,10 @@
 #
 #   * ringing      — the app declares IN_CALL_SERVICE_RINGING, so Telecom stops ringing and
 #                    CallRinger must. If it fails on an OEM, that phone rings for nothing.
+#                    THIS IS NOW ASSERTED BY ring_test.sh, which checks the three signals a
+#                    machine can read (Telecom's stand-down line, the app's own audio player,
+#                    the vibration's opPkg). Run that first; this script's `watch` only prints
+#                    log lines for a human to interpret.
 #   * recording    — AutoResponderRecorder captures AudioSource.MIC acoustically, because the real
 #                    call sources need CAPTURE_AUDIO_OUTPUT (signature|privileged; ROLE_DIALER does
 #                    not grant it). Several OEMs reserve the mic for telephony during a call, in
