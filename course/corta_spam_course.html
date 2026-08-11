@@ -2534,6 +2534,22 @@ th{background:var(--panel-2);font-weight:600}
 <div class="note gotcha"><span class="tag">Gotcha</span>
 <p style="margin-bottom:0">Component tests assert one composable's contract. Contradictions live <em>between</em> components, and so does layout. Both of these needed the release build, a real screen size, and the least convenient state — nothing granted — which is the state a first-time user is in and the one nobody screenshots.</p></div></div>
 
+<div class="callout" style="border-left-color:var(--red)"><h3>Case Study: The Permission That Was Only Ever a Comment</h3>
+<p>Preparing the Play submission meant auditing the <em>built</em> bundle rather than the source manifest, because manifest merging adds entries nobody wrote. The permission list came back with one that no feature needed:</p>
+<div class="filepath">androidApp/src/main/AndroidManifest.xml — before</div>
+<pre><code><span class="line"><span class="cm">&lt;!-- Required to be eligible for RoleManager.ROLE_DIALER and to act as the</span></span>
+<span class="line"><span class="cm">     default phone app (docs/SPEC.md §1/§4). --&gt;</span></span>
+<span class="line">&lt;uses-permission android:name=<span class="st">"android.permission.READ_PHONE_STATE"</span> /&gt;</span></code></pre>
+<p>The comment is the entire justification, and it is wrong. AOSP's <code>roles.xml</code> lists only the two <code>ACTION_DIAL</code> activities under <code>&lt;required-components&gt;</code> for <code>ROLE_DIALER</code>; the phone permission set appears under <code>&lt;permissions&gt;</code>, which is what holding the role <em>grants</em>, not what qualifying for it demands. The permission was being requested so that the role could grant back the thing that was never needed.</p>
+<p>One grep settled how much code depended on it:</p>
+<pre><code><span class="line">grep -rniE 'READ_PHONE_STATE|TelephonyManager|getLine1Number|SubscriptionManager' \</span>
+<span class="line">  --include='*.kt' androidApp/src shared/src</span>
+<span class="line"><span class="cm"># one hit — inside a comment</span></span></code></pre>
+<p>The onboarding checklist's <strong>Phone</strong> row looked like the counter-example, since <code>AppPermission.PHONE</code> sounds like phone state. It checks <code>CALL_PHONE</code>, used for placing a call back from the log. Removing <code>READ_PHONE_STATE</code> changed no screen and no test.</p>
+<div class="note contrast"><span class="tag">Contrast</span>
+<p><code>&lt;pkg&gt;.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</code>, contributed by <code>androidx.core</code>, showed up in the same audit and was deliberately <em>kept</em>. It is app-private and grants nothing, this app's own code calls <code>registerReceiver</code> zero times — but the androidx libraries it depends on do, and stripping a permission a library genuinely needs fails as a runtime <code>SecurityException</code> on a user's phone, not as a build error. An unverifiable cleanup on the eve of a submission is not a cleanup.</p></div>
+<p>The reason this matters beyond tidiness: a store reviewer reads the permission list and asks what each one is for. "Nothing reads it" is the worst possible answer, and this app had already been rejected once over a permission that <em>was</em> load-bearing. A declaration you cannot defend costs you the argument for the ones you can.</p></div>
+
 <div class="callout"><h3>Done when</h3>
 <ul>
 <li>No permission dialog opens before the app has explained, in its own words, what the permission is for</li>
@@ -2541,6 +2557,7 @@ th{background:var(--panel-2);font-weight:600}
 <li>Every permission the app can <em>lose</em> has a code path that notices the loss</li>
 <li>The warning for a broken permission is visible on a screen the user opens anyway</li>
 <li>State-transition tests assert the destination, not the absence of the old value</li>
+<li>Every permission in the <em>built</em> artefact has a caller, or a written reason it cannot be removed</li>
 </ul></div>
 
 <div class="quiz">
@@ -2548,9 +2565,9 @@ th{background:var(--panel-2);font-weight:600}
 <div class="quiz-item"><p><strong>1.</strong> Why is firing <code>POST_NOTIFICATIONS</code> from <code>onCreate</code> worse than firing it one screen later?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
 <div class="answer">The system dialog has no room to explain anything — it is a yes/no box with a platform string. Everything persuasive must be said before it opens. Fired from <code>onCreate</code> it lands over a screen that has explained nothing, so it reads as an app grabbing what it can. On Android 13+ the second denial is permanent, so this spends a one-shot ask at the moment of least trust.</div></div>
-<div class="quiz-item"><p><strong>2.</strong> The manifest declares seven permissions. Why does the onboarding checklist show four rows?</p>
+<div class="quiz-item"><p><strong>2.</strong> The manifest declares six permissions. Why does the onboarding checklist show four rows?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
-<div class="answer">Because it is modelled on what the user is being asked, not on what the manifest declares. <code>VIBRATE</code> is a normal permission with nothing to grant; <code>READ_PHONE_STATE</code> and <code>CALL_PHONE</code> are one concept ("Phone") to a user; and <code>USE_FULL_SCREEN_INTENT</code> is an app-op reachable only from system Settings, so it belongs in a warning banner rather than behind an Allow button.</div></div>
+<div class="answer">Because it is modelled on what the user is being asked, not on what the manifest declares. <code>VIBRATE</code> is a normal permission with nothing to grant, and <code>USE_FULL_SCREEN_INTENT</code> is an app-op reachable only from system Settings, so it belongs in a warning banner rather than behind an Allow button. The other four map one to one, with <code>CALL_PHONE</code> shown as plain "Phone" because the permission name means nothing to a user, and the microphone row shown but not requestable.</div></div>
 <div class="quiz-item"><p><strong>3.</strong> Why does <code>refresh()</code> return early when the state is <code>REQUESTING</code>?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
 <div class="answer">The system role dialog appears over the activity, which triggers a resume and therefore a refresh. Without the guard the poll moves the state out from under the in-flight request, and <code>RequestResult</code>'s <code>check</code> then throws on an ordinary grant. The dialog's result — not a resume poll — is the authority while a request is open.</div></div>
@@ -2563,6 +2580,9 @@ th{background:var(--panel-2);font-weight:600}
 <div class="quiz-item"><p><strong>6.</strong> Home caps its permission warnings at one card while Settings shows all of them. Why the asymmetry?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
 <div class="answer">They answer different questions. Home answers "is something wrong, and what do I do first" — four stacked error cards pushed the toggle and every counter off a 2640px screen, and a wall of red reads as one broken app rather than four fixable settings. Settings is the screen you open to diagnose, so it lists everything. Same component, one <code>limit</code> parameter, one severity order shared by both.</div></div>
+<div class="quiz-item"><p><strong>7.</strong> An audit finds two permissions in the built bundle that no application code reads. Why was one deleted and the other kept?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer"><code>READ_PHONE_STATE</code> was written by hand, justified only by a comment that misread <code>ROLE_DIALER</code>'s requirements, and nothing — app or library — depends on it, so removing it is verifiable by compiling. <code>DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</code> arrives through manifest merging from <code>androidx.core</code>, and although <em>this app</em> never calls <code>registerReceiver</code>, the libraries it ships do. Removing it fails as a runtime <code>SecurityException</code> on a user's device rather than as a build error, so "no hits in our source" is not evidence. The deciding question is not "does anything use it" but "would I find out if I were wrong".</div></div>
 </div>
 </section>
 

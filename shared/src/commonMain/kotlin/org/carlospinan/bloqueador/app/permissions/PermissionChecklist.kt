@@ -4,9 +4,10 @@ package org.carlospinan.bloqueador.app.permissions
  * The permissions this app asks a user for, in the order the onboarding checklist shows them.
  *
  * Deliberately *not* a mirror of AndroidManifest.xml. `VIBRATE` is a normal permission with
- * nothing to grant, `READ_PHONE_STATE` and `CALL_PHONE` are one thing from the user's point of
- * view ("Phone"), and `USE_FULL_SCREEN_INTENT` is an app-op the user can only reach from system
- * Settings -- it belongs in the warning banners, not in a checklist of things to tap Allow on.
+ * nothing to grant, `CALL_PHONE` is shown as plain "Phone" because the permission name means
+ * nothing to a user, and `USE_FULL_SCREEN_INTENT` is an app-op the user can only reach from
+ * system Settings -- it belongs in the warning banners, not in a checklist of things to tap
+ * Allow on.
  */
 enum class AppPermission {
     NOTIFICATIONS,

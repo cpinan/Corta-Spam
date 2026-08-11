@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Required to be eligible for RoleManager.ROLE_DIALER and to act as the
-         default phone app (docs/SPEC.md §1/§4). -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- Placing a call back from the call log / a blocked-call notification (ACTION_CALL).
+         READ_PHONE_STATE is deliberately NOT declared: ROLE_DIALER eligibility comes from the
+         ACTION_DIAL activities below (AOSP roles.xml required-components), not from the phone
+         permission set, which the role *grants* rather than demands. Nothing in this app reads
+         telephony state. Re-adding it needs a caller, not a comment. -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <!-- Required to post the ringing-call notification (API 33+) and to have Telecom's
