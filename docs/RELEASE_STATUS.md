@@ -11,9 +11,10 @@
 > and code are unchanged and staying. See `PLAY_FSI_APPEAL.md` and §3.3 of
 > `PLAY_INTERNAL_TESTING.md`.
 
-> **The bundle to upload is `corta-spam-0.1.0-2-release.aab`.**
-> `corta-spam-0.1.0-1-release.aab` sits in the same folder and is the **rejected** one — one digit
-> apart. Move it aside before upload day.
+> **The bundle to upload is `corta-spam-0.1.0-3-release.aab`.**
+> Codes 1 and 2 are both spent — 1 rejected under the FSI policy, 2 uploaded and withdrawn after
+> Play warned it dropped 6 devices (`RECORD_AUDIO` implying a required microphone). Both now sit in
+> `rejected/`.
 
 ---
 
@@ -39,7 +40,7 @@
 - [x] `androidApp/keystore.properties` wired; gitignored
 - [x] Artifacts carry the version: `corta-spam-<versionName>-<versionCode>-release.aab`
 - [x] **Signature verified**: `CN=Carlos Pinan, OU=Casa, O=Casa, L=Lima, ST=Lima, C=PE`
-- [x] `org.carlospinan.cortaspam`, **versionCode 2**, versionName 0.1.0, targetSdk 36
+- [x] `org.carlospinan.cortaspam`, **versionCode 3**, versionName 0.1.0, targetSdk 36
 - [x] Permissions audited on the **built bundle**, not the source manifest: `CALL_PHONE`,
       `READ_CONTACTS`, `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `RECORD_AUDIO`, `VIBRATE`.
       `READ_PHONE_STATE` was declared with no caller and has been removed (2026-08-11).
@@ -90,9 +91,11 @@
       "phone app", and corrected 2026-08-11 (it claimed the app requests no microphone access,
       which `RECORD_AUDIO` in versionCode 2 makes false). Screenshots are per-language: the `es_*`
       set is the **default** listing, the unprefixed set is the en-US translation
-- [ ] **Demo video** (~60s, unlisted YouTube) — reviewers ask for one on dialer apps, and it is
-      the single strongest exhibit for the full-screen intent argument
-- [ ] Play Console: upload `corta-spam-0.1.0-2-release.aab`
+- [x] **Demo video** recorded and uploaded unlisted 2026-08-11 →
+      `https://www.youtube.com/watch?v=x15aUnHav6w`. Shows an incoming call arriving on a locked
+      screen, which is the full-screen intent permission doing the job the policy auto-grants it
+      for. No audio — `screenrecord` captures none, and the description says so
+- [ ] Play Console: upload `corta-spam-0.1.0-3-release.aab`
 - [ ] **Accept Play App Signing** when offered (one-way; declining makes a lost key fatal)
 - [ ] Add testers, send them the **opt-in link** (they cannot install without it)
 

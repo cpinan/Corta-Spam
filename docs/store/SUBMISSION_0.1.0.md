@@ -1,9 +1,10 @@
-# Submission pack — 0.1.0 (versionCode 2), internal testing
+# Submission pack — 0.1.0 (versionCode 3), internal testing
 
 Everything needed to publish, in the order the Console wants it. Field values are paste-ready.
 `RELEASE_STATUS.md` is the running state; this file is the submission itself.
 
-**Prepared 2026-08-11.** Supersedes nothing — versionCode 1 was rejected and never republished.
+**Prepared 2026-08-11.** versionCode 1 was rejected; versionCode 2 was uploaded and withdrawn
+after Play warned it dropped 6 devices. **versionCode 3 is the one to publish.**
 
 ---
 
@@ -11,16 +12,26 @@ Everything needed to publish, in the order the Console wants it. Field values ar
 
 | | |
 |---|---|
-| File | `androidApp/build/outputs/bundle/release/corta-spam-0.1.0-2-release.aab` |
+| File | `androidApp/build/outputs/bundle/release/corta-spam-0.1.0-3-release.aab` |
 | Size | 5.2 MB |
 | applicationId | `org.carlospinan.cortaspam` |
-| versionCode / versionName | **2** / `0.1.0` |
+| versionCode / versionName | **3** / `0.1.0` |
 | minSdk / targetSdk | 26 / 36 |
 | Signature | `jar verified` — `CN=Carlos Pinan, OU=Casa, O=Casa, L=Lima, ST=Lima, C=PE` (upload key) |
 | Locales in bundle | en, es, hi, pt |
 
-> **`corta-spam-0.1.0-1-release.aab` is in the same folder and is the REJECTED build.**
-> The filename differs by one digit. Move it out before upload day.
+> **Two other bundles sit in the same tree and neither is the upload:** `-1-` was rejected under the
+> Full-Screen Intent policy, `-2-` was uploaded and withdrawn after Play warned it dropped 6 devices.
+> The filenames differ by one digit. `-1-` is already moved to `rejected/`; move `-2-` too.
+
+**Hardware features** (`aapt2 dump badging`, on the artifact):
+
+- `android.hardware.telephony` **required** — deliberate. An app that cannot receive calls has no
+  function, and this costs tablet and ChromeOS availability.
+- `android.hardware.microphone` **not required** — declared explicitly in versionCode 3. Without
+  that line, `RECORD_AUDIO` makes the tooling imply the feature as *required*, which is what dropped
+  6 devices from versionCode 2. Confirm on any future build that badging says
+  `uses-feature-not-required`, not `uses-implied-feature`.
 
 **Permissions in the built bundle** (audited with `unzip -p … base/manifest/AndroidManifest.xml`,
 not read off the source manifest):
@@ -94,8 +105,8 @@ rejects them.
 Paste-ready both languages in [`RELEASE_NOTES_0.1.0.md`](RELEASE_NOTES_0.1.0.md).
 Counted, not estimated: **es-419 450 / 500**, **en-US 426 / 500**.
 
-Written for a first-time installer, not an upgrader — versionCode 1 was never published, so
-versionCode 2 is the first build any tester sees.
+Written for a first-time installer, not an upgrader — neither versionCode 1 nor 2 ever reached a
+tester, so versionCode 3 is the first build anyone sees.
 
 ---
 
@@ -127,8 +138,8 @@ owner and 404s for a reviewer.
 
 ## 5. Upload, in order
 
-1. Move `corta-spam-0.1.0-1-release.aab` out of the output folder.
-2. Internal testing → Create release → upload `corta-spam-0.1.0-2-release.aab`.
+1. Move every bundle except `-3-` out of the output folder (`-1-` is already in `rejected/`).
+2. Internal testing → Create release → upload `corta-spam-0.1.0-3-release.aab`.
 3. **Accept Play App Signing when offered. This is one-way** — declining makes a lost upload key
    fatal.
 4. Paste release notes, both languages.
@@ -181,7 +192,7 @@ first.
 1. Confirm Gate 1 by opening **Production → Country availability**; if production access is not
    granted, the Console says so there and the rest is moot.
 2. Prove ringing on the razr with a real inbound call.
-3. Production → Create new release → upload the same `corta-spam-0.1.0-2-release.aab`.
+3. Production → Create new release → upload the same `corta-spam-0.1.0-3-release.aab`.
 4. Accept Play App Signing if not already enrolled (one-way).
 5. Release notes — the same two blocks, but reword them: the current text asks testers to *check*
    things, which is wrong copy for a public listing.
