@@ -95,7 +95,9 @@
       `https://www.youtube.com/watch?v=x15aUnHav6w`. Shows an incoming call arriving on a locked
       screen, which is the full-screen intent permission doing the job the policy auto-grants it
       for. No audio — `screenrecord` captures none, and the description says so
-- [ ] Play Console: upload `corta-spam-0.1.0-3-release.aab`
+- [x] Play Console: uploaded `corta-spam-0.1.0-3-release.aab` and **submitted to PRODUCTION**
+      on 2026-08-11. Review in progress — **stop editing the listing**, every send is its own
+      review cycle
 - [ ] **Accept Play App Signing** when offered (one-way; declining makes a lost key fatal)
 - [ ] Add testers, send them the **opt-in link** (they cannot install without it)
 
