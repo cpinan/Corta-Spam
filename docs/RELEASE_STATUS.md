@@ -1,20 +1,31 @@
 # Release status — Corta Spam internal testing
 
-**As of 2026-08-11.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
+**As of 2026-08-12.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
 `PLAY_INTERNAL_TESTING.md` is the requirements reference.
 
-> **Version code 1 was rejected** under the Full-Screen Intent policy — *"Permission use is not
-> directly related to your app's core purpose."* The app qualifies (core function is receiving
-> phone calls); the missing declaration form is what caused it, not the permission. Decided
-> 2026-08-08: **no appeal, same Console entry, new version code.** The rejection was version-level,
-> not a suspension, and a new Console app would have forced an `applicationId` rename. Permission
-> and code are unchanged and staying. See `PLAY_FSI_APPEAL.md` and §3.3 of
-> `PLAY_INTERNAL_TESTING.md`.
+> **Version code 3 was rejected 2026-08-12** under the Full-Screen Intent policy — the same
+> finding that took version code 1, *"Permission use is not directly related to your app's core
+> purpose."* This time the declaration form **had** been submitted before upload and the listing
+> **had** been rewritten to open with "phone app", so the version-code-1 theory (the reviewer never
+> saw the form) is dead.
+>
+> **Resolved by declining the pre-grant, not by removing the permission.** The declaration form's
+> second question — *do you want this permission pre-granted at installation?* — was changed from
+> **Yes** to **No** on 2026-08-12. Core functionality stays *making and receiving calls*. The
+> rejection is a verdict on pre-grant eligibility, so opting out removes the thing being judged.
+> The permission stays in the manifest and no code was deleted for policy reasons. See
+> `PLAY_FSI_APPEAL.md`.
+>
+> **What it costs:** every install on Android 14+ now starts with the ringing screen off. The user
+> grants the app-op from system settings, so the in-app route to it is load-bearing now rather than
+> a fallback — hence the full-screen row added to the onboarding checklist.
 
-> **The bundle to upload is `corta-spam-0.1.0-3-release.aab`.**
-> Codes 1 and 2 are both spent — 1 rejected under the FSI policy, 2 uploaded and withdrawn after
-> Play warned it dropped 6 devices (`RECORD_AUDIO` implying a required microphone). Both now sit in
-> `rejected/`.
+> **Codes 1, 2 and 3 are all spent.** 1 rejected under the FSI policy, 2 uploaded and withdrawn
+> after Play warned it dropped 6 devices (`RECORD_AUDIO` implying a required microphone), 3
+> rejected under the FSI policy again. 1 and 2 sit in `rejected/`.
+>
+> **The next upload needs `appVersionCode` 4** in `androidApp/build.gradle.kts` — both because 3 is
+> spent and because the onboarding change has to ship with it.
 
 ---
 
@@ -77,9 +88,11 @@
 
 - [x] **Contact email** for the store listing — `carlos.pinan@gmail.com`
 - [x] Play Console: app created; Category **Communication**, tags `Caller ID, Communication`
-- [x] Play Console: **App content** (2026-08-11)
-      - [x] **Full-screen intent declaration** — submitted *first*, deliberately: its absence, not
-            the permission, is what the version-code-1 rejection came from
+- [x] Play Console: **App content** (2026-08-11, amended 2026-08-12)
+      - [x] **Full-screen intent declaration** — core functionality *making and receiving calls*;
+            install behaviour **No** (do not pre-grant), set 2026-08-12 after the same policy
+            rejected version code 3 with the form already in place. Submitting the form first was
+            not enough, because the form was asking to be pre-granted
       - [x] Privacy policy URL → `https://cpinan.github.io/corta-spam/privacy.html` (canonical)
       - [x] Data safety → *collects no data*. True by construction: no `INTERNET` permission and
             no HTTP client anywhere in the dependency graph, so nothing can leave the device
@@ -96,8 +109,9 @@
       screen, which is the full-screen intent permission doing the job the policy auto-grants it
       for. No audio — `screenrecord` captures none, and the description says so
 - [x] Play Console: uploaded `corta-spam-0.1.0-3-release.aab` and **submitted to PRODUCTION**
-      on 2026-08-11. Review in progress — **stop editing the listing**, every send is its own
-      review cycle
+      on 2026-08-11 — **rejected 2026-08-12** under the Full-Screen Intent policy
+- [ ] Play Console: bump to `appVersionCode` 4, rebuild, upload, resubmit. The declaration form
+      now declines the pre-grant, so the finding that rejected 1 and 3 has nothing left to judge
 - [ ] **Accept Play App Signing** when offered (one-way; declining makes a lost key fatal)
 - [ ] Add testers, send them the **opt-in link** (they cannot install without it)
 
