@@ -121,6 +121,10 @@ class MainActivity : ComponentActivity() {
      * Launches the system dialog for one row of the onboarding checklist. Microphone is absent
      * on purpose: [AppPermission.MICROPHONE] is marked non-requestable there, so the screen
      * never calls this for it -- it is asked for at the moment recording is switched on.
+     *
+     * [AppPermission.FULL_SCREEN_INTENT] is the one row that does not open a dialog. There is no
+     * runtime-permission dialog for the app-op; the only way to grant it is the system settings
+     * screen, so the row's button says so and [onResume] picks the result up on the way back.
      */
     private fun requestPermission(permission: AppPermission) {
         when (permission) {
@@ -129,9 +133,27 @@ class MainActivity : ComponentActivity() {
                     notificationsPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
 
+            AppPermission.FULL_SCREEN_INTENT -> openFullScreenIntentSettings()
             AppPermission.CONTACTS -> contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
             AppPermission.PHONE -> callPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE)
             AppPermission.MICROPHONE -> micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    /**
+     * The only route to `USE_FULL_SCREEN_INTENT`. Reached from two places -- the onboarding
+     * checklist row and the warning card on Home/Settings -- because with pre-grant declined in
+     * the Play Console this starts off for every user on Android 14+, and one entry point in a
+     * screen they may never open is not enough.
+     */
+    private fun openFullScreenIntentSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                    "package:$packageName".toUri(),
+                ),
+            )
         }
     }
 
@@ -177,7 +199,10 @@ class MainActivity : ComponentActivity() {
                                         contactsGranted = contactsPermissionGranted,
                                         phoneGranted = callPhonePermissionGranted,
                                         micGranted = micPermissionGranted,
+                                        fullScreenIntentGranted = fullScreenIntentAllowed,
                                         notificationsApplicable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+                                        fullScreenIntentApplicable =
+                                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
                                     ),
                                 onRequest = ::requestPermission,
                                 onContinue = { viewModel.onIntent(DialerOnboardingIntent.PermissionsPromptShown) },
@@ -239,16 +264,7 @@ class MainActivity : ComponentActivity() {
                                             .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
                                     )
                                 },
-                                onOpenFullScreenIntentSettings = {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                        startActivity(
-                                            Intent(
-                                                Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
-                                                "package:$packageName".toUri(),
-                                            ),
-                                        )
-                                    }
-                                },
+                                onOpenFullScreenIntentSettings = ::openFullScreenIntentSettings,
                                 onOpenAppSettings = {
                                     startActivity(
                                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()),

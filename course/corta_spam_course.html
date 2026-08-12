@@ -2343,7 +2343,38 @@ th{background:var(--panel-2);font-weight:600}
 <p style="margin-bottom:0">A store's "How to fix" section describes the compliance path. It is not a finding that you are guilty. Following it <em>and</em> appealing at the same time destroys the appeal — you would be conceding the permission is not core while arguing that it is.</p></div>
 
 <div class="note why"><span class="tag">Why</span>
-<p style="margin-bottom:0">The real defect was elsewhere: the Play Console full-screen-intent declaration form had never been submitted, so review judged the permission against the store listing alone — and the listing led with "Block calls by your own rules", naming the dialer role once, in a closing caveat about permissions. The APK said phone app; the listing said utility. Review trusts the listing.</p></div>
+<p style="margin-bottom:0">The diagnosis at the time: the Play Console full-screen-intent declaration form had never been submitted, so review judged the permission against the store listing alone — and the listing led with "Block calls by your own rules", naming the dialer role once, in a closing caveat about permissions. The APK said phone app; the listing said utility. Both halves were fixed. <strong>It was not enough</strong> — see below.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> Being right, twice, and still rejected</h3>
+<p>Version code 3 went up with the declaration form submitted first, deliberately, and with listing copy rewritten to open with "phone app" in both languages. Play rejected it with the identical finding. Every fact in the section above was still true, and the app was still not published.</p>
+<p>The mistake was reading the declaration form as a single question. It has two:</p>
+<table>
+<tr><th>Question</th><th>Answered</th><th>Load-bearing?</th></tr>
+<tr><td>What is the core functionality of your app?</td><td>Making and receiving calls</td><td>True, and never disputed</td></tr>
+<tr><td>Do you want this permission pre-granted at installation?</td><td><strong>Yes</strong> → changed to <strong>No</strong></td><td>This is the one being judged</td></tr>
+</table>
+<p><em>"Permission use is not directly related to your app's core purpose"</em> is not a verdict on whether you may declare the permission. It is the answer to a request to have the app-op granted at install <em>without asking the user</em>. Decline the pre-grant and there is nothing left to review. The permission stays in the manifest, <code>setFullScreenIntent</code> stays in the code, and the user grants the app-op themselves.</p>
+
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">A policy rejection names the permission, so it reads as a verdict on the permission. Read the form the rejection came from before believing that. Two submissions and one deleted-feature plan were spent on a question that had already been answered correctly, next to one that had not been read at all.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> The cost of opting out lands on onboarding</h3>
+<p>Declining the pre-grant means every install on Android 14+ starts with the ringing screen off. That turns the in-app route to the setting from a fallback into the only route — and the app's route was a warning card ranked <em>third</em>, behind the dialer role and notifications, on a Home screen that renders only the first card. On a fresh install, the one permission now guaranteed to be missing was the hardest of the four to reach.</p>
+<p>So it became a checklist row, directly under notifications, because between them they are one feature: the notification carries the ringing call, the app-op lets it take over the screen.</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../permissions/PermissionChecklist.kt</div>
+<pre><code><span class="line">data class PermissionUiItem(</span>
+<span class="line">    val permission: AppPermission,</span>
+<span class="line">    val granted: Boolean,</span>
+<span class="line">    val requestable: Boolean,</span>
+<span class="line">    val opensSettings: Boolean = false,   // no runtime dialog exists for an app-op</span>
+<span class="line">)</span></code></pre>
+<p>The <code>opensSettings</code> flag exists to change one word. Every other row's button says <strong>Allow</strong> and produces a system dialog; this one says <strong>Open settings</strong> and leaves the app. A button labelled "Allow" that opens no dialog is a dead control, and the user learns not to trust the screen.</p>
+
+<div class="note verified"><span class="tag">Verified</span>
+<p style="margin-bottom:0">On a Pixel 8 Pro AVD at <strong>API 36</strong>, with the app-op forced to the shipping state via <code>adb shell cmd appops set &lt;pkg&gt; USE_FULL_SCREEN_INTENT deny</code>: the row renders second reading "Open settings"; tapping it resumes <code>com.android.settings/.spa.SpaActivity</code> on the per-app <em>Full-screen notifications</em> page with the toggle off; switching it on and pressing back returns to the checklist showing "✓ Granted", refreshed by <code>onResume</code>. Note that a sideloaded install grants the app-op — <code>granted=true</code> in <code>dumpsys package</code> — so the user's state has to be set deliberately or the test proves nothing.</p></div>
+
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0"><code>canUseFullScreenIntent()</code> is API 34+. Below it, <code>MainActivity.refreshPermissionStatus</code> hard-codes <code>fullScreenIntentAllowed = true</code>, so the warning card and the checklist row are correctly absent — and correspondingly <strong>unreachable</strong>. This project's only AVD was API 33, which means every full-screen-intent state had shipped without once being rendered. An emulator one API level below the feature does not test the feature; it silently tests the other branch.</p></div>
 
 <h3><span class="badge badge-i">Intermediate</span> A privacy policy that promised a feature</h3>
 <p>The same audit found a "Record caller message" switch. It persisted its flag, validated a consent phrase, rendered as a <code>Switch</code>, and had a passing repository test. Nothing recorded. No <code>RECORD_AUDIO</code> permission, no <code>MediaRecorder</code>, no <code>AudioRecord</code> anywhere in the source.</p>
@@ -2651,7 +2682,7 @@ th{background:var(--panel-2);font-weight:600}
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
 <p>373 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-12 — extended Chapter 21 with the second rejection of the same permission: the declaration form has two questions, and the one nobody read (pre-grant at install?) was the one being judged. Covers what declining the pre-grant costs — the permission is now off on every Android 14+ install — the checklist row added because the existing warning was ranked third on a screen that shows one, and the reason none of it had ever been rendered before: the project's only emulator was one API level below the feature. Previously: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>

@@ -22,6 +22,8 @@
     <string name="permissions_subtitle">Cada permiso se usa para una sola cosa. Ninguno es obligatorio: puedes rechazar cualquiera y el resto de la app sigue funcionando.</string>
     <string name="permissions_notifications_title">Notificaciones</string>
     <string name="permissions_notifications_body">Mostrarte quién llama y qué se bloqueó mientras no estabas. Sin esto no recibes ningún aviso de llamada entrante.</string>
+    <string name="permissions_fullscreen_title">Llamadas a pantalla completa</string>
+    <string name="permissions_fullscreen_body">Mostrar la llamada que suena sobre la pantalla de bloqueo, con Contestar y Rechazar, en vez de solo una notificación. Se activa desde los ajustes del sistema, no desde un diálogo.</string>
     <string name="permissions_contacts_title">Contactos</string>
     <string name="permissions_contacts_body">Dejar pasar a quienes ya están en tus contactos y mostrar su nombre en vez del número. Tus contactos se leen en este dispositivo y nunca se envían a ninguna parte.</string>
     <string name="permissions_phone_title">Teléfono</string>

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.action_open_settings
 import cortaspam.shared.generated.resources.permissions_allow
 import cortaspam.shared.generated.resources.permissions_asked_later
 import cortaspam.shared.generated.resources.permissions_change_later
@@ -31,6 +32,8 @@ import cortaspam.shared.generated.resources.permissions_contacts_body
 import cortaspam.shared.generated.resources.permissions_contacts_title
 import cortaspam.shared.generated.resources.permissions_continue
 import cortaspam.shared.generated.resources.permissions_continue_anyway
+import cortaspam.shared.generated.resources.permissions_fullscreen_body
+import cortaspam.shared.generated.resources.permissions_fullscreen_title
 import cortaspam.shared.generated.resources.permissions_granted
 import cortaspam.shared.generated.resources.permissions_microphone_body
 import cortaspam.shared.generated.resources.permissions_microphone_title
@@ -163,7 +166,11 @@ private fun PermissionRow(
 
                     item.requestable ->
                         TextButton(onClick = onRequest) {
-                            Text(stringResource(Res.string.permissions_allow))
+                            Text(
+                                stringResource(
+                                    if (item.opensSettings) Res.string.action_open_settings else Res.string.permissions_allow,
+                                ),
+                            )
                         }
 
                     else ->
@@ -181,6 +188,7 @@ private fun PermissionRow(
 private fun AppPermission.titleRes() =
     when (this) {
         AppPermission.NOTIFICATIONS -> Res.string.permissions_notifications_title
+        AppPermission.FULL_SCREEN_INTENT -> Res.string.permissions_fullscreen_title
         AppPermission.CONTACTS -> Res.string.permissions_contacts_title
         AppPermission.PHONE -> Res.string.permissions_phone_title
         AppPermission.MICROPHONE -> Res.string.permissions_microphone_title
@@ -189,6 +197,7 @@ private fun AppPermission.titleRes() =
 private fun AppPermission.bodyRes() =
     when (this) {
         AppPermission.NOTIFICATIONS -> Res.string.permissions_notifications_body
+        AppPermission.FULL_SCREEN_INTENT -> Res.string.permissions_fullscreen_body
         AppPermission.CONTACTS -> Res.string.permissions_contacts_body
         AppPermission.PHONE -> Res.string.permissions_phone_body
         AppPermission.MICROPHONE -> Res.string.permissions_microphone_body

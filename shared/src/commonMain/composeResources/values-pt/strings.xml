@@ -22,6 +22,8 @@
     <string name="permissions_subtitle">Cada permissão abaixo serve para uma coisa só. Nenhuma é obrigatória — você pode recusar qualquer uma e o resto do app continua funcionando.</string>
     <string name="permissions_notifications_title">Notificações</string>
     <string name="permissions_notifications_body">Mostrar quem está ligando e o que foi bloqueado enquanto você esteve fora. Sem isso você não recebe nenhum aviso de chamada recebida.</string>
+    <string name="permissions_fullscreen_title">Chamadas em tela cheia</string>
+    <string name="permissions_fullscreen_body">Mostrar a chamada tocando sobre a tela de bloqueio, com Atender e Recusar, em vez de apenas uma notificação. Ativada nas configurações do sistema, não por um diálogo.</string>
     <string name="permissions_contacts_title">Contatos</string>
     <string name="permissions_contacts_body">Deixar passar quem já está nos seus contatos e mostrar o nome em vez do número. Seus contatos são lidos neste dispositivo e nunca são enviados a lugar nenhum.</string>
     <string name="permissions_phone_title">Telefone</string>

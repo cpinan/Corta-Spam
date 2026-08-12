@@ -22,6 +22,8 @@
     <string name="permissions_subtitle">Each permission below is used for one thing only. Nothing here is required — you can refuse any of them and the rest of the app still works.</string>
     <string name="permissions_notifications_title">Notifications</string>
     <string name="permissions_notifications_body">Show you who is calling, and what was blocked while you were away. Without it you get no incoming-call alert at all.</string>
+    <string name="permissions_fullscreen_title">Full-screen calls</string>
+    <string name="permissions_fullscreen_body">Show a ringing call over your lock screen, with Answer and Decline, instead of only a notification. Granted from system settings, not from a dialog.</string>
     <string name="permissions_contacts_title">Contacts</string>
     <string name="permissions_contacts_body">Let people already in your contacts ring through, and show their name instead of a bare number. Contacts are read on this device and never sent anywhere.</string>
     <string name="permissions_phone_title">Phone</string>

@@ -22,6 +22,8 @@
     <string name="permissions_subtitle">नीचे दी गई हर अनुमति सिर्फ़ एक काम के लिए है। कोई भी अनिवार्य नहीं है — आप किसी को भी मना कर सकते हैं और बाकी ऐप फिर भी काम करता रहेगा।</string>
     <string name="permissions_notifications_title">सूचनाएँ</string>
     <string name="permissions_notifications_body">आपको दिखाना कि कौन कॉल कर रहा है, और आपकी अनुपस्थिति में क्या ब्लॉक हुआ। इसके बिना आपको आने वाली कॉल की कोई सूचना नहीं मिलेगी।</string>
+    <string name="permissions_fullscreen_title">फ़ुल-स्क्रीन कॉल</string>
+    <string name="permissions_fullscreen_body">बजती कॉल को सिर्फ़ एक सूचना के बजाय लॉक स्क्रीन पर पूरी स्क्रीन में दिखाना, उत्तर दें और अस्वीकार करें के साथ। यह किसी डायलॉग से नहीं, सिस्टम सेटिंग्स से चालू होती है।</string>
     <string name="permissions_contacts_title">संपर्क</string>
     <string name="permissions_contacts_body">आपके संपर्कों में पहले से मौजूद लोगों की कॉल आने देना, और नंबर के बजाय उनका नाम दिखाना। संपर्क इसी डिवाइस पर पढ़े जाते हैं और कहीं नहीं भेजे जाते।</string>
     <string name="permissions_phone_title">फ़ोन</string>
