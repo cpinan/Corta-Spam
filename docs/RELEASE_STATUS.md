@@ -1,7 +1,11 @@
 # Release status — Corta Spam internal testing
 
-**As of 2026-08-12.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
+**As of 2026-08-13.** This is the *current state*; `PLAY_RELEASE_PLAN.md` is the sequence and
 `PLAY_INTERNAL_TESTING.md` is the requirements reference.
+
+> **Version code 4 is cut and built (2026-08-13).** It is the answer to the code 3 rejection: the
+> declaration form now declines the pre-grant, and the bundle carries the onboarding checklist row
+> that gives the user a way to grant the app-op themselves. Nothing has been uploaded yet.
 
 > **Version code 3 was rejected 2026-08-12** under the Full-Screen Intent policy — the same
 > finding that took version code 1, *"Permission use is not directly related to your app's core
@@ -51,7 +55,9 @@
 - [x] `androidApp/keystore.properties` wired; gitignored
 - [x] Artifacts carry the version: `corta-spam-<versionName>-<versionCode>-release.aab`
 - [x] **Signature verified**: `CN=Carlos Pinan, OU=Casa, O=Casa, L=Lima, ST=Lima, C=PE`
-- [x] `org.carlospinan.cortaspam`, **versionCode 3**, versionName 0.1.0, targetSdk 36
+- [x] `org.carlospinan.cortaspam`, **versionCode 4**, versionName 0.1.0, targetSdk 36 — built and
+      audited 2026-08-13, `jar verified`, `CN=Carlos Pinan`. Codes 1, 2 and 3 are in
+      `androidApp/build/outputs/bundle/release/rejected/`; the upload folder holds one file
 - [x] Permissions audited on the **built bundle**, not the source manifest: `CALL_PHONE`,
       `READ_CONTACTS`, `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `RECORD_AUDIO`, `VIBRATE`.
       `READ_PHONE_STATE` was declared with no caller and has been removed (2026-08-11).
@@ -110,8 +116,14 @@
       for. No audio — `screenrecord` captures none, and the description says so
 - [x] Play Console: uploaded `corta-spam-0.1.0-3-release.aab` and **submitted to PRODUCTION**
       on 2026-08-11 — **rejected 2026-08-12** under the Full-Screen Intent policy
-- [ ] Play Console: bump to `appVersionCode` 4, rebuild, upload, resubmit. The declaration form
-      now declines the pre-grant, so the finding that rejected 1 and 3 has nothing left to judge
+- [x] `appVersionCode` bumped to 4 and rebuilt (2026-08-13) —
+      `androidApp/build/outputs/bundle/release/corta-spam-0.1.0-4-release.aab`, 5.2 MB
+- [ ] Play Console: upload `corta-spam-0.1.0-4-release.aab` and resubmit to production. The
+      declaration form now declines the pre-grant, so the finding that rejected 1 and 3 has nothing
+      left to judge. **Do not touch the declaration form again before uploading** — the No answer
+      set on 2026-08-12 is the fix; re-opening it risks resetting it to the default Yes
+- [ ] Release notes: reuse `docs/store/RELEASE_NOTES_PROD_0.1.0.md` unchanged. Code 3 was never
+      published, so code 4 is still the first release any user sees and the copy still reads true
 - [ ] **Accept Play App Signing** when offered (one-way; declining makes a lost key fatal)
 - [ ] Add testers, send them the **opt-in link** (they cannot install without it)
 

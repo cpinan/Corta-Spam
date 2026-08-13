@@ -1,6 +1,6 @@
 # Release template — naming and notes
 
-For every release after 0.1.0 (versionCode 3). Copy the blocks, fill the gaps, count the
+For every release. Latest cut is 0.1.0 (versionCode 4). Copy the blocks, fill the gaps, count the
 characters. This file is the thing to edit when the process changes; the per-version notes files
 are snapshots of what was actually shipped.
 
@@ -43,15 +43,20 @@ Both live in one place, `androidApp/build.gradle.kts`:
 
 ```kotlin
 val appVersionName = "0.1.0"
-val appVersionCode = 3
+val appVersionCode = 4
 ```
 
 The artifact filename derives from them (`corta-spam-<name>-<code>-release.aab`), so they can never
 disagree with what you upload.
 
 **A version code is spent the moment it is uploaded, not when it is published.** Play refuses a code
-it has ever seen. This app burned code 1 on a policy rejection and code 2 on a one-line manifest
-fix. Budget for that: a code is cheap, a wrong upload is not.
+it has ever seen. This app burned code 1 on a policy rejection, code 2 on a one-line manifest fix,
+and code 3 on the same policy finding as code 1. Budget for that: a code is cheap, a wrong upload
+is not.
+
+**A rejection spends a code even when the fix is not in the bundle.** Code 3's remedy was one answer
+on a Console form, and it still cost a rebuild — Play will not re-review a code it has already
+ruled on. Do not plan on resubmitting the same artifact after a form change.
 
 ## 3. Release notes
 

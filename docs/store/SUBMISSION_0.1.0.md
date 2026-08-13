@@ -1,10 +1,17 @@
-# Submission pack — 0.1.0 (versionCode 3), internal testing
+# Submission pack — 0.1.0 (versionCode 4), production
 
 Everything needed to publish, in the order the Console wants it. Field values are paste-ready.
 `RELEASE_STATUS.md` is the running state; this file is the submission itself.
 
-**Prepared 2026-08-11.** versionCode 1 was rejected; versionCode 2 was uploaded and withdrawn
-after Play warned it dropped 6 devices. **versionCode 3 is the one to publish.**
+**Prepared 2026-08-11, updated 2026-08-13 for versionCode 4.** Codes 1, 2 and 3 are all spent:
+1 rejected under the Full-Screen Intent policy, 2 uploaded and withdrawn after Play warned it
+dropped 6 devices, 3 rejected under the same Full-Screen Intent finding as 1 with the declaration
+form already filed. **versionCode 4 is the one to publish.**
+
+> **The fix for the code 3 rejection is not in this bundle.** It is the *No* answer to the
+> declaration form's pre-grant question, set on 2026-08-12 (§ App content below). Code 4 exists
+> because Play will not re-review a spent code, and because it carries the onboarding checklist row
+> the No answer made necessary.
 
 ---
 
@@ -12,17 +19,18 @@ after Play warned it dropped 6 devices. **versionCode 3 is the one to publish.**
 
 | | |
 |---|---|
-| File | `androidApp/build/outputs/bundle/release/corta-spam-0.1.0-3-release.aab` |
+| File | `androidApp/build/outputs/bundle/release/corta-spam-0.1.0-4-release.aab` |
 | Size | 5.2 MB |
 | applicationId | `org.carlospinan.cortaspam` |
-| versionCode / versionName | **3** / `0.1.0` |
+| versionCode / versionName | **4** / `0.1.0` |
 | minSdk / targetSdk | 26 / 36 |
 | Signature | `jar verified` — `CN=Carlos Pinan, OU=Casa, O=Casa, L=Lima, ST=Lima, C=PE` (upload key) |
 | Locales in bundle | en, es, hi, pt |
 
-> **Two other bundles sit in the same tree and neither is the upload:** `-1-` was rejected under the
-> Full-Screen Intent policy, `-2-` was uploaded and withdrawn after Play warned it dropped 6 devices.
-> The filenames differ by one digit. `-1-` is already moved to `rejected/`; move `-2-` too.
+> **Three other bundles carry the same name one digit apart, and none of them is the upload:** `-1-`
+> and `-3-` were rejected under the Full-Screen Intent policy, `-2-` was uploaded and withdrawn after
+> Play warned it dropped 6 devices. All three are in `rejected/` as of 2026-08-13, so the release
+> folder holds exactly one file. Keep it that way.
 
 **Hardware features** (`aapt2 dump badging`, on the artifact):
 
@@ -105,8 +113,8 @@ rejects them.
 Paste-ready both languages in [`RELEASE_NOTES_0.1.0.md`](RELEASE_NOTES_0.1.0.md).
 Counted, not estimated: **es-419 450 / 500**, **en-US 426 / 500**.
 
-Written for a first-time installer, not an upgrader — neither versionCode 1 nor 2 ever reached a
-tester, so versionCode 3 is the first build anyone sees.
+Written for a first-time installer, not an upgrader — no version code has ever reached a user, so
+versionCode 4 is still the first build anyone sees and the copy holds without a rewrite.
 
 ---
 
@@ -138,8 +146,9 @@ owner and 404s for a reviewer.
 
 ## 5. Upload, in order
 
-1. Move every bundle except `-3-` out of the output folder (`-1-` is already in `rejected/`).
-2. Internal testing → Create release → upload `corta-spam-0.1.0-3-release.aab`.
+1. Move every bundle except `-4-` out of the output folder (`-1-`, `-2-` and `-3-` are already in
+   `rejected/` as of 2026-08-13).
+2. Internal testing → Create release → upload `corta-spam-0.1.0-4-release.aab`.
 3. **Accept Play App Signing when offered. This is one-way** — declining makes a lost upload key
    fatal.
 4. Paste release notes, both languages.
@@ -189,11 +198,15 @@ first.
 
 1. Prove ringing on the razr with a real inbound call:
    `./scripts/ring_test.sh watch --device ZY22JZJDNH`, then have someone call it.
-2. Production → Create new release → upload the same `corta-spam-0.1.0-3-release.aab`.
+2. Production → Create new release → upload `corta-spam-0.1.0-4-release.aab`.
 3. Accept Play App Signing if not already enrolled (one-way).
-4. Release notes — use `RELEASE_NOTES_PROD_0.1.0.md`, not the tester file.
+4. Release notes — use `RELEASE_NOTES_PROD_0.1.0.md`, not the tester file. Unchanged for code 4:
+   code 3 was rejected before publication, so nothing in it has been read by a user.
 5. Select countries, set a staged rollout percentage.
-6. Send for review once, from Publishing overview.
+6. **Check the full-screen intent declaration still answers No to the pre-grant question** before
+   sending. That answer, set 2026-08-12, is the entire fix for the code 3 rejection, and it lives in
+   a form rather than in the bundle — nothing in the artifact audit can catch it if it reverts.
+7. Send for review once, from Publishing overview.
 
 **Release notes need rewriting for production.** `RELEASE_NOTES_0.1.0.md` is addressed to testers
 ("Please check: …"). Shipping that to the store tells the public the app is unverified.

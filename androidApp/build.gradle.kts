@@ -21,14 +21,19 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 
 // Single source of truth for the version, so the artifact filename and defaultConfig can never
 // disagree. Uploading the wrong build is easy when every bundle is called androidApp-release.aab.
-// Version codes 1 and 2 are both spent, and Play will not accept a re-upload of a code it has
-// already seen. 1 was submitted and rejected under the Full-Screen Intent policy. 2 was uploaded
-// and never sent for review: it warned that 6 previously supported devices had been dropped,
-// because declaring RECORD_AUDIO makes Play imply android.hardware.microphone as required. The
-// manifest now declares that feature optional, which needs a new code to upload. versionName stays
-// 0.1.0 because nothing has ever reached a tester under that name -- only the code had to move.
+// Version codes 1, 2 and 3 are all spent, and Play will not accept a re-upload of a code it has
+// already seen. A code is spent on upload, not on publication. 1 was submitted and rejected under
+// the Full-Screen Intent policy. 2 was uploaded and never sent for review: it warned that 6
+// previously supported devices had been dropped, because declaring RECORD_AUDIO makes Play imply
+// android.hardware.microphone as required; the manifest now declares that feature optional. 3 was
+// submitted to production and rejected under the same Full-Screen Intent policy as 1, with the
+// declaration form already filed -- resolved by answering No to the form's pre-grant question
+// rather than by dropping the permission, which means every Android 14+ install now starts with
+// the app-op denied and the in-app grant route is load-bearing. 4 carries the onboarding
+// checklist row that exposes that route. versionName stays 0.1.0 because nothing has ever reached
+// a user under that name -- only the code had to move.
 val appVersionName = "0.1.0"
-val appVersionCode = 3
+val appVersionCode = 4
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
