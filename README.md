@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 373 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 407 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -84,7 +84,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 391 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 394 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 13 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
@@ -137,9 +137,15 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 A complete 23-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — and (newest) one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 93 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 95 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-13 (third):** the same contact bug in a third place, and this one was the platform's.
+
+- **"Silence unknown callers" was silencing real contacts.** The setting shipped earlier the same day asks "is this caller in my address book?", and `PassthroughInCallService` answered it with `ContactNameLookup.displayNameFor(...) != null` — that is, with `ContactsContract.PhoneLookup`. `PhoneLookup` does not compare the digits it is handed: it matches through the provider's `NORMALIZED_NUMBER` (`data4`) column, which the provider computes *from the device's default region when the contact is saved*. A contact stored `611 99 88 77` only carries `+34611998877` there if the phone believed it was in Spain at the time; the call arrives from Telecom in E.164. Disagree, and there is no match — the exact national-versus-international mismatch fixed in the rule engine on 2026-08-11, walked back in by delegating to a component with its own idea of region. On an emulator with no SIM `data4` is null for every row, so *every* contact read as a stranger and a real contact's missed call was suppressed. The probe is now `isKnownContact`, sitting beside `contactDisplayName` and asking `ContactsGateway` — the same address book the rule engine and every screen use — so the country code comes from the number itself and no region has to be guessed. The national-format case was watched failing against a single-key lookup before the fix went in.
+- **Why it hid for months:** the same `PhoneLookup` call had been in the notification path since the notifications were built, but only ever to supply a display *name*, where a miss degrades to showing the number and reads as a design choice. Reading the identical miss as a boolean turned it into a dropped notification. `IncomingCallNotifier` still uses it for titles, and is left alone here: a wrong name is cosmetic and a separate change.
+- **Left unchanged deliberately:** the ringing notification and the ongoing-call notification, neither of which consults contacts at all. Asking the gateway is a suspend call — it is cached for five minutes because it runs on the ringing path — so the policy check became suspend, which meant `onCallRemoved` had to read the number off the `Call` *before* launching its coroutine: that callback is the last moment Telecom guarantees `details.handle` is readable. The permission is read once per check and reused, because a denied read would otherwise make the gateway cache an empty address book for its whole TTL.
 
 **2026-08-13 (later):** notification control, a credits screen, and the same contact bug in a second place.
 

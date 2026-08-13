@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 373 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 407 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -84,7 +84,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 391 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 394 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 13 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
@@ -139,9 +139,15 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 Un curso completo de 23 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) y (el más nuevo) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 93 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 95 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-13 (tercera):** el mismo fallo de contactos en un tercer sitio, y este era de la plataforma.
+
+- **«Silenciar desconocidos» estaba silenciando a contactos reales.** El ajuste publicado ese mismo día antes pregunta «¿está este llamante en mi agenda?», y `PassthroughInCallService` lo respondía con `ContactNameLookup.displayNameFor(...) != null`, es decir, con `ContactsContract.PhoneLookup`. `PhoneLookup` no compara los dígitos que se le pasan: busca a través de la columna `NORMALIZED_NUMBER` (`data4`) del proveedor, que este calcula *a partir de la región por defecto del dispositivo en el momento de guardar el contacto*. Un contacto guardado como `611 99 88 77` solo lleva ahí `+34611998877` si el teléfono creía estar en España entonces; la llamada llega desde Telecom en E.164. Si no coinciden, no hay resultado — exactamente el desajuste nacional-contra-internacional que se arregló en el motor de reglas el 2026-08-11, reintroducido al delegar en un componente con su propia idea de región. En un emulador sin SIM, `data4` es nulo en todas las filas, así que *todos* los contactos se leían como desconocidos y la llamada perdida de un contacto real quedaba suprimida. Ahora la comprobación es `isKnownContact`, junto a `contactDisplayName`, y pregunta a `ContactsGateway` — la misma agenda que usan el motor de reglas y todas las pantallas — de modo que el código de país sale del propio número y no hay que adivinar ninguna región. El caso del formato nacional se vio fallar contra una búsqueda de clave única antes de aplicar el arreglo.
+- **Por qué se escondió durante meses:** esa misma llamada a `PhoneLookup` llevaba en la ruta de notificaciones desde que se construyeron, pero solo para dar un *nombre* que mostrar, donde un fallo degrada a enseñar el número y parece una decisión de diseño. Leer ese mismo fallo como booleano lo convirtió en una notificación perdida. `IncomingCallNotifier` la sigue usando para los títulos, y aquí se deja intacta: un nombre equivocado es cosmético y es otro cambio.
+- **Sin tocar a propósito:** la notificación de llamada entrante y la de llamada en curso, que no consultan la agenda en absoluto. Preguntar al gateway es una llamada suspend — está cacheada cinco minutos porque corre en la ruta de la llamada sonando — así que la comprobación de la política pasó a suspend, y eso obligó a que `onCallRemoved` leyera el número del `Call` *antes* de lanzar su corrutina: ese callback es el último momento en que Telecom garantiza que `details.handle` se puede leer. El permiso se lee una vez por comprobación y se reutiliza, porque si no, un permiso denegado haría que el gateway cachease una agenda vacía durante todo su TTL.
 
 **2026-08-13 (más tarde):** control de notificaciones, una pantalla de créditos y el mismo fallo de contactos en un segundo sitio.
 
