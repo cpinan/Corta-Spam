@@ -117,6 +117,14 @@ sealed interface BlockListIntent {
     data class RemoveActionRule(
         val id: Long,
     ) : BlockListIntent
+
+    /**
+     * Re-read the address book. Dispatched on resume, because the permission that gates it can be
+     * granted while a block list is already on top -- from Settings, or from the onboarding
+     * checklist -- and loading names only in `init` left the list showing bare numbers until the
+     * process died.
+     */
+    data object RefreshContactNames : BlockListIntent
 }
 
 /** Backs all 6 block-list screens (hub + 5 detail screens) -- a single instance doesn't know
@@ -153,10 +161,13 @@ class BlockListViewModel(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BlockListUiState())
 
     init {
-        if (contactsGateway.hasPermission()) {
-            viewModelScope.launch {
-                contactNamesFlow.value = contactsGateway.contactNames()
-            }
+        loadContactNames()
+    }
+
+    private fun loadContactNames() {
+        if (!contactsGateway.hasPermission()) return
+        viewModelScope.launch {
+            contactNamesFlow.value = contactsGateway.contactNames()
         }
     }
 
@@ -179,6 +190,7 @@ class BlockListViewModel(
                 addActionRule(intent.label, intent.attempts, intent.windowMinutes, intent.patternId)
             is BlockListIntent.ToggleActionRule -> toggleActionRule(intent.id, intent.enabled)
             is BlockListIntent.RemoveActionRule -> removeActionRule(intent.id)
+            is BlockListIntent.RefreshContactNames -> loadContactNames()
         }
     }
 

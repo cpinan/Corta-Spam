@@ -32,6 +32,14 @@ sealed interface CallLogIntent {
     data class DeleteRecording(
         val entryId: Long,
     ) : CallLogIntent
+
+    /**
+     * Re-read the address book. Dispatched on resume, because the permission that gates it can be
+     * granted while this screen is already on top -- from Settings, or from the onboarding
+     * checklist -- and loading names only in `init` left the log showing bare numbers until the
+     * process died.
+     */
+    data object RefreshContactNames : CallLogIntent
 }
 
 class CallLogViewModel(
@@ -51,11 +59,7 @@ class CallLogViewModel(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CallLogUiState())
 
     init {
-        if (contactsGateway.hasPermission()) {
-            viewModelScope.launch {
-                contactNamesFlow.value = contactsGateway.contactNames()
-            }
-        }
+        loadContactNames()
     }
 
     fun onIntent(intent: CallLogIntent) {
@@ -63,6 +67,14 @@ class CallLogViewModel(
             is CallLogIntent.SetFilter -> filterFlow.value = intent.filter
             is CallLogIntent.DeleteRecording ->
                 viewModelScope.launch { callLogRepository.deleteRecording(intent.entryId) }
+            is CallLogIntent.RefreshContactNames -> loadContactNames()
+        }
+    }
+
+    private fun loadContactNames() {
+        if (!contactsGateway.hasPermission()) return
+        viewModelScope.launch {
+            contactNamesFlow.value = contactsGateway.contactNames()
         }
     }
 }

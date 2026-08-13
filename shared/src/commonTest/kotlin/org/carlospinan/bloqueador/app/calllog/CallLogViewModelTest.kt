@@ -13,13 +13,34 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CallLogViewModelTest {
-    private class FakeContactsGateway : ContactsGateway {
+    private class FakeContactsGateway(
+        var granted: Boolean = false,
+        var names: Map<String, String> = emptyMap(),
+    ) : ContactsGateway {
         override suspend fun contactNumbers(): Set<String> = emptySet()
 
-        override suspend fun contactNames(): Map<String, String> = emptyMap()
+        override suspend fun contactNames(): Map<String, String> = names
 
-        override fun hasPermission(): Boolean = false
+        override fun hasPermission(): Boolean = granted
     }
+
+    @Test
+    fun `RefreshContactNames picks up a grant that landed after construction`() =
+        runTest {
+            // The screen is already on top when the user grants contacts from Settings or the
+            // onboarding checklist, so the ViewModel's init has already run and skipped the load.
+            val contacts = FakeContactsGateway(granted = false)
+            val vm = CallLogViewModel(callLogRepository = FakeCallLogRepository(), contactsGateway = contacts)
+            val before = vm.state.first().contactNames
+            assertTrue(before.isEmpty())
+
+            contacts.granted = true
+            contacts.names = mapOf("611998877" to "Ana")
+            vm.onIntent(CallLogIntent.RefreshContactNames)
+
+            val names = vm.state.first { it.contactNames.isNotEmpty() }.contactNames
+            assertEquals("Ana", names["611998877"])
+        }
 
     @Test
     fun `entries flow reflects repository data`() =

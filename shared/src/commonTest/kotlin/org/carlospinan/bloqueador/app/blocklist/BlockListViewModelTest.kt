@@ -20,13 +20,33 @@ import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BlockListViewModelTest {
-    private class FakeContactsGateway : org.carlospinan.bloqueador.app.contacts.ContactsGateway {
+    private class FakeContactsGateway(
+        var granted: Boolean = false,
+        var names: Map<String, String> = emptyMap(),
+    ) : org.carlospinan.bloqueador.app.contacts.ContactsGateway {
         override suspend fun contactNumbers(): Set<String> = emptySet()
 
-        override suspend fun contactNames(): Map<String, String> = emptyMap()
+        override suspend fun contactNames(): Map<String, String> = names
 
-        override fun hasPermission(): Boolean = false
+        override fun hasPermission(): Boolean = granted
     }
+
+    @Test
+    fun `RefreshContactNames picks up a grant that landed after construction`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val contacts = FakeContactsGateway(granted = false)
+            val vm = BlockListViewModel(FakeRuleRepository(), contacts)
+            advanceUntilIdle()
+            assertEquals(emptyMap(), vm.state.first().contactNames)
+
+            contacts.granted = true
+            contacts.names = mapOf("611998877" to "Ana")
+            vm.onIntent(BlockListIntent.RefreshContactNames)
+
+            val names = vm.state.first { it.contactNames.isNotEmpty() }.contactNames
+            assertEquals("Ana", names["611998877"])
+        }
 
     @AfterTest
     fun tearDown() {

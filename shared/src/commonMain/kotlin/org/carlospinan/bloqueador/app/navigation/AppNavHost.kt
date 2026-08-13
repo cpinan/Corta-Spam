@@ -159,6 +159,9 @@ fun AppNavHost(
             ) { backStackEntry ->
                 val callLogViewModel = koinViewModel<CallLogViewModel>()
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    callLogViewModel.onIntent(CallLogIntent.RefreshContactNames)
+                }
 
                 @Suppress("UNCHECKED_CAST")
                 val filter = (backStackEntry.arguments as? Map<String, *>)?.get("filter") as? String ?: "all"
@@ -212,6 +215,9 @@ fun AppNavHost(
             composable(Routes.MANUAL_BLOCK_LIST) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val state by blockListViewModel.state.collectAsState()
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    blockListViewModel.onIntent(BlockListIntent.RefreshContactNames)
+                }
                 ManualBlockListScreen(
                     numbers = state.blockedNumbers,
                     allowlistedNumbers = state.allowlistedNumbers.map { it.number }.toSet(),
@@ -225,6 +231,9 @@ fun AppNavHost(
             composable(Routes.ALLOWLIST) {
                 val blockListViewModel = koinViewModel<BlockListViewModel>()
                 val state by blockListViewModel.state.collectAsState()
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    blockListViewModel.onIntent(BlockListIntent.RefreshContactNames)
+                }
                 AllowlistScreen(
                     numbers = state.allowlistedNumbers,
                     blockedNumbers = state.blockedNumbers.map { it.number }.toSet(),
