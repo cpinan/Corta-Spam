@@ -38,6 +38,8 @@ object IncomingCallNotifier {
     private const val HISTORY_ID_RANGE = 1_000_000L
     private const val TAG = "IncomingCallNotifier"
 
+    internal val repeatedCalls = RepeatedCallNotifications()
+
     fun createChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         val channel =
@@ -184,6 +186,11 @@ object IncomingCallNotifier {
                 displayName
             }
 
+        // A blank number cannot be told apart from the next blank one, so it is never counted --
+        // otherwise every withheld-number call would pile onto the same growing tally.
+        val bucket = if (number.isBlank()) null else repeatedCalls.record(number)
+        val notificationNumber = bucket?.representative ?: number
+
         val builder =
             NotificationCompat
                 .Builder(context, HISTORY_CHANNEL_ID)
@@ -193,17 +200,29 @@ object IncomingCallNotifier {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
 
+        // Posting to the same id already replaced the previous notification; what was missing was
+        // any sign that it had happened, so five calls from one spammer looked like one call.
+        if (bucket != null && bucket.count > 1) {
+            builder.setSubText(
+                context.resources.getQuantityString(
+                    R.plurals.notification_call_attempts,
+                    bucket.count,
+                    bucket.count,
+                ),
+            )
+        }
+
         if (number.isNotBlank()) {
             actions.forEach { action ->
                 builder.addAction(
                     action.iconRes,
                     context.getString(action.labelRes),
-                    ruleActionPendingIntent(context, action, number),
+                    ruleActionPendingIntent(context, action, notificationNumber),
                 )
             }
         }
 
-        post(context, historyNotificationId(number), builder.build())
+        post(context, historyNotificationId(notificationNumber), builder.build())
     }
 
     /**
@@ -228,6 +247,17 @@ object IncomingCallNotifier {
             R.string.notification_action_allowlist,
             android.R.drawable.ic_menu_add,
             CallActionReceiver.ACTION_ALLOW_NUMBER,
+        ),
+
+        /**
+         * Returns the call. Offered on the outcomes where the user lost one -- missed, and a
+         * repeat caller that got through -- and deliberately not on a blocked call, where the
+         * whole point of the rule was that this caller should not be reached.
+         */
+        CALL_BACK(
+            R.string.notification_action_call_back,
+            android.R.drawable.sym_action_call,
+            CallActionReceiver.ACTION_CALL_BACK,
         ),
         ;
 
@@ -265,7 +295,10 @@ object IncomingCallNotifier {
         context: Context,
         number: String,
     ) {
-        NotificationManagerCompat.from(context).cancel(historyNotificationId(number))
+        NotificationManagerCompat.from(context).cancel(historyNotificationId(repeatedCalls.representativeFor(number)))
+        // The user has dealt with this caller, so the next call from them starts a fresh count
+        // rather than resuming a tally they already acted on.
+        repeatedCalls.clear(number)
     }
 
     /**

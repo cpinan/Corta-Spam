@@ -7,6 +7,7 @@
     <string name="notification_missed_call_title">मिस्ड कॉल</string>
     <string name="notification_action_block">ब्लॉक करें</string>
     <string name="notification_action_allowlist">हमेशा अनुमति दें</string>
+    <string name="notification_action_call_back">वापस कॉल करें</string>
     <string name="notification_repeated_caller_title">बार-बार कॉल करने वाला</string>
     <string name="notification_call_result_with_reason">%1$s — %2$s</string>
     <string name="notification_channel_incoming_calls_name">आने वाली कॉलें</string>
@@ -26,5 +27,9 @@
     <plurals name="reason_allowed_after_repeated">
         <item quantity="one">%1$d बार कॉल किया — अनुमति दी गई</item>
         <item quantity="other">%1$d बार कॉल किया — अनुमति दी गई</item>
+    </plurals>
+    <plurals name="notification_call_attempts">
+        <item quantity="one">%1$d प्रयास</item>
+        <item quantity="other">%1$d प्रयास</item>
     </plurals>
 </resources>

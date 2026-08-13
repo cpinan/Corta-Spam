@@ -1,9 +1,15 @@
 package org.carlospinan.bloqueador.app.telecom
 
+import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,12 +37,50 @@ class CallActionReceiver :
             ACTION_HANG_UP -> InCallState.hangUp()
             ACTION_BLOCK_NUMBER -> applyRule(context, intent, block = true)
             ACTION_ALLOW_NUMBER -> applyRule(context, intent, block = false)
+            ACTION_CALL_BACK -> callBack(context, intent)
         }
         if (intent.action == ACTION_ANSWER || intent.action == ACTION_DECLINE || intent.action == ACTION_HANG_UP) {
             IncomingCallNotifier.cancel(context)
         }
         if (intent.action == ACTION_HANG_UP) {
             IncomingCallNotifier.cancelOngoing(context)
+        }
+    }
+
+    /**
+     * Returns a call from its notification.
+     *
+     * Places it directly only when `CALL_PHONE` is already granted. Without the permission the
+     * fallback is the app's own keypad, pre-filled with the number: a `BroadcastReceiver` cannot
+     * show a permission dialog, and firing `ACTION_CALL` without the grant throws a
+     * `SecurityException` that would look to the user like the button doing nothing at all.
+     */
+    private fun callBack(
+        context: Context,
+        intent: Intent,
+    ) {
+        val number = intent.getStringExtra(EXTRA_NUMBER)
+        if (number.isNullOrBlank()) return
+        IncomingCallNotifier.cancelCallResult(context, number)
+
+        val granted =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) ==
+                PackageManager.PERMISSION_GRANTED
+        val action = if (granted) Intent.ACTION_CALL else Intent.ACTION_DIAL
+        val callIntent =
+            Intent(action, "tel:${Uri.encode(number.trim())}".toUri())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (!granted) {
+            // ACTION_DIAL would otherwise be offered to every dialer on the device, including the
+            // one this app replaced -- which is exactly the trip to another app being fixed here.
+            callIntent.setPackage(context.packageName)
+        }
+        try {
+            context.startActivity(callIntent)
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "No activity could handle the call-back intent", e)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "CALL_PHONE was revoked between the permission check and the call", e)
         }
     }
 
@@ -82,6 +126,7 @@ class CallActionReceiver :
         const val ACTION_HANG_UP = "org.carlospinan.bloqueador.app.telecom.ACTION_HANG_UP"
         const val ACTION_BLOCK_NUMBER = "org.carlospinan.bloqueador.app.telecom.ACTION_BLOCK_NUMBER"
         const val ACTION_ALLOW_NUMBER = "org.carlospinan.bloqueador.app.telecom.ACTION_ALLOW_NUMBER"
+        const val ACTION_CALL_BACK = "org.carlospinan.bloqueador.app.telecom.ACTION_CALL_BACK"
         const val EXTRA_NUMBER = "org.carlospinan.bloqueador.app.telecom.EXTRA_NUMBER"
     }
 }

@@ -226,8 +226,14 @@ class PassthroughInCallService :
                                 R.string.notification_repeated_caller_title,
                                 decision.reason?.let { BlockReasonStrings.format(this@PassthroughInCallService, it) },
                                 // This number just got through on persistence alone; Block is
-                                // the decision the notification exists to offer.
-                                actions = setOf(IncomingCallNotifier.CallResultAction.BLOCK),
+                                // the decision the notification exists to offer. Call back is
+                                // there too because a persistent caller is as often someone who
+                                // genuinely needs reaching as it is a spammer.
+                                actions =
+                                    setOf(
+                                        IncomingCallNotifier.CallResultAction.BLOCK,
+                                        IncomingCallNotifier.CallResultAction.CALL_BACK,
+                                    ),
                             )
                         }
                     }
@@ -320,8 +326,14 @@ class PassthroughInCallService :
                         number,
                         R.string.notification_missed_call_title,
                         reason = null,
-                        // The call came through, so Allow would change nothing.
-                        actions = setOf(IncomingCallNotifier.CallResultAction.BLOCK),
+                        // The call came through, so Allow would change nothing. Call back is the
+                        // action a missed call is actually about; without it the user had to
+                        // leave for another app to return a call this app told them about.
+                        actions =
+                            setOf(
+                                IncomingCallNotifier.CallResultAction.CALL_BACK,
+                                IncomingCallNotifier.CallResultAction.BLOCK,
+                            ),
                     )
                 }
             }

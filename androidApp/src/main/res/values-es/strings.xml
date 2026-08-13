@@ -7,6 +7,7 @@
     <string name="notification_missed_call_title">Llamada perdida</string>
     <string name="notification_action_block">Bloquear</string>
     <string name="notification_action_allowlist">Permitir siempre</string>
+    <string name="notification_action_call_back">Devolver la llamada</string>
     <string name="notification_repeated_caller_title">Llamada repetida</string>
     <string name="notification_call_result_with_reason">%1$s — %2$s</string>
     <string name="notification_channel_incoming_calls_name">Llamadas entrantes</string>
@@ -26,5 +27,9 @@
     <plurals name="reason_allowed_after_repeated">
         <item quantity="one">Llamó una vez — permitida</item>
         <item quantity="other">Llamó %1$d veces — permitida</item>
+    </plurals>
+    <plurals name="notification_call_attempts">
+        <item quantity="one">%1$d intento</item>
+        <item quantity="other">%1$d intentos</item>
     </plurals>
 </resources>
