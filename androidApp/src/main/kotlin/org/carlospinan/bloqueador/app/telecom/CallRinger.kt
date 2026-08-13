@@ -46,15 +46,13 @@ class CallRinger(
             }
 
     fun start() {
-        val mode = audioManager?.ringerMode ?: AudioManager.RINGER_MODE_NORMAL
-        if (mode == AudioManager.RINGER_MODE_SILENT) return
-
-        if (mode == AudioManager.RINGER_MODE_NORMAL) {
-            startRingtone()
-            if (shouldVibrateWhileRinging()) startVibration()
-        } else {
-            startVibration()
-        }
+        val plan =
+            RingerPolicy.plan(
+                ringerMode = audioManager?.ringerMode ?: AudioManager.RINGER_MODE_NORMAL,
+                vibrateWhileRinging = shouldVibrateWhileRinging(),
+            )
+        if (plan.playRingtone) startRingtone()
+        if (plan.vibrate) startVibration()
     }
 
     fun stop() {
