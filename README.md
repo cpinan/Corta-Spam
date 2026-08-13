@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 407 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 419 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -85,7 +85,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 
 ```sh
 ./gradlew :shared:testDebugUnitTest          # 394 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 13 tests, Android-only classes (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 25 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -137,9 +137,16 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 A complete 23-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — and (newest) one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 95 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 96 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-13 (fourth):** the ringer gets tests, eight days after it was found inert.
+
+- **Ringing had no test at all.** The 2026-08-05 audit found the app took every call in silence — `IN_CALL_SERVICE_RINGING` declared, no ringtone code anywhere — and `CallRinger` fixed it, but nothing has covered it since: a ringtone lives inside `MediaPlayer`, `Vibrator` and an `InCallService` no unit test can construct, and "untestable" is how it shipped empty in the first place. The decision is now a pure `RingerPolicy` (the same extraction `NotificationPolicy` got), so the truth table is six assertions at a desk: silent rings not at all, vibrate mode vibrates *regardless* of the vibrate-while-ringing setting (there the vibration is the ring), normal plays the ringtone, and an unrecognised ringer mode rings rather than falling silent — the app told Telecom to stop ringing on its behalf, so an unexpected `AudioManager` value must never be why a call arrives silent.
+- **A policy nobody consumes is exactly as silent as no policy.** So a second Robolectric test drives the real `CallRinger` and asserts the vibrator is actually running. Both were checked by breaking them: stubbing out the vibration call failed three of the six, and **the three that stayed green were the ones asserting absences** — silent mode doesn't vibrate, `stop()` is safe when nothing started, a double `start()` doesn't stack. All three pass against a ringer that does nothing whatsoever, which is the state this app shipped in. That is what six inert features with green tests look like from the inside.
+- **Still not proven, and not provable here: that a ringtone is audible.** That needs a real audio HAL and the OEM behaviour an emulator cannot stand in for. `./scripts/ring_test.sh watch --device <serial>` is the check, and it still has to be run on the razr. The test file says so, because a reader who thinks ringing is now covered is worse off than one who knows it is half-covered.
+- 407 → 419 tests (`:androidApp` 13 → 25).
 
 **2026-08-13 (third):** the same contact bug in a third place, and this one was the platform's.
 

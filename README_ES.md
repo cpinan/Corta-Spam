@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 407 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 419 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -85,7 +85,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 
 ```sh
 ./gradlew :shared:testDebugUnitTest          # 394 pruebas, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 13 pruebas, clases exclusivas de Android (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 25 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
 ```
@@ -139,9 +139,16 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 Un curso completo de 23 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) y (el más nuevo) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 95 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 96 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-13 (cuarta):** el timbre por fin tiene pruebas, ocho días después de descubrirse inerte.
+
+- **El timbre no tenía ninguna prueba.** La auditoría del 2026-08-05 descubrió que la app recibía todas las llamadas en silencio — `IN_CALL_SERVICE_RINGING` declarado y ni una línea que sonara — y `CallRinger` lo arregló, pero desde entonces nada lo cubría: un tono vive dentro de `MediaPlayer`, `Vibrator` y un `InCallService` que ninguna prueba unitaria puede construir, y «no se puede probar» es justo como llegó a publicarse vacío. Ahora la decisión es un `RingerPolicy` puro (la misma extracción que recibió `NotificationPolicy`), así que la tabla de verdad son seis aserciones de escritorio: en silencio no suena nada, en modo vibración vibra *independientemente* del ajuste de vibrar-al-sonar (ahí la vibración *es* el timbre), en normal suena el tono elegido, y un modo de timbre desconocido suena en lugar de callar — la app le dijo a Telecom que dejara de sonar por ella, así que un valor inesperado de `AudioManager` jamás debe ser el motivo de una llamada silenciosa.
+- **Una política que nadie consume deja el teléfono igual de mudo que ninguna política.** Por eso una segunda prueba con Robolectric ejecuta el `CallRinger` real y comprueba que el vibrador está funcionando de verdad. Ambas se validaron rompiéndolas: anular la llamada a la vibración hizo fallar tres de las seis, y **las tres que siguieron en verde eran las que afirman ausencias** — en silencio no vibra, `stop()` es seguro sin haber empezado, un `start()` repetido no se acumula. Las tres pasan contra un timbre que no hace absolutamente nada, que es el estado en el que se publicó esta app. Así se ven por dentro seis funcionalidades inertes con las pruebas en verde.
+- **Sigue sin demostrarse, y aquí no se puede demostrar: que el tono se oiga.** Eso necesita un HAL de audio real y el comportamiento del fabricante que ningún emulador puede suplir. `./scripts/ring_test.sh watch --device <serial>` es la comprobación, y sigue pendiente en el razr. El propio archivo de pruebas lo dice, porque quien crea que el timbre ya está cubierto está peor que quien sabe que lo está a medias.
+- De 407 a 419 pruebas (`:androidApp` de 13 a 25).
 
 **2026-08-13 (tercera):** el mismo fallo de contactos en un tercer sitio, y este era de la plataforma.
 
