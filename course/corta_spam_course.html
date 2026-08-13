@@ -2839,9 +2839,106 @@ th{background:var(--panel-2);font-weight:600}
 </div>
 </section>
 
+<section class="module" id="m24">
+<div class="chapter-status">Chapter 24 done</div>
+<h2><span class="cn">24</span>Two Kinds of Non-Evidence</h2>
+<p>A user reports that a screen does not scroll. You read the code and find the scroll modifier exactly where it should be. You run the app on a device and watch it fail to scroll. Both of those feel like answers. Neither one is, and this chapter is about the shape of the test that finally is.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul>
+<li>Tell the difference between reading a modifier chain and verifying its behaviour</li>
+<li>Recognise when an on-device observation is invalidated by the state of the device</li>
+<li>See why <code>assertExists</code> passes for the very bug being reported</li>
+<li>Shrink a window in a Robolectric test instead of hoping content overflows</li>
+<li>Test a screen inside the composition it actually ships in, not on its own</li>
+</ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> The code says it scrolls</h3>
+<p>Home hands the scroll modifier down to the shared adaptive container:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../home/HomeScreen.kt</div>
+<pre><code><span class="line">AdaptiveContent(</span>
+<span class="line">    windowSizeClass = windowSizeClass,</span>
+<span class="line">    contentModifier = Modifier.<span class="fn">verticalScroll</span>(<span class="fn">rememberScrollState</span>()),</span>
+<span class="line">) { ... }</span></code></pre>
+<p>And the container applies it to its column:</p>
+<div class="filepath">shared/src/commonMain/kotlin/.../adaptive/AdaptiveContent.kt</div>
+<pre><code><span class="line">modifier.<span class="fn">fillMaxWidth</span>().<span class="fn">padding</span>(24.dp).<span class="fn">then</span>(contentModifier)</span></code></pre>
+<p>Chase it further and everything still checks out: <code>AdaptiveScaffold</code> puts the content in a <code>Box(Modifier.weight(1f))</code>, so the column is measured against a bounded height; <code>verticalScroll</code> measures its child unbounded and clamps itself to that bound, which is exactly the arrangement that produces a scrollable viewport. The reading is correct. It was also given to the user as the answer, before anything had been run.</p>
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">A modifier chain is a description of intent, and layout bugs are almost never in the intent — they are in what some ancestor did to the constraints, or in a second component docked on top, or in a font scale nobody tried. "I read the code and it looks right" is the same evidence the person who wrote the bug had.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> The device says it doesn't — and that isn't evidence either</h3>
+<p>So it was run: a 1344x2992 emulator at <code>font_scale 2.0</code> and <code>wm density 560</code>. Home's last quick link sat clipped at the bottom edge, and two swipes produced pixel-identical screenshots. That is the reported bug, reproduced.</p>
+<p>Except that mid-run the emulator threw <em>"System UI isn't responding"</em> and died shortly after. If the window manager is failing, an injected swipe that changes nothing tells you nothing about the scroll container — it may never have been delivered. A <code>uiautomator dump</code> also found no <code>scrollable="true"</code> node, which sounds decisive and is not: Compose scroll containers do not reliably surface that attribute.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">A failed observation on a broken instrument is not a weaker result — it is <em>no</em> result. The tempting move is to treat it as suggestive and go fix something, which is how a real scroll modifier gets rewritten to chase a bug that was never there. The honest record was "open, and neither answer is trusted", carried into the next session as exactly that.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> Why every existing test passed</h3>
+<p>Home already had UI tests naming the exact element that was clipped:</p>
+<pre><code><span class="line">composeTestRule.<span class="fn">onNodeWithText</span>(<span class="st">"Settings"</span>).<span class="fn">assertExists</span>()</span></code></pre>
+<p><code>assertExists</code> asks whether the node is in the semantics tree. A composable that was measured, placed and then clipped off the bottom of the window is in the semantics tree. Every test in the file passes against a Home that a user cannot scroll — they were written to check that Home renders its quick links, and they do check that, which is why nobody looked at them twice.</p>
+<div class="note contrast"><span class="tag">Contrast</span>
+<p style="margin-bottom:0">Chapter 22 made the same point from the other direction: assertions about <em>absence</em> stay green against a feature that does nothing. This is the mirror image — an assertion about mere <em>existence</em> stays green against a feature the user cannot reach. Both are true statements about a broken screen.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> The test that can fail</h3>
+<p>The bug needs content taller than the window. Rather than hope Home overflows at the default Robolectric size, shrink the window until it must — Robolectric takes screen qualifiers per test:</p>
+<div class="filepath">shared/src/androidUnitTest/kotlin/.../home/HomeScreenUiTest.kt</div>
+<pre><code><span class="line">@Test</span>
+<span class="line">@Config(sdk = [34], qualifiers = <span class="st">"w411dp-h320dp"</span>)</span>
+<span class="line">fun <span class="fn">`last quick link is off screen but reachable by scrolling`</span>() {</span>
+<span class="line">    ...</span>
+<span class="line">    composeTestRule.<span class="fn">onNodeWithText</span>(<span class="st">"Settings"</span>).<span class="fn">assertIsNotDisplayed</span>()</span>
+<span class="line">    composeTestRule.<span class="fn">onNodeWithText</span>(<span class="st">"Settings"</span>).<span class="fn">performScrollTo</span>().<span class="fn">assertIsDisplayed</span>()</span>
+<span class="line">}</span></code></pre>
+<p>Three claims in two lines: the element is off-screen (so the test is exercising the overflow case rather than a window that happens to fit), scrolling to it is possible at all (<code>performScrollTo</code> fails outright when no scrollable ancestor exists), and it is genuinely visible afterwards.</p>
+<p>The second test renders Home the way the app does — inside the navigation scaffold:</p>
+<pre><code><span class="line">AdaptiveScaffold(windowSizeClass = WindowSizeClass.Compact, selectedIndex = 0, onNavigate = {}) {</span>
+<span class="line">    <span class="fn">HomeScreen</span>(...)</span>
+<span class="line">}</span></code></pre>
+<p>Home is never shown bare: the scaffold's <code>NavigationBar</code> takes the bottom of the window away from it. A screen that scrolls on its own and stops once something is docked underneath is a bug an isolated test structurally cannot see — the same lesson Chapter 20 draws about testing through the real entry point.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">Inside the scaffold, <code>onNodeWithText("Settings")</code> becomes ambiguous — the NavigationBar has a tab with that label too. Matching by text alone would fail the test for a reason that has nothing to do with scrolling. The quick link is the one inside the scrolling area, so say that:</p>
+<pre style="margin-top:12px;margin-bottom:0"><code><span class="line">composeTestRule.<span class="fn">onNode</span>(<span class="fn">hasText</span>(<span class="st">"Settings"</span>) and <span class="fn">hasAnyAncestor</span>(<span class="fn">hasScrollAction</span>()))</span></code></pre></div>
+
+<div class="note verified"><span class="tag">Verified</span>
+<p style="margin-bottom:0">Both tests were run against a Home with <code>contentModifier = Modifier</code> — the scroll removed — and both failed. Then the modifier was restored and both passed. That is the only step that separates a regression test from a decoration, and Chapter 22 exists because the ones that skipped it stayed green against an inert feature for eight days.</p></div>
+
+<div class="note scope"><span class="tag">Scope</span>
+<p style="margin-bottom:0">What these tests do <em>not</em> prove: that Home scrolls at <code>font_scale 2.0</code> on the razr. They shrink the viewport instead of enlarging the text, which produces the same condition — content taller than the window — through a different cause. That is a reasonable substitute and it is not the same experiment, so the README says so rather than claiming the hardware question closed.</p></div>
+
+<div class="callout"><h3>Done when</h3>
+<ul>
+<li>No layout claim rests on reading a modifier chain</li>
+<li>An observation made on a device that was failing at the time is recorded as unresolved, not as a result</li>
+<li>Reachability assertions use <code>assertIsDisplayed</code>/<code>performScrollTo</code>, never <code>assertExists</code></li>
+<li>Overflow tests force the overflow with a window qualifier instead of assuming it</li>
+<li>At least one test renders the screen inside the scaffold it ships in</li>
+<li>Every new regression test has been watched failing against the unfixed code</li>
+</ul></div>
+
+<div class="quiz">
+<h3>Check Yourself</h3>
+<div class="quiz-item"><p><strong>1.</strong> The scroll modifier was present and correctly applied. Why was that not an answer to "the home screen does not scroll"?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because a modifier chain states intent, and layout bugs live in what surrounds it — an ancestor's constraints, a component docked over it, a font scale nobody tried. The reading was in fact correct here, which is the point: it would have read exactly the same if the bug had been real, so it could not distinguish the two cases. It is the same evidence available to whoever wrote the bug.</div></div>
+<div class="quiz-item"><p><strong>2.</strong> The screen was reproduced clipped on a device, and two swipes changed nothing. Why was that thrown out?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The emulator reported "System UI isn't responding" during the run and died shortly after. With input delivery itself suspect, a swipe that produced no change says nothing about the scroll container — it may never have arrived. A broken instrument yields no result rather than a weak one, and acting on it risks rewriting working code to chase a bug that was never there.</div></div>
+<div class="quiz-item"><p><strong>3.</strong> Home's existing tests assert <code>onNodeWithText("Settings").assertExists()</code>. What state of the screen do they fail to distinguish?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">A quick link that was composed, placed, and then clipped off the bottom of an unscrollable window is still in the semantics tree, so <code>assertExists</code> passes on precisely the bug a user would report. The reachability assertions are <code>assertIsNotDisplayed</code> before scrolling and <code>performScrollTo().assertIsDisplayed()</code> after — the first proves the test is exercising the overflow case, the second fails outright if no scrollable ancestor exists.</div></div>
+<div class="quiz-item"><p><strong>4.</strong> Why does one of the two tests wrap <code>HomeScreen</code> in <code>AdaptiveScaffold</code>?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because that is the composition the app ships: Home is never rendered bare, and the scaffold's <code>NavigationBar</code> takes the bottom of the window away from it. A screen that scrolls in isolation and stops scrolling once something is docked beneath it would pass a bare-screen test forever. It also forces a real disambiguation — "Settings" is a NavigationBar label too, so the assertion targets the node with a scrolling ancestor.</div></div>
+<div class="quiz-item"><p><strong>5.</strong> These tests pass. What question about Home is still open?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Whether Home scrolls at <code>font_scale 2.0</code> on real hardware. The tests create the overflow by shrinking the window rather than by enlarging text — the same condition reached by a different cause, which is a reasonable substitute and not the same experiment. Saying so is the difference between a covered behaviour and one that is merely believed.</div></div>
+</div>
+</section>
+
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>23 Chapters, One Production App</h3>
+<div class="callout"><h3>24 Chapters, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -2869,6 +2966,7 @@ th{background:var(--panel-2);font-weight:600}
 <tr><td style="padding:8px">Policy &amp; Claims</td><td style="padding:8px">Play permission policy, privileged audio sources, file-backed rows</td><td style="padding:8px">21</td></tr>
 <tr><td style="padding:8px">Permission UX</td><td style="padding:8px">Explaining before asking, revocation, warning placement, positive assertions</td><td style="padding:8px">22</td></tr>
 <tr><td style="padding:8px">Duplication &amp; Identity</td><td style="padding:8px">One behaviour in three places, one of them a platform API; init-time permission checks; PendingIntent equality</td><td style="padding:8px">23</td></tr>
+<tr><td style="padding:8px">Evidence</td><td style="padding:8px">Reading code vs verifying it; observations from a failing device; existence vs reachability assertions</td><td style="padding:8px">24</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2879,8 +2977,8 @@ th{background:var(--panel-2);font-weight:600}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>419 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-13 (fifth) — extended Chapter 20 with three device scripts that were reporting something other than what they measured: a rule-matrix harness reading the previous scenario's call-log row (4 false failures, and a shape that yields false passes too — the rule engine was innocent on all four, 13/13 after the fix), a contact regression test whose <code>sed</code> split "611 99 88 77" into "611" and dialled a number too short for the parser to read a country code from, a ringing test that grepped <code>userId=</code> when Android prints <code>appId=</code> and so had never once run on the hardware it exists for, and a crash check reading the device's entire persistent logcat that failed on another app's fatal before any database assertion ran. Previously: 2026-08-13 (fourth) — extended Chapter 20 with the ringer finally getting tests, eight days after the audit found it inert: extracting <code>RingerPolicy</code> so the decision leaves the untestable <code>MediaPlayer</code>/<code>Vibrator</code> class, a Robolectric test proving the plan is actually consumed rather than merely computed, and the check that matters — stubbing the vibration failed three of six tests, and the three that stayed green were the ones asserting absences, which is the shape a "covered" inert feature has. Previously: 2026-08-13 (third) — extended Chapter 23 with the third copy of the contact-matching behaviour, which is <code>ContactsContract.PhoneLookup</code> itself: it matches through a <code>NORMALIZED_NUMBER</code> column computed from the device's region at save time, so a contact saved nationally misses an E.164 call, and on a SIM-less emulator every contact reads as a stranger — meaning "silence unknown callers" was suppressing real contacts' missed calls. Covers why months passed without anyone noticing (the same lookup had only supplied a display name, where a miss degrades to a number) and the Telecom callback that had to read the number before launching a coroutine. Previously: 2026-08-13 (later) — added Chapter 23 (one behaviour written twice and fixed once: the contact-name lookup that was correct in the call log and single-key in the block lists, a permission check in <code>init</code> that runs before the permission arrives, a feature request whose literal reading would have left strangers' calls with no screen at all, and PendingIntent equality ignoring the extras that distinguish two notifications). Previously: 2026-08-13 — extended Chapter 21 with release economics: a fix that lives in a Console form still spends a version code, because Play will not re-review a code it has ruled on, and no artifact audit can see a form answer revert. Previously: 2026-08-12 — extended Chapter 21 with the second rejection of the same permission: the declaration form has two questions, and the one nobody read (pre-grant at install?) was the one being judged. Covers what declining the pre-grant costs — the permission is now off on every Android 14+ install — the checklist row added because the existing warning was ranked third on a screen that shows one, and the reason none of it had ever been rendered before: the project's only emulator was one API level below the feature. Previously: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p>421 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-13 (seventh) — added Chapter 24 (two kinds of non-evidence: reading a modifier chain is not verification, and a device screenshot taken from an emulator that was already failing is not one either). Covers why every existing Home test passed against the reported bug (<code>assertExists</code> is true of a node clipped off the bottom of the window), forcing the overflow with a Robolectric window qualifier rather than assuming it, testing the screen inside the <code>AdaptiveScaffold</code> it actually ships in, and what the passing tests still do not prove. Previously: 2026-08-13 (fifth) — extended Chapter 20 with three device scripts that were reporting something other than what they measured: a rule-matrix harness reading the previous scenario's call-log row (4 false failures, and a shape that yields false passes too — the rule engine was innocent on all four, 13/13 after the fix), a contact regression test whose <code>sed</code> split "611 99 88 77" into "611" and dialled a number too short for the parser to read a country code from, a ringing test that grepped <code>userId=</code> when Android prints <code>appId=</code> and so had never once run on the hardware it exists for, and a crash check reading the device's entire persistent logcat that failed on another app's fatal before any database assertion ran. Previously: 2026-08-13 (fourth) — extended Chapter 20 with the ringer finally getting tests, eight days after the audit found it inert: extracting <code>RingerPolicy</code> so the decision leaves the untestable <code>MediaPlayer</code>/<code>Vibrator</code> class, a Robolectric test proving the plan is actually consumed rather than merely computed, and the check that matters — stubbing the vibration failed three of six tests, and the three that stayed green were the ones asserting absences, which is the shape a "covered" inert feature has. Previously: 2026-08-13 (third) — extended Chapter 23 with the third copy of the contact-matching behaviour, which is <code>ContactsContract.PhoneLookup</code> itself: it matches through a <code>NORMALIZED_NUMBER</code> column computed from the device's region at save time, so a contact saved nationally misses an E.164 call, and on a SIM-less emulator every contact reads as a stranger — meaning "silence unknown callers" was suppressing real contacts' missed calls. Covers why months passed without anyone noticing (the same lookup had only supplied a display name, where a miss degrades to a number) and the Telecom callback that had to read the number before launching a coroutine. Previously: 2026-08-13 (later) — added Chapter 23 (one behaviour written twice and fixed once: the contact-name lookup that was correct in the call log and single-key in the block lists, a permission check in <code>init</code> that runs before the permission arrives, a feature request whose literal reading would have left strangers' calls with no screen at all, and PendingIntent equality ignoring the extras that distinguish two notifications). Previously: 2026-08-13 — extended Chapter 21 with release economics: a fix that lives in a Console form still spends a version code, because Play will not re-review a code it has ruled on, and no artifact audit can see a form answer revert. Previously: 2026-08-12 — extended Chapter 21 with the second rejection of the same permission: the declaration form has two questions, and the one nobody read (pre-grant at install?) was the one being judged. Covers what declining the pre-grant costs — the permission is now off on every Android 14+ install — the checklist row added because the existing warning was ranked third on a screen that shows one, and the reason none of it had ever been rendered before: the project's only emulator was one API level below the feature. Previously: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>

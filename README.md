@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 419 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 421 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -84,7 +84,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 394 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 396 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 25 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
@@ -135,11 +135,19 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 23-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — and (newest) one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product.
+A complete 24-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product, and (newest) the difference between reading code, watching a failing device, and actually proving a screen scrolls.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 97 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 102 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-13 (seventh):** "the home screen does not scroll" — answered with a test instead of an argument.
+
+- **It scrolls.** The report was investigated once by reading the code, which is not the same thing as checking: `HomeScreen` passes `Modifier.verticalScroll(...)` into `AdaptiveContent`, so on paper the question was closed. The device run that followed said otherwise — Home's last quick link clipped at the bottom edge, two swipes producing pixel-identical screenshots — but the emulator threw *"System UI isn't responding"* mid-swipe and died shortly after, so input delivery itself was suspect and **neither the reasoning nor the observation was evidence**. The question is now settled by two regression tests that fail against a Home with the scroll modifier removed, watched failing before they were kept.
+- **Every existing Home test would have passed on the reported bug.** They all assert `assertExists`, which is true of a node that was composed and then clipped off the bottom of the window — exactly the state a user calls "does not scroll". The new tests shrink the window until Home overflows, assert the last quick link is genuinely **not displayed**, and then require that scrolling reaches it. An absence assertion could not have caught this; a positive one does.
+- **One of the two runs Home inside `AdaptiveScaffold`, because a screen that scrolls alone can stop scrolling once something is docked under it.** Home is never rendered bare — the scaffold's `NavigationBar` takes the bottom of the window away from it. Testing the screen in isolation cannot see a bug that only exists in the composition the app actually ships.
+- **Still not proven on hardware:** the tests shrink the viewport rather than raising the font scale. The mechanism is the same (content taller than the window), but the razr has not re-run the original scenario at `font_scale 2.0`.
+- 419 → 421 tests (`:shared` 394 → 396). `./scripts/verify.sh` green, including the iOS compile, Android Lint and the SQLDelight migration check, which had not run since `b418b12`.
 
 **2026-08-13 (sixth):** onboarding was a dead end at a large font size. Version 1.1.4.
 

@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 419 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 421 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -84,7 +84,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 394 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 396 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 25 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
@@ -137,11 +137,19 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 23 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) y (el más nuevo) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto.
+Un curso completo de 24 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto, y (el más nuevo) la diferencia entre leer el código, ver fallar un dispositivo y demostrar de verdad que una pantalla se desplaza.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 97 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 102 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-13 (séptima):** «la pantalla de inicio no se desplaza» — respondido con una prueba, no con un argumento.
+
+- **Sí se desplaza.** El aviso se investigó primero leyendo el código, que no es lo mismo que comprobarlo: `HomeScreen` pasa `Modifier.verticalScroll(...)` a `AdaptiveContent`, así que sobre el papel la duda quedaba cerrada. La prueba en dispositivo que vino después decía lo contrario — el último acceso rápido recortado en el borde inferior y dos deslizamientos que produjeron capturas idénticas píxel a píxel — pero el emulador lanzó *«System UI isn't responding»* en mitad del gesto y murió poco después, así que la propia entrada táctil era sospechosa y **ni el razonamiento ni la observación eran pruebas**. Ahora la duda la zanjan dos pruebas de regresión que fallan contra un Home sin el modificador de scroll, vistas fallando antes de darlas por buenas.
+- **Todas las pruebas que ya existían de Home habrían pasado con el fallo reportado.** Usan `assertExists`, que es cierto para un nodo que se compuso y luego quedó recortado fuera de la ventana — justo el estado que un usuario describe como «no se desplaza». Las nuevas encogen la ventana hasta que Home desborda, afirman que el último acceso rápido **no se está mostrando** y exigen que el desplazamiento llegue hasta él. Una aserción de ausencia no habría detectado esto; una positiva sí.
+- **Una de las dos renderiza Home dentro de `AdaptiveScaffold`, porque una pantalla que se desplaza sola puede dejar de hacerlo en cuanto se le acopla algo debajo.** Home nunca se muestra desnuda: la `NavigationBar` del scaffold le quita la parte inferior de la ventana. Probar la pantalla aislada no puede ver un fallo que solo existe en la composición que la app realmente publica.
+- **Sigue sin probarse en hardware:** las pruebas encogen el viewport en vez de subir la escala de fuente. El mecanismo es el mismo (contenido más alto que la ventana), pero el razr no ha repetido el escenario original con `font_scale 2.0`.
+- De 419 a 421 pruebas (`:shared` de 394 a 396). `./scripts/verify.sh` en verde, incluidos la compilación de iOS, Android Lint y la comprobación de migraciones de SQLDelight, que no se ejecutaban desde `b418b12`.
 
 **2026-08-13 (sexta):** el onboarding era un callejón sin salida con fuente grande. Versión 1.1.4.
 
