@@ -64,6 +64,18 @@ class PassthroughInCallService :
 
     private val callStates = mutableMapOf<Call, CallState>()
 
+    /**
+     * Whether to post an after-the-fact notification (blocked / missed / repeated caller) for
+     * [number]. The ringing notification does not go through here — see [NotificationPolicy].
+     */
+    private fun shouldNotifyResult(number: String): Boolean =
+        NotificationPolicy.shouldNotifyCallResult(
+            notificationsEnabled = settingsRepository.notificationsEnabled.value,
+            notifyUnknownCallers = settingsRepository.notifyUnknownCallers.value,
+            contactsAccessGranted = ContactNameLookup.hasContactsAccess(this),
+            callerIsInContacts = ContactNameLookup.displayNameFor(this, number) != null,
+        )
+
     private class CallState {
         var blockedByRules = false
         var evaluation: Job? = null
@@ -168,7 +180,7 @@ class PassthroughInCallService :
                         state.blockedByRules = true
                         ringer.stop()
                         IncomingCallNotifier.cancel(this@PassthroughInCallService)
-                        if (settingsRepository.notificationsEnabled.value) {
+                        if (shouldNotifyResult(number)) {
                             IncomingCallNotifier.notifyCallResult(
                                 this@PassthroughInCallService,
                                 number,
@@ -188,7 +200,7 @@ class PassthroughInCallService :
                         // Not blocked -- the call keeps ringing normally. The only extra step is
                         // telling the user why an unrecognized number is getting through.
                         InCallState.setRepeatedCallAttempts(decision.attempts)
-                        if (settingsRepository.notificationsEnabled.value) {
+                        if (shouldNotifyResult(number)) {
                             IncomingCallNotifier.notifyCallResult(
                                 this@PassthroughInCallService,
                                 number,
@@ -277,7 +289,7 @@ class PassthroughInCallService :
 
         if (state?.blockedByRules != true &&
             call.details?.disconnectCause?.code == DisconnectCause.MISSED &&
-            settingsRepository.notificationsEnabled.value
+            shouldNotifyResult(call.handleNumber())
         ) {
             IncomingCallNotifier.notifyCallResult(
                 this,

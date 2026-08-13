@@ -313,6 +313,7 @@ fun AppNavHost(
                     onSetDefaultAction = { settingsViewModel.onIntent(SettingsIntent.SetDefaultAction(it)) },
                     onSetSpamEnabled = { settingsViewModel.onIntent(SettingsIntent.SetSpamEnabled(it)) },
                     onSetNotificationsEnabled = { settingsViewModel.onIntent(SettingsIntent.SetNotificationsEnabled(it)) },
+                    onSetNotifyUnknownCallers = { settingsViewModel.onIntent(SettingsIntent.SetNotifyUnknownCallers(it)) },
                     onSetRepeatedCallerBypassCount = { settingsViewModel.onIntent(SettingsIntent.SetRepeatedCallerBypassCount(it)) },
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onOpenNotificationSettings = onOpenNotificationSettings ?: {},

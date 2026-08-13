@@ -15,6 +15,7 @@ data class SettingsUiState(
     val defaultAction: DefaultAction = DefaultAction.ALLOW,
     val spamEnabled: Boolean = false,
     val notificationsEnabled: Boolean = true,
+    val notifyUnknownCallers: Boolean = true,
     val repeatedCallerBypassCount: Int = 0,
 )
 
@@ -36,6 +37,10 @@ sealed interface SettingsIntent {
     ) : SettingsIntent
 
     data class SetNotificationsEnabled(
+        val enabled: Boolean,
+    ) : SettingsIntent
+
+    data class SetNotifyUnknownCallers(
         val enabled: Boolean,
     ) : SettingsIntent
 
@@ -67,6 +72,8 @@ class SettingsViewModel(
             // 2-arg combine on top avoids forcing the mixed-type set into the vararg Array<T> form.
         }.combine(settingsRepository.repeatedCallerBypassCount) { partial, repeatedCallerBypassCount ->
             partial.copy(repeatedCallerBypassCount = repeatedCallerBypassCount)
+        }.combine(settingsRepository.notifyUnknownCallers) { partial, notifyUnknownCallers ->
+            partial.copy(notifyUnknownCallers = notifyUnknownCallers)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun onIntent(intent: SettingsIntent) {
@@ -76,6 +83,7 @@ class SettingsViewModel(
             is SettingsIntent.SetDefaultAction -> setDefaultAction(intent.action)
             is SettingsIntent.SetSpamEnabled -> setSpamEnabled(intent.enabled)
             is SettingsIntent.SetNotificationsEnabled -> setNotificationsEnabled(intent.enabled)
+            is SettingsIntent.SetNotifyUnknownCallers -> setNotifyUnknownCallers(intent.enabled)
             is SettingsIntent.SetRepeatedCallerBypassCount -> setRepeatedCallerBypassCount(intent.count)
         }
     }
@@ -107,6 +115,12 @@ class SettingsViewModel(
     private fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setNotificationsEnabled(enabled)
+        }
+    }
+
+    private fun setNotifyUnknownCallers(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setNotifyUnknownCallers(enabled)
         }
     }
 

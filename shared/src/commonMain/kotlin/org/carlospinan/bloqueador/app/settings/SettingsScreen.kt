@@ -60,6 +60,8 @@ import cortaspam.shared.generated.resources.settings_default_action_ask
 import cortaspam.shared.generated.resources.settings_default_action_block
 import cortaspam.shared.generated.resources.settings_default_action_desc
 import cortaspam.shared.generated.resources.settings_grant_contacts
+import cortaspam.shared.generated.resources.settings_notify_unknown_callers
+import cortaspam.shared.generated.resources.settings_notify_unknown_callers_desc
 import cortaspam.shared.generated.resources.settings_privacy_desc
 import cortaspam.shared.generated.resources.settings_privacy_title
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass
@@ -111,6 +113,7 @@ fun SettingsScreen(
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
     onSetNotificationsEnabled: (Boolean) -> Unit = {},
+    onSetNotifyUnknownCallers: (Boolean) -> Unit = {},
     onSetRepeatedCallerBypassCount: (Int) -> Unit = {},
     onRequestContactsPermission: () -> Unit,
     onOpenNotificationSettings: () -> Unit = {},
@@ -179,8 +182,13 @@ fun SettingsScreen(
                                     onRequestContactsPermission = onRequestContactsPermission,
                                 )
 
-                            SettingsSection.Notifications ->
+                            SettingsSection.Notifications -> {
                                 NotificationsToggleItem(state.notificationsEnabled, onSetNotificationsEnabled)
+                                if (state.notificationsEnabled) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    UnknownCallerToggleItem(state.notifyUnknownCallers, onSetNotifyUnknownCallers)
+                                }
+                            }
 
                             SettingsSection.About -> {
                                 PrivacyItem(onNavigateToPrivacy)
@@ -220,6 +228,13 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     NotificationsToggleItem(state.notificationsEnabled, onSetNotificationsEnabled)
+
+                    // Hidden rather than disabled while the parent is off: it reads as a
+                    // promise the app cannot keep when nothing is being posted at all.
+                    if (state.notificationsEnabled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        UnknownCallerToggleItem(state.notifyUnknownCallers, onSetNotifyUnknownCallers)
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -385,6 +400,25 @@ private fun NotificationsToggleItem(
         title = stringResource(Res.string.settings_show_notifications),
         description = stringResource(Res.string.settings_show_notifications_desc),
         icon = Res.drawable.ic_settings,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
+}
+
+/**
+ * Sub-toggle of [NotificationsToggleItem]: whether the blocked / missed / repeated-caller
+ * notifications are posted for numbers the address book does not claim. It does not touch the
+ * ringing call screen — see SettingsRepository.notifyUnknownCallers.
+ */
+@Composable
+private fun UnknownCallerToggleItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_notify_unknown_callers),
+        description = stringResource(Res.string.settings_notify_unknown_callers_desc),
+        icon = Res.drawable.ic_unknown_call,
         checked = checked,
         onCheckedChange = onCheckedChange,
     )

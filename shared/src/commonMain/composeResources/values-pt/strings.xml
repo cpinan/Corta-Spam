@@ -186,6 +186,8 @@
     <string name="settings_privacy_desc">Como seus dados são tratados</string>
     <string name="settings_terms_title">Termos e Condições</string>
     <string name="settings_terms_desc">Licença open source e termos de uso</string>
+    <string name="settings_notify_unknown_callers">Notificar chamadas desconhecidas</string>
+    <string name="settings_notify_unknown_callers_desc">Notificações de chamadas bloqueadas, perdidas e de insistentes para números que não estão nos seus contatos. A tela de chamada recebida sempre aparece.</string>
     <string name="settings_credits_title">Créditos</string>
     <string name="settings_credits_desc">Pessoas que ajudaram a construir o Corta Spam</string>
     <string name="credits_intro">O Corta Spam é open source. Estas pessoas contribuíram com código, traduções, relatos de erros ou o feedback que mudou uma decisão.</string>

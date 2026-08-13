@@ -249,6 +249,8 @@ The optional spam provider is a list of known scam dialling codes bundled inside
 The app is fully open source. Every line of code can be audited independently at its public repository.</string>
     <string name="settings_terms_title">Terms &amp; Conditions</string>
     <string name="settings_terms_desc">Open source license and usage terms</string>
+    <string name="settings_notify_unknown_callers">Notify for unknown callers</string>
+    <string name="settings_notify_unknown_callers_desc">Blocked, missed and repeat-caller notifications for numbers that are not in your contacts. The incoming-call screen always appears.</string>
     <string name="settings_credits_title">Credits</string>
     <string name="settings_credits_desc">People who helped build Corta Spam</string>
     <string name="credits_intro">Corta Spam is open source. These people contributed code, translations, bug reports, or the feedback that changed a decision.</string>

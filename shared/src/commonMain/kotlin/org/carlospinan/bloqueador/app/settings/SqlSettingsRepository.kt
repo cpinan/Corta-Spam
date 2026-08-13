@@ -26,6 +26,9 @@ class SqlSettingsRepository(
     private val _notificationsEnabled = MutableStateFlow(true)
     override val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
 
+    private val _notifyUnknownCallers = MutableStateFlow(true)
+    override val notifyUnknownCallers: StateFlow<Boolean> = _notifyUnknownCallers.asStateFlow()
+
     private val _repeatedCallerBypassCount = MutableStateFlow(0)
     override val repeatedCallerBypassCount: Flow<Int> = _repeatedCallerBypassCount.asStateFlow()
 
@@ -37,6 +40,7 @@ class SqlSettingsRepository(
                 DefaultAction.entries.find { it.key == key } ?: DefaultAction.ALLOW
             }
         _notificationsEnabled.value = store.readBool("notifications_enabled", true)
+        _notifyUnknownCallers.value = store.readBool("notify_unknown_callers", true)
         _repeatedCallerBypassCount.value = store.readInt("repeated_caller_bypass_count", 0)
     }
 
@@ -58,6 +62,11 @@ class SqlSettingsRepository(
     override suspend fun setNotificationsEnabled(enabled: Boolean) {
         store.writeBool("notifications_enabled", enabled)
         _notificationsEnabled.value = enabled
+    }
+
+    override suspend fun setNotifyUnknownCallers(enabled: Boolean) {
+        store.writeBool("notify_unknown_callers", enabled)
+        _notifyUnknownCallers.value = enabled
     }
 
     override suspend fun setRepeatedCallerBypassCount(count: Int) {

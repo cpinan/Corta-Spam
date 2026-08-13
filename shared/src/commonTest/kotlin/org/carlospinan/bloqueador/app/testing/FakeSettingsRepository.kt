@@ -20,6 +20,7 @@ internal class FakeSettingsRepository(
     override val autoAllowContacts: MutableStateFlow<Boolean> = MutableStateFlow(false),
     override val defaultAction: MutableStateFlow<DefaultAction> = MutableStateFlow(DefaultAction.ALLOW),
     override val notificationsEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
+    override val notifyUnknownCallers: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val repeatedCallerBypassCount: MutableStateFlow<Int> = MutableStateFlow(0),
     override val welcomeShown: Boolean = false,
     override val permissionsPromptShown: Boolean = false,
@@ -38,6 +39,10 @@ internal class FakeSettingsRepository(
 
     override suspend fun setNotificationsEnabled(enabled: Boolean) {
         notificationsEnabled.value = enabled
+    }
+
+    override suspend fun setNotifyUnknownCallers(enabled: Boolean) {
+        notifyUnknownCallers.value = enabled
     }
 
     override suspend fun setRepeatedCallerBypassCount(count: Int) {
