@@ -52,6 +52,8 @@ import cortaspam.shared.generated.resources.settings_backup
 import cortaspam.shared.generated.resources.settings_backup_desc
 import cortaspam.shared.generated.resources.settings_blocking_enabled
 import cortaspam.shared.generated.resources.settings_blocking_enabled_desc
+import cortaspam.shared.generated.resources.settings_credits_desc
+import cortaspam.shared.generated.resources.settings_credits_title
 import cortaspam.shared.generated.resources.settings_default_action
 import cortaspam.shared.generated.resources.settings_default_action_allow
 import cortaspam.shared.generated.resources.settings_default_action_ask
@@ -118,6 +120,7 @@ fun SettingsScreen(
     onNavigateToBackup: () -> Unit,
     onNavigateToPrivacy: () -> Unit = {},
     onNavigateToTerms: () -> Unit = {},
+    onNavigateToCredits: () -> Unit = {},
     onBack: () -> Unit,
     // Injectable so a test can exercise the Expanded layout without a wide container,
     // the same shape AdaptiveScaffold already uses.
@@ -183,6 +186,8 @@ fun SettingsScreen(
                                 PrivacyItem(onNavigateToPrivacy)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 TermsItem(onNavigateToTerms)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                CreditsItem(onNavigateToCredits)
                             }
                         }
                     }
@@ -248,6 +253,10 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     TermsItem(onNavigateToTerms)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    CreditsItem(onNavigateToCredits)
                 }
             }
         }
@@ -501,6 +510,17 @@ private fun TermsItem(onClick: () -> Unit) {
         title = stringResource(Res.string.settings_terms_title),
         description = stringResource(Res.string.settings_terms_desc),
         icon = Res.drawable.ic_privacy,
+        value = stringResource(Res.string.action_view),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun CreditsItem(onClick: () -> Unit) {
+    SettingDropdown(
+        title = stringResource(Res.string.settings_credits_title),
+        description = stringResource(Res.string.settings_credits_desc),
+        icon = Res.drawable.ic_contacts,
         value = stringResource(Res.string.action_view),
         onClick = onClick,
     )

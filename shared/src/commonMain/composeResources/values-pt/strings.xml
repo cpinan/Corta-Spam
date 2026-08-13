@@ -186,6 +186,10 @@
     <string name="settings_privacy_desc">Como seus dados são tratados</string>
     <string name="settings_terms_title">Termos e Condições</string>
     <string name="settings_terms_desc">Licença open source e termos de uso</string>
+    <string name="settings_credits_title">Créditos</string>
+    <string name="settings_credits_desc">Pessoas que ajudaram a construir o Corta Spam</string>
+    <string name="credits_intro">O Corta Spam é open source. Estas pessoas contribuíram com código, traduções, relatos de erros ou o feedback que mudou uma decisão.</string>
+    <string name="credits_empty">Os nomes chegarão em breve. Se você ajudou e não está aqui, abra uma issue no GitHub.</string>
 
     <!-- Auto-respondedor -->
     <string name="settings_autoresponder">Auto-respondedor (Experimental)</string>

@@ -16,6 +16,7 @@ object AdaptiveRoutes {
     const val BACKUP = "backup"
     const val PRIVACY_POLICY = "privacy_policy"
     const val TERMS_CONDITIONS = "terms_conditions"
+    const val CREDITS = "credits"
 
     fun callLogRoute(filter: String = "all"): String = "call_log/$filter"
 }
@@ -41,6 +42,7 @@ val settingsSectionRoutes =
         AdaptiveRoutes.BACKUP,
         AdaptiveRoutes.PRIVACY_POLICY,
         AdaptiveRoutes.TERMS_CONDITIONS,
+        AdaptiveRoutes.CREDITS,
     )
 val sectionRoutes =
     listOf(

@@ -186,6 +186,10 @@
     <string name="settings_privacy_desc">आपका डेटा कैसे संभाला जाता है</string>
     <string name="settings_terms_title">नियम और शर्तें</string>
     <string name="settings_terms_desc">ओपन सोर्स लाइसेंस और उपयोग की शर्तें</string>
+    <string name="settings_credits_title">श्रेय</string>
+    <string name="settings_credits_desc">Corta Spam बनाने में मदद करने वाले लोग</string>
+    <string name="credits_intro">Corta Spam ओपन सोर्स है। इन लोगों ने कोड, अनुवाद, बग रिपोर्ट या ऐसी प्रतिक्रिया दी जिसने कोई फैसला बदला।</string>
+    <string name="credits_empty">नाम जल्द ही जोड़े जाएंगे। अगर आपने मदद की है और यहाँ नहीं हैं, तो GitHub पर issue खोलें।</string>
 
     <!-- ऑटो-रिस्पॉन्डर -->
     <string name="settings_autoresponder">ऑटो-रिस्पॉन्डर (प्रायोगिक)</string>

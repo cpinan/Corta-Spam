@@ -40,6 +40,7 @@ import org.carlospinan.bloqueador.app.blocklist.ScheduleRuleScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogIntent
 import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
+import org.carlospinan.bloqueador.app.credits.CreditsScreen
 import org.carlospinan.bloqueador.app.home.HomeIntent
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
@@ -75,6 +76,7 @@ object Routes {
     const val BACKUP = AdaptiveRoutes.BACKUP
     const val PRIVACY_POLICY = AdaptiveRoutes.PRIVACY_POLICY
     const val TERMS_CONDITIONS = AdaptiveRoutes.TERMS_CONDITIONS
+    const val CREDITS = AdaptiveRoutes.CREDITS
 
     fun callLogRoute(filter: String = "all"): String = AdaptiveRoutes.callLogRoute(filter)
 }
@@ -320,6 +322,7 @@ fun AppNavHost(
                     onNavigateToBackup = { navController.navigate(Routes.BACKUP) { launchSingleTop = true } },
                     onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) { launchSingleTop = true } },
                     onNavigateToTerms = { navController.navigate(Routes.TERMS_CONDITIONS) { launchSingleTop = true } },
+                    onNavigateToCredits = { navController.navigate(Routes.CREDITS) { launchSingleTop = true } },
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -374,6 +377,10 @@ fun AppNavHost(
                     body = stringResource(Res.string.terms_conditions_body),
                     onBack = { navController.popBackStack() },
                 )
+            }
+
+            composable(Routes.CREDITS) {
+                CreditsScreen(onBack = { navController.popBackStack() })
             }
         }
     }
