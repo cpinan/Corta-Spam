@@ -64,8 +64,8 @@ import kotlinx.datetime.toLocalDateTime
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.contacts.contactDisplayName
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
-import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.carlospinan.bloqueador.app.rules.storedBlockReasonText
 import org.jetbrains.compose.resources.painterResource
@@ -172,7 +172,7 @@ fun CallLogScreen(
         selectedNumber?.let { number ->
             AlertDialog(
                 onDismissRequest = { selectedNumber = null },
-                title = { Text(displayName(number, contactNames)) },
+                title = { Text(contactDisplayName(number, contactNames)) },
                 text = {
                     Column {
                         TextButton(
@@ -337,7 +337,7 @@ private fun CallLogDetailPane(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = displayName(entry.number, contactNames),
+                text = contactDisplayName(entry.number, contactNames),
                 style = MaterialTheme.typography.headlineMedium,
             )
 
@@ -456,7 +456,7 @@ private fun CallLogEntryRow(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = displayName(entry.number, contactNames),
+                    text = contactDisplayName(entry.number, contactNames),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
@@ -543,24 +543,6 @@ private fun RecordingControls(
         )
     }
 }
-
-/**
- * The contact's name, or the number when nobody in the address book claims it.
- *
- * Probes every form the number may be filed under rather than its digits alone. Contacts are
- * saved the way they are dialled, calls arrive in E.164, and comparing digits meant a call log
- * full of bare numbers for people who were in the address book all along — while the incoming-call
- * notification showed the name correctly, because that path goes through the platform's own
- * PhoneLookup. See PhoneNumberParser.comparisonKeys.
- */
-private fun displayName(
-    number: String,
-    contactNames: Map<String, String>,
-): String =
-    PhoneNumberParser
-        .comparisonKeys(number)
-        .firstNotNullOfOrNull { contactNames[it] }
-        ?: number
 
 private fun formatTimestamp(epochMillis: Long): String {
     val now = currentTimeMillis()

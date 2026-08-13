@@ -111,11 +111,11 @@ import cortaspam.shared.generated.resources.schedule_start_hint
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.contacts.contactDisplayName
 import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.COUNTRIES
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
-import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
 import org.jetbrains.compose.resources.DrawableResource
@@ -172,7 +172,7 @@ fun ManualBlockListScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = displayName(entry.number, contactNames),
+                                            text = contactDisplayName(entry.number, contactNames),
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
                                         if (entry.label != null) {
@@ -296,7 +296,7 @@ fun AllowlistScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = displayName(entry.number, contactNames),
+                                            text = contactDisplayName(entry.number, contactNames),
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
                                         if (entry.label != null) {
@@ -974,11 +974,6 @@ fun ScheduleRuleScreen(
         )
     }
 }
-
-private fun displayName(
-    number: String,
-    contactNames: Map<String, String>,
-): String = contactNames[PhoneNumberParser.normalizeForComparison(number)] ?: number
 
 private fun minuteOfDayToHHmm(minute: Int): String {
     val hour = (minute / 60).toString().padStart(2, '0')
