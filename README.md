@@ -84,8 +84,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 378 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 8 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 391 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 13 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -135,11 +135,19 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 22-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, and (newest) permission UX as a design problem — asking, explaining, and noticing when a permission is taken back.
+A complete 23-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — and (newest) one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 88 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 93 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-13 (later):** notification control, a credits screen, and the same contact bug in a second place.
+
+- **The block lists had the contact bug the call log was fixed for two days earlier.** `BlockListScreens.kt` looked names up with `contactNames[normalizeForComparison(number)]` — one key, bare digits — while `ContactsGateway` keys that map by *every* `comparisonKeys` form of each saved contact. So the lookup could miss an entry that was sitting right there, and both block lists showed bare numbers for people in the address book. Nothing tied the two copies together, which is why fixing the call log on 2026-08-11 left this untouched. There is now one `contactDisplayName` in `contacts/`, used by both screens, with the two failing cases (a contact saved nationally, and one saved with a trunk zero) watched failing against the old body before the fix went in.
+- **Contact names never appeared if the permission arrived after the screen did.** Both view models loaded the address book once, in `init`, behind `hasPermission()`. Granting contacts from Settings or the onboarding checklist happens while the screen is already on top, so that check had already run and said no — and the list showed bare numbers until the process died. Both now expose a `RefreshContactNames` intent, dispatched on resume, which is exactly when a returning permission dialog lands.
+- **Notifications for unknown callers can be switched off, and the switch deliberately does not touch the ringing screen.** The new `notifyUnknownCallers` setting filters the after-the-fact notifications — blocked, missed, repeat caller — for numbers the address book does not claim. It is *not* wired to the incoming-call notification: as the default dialer this app owns that UI, so suppressing it would not hide a banner, it would leave a stranger's call with no screen at all over the lock screen. Silencing a stranger outright is what a block rule is for. The decision lives in a pure `NotificationPolicy` object rather than inside the Telecom service, so it is provable at the desk instead of by placing a real call — including the trap that without `READ_CONTACTS` every caller looks unknown, which would have silenced the channel for the user's whole address book.
+- **Finished-call notifications carry one-tap rule buttons.** A blocked call offers **Always allow** (the undo), a missed or repeat-caller call offers **Block**. Which button appears depends on the outcome: "Block" on an already-blocked call changes nothing, and a button that does nothing when tapped teaches the user their taps are ignored. They could not go on the ringing notification — `CallStyle.forIncomingCall` fixes that one's buttons to answer/decline. Each button's `PendingIntent` carries a per-number `data` URI, because `PendingIntent` equality ignores extras: without it, posting a second notification would have rewritten the first one's number through `FLAG_UPDATE_CURRENT`, so blocking one caller would blocklist a different one. The write runs under `goAsync()`, and the notification is dismissed only after it lands.
+- **Settings has a Credits section.** It is reachable and empty on purpose, telling the user names are on the way rather than pretending nobody helped. Adding a name means adding an entry to `CONTRIBUTORS` and nothing else. Contribution lines are deliberately not localized — a resource key per person would fail the build every time someone was added without all four locales, and a credit is an attribution, not app copy.
 
 **2026-08-13:** version code 4, cut for a fix that is not in the bundle.
 

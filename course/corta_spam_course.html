@@ -2652,9 +2652,114 @@ th{background:var(--panel-2);font-weight:600}
 </div>
 </section>
 
+<section class="module" id="m23">
+<div class="chapter-status">Chapter 23 done</div>
+<h2><span class="cn">23</span>One Behaviour, Two Copies</h2>
+<p>Chapter 20 was about code that ships and never runs. This one is about code that ships, runs, and is <em>right in one place and wrong in another</em> — the same behaviour written twice, fixed once. It ends with two features whose obvious implementation would have quietly broken the product.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul>
+<li>Spot the drift that happens when one behaviour lives in two private functions</li>
+<li>See why a permission check in <code>init</code> is a check that runs at the wrong time</li>
+<li>Refuse the literal reading of a feature request when it would break the feature</li>
+<li>Understand what <code>PendingIntent</code> equality actually compares — and what it ignores</li>
+</ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> The fix that only landed in one file</h3>
+<p>Chapter 10 describes matching a contact saved <code>611 99 88 77</code> against the same person calling as <code>+34611998877</code>. The gateway builds its name map keyed by <em>every</em> form a contact may be recognised by:</p>
+<div class="filepath">shared/src/androidMain/kotlin/.../AndroidContactsGateway.kt</div>
+<pre><code><span class="line">val keys = PhoneNumberParser.<span class="fn">comparisonKeys</span>(raw)</span>
+<span class="line">keys.<span class="fn">forEach</span> { key -&gt; names.<span class="fn">getOrPut</span>(key) { name } }</span></code></pre>
+<p>So a lookup has to probe the same set. The call log did:</p>
+<pre><code><span class="line">PhoneNumberParser.<span class="fn">comparisonKeys</span>(number).<span class="fn">firstNotNullOfOrNull</span> { contactNames[it] } ?: number</span></code></pre>
+<p>And the block lists, in their own private function with the same name, in a different file, did not:</p>
+<pre><code><span class="line">contactNames[PhoneNumberParser.<span class="fn">normalizeForComparison</span>(number)] ?: number</span></code></pre>
+<p>One key, bare digits. Both functions were called <code>displayName</code>, both were <code>private</code>, and both were correct on the day they were written. When the contact-matching bug was fixed, the fix landed in the file where the bug had been reported and nowhere else — so for two days the call log showed names and the block lists showed numbers, for the same people, on the same phone.</p>
+
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">Nothing connected the two copies. No import, no shared symbol, no test that named both. A grep for <code>displayName</code> finds them, but only if you already suspect there are two — and the person fixing a reported bug has no reason to. The duplication itself is the defect; the wrong answer is only its symptom.</p></div>
+
+<p>The repair is not "fix the second copy". It is to make a second copy impossible: one public <code>contactDisplayName</code> in the <code>contacts</code> package, both screens importing it, the private pair deleted. The test then has one place to point at — and it builds its fixture <em>the way the gateway builds the real map</em>, not by hand:</p>
+<pre><code><span class="line"><span class="cm">// A map keyed by hand would pass against a lookup that cannot work on a device.</span></span>
+<span class="line">private fun <span class="fn">contactsOf</span>(vararg saved: Pair&lt;String, String&gt;): Map&lt;String, String&gt; { ... }</span></code></pre>
+<p>Both failing cases — a contact saved nationally, and one saved with a trunk zero — were watched failing against the single-key body before it was replaced.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> A permission check that runs before the permission arrives</h3>
+<p>Both view models loaded the address book like this:</p>
+<pre><code><span class="line">init {</span>
+<span class="line">    if (contactsGateway.<span class="fn">hasPermission</span>()) {</span>
+<span class="line">        viewModelScope.<span class="fn">launch</span> { contactNamesFlow.value = contactsGateway.<span class="fn">contactNames</span>() }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+<p>Correct, and useless in the case that matters. The user grants contacts from Settings or the onboarding checklist — both of which run <em>while a screen is already on top</em>. By then <code>init</code> has run, seen no permission, and will never look again. The names stayed missing until the process died, which on a healthy phone can be days.</p>
+<div class="note contrast"><span class="tag">Contrast</span>
+<p style="margin-bottom:0">The tempting fix is to collect the permission as a flow. It is not one: <code>checkSelfPermission</code> is a synchronous poll with no change notification. The event that actually exists is the activity resuming, which is precisely what happens when a permission dialog closes. So the trigger is <code>LifecycleEventEffect(ON_RESUME)</code> dispatching a <code>RefreshContactNames</code> intent — the same shape <code>HomeViewModel</code> already used, for the same reason.</p></div>
+
+<h3><span class="badge badge-i">Intermediate</span> When the literal reading breaks the feature</h3>
+<p>"Add a way to disable notifications for unknown callers" has an obvious implementation: find every <code>notify*</code> call, gate them all on the new setting. It would have shipped a bug that no test in this repository could catch.</p>
+<p>This app is the default dialer. Chapter 09 covers what that means: Telecom hands it <code>IN_CALL_SERVICE_RINGING</code> and stops ringing on its behalf, and the full-screen notification <em>is</em> the incoming-call screen over the lock screen. Suppressing it does not hide a banner — it leaves a stranger's call with no UI at all.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">The setting therefore covers only the three after-the-fact notifications — blocked, missed, repeat caller — and the ringing one is deliberately not routed through it. A user who wants a stranger silenced outright already has a tool for that: a block rule. A setting named "notifications" that can stop calls from arriving is not a notification setting.</p></div>
+<p>The second trap is inside the check itself. "Unknown" is answered by <code>ContactNameLookup</code>, which returns <code>null</code> both for a stranger <em>and</em> for every number on earth when <code>READ_CONTACTS</code> is denied:</p>
+<pre><code><span class="line">if (!notificationsEnabled) return false</span>
+<span class="line">if (notifyUnknownCallers) return true</span>
+<span class="line"><span class="cm">// Without the permission everyone looks unknown, so filtering here would silence</span></span>
+<span class="line"><span class="cm">// the channel for the user's whole address book, not for strangers.</span></span>
+<span class="line">if (!contactsAccessGranted) return true</span>
+<span class="line">return callerIsInContacts</span></code></pre>
+<p>Note where that lives: a pure <code>NotificationPolicy</code> object, not inside <code>PassthroughInCallService</code>. The service is Telecom-bound and no unit test can construct it, which is why every notification decision this app had shipped until now was provable only by placing a real call. Moved out, the whole truth table is five assertions at a desk.</p>
+
+<h3><span class="badge badge-a">Advanced</span> PendingIntent equality ignores your extras</h3>
+<p>The finished-call notification grew one-tap <b>Block</b> and <b>Always allow</b> buttons, each carrying the number in an extra. The natural implementation collides:</p>
+<pre><code><span class="line"><span class="cm">// Wrong: two numbers, one PendingIntent.</span></span>
+<span class="line">PendingIntent.<span class="fn">getBroadcast</span>(context, 0,</span>
+<span class="line">    Intent(context, CallActionReceiver::class.java)</span>
+<span class="line">        .<span class="fn">setAction</span>(ACTION_BLOCK_NUMBER)</span>
+<span class="line">        .<span class="fn">putExtra</span>(EXTRA_NUMBER, number),</span>
+<span class="line">    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)</span></code></pre>
+<p>Two <code>PendingIntent</code>s are the same object when their request code and their <code>Intent</code> match under <code>filterEquals</code> — which compares action, data, type, package, component and categories, and <strong>ignores extras entirely</strong>. Post a missed-call notification for a second number and <code>FLAG_UPDATE_CURRENT</code> rewrites the first one's extra. The first notification still says the first name; its Block button now blocklists the second number.</p>
+<div class="note why"><span class="tag">Why</span>
+<p style="margin-bottom:0">This class of bug survives every test that renders a notification, because it needs <em>two</em> notifications alive at once to appear, and it damages data rather than the UI — the notification looks perfect right up to the moment it blocks the wrong person.</p></div>
+<p>The fix is to put the number somewhere <code>filterEquals</code> looks: a per-number <code>data</code> URI, plus the per-number history id as the request code.</p>
+<pre><code><span class="line">.<span class="fn">setData</span>(<span class="st">"cortaspam://call/${Uri.encode(number)}"</span>.<span class="fn">toUri</span>())</span></code></pre>
+<div class="note gotcha"><span class="tag">Gotcha</span>
+<p style="margin-bottom:0">A <code>BroadcastReceiver</code> is dead the moment <code>onReceive</code> returns, so a suspend write started there is lost whenever the system reclaims the process first. <code>goAsync()</code> holds the broadcast open; the notification is dismissed only <em>after</em> the rule lands, so a tap that failed never looks like one that worked. And the buttons offered depend on the outcome — <b>Block</b> on an already-blocked call would do nothing, and a control that does nothing teaches the user their taps are ignored.</p></div>
+
+<div class="note scope"><span class="tag">Scope</span>
+<p style="margin-bottom:0">These buttons could not go on the ringing notification at all: <code>CallStyle.forIncomingCall</code> fixes its action set to answer and decline and drops anything added beside them. That constraint turned out to be good design advice — mid-ring is the worst moment to ask someone to make a filing decision.</p></div>
+
+<div class="callout"><h3>Done when</h3>
+<ul>
+<li>No behaviour is implemented by two private functions in two files</li>
+<li>Every permission-gated load has a trigger that fires when the permission arrives, not only when the object is built</li>
+<li>A feature request that would break an existing guarantee is answered with the narrower reading, and the reason is written down</li>
+<li>Every <code>PendingIntent</code> that varies by data differs in something <code>filterEquals</code> compares</li>
+<li>Decisions made inside untestable framework classes are extracted to something a unit test can call</li>
+</ul></div>
+
+<div class="quiz">
+<h3>Check Yourself</h3>
+<div class="quiz-item"><p><strong>1.</strong> Two files each had a private <code>displayName</code> function. Which one had the bug?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The block-list copy, which probed the name map with a single normalised-digits key while the map is built keyed by every <code>comparisonKeys</code> form. But the more useful answer is that the duplication was the defect: both functions were correct when written, and the fix for the reported bug had no way to reach the copy nobody had mentioned. Extracting one shared <code>contactDisplayName</code> is the repair; correcting the second copy would only reset the clock.</div></div>
+<div class="quiz-item"><p><strong>2.</strong> Why is <code>if (hasPermission())</code> in a ViewModel's <code>init</code> the wrong place for that check?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because the grant usually happens after the ViewModel exists. The user is on the screen when they open Settings or the onboarding checklist and allow contacts, so <code>init</code> has already run and already decided no. There is no flow to observe either — <code>checkSelfPermission</code> is a synchronous poll with no change notification — so the real event is the activity resuming, which is exactly what a closing permission dialog produces.</div></div>
+<div class="quiz-item"><p><strong>3.</strong> Why does the "notifications for unknown callers" setting deliberately not cover the incoming-call notification?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because as the default dialer this app owns the incoming-call UI. That notification's full-screen intent is the call screen over the lock screen, not a banner about it, so suppressing it would leave a stranger's call with no UI at all — a silent failure to receive calls, dressed as a notification preference. The user who wants a stranger stopped has a block rule for that.</div></div>
+<div class="quiz-item"><p><strong>4.</strong> With <code>READ_CONTACTS</code> denied, what would a naive "is this caller in my contacts?" check do to the setting?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Invert it. <code>PhoneLookup</code> returns nothing without the permission, so every caller reads as unknown and the filter silences the entire channel — including the user's own family. The policy checks whether the lookup can answer at all before trusting its answer, and notifies when it cannot.</div></div>
+<div class="quiz-item"><p><strong>5.</strong> Two notifications, two numbers, two Block buttons built with the same request code and action. What goes wrong?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer"><code>PendingIntent</code> identity is decided by <code>Intent.filterEquals</code> — action, data, type, package, component, categories — and extras are not part of it. The second build is therefore the <em>same</em> PendingIntent, and <code>FLAG_UPDATE_CURRENT</code> overwrites the first one's number extra. Both notifications now act on the second number, so tapping Block on the first blocklists the wrong caller while the UI shows the right name. Giving each a per-number <code>data</code> URI puts the distinguishing value somewhere <code>filterEquals</code> actually looks.</div></div>
+</div>
+</section>
+
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>22 Chapters, One Production App</h3>
+<div class="callout"><h3>23 Chapters, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -2681,6 +2786,7 @@ th{background:var(--panel-2);font-weight:600}
 <tr><td style="padding:8px">Auditing</td><td style="padding:8px">Code that ships but never runs; integration-level tests; toolchain vs code failures</td><td style="padding:8px">20</td></tr>
 <tr><td style="padding:8px">Policy &amp; Claims</td><td style="padding:8px">Play permission policy, privileged audio sources, file-backed rows</td><td style="padding:8px">21</td></tr>
 <tr><td style="padding:8px">Permission UX</td><td style="padding:8px">Explaining before asking, revocation, warning placement, positive assertions</td><td style="padding:8px">22</td></tr>
+<tr><td style="padding:8px">Duplication &amp; Identity</td><td style="padding:8px">One behaviour in two files; init-time permission checks; PendingIntent equality</td><td style="padding:8px">23</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -2691,8 +2797,8 @@ th{background:var(--panel-2);font-weight:600}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>373 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
-<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-13 — extended Chapter 21 with release economics: a fix that lives in a Console form still spends a version code, because Play will not re-review a code it has ruled on, and no artifact audit can see a form answer revert. Previously: 2026-08-12 — extended Chapter 21 with the second rejection of the same permission: the declaration form has two questions, and the one nobody read (pre-grant at install?) was the one being judged. Covers what declining the pre-grant costs — the permission is now off on every Android 14+ install — the checklist row added because the existing warning was ranked third on a screen that shows one, and the reason none of it had ever been rendered before: the project's only emulator was one API level below the feature. Previously: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
+<p>404 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-13 (later) — added Chapter 23 (one behaviour written twice and fixed once: the contact-name lookup that was correct in the call log and single-key in the block lists, a permission check in <code>init</code> that runs before the permission arrives, a feature request whose literal reading would have left strangers' calls with no screen at all, and PendingIntent equality ignoring the extras that distinguish two notifications). Previously: 2026-08-13 — extended Chapter 21 with release economics: a fix that lives in a Console form still spends a version code, because Play will not re-review a code it has ruled on, and no artifact audit can see a form answer revert. Previously: 2026-08-12 — extended Chapter 21 with the second rejection of the same permission: the declaration form has two questions, and the one nobody read (pre-grant at install?) was the one being judged. Covers what declining the pre-grant costs — the permission is now off on every Android 14+ install — the checklist row added because the existing warning was ranked third on a screen that shows one, and the reason none of it had ever been rendered before: the project's only emulator was one API level below the feature. Previously: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 
 <script>
