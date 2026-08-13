@@ -56,8 +56,23 @@ fail() { echo -e "    ${RED}FAIL${NC} $1"; FAILED=1; }
 warn() { echo -e "    ${YELLOW}WARN${NC} $1"; }
 FAILED=0
 
-UID_APP=$($ADB shell dumpsys package "$PKG" 2>/dev/null | awk -F= '/userId=/{print $2; exit}' | tr -d '\r')
-[ -z "$UID_APP" ] && { echo "$PKG is not installed on $DEVICE." >&2; exit 1; }
+# `appId=` is what current Android prints; `userId=` is the older name and is what the emulator
+# this script was written against (API 33) still uses. Matching only the old one made the script
+# exit "not installed" on a razr 50 ultra (Android 16) that had the app installed and running --
+# so `watch`, the mode that exists specifically for real hardware, had never once run on real
+# hardware. Both spellings are accepted, and a missing package is now distinguished from a field
+# rename by asking pm directly.
+UID_APP=$($ADB shell dumpsys package "$PKG" 2>/dev/null \
+  | awk -F= '/appId=|userId=/{gsub(/[^0-9]/,"",$2); if ($2 != "") {print $2; exit}}' | tr -d '\r')
+if [ -z "$UID_APP" ]; then
+  if $ADB shell pm list packages 2>/dev/null | grep -q "^package:$PKG$"; then
+    echo "$PKG is installed on $DEVICE, but neither appId= nor userId= was found in" >&2
+    echo "dumpsys package output. The uid field has been renamed again — fix this grep." >&2
+  else
+    echo "$PKG is not installed on $DEVICE." >&2
+  fi
+  exit 1
+fi
 echo "==> device $DEVICE, $PKG uid $UID_APP"
 
 # The dialer role is the whole precondition: without it Telecom never binds this app and no call

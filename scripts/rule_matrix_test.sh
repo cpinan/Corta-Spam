@@ -193,21 +193,60 @@ PY
   sleep 3   # Telecom binds the InCallService a moment after the process is up.
 }
 
-# Places one call and returns "ACTION|RULE_TYPE" for the row it produced.
+# The highest CallLogEntry id currently on the device, or 0. Used as the baseline a call's own
+# row must beat, so a scenario can never be judged on the previous scenario's row.
+max_log_id() {
+  pull_db 2>/dev/null || { echo "-1"; return; }
+  python3 - "$WORK/db" <<'PY'
+import sqlite3, sys
+try:
+    r = sqlite3.connect(sys.argv[1]).execute("SELECT MAX(id) FROM CallLogEntry").fetchone()
+    print(r[0] if r and r[0] is not None else 0)
+except Exception:
+    print(0)
+PY
+}
+
+# Places one call and returns "ACTION|RULE_TYPE" for the row THAT call produced.
+#
+# Polls for a row newer than the pre-call baseline instead of sleeping a fixed interval and
+# reading `ORDER BY id DESC LIMIT 1`. That older form read whatever row happened to be newest,
+# which is only the right row when the write beat the sleep. On 2026-08-13 it did not: the
+# bundled-spam scenario reported the country scenario's row, and the allowlist scenario then
+# reported the spam row arriving late. Two scenarios "failed" that had in fact behaved correctly.
+#
+# The same defect can pass a scenario for the wrong reason -- any run where consecutive
+# expectations coincide reads a stale row and calls it a match -- which is why this is a
+# correctness fix and not a flake workaround.
 place_call() {
   local number="$1"
+  local baseline; baseline=$(max_log_id)
   $ADB emu gsm cancel "$number" >/dev/null 2>&1 || true
   $ADB emu gsm call "$number" >/dev/null
   sleep 5
   $ADB emu gsm cancel "$number" >/dev/null 2>&1 || true
-  sleep 2
-  pull_db || { echo "PULL_FAILED|"; return; }
-  python3 - "$WORK/db" <<'PY'
+
+  local i got
+  for i in $(seq 1 15); do
+    sleep 1
+    pull_db 2>/dev/null || continue
+    got=$(python3 - "$WORK/db" "$baseline" <<'PY'
 import sqlite3, sys
-r = sqlite3.connect(sys.argv[1]).execute(
-    "SELECT action, rule_type FROM CallLogEntry ORDER BY id DESC LIMIT 1").fetchone()
-print(f"{r[0]}|{r[1] or '-'}" if r else "NO_ROW|-")
+db, baseline = sys.argv[1], int(sys.argv[2])
+try:
+    r = sqlite3.connect(db).execute(
+        "SELECT action, rule_type, number FROM CallLogEntry WHERE id > ? ORDER BY id DESC LIMIT 1",
+        (baseline,)).fetchone()
+except Exception:
+    r = None
+print(f"{r[0]}|{r[1] or '-'}" if r else "")
 PY
+)
+    [ -n "$got" ] && { echo "$got"; return; }
+  done
+  # No new row in 15s. Reported as its own outcome rather than silently inheriting an old row:
+  # "this call was never logged" is a real finding and must not look like a wrong rule_type.
+  echo "NO_NEW_ROW|-"
 }
 
 check() {   # number, expected_action, expected_rule, description
@@ -263,8 +302,14 @@ OUT=$(mktemp); trap 'rm -rf "$WORK" "$OUT"' EXIT
   echo "=== phase E — a contact saved the way it is dialled ==="
   echo "    (regression for the 2026-08-11 fix: national-format contact vs an E.164 call)"
   seed B   # default BLOCK, so only the contacts path can let this through
+  # Capture the WHOLE data1 value, then strip formatting. The old pattern was
+  # 's/.*data1=\([0-9+][0-9]*\).*/\1/p', whose digit class stops at the first space: the emulator
+  # contact "611 99 88 77" came out as "611", so this dialled +34611. That is 5 digits, and
+  # PhoneNumberParser requires code.length + 4 before it will read "34" as a country code -- so
+  # the engine correctly declined to match and the scenario reported a contact-matching
+  # regression that did not exist. The test data was the bug.
   NAT=$($ADB shell content query --uri content://com.android.contacts/data/phones --projection data1 2>/dev/null \
-        | sed -n 's/.*data1=\([0-9+][0-9]*\).*/\1/p' | grep -v '^+' | head -1 | tr -d '\r')
+        | sed -n 's/.*data1=//p' | tr -d '\r' | grep -v '^+' | head -1 | tr -cd '0-9')
   if [ -n "$NAT" ]; then
     got=$(place_call "+34${NAT}")
     if [ "$got" = "ALLOWED|CONTACTS" ]; then

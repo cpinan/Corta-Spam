@@ -41,18 +41,32 @@ if [ "$CLEAR" = true ]; then
   $ADB shell pm clear "$PKG" >/dev/null
 fi
 
+# Clear the log BEFORE the launch this run is judging. Without this the check reads the device's
+# whole persistent buffer: on 2026-08-13 it failed the razr on a two-day-old trace and a crash
+# belonging to an entirely different app, and exited before any of the database assertions below
+# — the ones this script exists for — had run.
+$ADB logcat -c 2>/dev/null || true
+
 ./install_android.sh --device "$DEVICE"
 
 # Give the app a moment to open the database; the settings warm-up runs off the main thread.
 sleep 3
 
 echo "==> crash check"
-if $ADB logcat -d 2>/dev/null | grep -E "FATAL EXCEPTION" | grep -q .; then
-  echo "FAIL: fatal exception in logcat:" >&2
-  $ADB logcat -d 2>/dev/null | grep -A15 "FATAL EXCEPTION" | tail -25 >&2
+# Scoped to this app's own process. A fatal in some unrelated package is not this app's failure,
+# and treating it as one makes the whole check unrunnable on a phone somebody actually uses.
+APP_PID=$($ADB shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
+if [ -z "$APP_PID" ]; then
+  echo "FAIL: $PKG is not running after launch — it died on startup." >&2
+  $ADB logcat -d 2>/dev/null | grep -B2 -A15 "FATAL EXCEPTION" | tail -30 >&2
   exit 1
 fi
-echo "    no fatal exceptions"
+if $ADB logcat -d --pid="$APP_PID" 2>/dev/null | grep -q "FATAL EXCEPTION"; then
+  echo "FAIL: fatal exception in $PKG (pid $APP_PID):" >&2
+  $ADB logcat -d --pid="$APP_PID" 2>/dev/null | grep -A15 "FATAL EXCEPTION" | tail -25 >&2
+  exit 1
+fi
+echo "    no fatal exceptions (pid $APP_PID)"
 
 echo "==> pulling $DB"
 TMP=$(mktemp -t cortaspam-db)
