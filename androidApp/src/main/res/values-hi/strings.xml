@@ -5,6 +5,8 @@
     <string name="notification_incoming_call">आने वाली कॉल</string>
     <string name="notification_blocked_call_title">ब्लॉक की गई कॉल</string>
     <string name="notification_missed_call_title">मिस्ड कॉल</string>
+    <string name="notification_action_block">ब्लॉक करें</string>
+    <string name="notification_action_allowlist">हमेशा अनुमति दें</string>
     <string name="notification_repeated_caller_title">बार-बार कॉल करने वाला</string>
     <string name="notification_call_result_with_reason">%1$s — %2$s</string>
     <string name="notification_channel_incoming_calls_name">आने वाली कॉलें</string>

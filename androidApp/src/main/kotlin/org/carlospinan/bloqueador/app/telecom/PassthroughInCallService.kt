@@ -186,6 +186,9 @@ class PassthroughInCallService :
                                 number,
                                 R.string.notification_blocked_call_title,
                                 decision.reason?.let { BlockReasonStrings.format(this@PassthroughInCallService, it) },
+                                // Only the undo: the number is already blocked, so a Block
+                                // button here would be a no-op the user cannot tell from a bug.
+                                actions = setOf(IncomingCallNotifier.CallResultAction.ALLOWLIST),
                             )
                         }
                         val autoConfig = autoResponderRepository.config.first()
@@ -206,6 +209,9 @@ class PassthroughInCallService :
                                 number,
                                 R.string.notification_repeated_caller_title,
                                 decision.reason?.let { BlockReasonStrings.format(this@PassthroughInCallService, it) },
+                                // This number just got through on persistence alone; Block is
+                                // the decision the notification exists to offer.
+                                actions = setOf(IncomingCallNotifier.CallResultAction.BLOCK),
                             )
                         }
                     }
@@ -296,6 +302,8 @@ class PassthroughInCallService :
                 call.handleNumber(),
                 R.string.notification_missed_call_title,
                 reason = null,
+                // The call came through, so Allow would change nothing.
+                actions = setOf(IncomingCallNotifier.CallResultAction.BLOCK),
             )
         }
         InCallState.detach(call)

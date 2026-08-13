@@ -9,6 +9,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.StringRes
@@ -16,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import org.carlospinan.bloqueador.app.R
 
 /**
@@ -155,12 +157,20 @@ object IncomingCallNotifier {
         NotificationManagerCompat.from(context).cancel(ONGOING_NOTIFICATION_ID)
     }
 
-    /** Posted after the call already ended -- missed, or blocked (with why). Not full-screen. */
+    /**
+     * Posted after the call already ended -- missed, or blocked (with why). Not full-screen.
+     *
+     * [actions] adds one-tap rule buttons. They live here rather than on the ringing notification
+     * because [NotificationCompat.CallStyle] fixes that one's buttons to answer/decline and
+     * ignores anything added alongside -- and because deciding a number's fate mid-ring is the
+     * wrong moment anyway.
+     */
     fun notifyCallResult(
         context: Context,
         number: String,
         @StringRes titleRes: Int,
         reason: String?,
+        actions: Set<CallResultAction> = emptySet(),
     ) {
         if (!canPostNotifications(context)) return
 
@@ -174,7 +184,7 @@ object IncomingCallNotifier {
                 displayName
             }
 
-        val notification =
+        val builder =
             NotificationCompat
                 .Builder(context, HISTORY_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.sym_call_missed)
@@ -182,9 +192,80 @@ object IncomingCallNotifier {
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
-                .build()
 
-        post(context, historyNotificationId(number), notification)
+        if (number.isNotBlank()) {
+            actions.forEach { action ->
+                builder.addAction(
+                    action.iconRes,
+                    context.getString(action.labelRes),
+                    ruleActionPendingIntent(context, action, number),
+                )
+            }
+        }
+
+        post(context, historyNotificationId(number), builder.build())
+    }
+
+    /**
+     * One-tap rule buttons on a finished call's notification.
+     *
+     * Which of them a given notification carries is decided per call outcome, not offered as a
+     * pair everywhere: "Block" on a call that was already blocked does nothing, and "Allow" on a
+     * call that already came through does nothing either. A button that changes nothing when
+     * tapped teaches the user their taps are ignored.
+     */
+    enum class CallResultAction(
+        @param:StringRes val labelRes: Int,
+        val iconRes: Int,
+        private val broadcastAction: String,
+    ) {
+        BLOCK(
+            R.string.notification_action_block,
+            android.R.drawable.ic_menu_close_clear_cancel,
+            CallActionReceiver.ACTION_BLOCK_NUMBER,
+        ),
+        ALLOWLIST(
+            R.string.notification_action_allowlist,
+            android.R.drawable.ic_menu_add,
+            CallActionReceiver.ACTION_ALLOW_NUMBER,
+        ),
+        ;
+
+        internal fun intentAction(): String = broadcastAction
+    }
+
+    /**
+     * A PendingIntent that survives another number's notification being posted next to it.
+     *
+     * PendingIntent equality ignores extras, so two of these built with the same request code and
+     * the same action would be the *same* object -- and `FLAG_UPDATE_CURRENT` would rewrite the
+     * first notification's number to the second's. Blocking one caller would then blocklist a
+     * different one. The per-number `data` URI is what keeps them distinct.
+     */
+    private fun ruleActionPendingIntent(
+        context: Context,
+        action: CallResultAction,
+        number: String,
+    ): PendingIntent {
+        val intent =
+            Intent(context, CallActionReceiver::class.java)
+                .setAction(action.intentAction())
+                .setData("cortaspam://call/${Uri.encode(number)}".toUri())
+                .putExtra(CallActionReceiver.EXTRA_NUMBER, number)
+        return PendingIntent.getBroadcast(
+            context,
+            historyNotificationId(number),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    /** Dismisses the finished-call notification for [number], once its button has been acted on. */
+    fun cancelCallResult(
+        context: Context,
+        number: String,
+    ) {
+        NotificationManagerCompat.from(context).cancel(historyNotificationId(number))
     }
 
     /**
