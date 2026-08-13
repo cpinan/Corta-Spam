@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 421 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 458 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -26,8 +26,9 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - **Auto-respondedor (Experimental)** — responde llamadas bloqueadas con saludo TTS o audio personalizado; botón "Probar saludo" para escucharlo localmente sin necesidad de una llamada real. El saludo por defecto y la frase de consentimiento de grabación están traducidos, y la reproducción fuerza el altavoz para que quien llama pueda oírlo
 - **Grabación del mensaje del llamante (Experimental, desactivada por defecto)** — graba lo que dice quien llama después del saludo, con un límite de 60 s, y se puede reproducir y borrar desde su entrada del registro de llamadas. Requiere tanto una frase de consentimiento en tu propio saludo como el permiso de micrófono de Android. Graba por el micrófono, porque Android reserva el audio real de la línea para apps privilegiadas — así que en teléfonos cuyo fabricante bloquea el micrófono durante una llamada no captará nada
 - **Respuesta a llamadas repetidas** — opcional: un número desconocido que normalmente se bloquearía en silencio se deja pasar tras suficientes intentos, con un aviso en la pantalla de llamada entrante y una notificación. Nunca aplica a números bloqueados manualmente ni por patrón, país, spam u horario
+- **Teclado** — una pestaña con teclado de marcación, porque asumir el rol de marcador predeterminado sustituye a la app de teléfono. También es donde aterriza, ya relleno, un intent `ACTION_DIAL` de cualquier otra app
 - **Registro de llamadas** — historial con hora local, resultado, detalle de la regla y el nombre del contacto cuando coincide (panel dividido en tablet)
-- **Devolver llamada** — toca cualquier número en el registro para devolver la llamada
+- **Devolver llamada** — toca cualquier número en el registro para devolver la llamada, o el botón Devolver la llamada de la notificación de llamada perdida
 - **Copiar número** — copia números al portapapeles desde el registro
 - **Estadísticas** — conteo de llamadas bloqueadas por día/semana/mes, agrupado por medianoche *local* y con soporte de horario de verano
 - **Respaldo** — exporta/importa todas las reglas como JSON, conservando las etiquetas; un diálogo en la app ("Ver formato de ejemplo") muestra la estructura JSON
@@ -39,7 +40,7 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - **Avisos de permisos en Inicio** — si la app pierde el rol de teléfono, las notificaciones, el intent a pantalla completa o el permiso de llamada, una tarjeta lo dice encima de los contadores de llamadas bloqueadas, con un botón que arregla exactamente eso. Los mismos avisos aparecen en Ajustes
 - **Privacidad y Términos** — política de privacidad y licencia MIT dentro de la app
 - **Tono de llamada** — la app reproduce el tono y la vibración por sí misma (como exige el contrato de marcador predeterminado), respetando el modo de sonido del sistema, y lo silencia en cuanto llega una decisión de bloqueo
-- **Control de notificaciones** — un solo interruptor "Mostrar notificaciones" silencia todo lo que publique la app, incluida la alerta de llamada entrante
+- **Control de notificaciones** — un solo interruptor "Mostrar notificaciones" silencia todo lo que publique la app, incluida la alerta de llamada entrante. Las llamadas repetidas del mismo número actualizan la notificación de ese interlocutor con un contador de intentos en vez de apilar otra
 - **i18n** — inglés (predeterminado), español (es), portugués (pt), hindi (hi)
 
 ## Estructura del proyecto
@@ -84,8 +85,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 396 pruebas, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 25 pruebas, clases exclusivas de Android (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 406 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 52 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
 ```
@@ -114,7 +115,7 @@ alguien tiene que llamar al teléfono.
 
 ## Regeneración de iconos
 
-Si cambian los SVG fuente, regenera los 21 iconos PNG:
+Si cambian los SVG fuente, regenera los 22 iconos PNG:
 
 ```sh
 npm install --no-save sharp
@@ -137,11 +138,22 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 ## Aprendizaje
 
-Un curso completo de 24 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto, y (el más nuevo) la diferencia entre leer el código, ver fallar un dispositivo y demostrar de verdad que una pantalla se desplaza.
+Un curso completo de 25 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto, la diferencia entre leer el código, ver fallar un dispositivo y demostrar de verdad que una pantalla se desplaza, y (el más nuevo) un marcador predeterminado que no sabía marcar, y la declaración del manifiesto que llevaba tiempo prometiendo lo contrario.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 102 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 108 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-13 (octava):** el marcador predeterminado no sabía marcar. Teclado, devolver la llamada y una notificación por interlocutor.
+
+- **Asumir el rol de marcador le quitaba al usuario la posibilidad de llamar.** `ROLE_DIALER` sustituye a la app de teléfono, y la única forma de originar una llamada en Corta Spam era tocar una fila que ya existía en el registro, así que cualquier número nuevo obligaba a irse a otra app. Ahora hay una pestaña **Teclado**, la segunda de la barra de navegación. El `+` es una tecla propia y no una pulsación larga sobre el `0`: una pulsación larga no se descubre, y sin ella no se podía marcar ningún número internacional.
+- **El manifiesto llevaba anunciando un marcador que nunca implementó.** Dos filtros `ACTION_DIAL` (uno con el esquema `tel:`) apuntan a `MainActivity` desde que la app reclamó el rol, con un comentario que dice que existen para ser elegible. Nadie los leía nunca: `MainActivity` no tenía `onNewIntent` ni tocaba `intent.data`. Corta Spam aparecía en el selector de cada enlace `tel:` del dispositivo, se abría en Inicio y **descartaba el número en silencio**. Es el patrón de funcionalidad inerte del Capítulo 20 sin nada de código dentro — una declaración de manifiesto que satisface una comprobación de la plataforma y no responde a nada, invisible para cualquier auditoría de Kotlin.
+- **`ACTION_DIAL` rellena el teclado; no llama.** `DIAL` significa «muestra este número y que decida la persona»; el que marca es `CALL`. Marcar solo convertiría cada enlace `tel:` de la web en una llamada sin confirmación. El número viaja como un `DialRequest` con un id, porque un `String?` comparado por valor no distingue **«el mismo enlace tocado otra vez»** de **«no ha cambiado nada»**, y ese id es además lo que evita que volver a la pestaña reescriba un número que la persona había borrado.
+- **Las notificaciones de llamada perdida y de insistente ofrecen ahora Devolver la llamada.** Las de llamada bloqueada no, a propósito: la regla existía justamente para no atender a ese número. Sin `CALL_PHONE` el botón abre el teclado propio ya relleno en vez de lanzar `ACTION_CALL` — un `BroadcastReceiver` no puede mostrar un diálogo de permiso, y la `SecurityException` parecería un botón que no hace nada. El intent de reserva se fija a este paquete; si no, `ACTION_DIAL` ofrecería el viaje a otra app que este cambio elimina.
+- **Una notificación por interlocutor, con contador.** Publicar con un id por número ya reemplazaba la notificación anterior, pero nada lo indicaba, así que cinco llamadas del mismo spammer se leían como una llamada cinco veces. Ahora la notificación lleva «N intentos». Los números se comparan con `PhoneNumberParser.sameNumber` y **no** con una clave canónica: esa comparación es asimétrica a propósito — un número nacional puede coincidir con uno internacional, mientras que dos internacionales con distinto código de país nunca deben coincidir aunque su parte nacional sea idéntica — y ninguna cadena canónica expresa eso. Reducir un número a una sola clave es lo que causó los fallos de contactos del 2026-08-11 y del 2026-08-13. Los números ocultos llegan vacíos y nunca se cuentan, porque un vacío no se distingue del siguiente.
+- **La barra de navegación tenía dos fuentes de verdad para el orden de pestañas** — la lista de elementos y el `when` de `routeSection` — e insertar una desplaza todos los índices posteriores sin que nada deje de compilar. Una prueba nueva comprueba que cada entrada de `sectionRoutes` selecciona su propia pestaña.
+- De 421 a 458 pruebas (`:shared` de 396 a 406, `:androidApp` de 25 a 52). La guarda del id aplicado, la comparación con `sameNumber` y el contador de intentos se vieron fallar antes de dar sus pruebas por buenas. `./scripts/verify.sh` en verde.
+- **Sin verificar en hardware:** no había ningún dispositivo conectado. Falta ver en un teléfono real que el teclado coloca la llamada y que un enlace `tel:` de otra app llega al teclado ya relleno.
 
 **2026-08-13 (séptima):** «la pantalla de inicio no se desplaza» — respondido con una prueba, no con un argumento.
 

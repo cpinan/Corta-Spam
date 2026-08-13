@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 421 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 458 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -26,8 +26,9 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Auto-responder (Experimental)** — answer blocked calls with TTS greeting or custom audio; "Test greeting" button previews it locally, no real call needed. The default greeting and the recording-consent phrase are localized, and playback forces the speaker so the caller can actually hear it
 - **Caller message recording (Experimental, off by default)** — records what a blocked caller says after the greeting, capped at 60s, playable and deletable from its call-log entry. Gated on both a consent phrase in your own greeting and the Android microphone permission. Records through the microphone, because Android reserves the actual call-audio sources for privileged apps — so on phones whose manufacturer locks the mic during a call it captures nothing
 - **Repeated-caller bypass** — opt-in: an unknown number that would otherwise be silently blocked gets let through once it retries enough times, with a heads-up on the ringing screen and a notification. Never applies to numbers matched by a manual block, pattern, country, spam, or schedule rule
+- **Keypad** — a dial pad tab, because taking the default-dialer role replaces the phone app. Also where an `ACTION_DIAL` intent from any other app lands, pre-filled
 - **Call log** — every call with local timestamp, outcome, rule detail, and the contact's name when it matches one (list-detail two-pane on tablet)
-- **Call back** — tap any number in the call log to return the call
+- **Call back** — tap any number in the call log to return the call, or the Call back button on a missed-call notification
 - **Copy number** — copy phone numbers to clipboard from the call log
 - **Stats** — blocked-call counts by day/week/month, bucketed on *local* midnight and DST-aware
 - **Backup/restore** — export/import all rules as JSON, with labels preserved; an in-app "View example format" dialog shows the JSON shape
@@ -39,7 +40,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Permission warnings on Home** — if the app loses the dialer role, notifications, full-screen intent, or the call permission, a card says so above the blocked-call counters, with a button that fixes that specific thing. The same warnings appear in Settings
 - **Privacy & Terms** — in-app privacy policy and MIT license terms
 - **Ringing** — the app plays the ringtone and vibration itself (as the default dialer contract requires), honouring the system ringer mode, and silences it the moment a block decision lands
-- **Notification control** — a single "Show notifications" switch mutes everything the app posts, including the incoming-call alert
+- **Notification control** — a single "Show notifications" switch mutes everything the app posts, including the incoming-call alert. Repeat calls from one number update that caller's notification with an attempt count instead of stacking a new one
 - **i18n** — English (default), Spanish (es), Portuguese (pt), Hindi (hi)
 
 ## Project layout
@@ -84,8 +85,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 396 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 25 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 406 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 52 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -112,7 +113,7 @@ cannot settle — `ring_test.sh watch` is for that, and someone has to phone the
 
 ## Icon regeneration
 
-If SVG sources change, regenerate all 21 PNG icons:
+If SVG sources change, regenerate all 22 PNG icons:
 
 ```sh
 npm install --no-save sharp
@@ -135,11 +136,22 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 ## Learning
 
-A complete 24-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product, and (newest) the difference between reading code, watching a failing device, and actually proving a screen scrolls.
+A complete 25-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product, the difference between reading code, watching a failing device, and actually proving a screen scrolls, and (newest) a default dialer that could not dial, and the manifest declaration that had been promising otherwise.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 102 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 108 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-13 (eighth):** the default dialer could not dial. Keypad, call back, and one notification per caller.
+
+- **Taking the dialer role removed the user's ability to place a call.** `ROLE_DIALER` replaces the phone app; the only way to originate a call in Corta Spam was tapping a row that already existed in the call log, so any new number meant leaving for another app. There is now a **Keypad** tab, second in the navigation bar. `+` is a key of its own rather than a long-press on `0` — a long-press is undiscoverable, and without it no international number could be dialled at all.
+- **The manifest had been advertising a dialer it never implemented.** Two `ACTION_DIAL` intent-filters (one with the `tel:` scheme) have pointed at `MainActivity` since the app first claimed the role, with a comment saying they exist for role eligibility. Nothing ever read them: `MainActivity` had no `onNewIntent` and never touched `intent.data`. So Corta Spam appeared in the chooser for every `tel:` link on the device, launched to Home, and **silently dropped the number**. This is the inert-feature pattern from Chapter 20 with no code in it at all — a manifest declaration that satisfies a platform check and answers nothing, which no audit of Kotlin can see.
+- **`ACTION_DIAL` fills the keypad; it does not call.** `DIAL` means "show this number, let the user decide" — `CALL` is the one that dials. Auto-dialling would turn every `tel:` link on the web into a call placed without confirmation. The number is carried as a `DialRequest` with an id, because a plain `String?` compared by value cannot tell **"the same link tapped again"** from **"nothing changed"**, and the id is also what stops returning to the tab from retyping a number the user deleted.
+- **Missed and repeat-caller notifications now offer Call back.** Blocked calls deliberately do not get it: the rule existed to stop that caller being reached. Without `CALL_PHONE` the button opens the app's own keypad pre-filled rather than firing `ACTION_CALL` — a `BroadcastReceiver` cannot show a permission dialog, and the `SecurityException` would look like a button that does nothing. The fallback intent is pinned to this package, or `ACTION_DIAL` would offer the trip to another app that this whole change removes.
+- **One notification per caller, with a count.** Posting to a per-number id already replaced the previous notification, but nothing said it had happened, so five calls from one spammer read as one call five times over. The notification now carries "N attempts". Callers are matched with `PhoneNumberParser.sameNumber`, **not** a canonical key: that comparison is deliberately asymmetric — a national number may match an international one, while two international numbers with different country codes must never match even when their national parts are identical — and no single canonical string expresses that. Reducing a number to one key is what caused the contact bugs of 2026-08-11 and 2026-08-13. Withheld numbers arrive blank and are never counted, since one blank is indistinguishable from the next.
+- **The nav bar had two sources of truth for tab order** — the item list and the `routeSection` `when` — and inserting a tab shifts every index after it while nothing fails to compile. A new test asserts every entry in `sectionRoutes` selects its own tab.
+- 421 → 458 tests (`:shared` 396 → 406, `:androidApp` 25 → 52). The applied-id guard, the `sameNumber` matching and the attempt count were each watched failing before their tests were kept. `./scripts/verify.sh` green.
+- **Not verified on hardware:** no device was attached. What a real phone still has to show is the keypad placing a call, and a `tel:` link from another app reaching the keypad pre-filled.
 
 **2026-08-13 (seventh):** "the home screen does not scroll" — answered with a test instead of an argument.
 
