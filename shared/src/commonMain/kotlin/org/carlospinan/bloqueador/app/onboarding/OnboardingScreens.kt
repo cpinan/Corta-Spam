@@ -5,13 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,6 +53,7 @@ import cortaspam.shared.generated.resources.onboarding_reason_screen_title
 import cortaspam.shared.generated.resources.onboarding_requesting_indicator
 import cortaspam.shared.generated.resources.onboarding_subtitle
 import cortaspam.shared.generated.resources.onboarding_title
+import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -117,13 +118,11 @@ fun PermissionExplainerScreen(
     onContinue: () -> Unit,
     onNotNow: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = 20.dp)
-                .padding(top = 28.dp, bottom = 16.dp),
+    // Scrollable, not just padded: at font scale 1.8 on a 1344x2992 screen this column's own
+    // Continue and Not now buttons fell off the bottom and could not be reached, which made
+    // first-run onboarding impossible to complete.
+    ScrollableScreenColumn(
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 16.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -245,8 +244,8 @@ private fun NeverDoBox() {
 
 @Composable
 fun RequestingIndicatorScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
+    ScrollableScreenColumn(
+        contentPadding = PaddingValues(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -265,8 +264,8 @@ fun DeniedScreen(
     onRetry: () -> Unit,
     onContinueWithoutDefault: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
+    ScrollableScreenColumn(
+        contentPadding = PaddingValues(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

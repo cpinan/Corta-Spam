@@ -2,13 +2,11 @@ package org.carlospinan.bloqueador.app.welcome
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +24,7 @@ import cortaspam.shared.generated.resources.ic_brand_app
 import cortaspam.shared.generated.resources.welcome_get_started
 import cortaspam.shared.generated.resources.welcome_subtitle
 import cortaspam.shared.generated.resources.welcome_title
+import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -33,12 +32,8 @@ import org.jetbrains.compose.resources.stringResource
 fun WelcomeScreen(onGetStarted: () -> Unit) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .safeDrawingPadding()
-                        .padding(32.dp),
+            ScrollableScreenColumn(
+                contentPadding = PaddingValues(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
