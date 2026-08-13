@@ -19,6 +19,8 @@ import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
+import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.contacts.isKnownContact
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.domain.EvaluateIncomingCallUseCase
@@ -42,6 +44,7 @@ class PassthroughInCallService :
     private val evaluateIncomingCall: EvaluateIncomingCallUseCase by inject()
     private val callLogRepository: CallLogRepository by inject()
     private val settingsRepository: SettingsRepository by inject()
+    private val contactsGateway: ContactsGateway by inject()
     private val autoResponderRepository: AutoResponderRepository by inject()
 
     /** Lives for the whole service, not one call, so a second call can't cancel the first's work. */
@@ -67,14 +70,27 @@ class PassthroughInCallService :
     /**
      * Whether to post an after-the-fact notification (blocked / missed / repeated caller) for
      * [number]. The ringing notification does not go through here — see [NotificationPolicy].
+     *
+     * "Is this one of my contacts" is answered by [ContactsGateway], the same source the rule
+     * engine and every screen use, and NOT by ContactNameLookup's PhoneLookup query. PhoneLookup
+     * matches through the provider's region-derived `data4` column, so it misses a contact saved
+     * nationally when the call arrives in E.164 — verified on an emulator, where every contact
+     * read as a stranger and a real contact's missed call was silenced.
+     *
+     * Suspend because that gateway is: it is cached for five minutes, so this costs a map lookup
+     * on all but the first call after a change.
      */
-    private fun shouldNotifyResult(number: String): Boolean =
-        NotificationPolicy.shouldNotifyCallResult(
+    private suspend fun shouldNotifyResult(number: String): Boolean {
+        // Asked once and reused: a denied read returns an empty address book, and the gateway
+        // would cache that emptiness for its whole TTL, so don't make it query at all.
+        val contactsAccessGranted = contactsGateway.hasPermission()
+        return NotificationPolicy.shouldNotifyCallResult(
             notificationsEnabled = settingsRepository.notificationsEnabled.value,
             notifyUnknownCallers = settingsRepository.notifyUnknownCallers.value,
-            contactsAccessGranted = ContactNameLookup.hasContactsAccess(this),
-            callerIsInContacts = ContactNameLookup.displayNameFor(this, number) != null,
+            contactsAccessGranted = contactsAccessGranted,
+            callerIsInContacts = contactsAccessGranted && isKnownContact(number, contactsGateway.contactNames()),
         )
+    }
 
     private class CallState {
         var blockedByRules = false
@@ -293,18 +309,22 @@ class PassthroughInCallService :
             autoResponderAudio = null
         }
 
-        if (state?.blockedByRules != true &&
-            call.details?.disconnectCause?.code == DisconnectCause.MISSED &&
-            shouldNotifyResult(call.handleNumber())
-        ) {
-            IncomingCallNotifier.notifyCallResult(
-                this,
-                call.handleNumber(),
-                R.string.notification_missed_call_title,
-                reason = null,
-                // The call came through, so Allow would change nothing.
-                actions = setOf(IncomingCallNotifier.CallResultAction.BLOCK),
-            )
+        if (state?.blockedByRules != true && call.details?.disconnectCause?.code == DisconnectCause.MISSED) {
+            // Read off the Call before leaving the callback: onCallRemoved is the last moment
+            // Telecom guarantees these are readable, and the coroutine outlives it.
+            val number = call.handleNumber()
+            serviceScope.launch {
+                if (shouldNotifyResult(number)) {
+                    IncomingCallNotifier.notifyCallResult(
+                        this@PassthroughInCallService,
+                        number,
+                        R.string.notification_missed_call_title,
+                        reason = null,
+                        // The call came through, so Allow would change nothing.
+                        actions = setOf(IncomingCallNotifier.CallResultAction.BLOCK),
+                    )
+                }
+            }
         }
         InCallState.detach(call)
     }

@@ -3,6 +3,8 @@ package org.carlospinan.bloqueador.app.contacts
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * The map under test is built the way [ContactsGateway.contactNames] builds it — keyed by every
@@ -51,5 +53,26 @@ class ContactDisplayNameTest {
     @Test
     fun `falls back to the number when the address book is empty`() {
         assertEquals("+34611998877", contactDisplayName("+34611998877", emptyMap()))
+    }
+
+    @Test
+    fun `recognises a contact saved nationally when the call arrives in E164`() {
+        // The case ContactsContract.PhoneLookup gets wrong, which silenced a real contact's
+        // missed-call notification on a device whose region did not match the number.
+        val contacts = contactsOf("611 99 88 77" to "Ana")
+
+        assertTrue(isKnownContact("+34611998877", contacts))
+    }
+
+    @Test
+    fun `does not recognise a number the address book has never seen`() {
+        val contacts = contactsOf("611 99 88 77" to "Ana")
+
+        assertFalse(isKnownContact("+34600000000", contacts))
+    }
+
+    @Test
+    fun `recognises nobody when the address book is empty`() {
+        assertFalse(isKnownContact("+34611998877", emptyMap()))
     }
 }

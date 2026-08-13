@@ -27,3 +27,19 @@ fun contactDisplayName(
         .comparisonKeys(number)
         .firstNotNullOfOrNull { contactNames[it] }
         ?: number
+
+/**
+ * Whether the address book claims [number].
+ *
+ * Deliberately the same probe as [contactDisplayName] rather than a second opinion. The platform's
+ * own `ContactsContract.PhoneLookup` looks like the obvious way to ask this and is not: it matches
+ * through the provider's normalized `data4` column, which is computed from the device's default
+ * region, so a contact saved nationally does not match an E.164 call unless the phone's region
+ * happens to agree. On an emulator with no SIM `data4` is null and *every* contact reads as a
+ * stranger. Deriving the country code from the number itself, which is what comparisonKeys does,
+ * has no region to be wrong about.
+ */
+fun isKnownContact(
+    number: String,
+    contactNames: Map<String, String>,
+): Boolean = PhoneNumberParser.comparisonKeys(number).any { it in contactNames }
