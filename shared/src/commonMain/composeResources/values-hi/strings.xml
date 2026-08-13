@@ -216,6 +216,11 @@
     <string name="autoresponder_error_consent">रिकॉर्डिंग के लिए स्क्रिप्ट में सहमति पंक्ति आवश्यक है।</string>
 
     <!-- नेविगेशन -->
+    <string name="nav_keypad">कीपैड</string>
+    <string name="keypad_title">कीपैड</string>
+    <string name="keypad_hint">नंबर डालें</string>
+    <string name="keypad_call">कॉल करें</string>
+    <string name="keypad_delete">आख़िरी अंक मिटाएँ</string>
     <string name="nav_home">होम</string>
     <string name="nav_log">लॉग</string>
     <string name="nav_lists">सूचियाँ</string>

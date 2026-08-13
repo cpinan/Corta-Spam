@@ -44,6 +44,8 @@ import org.carlospinan.bloqueador.app.credits.CreditsScreen
 import org.carlospinan.bloqueador.app.home.HomeIntent
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
+import org.carlospinan.bloqueador.app.keypad.DialRequest
+import org.carlospinan.bloqueador.app.keypad.KeypadScreen
 import org.carlospinan.bloqueador.app.settings.InfoScreen
 import org.carlospinan.bloqueador.app.settings.SettingsIntent
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
@@ -62,6 +64,7 @@ import org.koin.compose.viewmodel.koinViewModel
  */
 object Routes {
     const val HOME = AdaptiveRoutes.HOME
+    const val KEYPAD = AdaptiveRoutes.KEYPAD
     const val CALL_LOG = AdaptiveRoutes.CALL_LOG
     const val STATS = AdaptiveRoutes.STATS
     const val BLOCK_LIST = AdaptiveRoutes.BLOCK_LIST
@@ -103,11 +106,23 @@ fun AppNavHost(
     micPermissionGranted: Boolean = true,
     onRequestMicPermission: (() -> Unit)? = null,
     onPlayRecording: ((String) -> Unit)? = null,
+    dialRequest: DialRequest? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val selectedSection = routeSection(currentRoute)
+
+    // An ACTION_DIAL intent has to reach the keypad wherever the user happens to be. Without this
+    // the number arrived and the app simply showed whatever screen was already open, which is the
+    // bug the manifest's DIAL filters had shipped with since they were added for ROLE_DIALER.
+    LaunchedEffect(dialRequest) {
+        if (dialRequest == null) return@LaunchedEffect
+        navController.navigate(Routes.KEYPAD) {
+            popUpTo(Routes.HOME)
+            launchSingleTop = true
+        }
+    }
 
     AdaptiveScaffold(
         windowSizeClass = windowSizeClass,
@@ -152,6 +167,13 @@ fun AppNavHost(
                     onOpenNotificationSettings = onOpenNotificationSettings ?: {},
                     onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},
                     onOpenAppSettings = onOpenAppSettings ?: {},
+                )
+            }
+
+            composable(Routes.KEYPAD) {
+                KeypadScreen(
+                    dialRequest = dialRequest,
+                    onCall = onCallBack ?: {},
                 )
             }
 

@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import org.carlospinan.bloqueador.app.keypad.DialRequest
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingIntent
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
@@ -173,10 +174,36 @@ class MainActivity : ComponentActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * The number an `ACTION_DIAL` intent arrived with, waiting to be shown on the keypad.
+     *
+     * Counted rather than stored bare: tapping the same `tel:` link twice has to re-open the
+     * keypad the second time as well, and two equal `DialRequest`s would recompose to nothing.
+     */
+    private var dialRequest by mutableStateOf<DialRequest?>(null)
+    private var dialRequestCount = 0L
+
+    private fun consumeDialIntent(intent: Intent?) {
+        val number = DialIntentParser.numberFrom(intent) ?: return
+        dialRequestCount += 1
+        dialRequest = DialRequest(number = number, id = dialRequestCount)
+        // Cleared so the same intent is not re-read on the next configuration change or resume,
+        // which would drag the user back to the keypad long after they navigated away.
+        intent?.data = null
+        intent?.action = Intent.ACTION_MAIN
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        consumeDialIntent(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         refreshPermissionStatus()
+        consumeDialIntent(intent)
 
         setContent {
             val state by viewModel.state.collectAsState()
@@ -275,6 +302,7 @@ class MainActivity : ComponentActivity() {
                                     micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                 },
                                 onPlayRecording = { path -> recordingPlayer.play(path) },
+                                dialRequest = dialRequest,
                             )
                         }
                     },

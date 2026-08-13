@@ -29,6 +29,7 @@ const outputDirectory = path.join(
 
 const iconNames = [
   "ic_home",
+  "ic_keypad",
   "ic_call_log",
   "ic_block_lists",
   "ic_settings",

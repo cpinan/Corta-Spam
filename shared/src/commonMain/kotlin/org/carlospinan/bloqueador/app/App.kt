@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
+import org.carlospinan.bloqueador.app.keypad.DialRequest
 import org.carlospinan.bloqueador.app.navigation.AppNavHost
 
 @Composable
@@ -25,6 +26,7 @@ fun App(
     micPermissionGranted: Boolean = true,
     onRequestMicPermission: (() -> Unit)? = null,
     onPlayRecording: ((String) -> Unit)? = null,
+    dialRequest: DialRequest? = null,
 ) {
     val navController = rememberNavController()
     AppNavHost(
@@ -48,5 +50,6 @@ fun App(
         micPermissionGranted = micPermissionGranted,
         onRequestMicPermission = onRequestMicPermission,
         onPlayRecording = onPlayRecording,
+        dialRequest = dialRequest,
     )
 }

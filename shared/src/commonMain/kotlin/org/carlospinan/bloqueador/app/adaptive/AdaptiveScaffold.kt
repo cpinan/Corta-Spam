@@ -22,8 +22,10 @@ import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.ic_block_lists
 import cortaspam.shared.generated.resources.ic_call_log
 import cortaspam.shared.generated.resources.ic_home
+import cortaspam.shared.generated.resources.ic_keypad
 import cortaspam.shared.generated.resources.ic_settings
 import cortaspam.shared.generated.resources.nav_home
+import cortaspam.shared.generated.resources.nav_keypad
 import cortaspam.shared.generated.resources.nav_lists
 import cortaspam.shared.generated.resources.nav_log
 import cortaspam.shared.generated.resources.nav_settings
@@ -48,6 +50,7 @@ fun AdaptiveScaffold(
     val navItems =
         listOf(
             NavItem(stringResource(Res.string.nav_home), Res.drawable.ic_home, stringResource(Res.string.nav_home)),
+            NavItem(stringResource(Res.string.nav_keypad), Res.drawable.ic_keypad, stringResource(Res.string.nav_keypad)),
             NavItem(stringResource(Res.string.nav_log), Res.drawable.ic_call_log, stringResource(Res.string.nav_log)),
             NavItem(stringResource(Res.string.nav_lists), Res.drawable.ic_block_lists, stringResource(Res.string.nav_lists)),
             NavItem(stringResource(Res.string.nav_settings), Res.drawable.ic_settings, stringResource(Res.string.nav_settings)),

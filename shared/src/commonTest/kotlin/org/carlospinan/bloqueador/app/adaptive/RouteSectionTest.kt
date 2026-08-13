@@ -11,31 +11,36 @@ class RouteSectionTest {
     }
 
     @Test
-    fun `call log route maps to index 1`() {
-        assertEquals(1, routeSection(AdaptiveRoutes.CALL_LOG))
-        assertEquals(1, routeSection("call_log/all"))
-        assertEquals(1, routeSection("call_log/today"))
-        assertEquals(1, routeSection("call_log/week"))
+    fun `keypad route maps to index 1`() {
+        assertEquals(1, routeSection(AdaptiveRoutes.KEYPAD))
     }
 
     @Test
-    fun `block list hub and detail routes map to index 2`() {
-        assertEquals(2, routeSection(AdaptiveRoutes.BLOCK_LIST))
-        assertEquals(2, routeSection(AdaptiveRoutes.MANUAL_BLOCK_LIST))
-        assertEquals(2, routeSection(AdaptiveRoutes.ALLOWLIST))
-        assertEquals(2, routeSection(AdaptiveRoutes.PATTERNS))
-        assertEquals(2, routeSection(AdaptiveRoutes.COUNTRIES))
-        assertEquals(2, routeSection(AdaptiveRoutes.SCHEDULES))
-        assertEquals(2, routeSection(AdaptiveRoutes.ACTION_RULES))
+    fun `call log route maps to index 2`() {
+        assertEquals(2, routeSection(AdaptiveRoutes.CALL_LOG))
+        assertEquals(2, routeSection("call_log/all"))
+        assertEquals(2, routeSection("call_log/today"))
+        assertEquals(2, routeSection("call_log/week"))
     }
 
     @Test
-    fun `settings and sub-screen routes map to index 3`() {
-        assertEquals(3, routeSection(AdaptiveRoutes.SETTINGS))
-        assertEquals(3, routeSection(AdaptiveRoutes.AUTO_RESPONDER))
-        assertEquals(3, routeSection(AdaptiveRoutes.BACKUP))
-        assertEquals(3, routeSection(AdaptiveRoutes.PRIVACY_POLICY))
-        assertEquals(3, routeSection(AdaptiveRoutes.TERMS_CONDITIONS))
+    fun `block list hub and detail routes map to index 3`() {
+        assertEquals(3, routeSection(AdaptiveRoutes.BLOCK_LIST))
+        assertEquals(3, routeSection(AdaptiveRoutes.MANUAL_BLOCK_LIST))
+        assertEquals(3, routeSection(AdaptiveRoutes.ALLOWLIST))
+        assertEquals(3, routeSection(AdaptiveRoutes.PATTERNS))
+        assertEquals(3, routeSection(AdaptiveRoutes.COUNTRIES))
+        assertEquals(3, routeSection(AdaptiveRoutes.SCHEDULES))
+        assertEquals(3, routeSection(AdaptiveRoutes.ACTION_RULES))
+    }
+
+    @Test
+    fun `settings and sub-screen routes map to index 4`() {
+        assertEquals(4, routeSection(AdaptiveRoutes.SETTINGS))
+        assertEquals(4, routeSection(AdaptiveRoutes.AUTO_RESPONDER))
+        assertEquals(4, routeSection(AdaptiveRoutes.BACKUP))
+        assertEquals(4, routeSection(AdaptiveRoutes.PRIVACY_POLICY))
+        assertEquals(4, routeSection(AdaptiveRoutes.TERMS_CONDITIONS))
     }
 
     @Test
@@ -50,11 +55,24 @@ class RouteSectionTest {
     }
 
     @Test
-    fun `sectionRoutes list has four entries`() {
-        assertEquals(4, sectionRoutes.size)
+    fun `sectionRoutes list has five entries`() {
+        assertEquals(5, sectionRoutes.size)
         assertEquals(AdaptiveRoutes.HOME, sectionRoutes[0])
-        assertEquals(AdaptiveRoutes.BLOCK_LIST, sectionRoutes[2])
-        assertEquals(AdaptiveRoutes.SETTINGS, sectionRoutes[3])
+        assertEquals(AdaptiveRoutes.KEYPAD, sectionRoutes[1])
+        assertEquals(AdaptiveRoutes.BLOCK_LIST, sectionRoutes[3])
+        assertEquals(AdaptiveRoutes.SETTINGS, sectionRoutes[4])
+    }
+
+    /**
+     * The nav bar builds its items from one list and highlights them from a separate `when`.
+     * Inserting a tab shifts every index after it, and nothing else in the app would fail: the
+     * bar would simply light up the wrong tab. This asserts the two agree for every section.
+     */
+    @Test
+    fun `every section route selects its own tab`() {
+        sectionRoutes.forEachIndexed { index, route ->
+            assertEquals(index, routeSection(route), "route $route should select tab $index")
+        }
     }
 
     @Test

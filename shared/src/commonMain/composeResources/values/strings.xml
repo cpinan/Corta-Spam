@@ -203,6 +203,11 @@
     <string name="autoresponder_error_too_long">Script is too long (max 500 characters).</string>
     <string name="autoresponder_error_consent">Recording requires consent line in script.</string>
     <!-- Navigation -->
+    <string name="nav_keypad">Keypad</string>
+    <string name="keypad_title">Keypad</string>
+    <string name="keypad_hint">Enter a number</string>
+    <string name="keypad_call">Call</string>
+    <string name="keypad_delete">Delete last digit</string>
     <string name="nav_home">Home</string>
     <string name="nav_log">Log</string>
     <string name="nav_lists">Lists</string>

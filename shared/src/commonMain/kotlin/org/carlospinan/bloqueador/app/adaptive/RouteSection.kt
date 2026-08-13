@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.adaptive
 
 object AdaptiveRoutes {
     const val HOME = "home"
+    const val KEYPAD = "keypad"
     const val CALL_LOG = "call_log/{filter}"
     const val STATS = "stats"
     const val BLOCK_LIST = "block_list"
@@ -23,6 +24,8 @@ object AdaptiveRoutes {
 
 val homeSectionRoutes =
     setOf(AdaptiveRoutes.HOME, AdaptiveRoutes.STATS)
+val keypadSectionRoutes =
+    setOf(AdaptiveRoutes.KEYPAD)
 val callLogSectionRoutes =
     setOf(AdaptiveRoutes.CALL_LOG)
 val blockListSectionRoutes =
@@ -47,6 +50,7 @@ val settingsSectionRoutes =
 val sectionRoutes =
     listOf(
         AdaptiveRoutes.HOME,
+        AdaptiveRoutes.KEYPAD,
         AdaptiveRoutes.callLogRoute(),
         AdaptiveRoutes.BLOCK_LIST,
         AdaptiveRoutes.SETTINGS,
@@ -56,8 +60,9 @@ fun routeSection(route: String?): Int =
     when {
         route == null -> 0
         route in homeSectionRoutes -> 0
-        route.startsWith("call_log") -> 1
-        route in blockListSectionRoutes -> 2
-        route in settingsSectionRoutes -> 3
+        route in keypadSectionRoutes -> 1
+        route.startsWith("call_log") -> 2
+        route in blockListSectionRoutes -> 3
+        route in settingsSectionRoutes -> 4
         else -> 0
     }

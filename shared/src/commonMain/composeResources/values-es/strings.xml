@@ -229,6 +229,11 @@
     <string name="autoresponder_error_consent">La grabación requiere la línea de consentimiento en el guion.</string>
 
     <!-- Navegación -->
+    <string name="nav_keypad">Teclado</string>
+    <string name="keypad_title">Teclado</string>
+    <string name="keypad_hint">Escribe un número</string>
+    <string name="keypad_call">Llamar</string>
+    <string name="keypad_delete">Borrar el último dígito</string>
     <string name="nav_home">Inicio</string>
     <string name="nav_log">Registro</string>
     <string name="nav_lists">Listas</string>

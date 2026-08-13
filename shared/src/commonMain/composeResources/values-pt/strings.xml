@@ -216,6 +216,11 @@
     <string name="autoresponder_error_consent">Gravação requer aviso de consentimento no roteiro.</string>
 
     <!-- Navegação -->
+    <string name="nav_keypad">Teclado</string>
+    <string name="keypad_title">Teclado</string>
+    <string name="keypad_hint">Digite um número</string>
+    <string name="keypad_call">Ligar</string>
+    <string name="keypad_delete">Apagar o último dígito</string>
     <string name="nav_home">Início</string>
     <string name="nav_log">Registro</string>
     <string name="nav_lists">Listas</string>
