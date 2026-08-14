@@ -45,6 +45,8 @@ fun CallScreen(
     onDecline: () -> Unit,
     onHangUp: () -> Unit,
     repeatedCallAttempts: Int? = null,
+    /** Contact name, or the user's own label for this number. Null when it is neither. */
+    displayName: String? = null,
 ) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -68,10 +70,21 @@ fun CallScreen(
                         style = MaterialTheme.typography.labelLarge,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    // The name is what identifies the caller; the number stays underneath rather
+                    // than being replaced, because "who is calling" and "which of their numbers"
+                    // are different questions and a call screen is where both get asked.
                     Text(
-                        text = number.ifBlank { stringResource(Res.string.call_unknown_number) },
+                        text = displayName ?: number.ifBlank { stringResource(Res.string.call_unknown_number) },
                         style = MaterialTheme.typography.headlineMedium,
                     )
+                    if (displayName != null && number.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = number,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     if (repeatedCallAttempts != null) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(

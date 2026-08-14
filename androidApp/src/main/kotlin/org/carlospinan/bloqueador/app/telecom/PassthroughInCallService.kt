@@ -22,7 +22,9 @@ import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.contacts.isKnownContact
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
+import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.RuleDecision
+import org.carlospinan.bloqueador.app.rules.RuleRepository
 import org.carlospinan.bloqueador.app.rules.domain.EvaluateIncomingCallUseCase
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.koin.core.component.KoinComponent
@@ -46,6 +48,7 @@ class PassthroughInCallService :
     private val settingsRepository: SettingsRepository by inject()
     private val contactsGateway: ContactsGateway by inject()
     private val autoResponderRepository: AutoResponderRepository by inject()
+    private val ruleRepository: RuleRepository by inject()
 
     /** Lives for the whole service, not one call, so a second call can't cancel the first's work. */
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -166,6 +169,7 @@ class PassthroughInCallService :
         val number = call.handleNumber()
 
         InCallState.attach(call)
+        resolveCallerName(number)
         startActivity(
             Intent(this@PassthroughInCallService, InCallActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -269,6 +273,52 @@ class PassthroughInCallService :
                     Log.e(TAG, "Call evaluation failed, failing open", e)
                 }
             }
+    }
+
+    /**
+     * Puts a name on the in-call screen: the contact's, or failing that the label the user gave
+     * this number in their own rules.
+     *
+     * Off the call-setup path on purpose. Both lookups touch a content provider or the database,
+     * and the screen has to be up before either finishes -- a call that shows nothing for 200 ms
+     * and then gains a name is fine, a call whose UI waits on a 5,000-contact provider query is
+     * not. The number is already on screen from [InCallState.attach]; this only replaces it.
+     *
+     * The rule label is a genuine fallback rather than a decoration: a number worth adding to a
+     * blocklist by hand is usually one the user has already identified ("insurance spam"), and
+     * that is more use on a ringing screen than the digits are.
+     */
+    private fun resolveCallerName(number: String) {
+        if (number.isBlank()) return
+        serviceScope.launch {
+            try {
+                val name =
+                    ContactNameLookup.displayNameFor(this@PassthroughInCallService, number)
+                        ?: ruleLabelFor(number)
+                if (name != null) InCallState.setDisplayName(number, name)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The number stays on screen. A missing name is cosmetic; a crash here is not.
+                Log.e(TAG, "Could not resolve a name for the caller", e)
+            }
+        }
+    }
+
+    /**
+     * The label on this number's own block or allowlist entry, if it has one.
+     *
+     * Matched with [PhoneNumberParser.sameNumber] rather than string equality, for the reason the
+     * whole app matches numbers that way: the rule may have been saved nationally and the call
+     * arrives in E.164, or the other way round.
+     */
+    private suspend fun ruleLabelFor(number: String): String? {
+        val blocked =
+            ruleRepository.blockedNumberEntries().firstOrNull { PhoneNumberParser.sameNumber(it.number, number) }?.label
+        if (!blocked.isNullOrBlank()) return blocked
+        val allowed =
+            ruleRepository.allowlistedNumberEntries().firstOrNull { PhoneNumberParser.sameNumber(it.number, number) }?.label
+        return allowed?.takeIf { it.isNotBlank() }
     }
 
     /**

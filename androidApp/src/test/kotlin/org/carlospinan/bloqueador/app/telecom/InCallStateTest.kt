@@ -36,6 +36,17 @@ class InCallStateTest {
         assertNull(InCallState.state.value)
     }
 
+    /**
+     * The name lookup runs off the call-setup path, so it can land after the call it was started
+     * for has ended — and with no call attached there is nothing to name.
+     */
+    @Test
+    fun `a name resolved after the call ended is dropped`() {
+        InCallState.setDisplayName("+34600123456", "Ana Torres")
+
+        assertNull(InCallState.state.value)
+    }
+
     @Test
     fun `repeated-attempt info arriving before a call is dropped, not buffered`() {
         // setRepeatedCallAttempts copies the existing state, so with no state there is nothing
