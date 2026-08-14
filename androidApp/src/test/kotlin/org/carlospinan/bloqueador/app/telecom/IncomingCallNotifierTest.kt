@@ -159,6 +159,33 @@ class IncomingCallNotifierTest {
     }
 
     /**
+     * The regression that killed the app mid-call.
+     *
+     * From Android 14 the platform refuses a `CallStyle` notification that is not tied to a
+     * foreground service or a user-initiated job and carries no full-screen intent — and it
+     * refuses it by throwing out of `notify()`, on the main thread, inside a `Call.Callback`.
+     * This notification is posted the moment a call is answered, so the process died exactly
+     * then and Telecom handed the live call to the preloaded dialer.
+     *
+     * Robolectric's notification manager does not enforce that rule, so the assertion is on the
+     * shape rather than on the throw: the ongoing notification must not be CallStyle at all.
+     */
+    @Test
+    fun `the ongoing-call notification is not CallStyle`() {
+        IncomingCallNotifier.notifyOngoingCall(context, "+34600123456")
+
+        val notification = manager.activeNotifications.single().notification
+        assertEquals(
+            null,
+            notification.extras.getString(Notification.EXTRA_TEMPLATE),
+            "an ongoing CallStyle notification is rejected by Android 14 and takes the process with it",
+        )
+        val actions = notification.actions.orEmpty().map { it.title.toString() }
+        assertTrue("Hang up" in actions, "expected a hang-up action, got $actions")
+        assertNotNull(notification.contentIntent, "no way back into the call")
+    }
+
+    /**
      * The body of a finished-call notification used to do nothing at all -- no content intent, so
      * a tap dismissed the only surface reporting the call and left the log two screens away.
      */

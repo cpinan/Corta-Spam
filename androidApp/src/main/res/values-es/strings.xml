@@ -8,6 +8,8 @@
     <string name="notification_action_block">Bloquear</string>
     <string name="notification_action_allowlist">Permitir siempre</string>
     <string name="notification_action_call_back">Devolver la llamada</string>
+    <string name="notification_action_hang_up">Colgar</string>
+    <string name="notification_ongoing_call">En llamada — toca para volver</string>
     <string name="notification_repeated_caller_title">Llamada repetida</string>
     <string name="notification_call_result_with_reason">%1$s — %2$s</string>
     <string name="notification_channel_incoming_calls_name">Llamadas entrantes</string>

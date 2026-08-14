@@ -123,6 +123,18 @@ object IncomingCallNotifier {
      * Low-priority "return to call" notification while a call is active. [InCallActivity] is
      * `excludeFromRecents` and finishes once dismissed, so without this there's no way back to
      * a live call after leaving it (locking the screen, hitting home, etc).
+     *
+     * **Deliberately not `CallStyle`.** From Android 14, the platform rejects a `CallStyle`
+     * notification that is neither tied to a foreground service nor a user-initiated job nor
+     * carrying a full-screen intent — and it rejects it by throwing `IllegalArgumentException`
+     * out of `notify()`, on the main thread, inside a `Call.Callback`. This one had all three
+     * missing, so **answering a call killed the app process**: Telecom then fell back to the
+     * preloaded dialer, which is what the user saw as "the system phone app takes over"
+     * mid-conversation. The ringing notification survives because it has a full-screen intent.
+     *
+     * The style is not worth the risk here. A plain ongoing notification with a Hang up action
+     * and a tap target back into the call does the same job, and the restriction does not apply
+     * to it. See [post] for the second half of the fix.
      */
     fun notifyOngoingCall(
         context: Context,
@@ -141,18 +153,21 @@ object IncomingCallNotifier {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
         val hangUpPendingIntent = actionPendingIntent(context, CallActionReceiver.ACTION_HANG_UP, requestCode = 3)
-        val caller = Person.Builder().setName(displayName).build()
 
         val notification =
             NotificationCompat
                 .Builder(context, ONGOING_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.sym_call_incoming)
                 .setContentTitle(displayName)
+                .setContentText(context.getString(R.string.notification_ongoing_call))
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setOngoing(true)
                 .setContentIntent(contentPendingIntent)
-                .setStyle(NotificationCompat.CallStyle.forOngoingCall(caller, hangUpPendingIntent))
-                .build()
+                .addAction(
+                    android.R.drawable.ic_menu_close_clear_cancel,
+                    context.getString(R.string.notification_action_hang_up),
+                    hangUpPendingIntent,
+                ).build()
 
         post(context, ONGOING_NOTIFICATION_ID, notification)
     }
@@ -359,6 +374,13 @@ object IncomingCallNotifier {
             NotificationManagerCompat.from(context).notify(id, notification)
         } catch (e: SecurityException) {
             Log.w(TAG, "Notification permission was revoked before the notification could be posted", e)
+        } catch (e: RuntimeException) {
+            // Every caller here runs on the main thread inside a Telecom callback, so anything
+            // thrown out of notify() takes the whole process down *during a live call* -- and
+            // Telecom answers a dead default dialer by handing the call to the preloaded one.
+            // That is exactly what an IllegalArgumentException from a CallStyle notification did
+            // on Android 14 (see notifyOngoingCall). A notification is never worth a call.
+            Log.e(TAG, "Notification $id was rejected by the platform and has been dropped", e)
         }
     }
 
