@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 500 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 508 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -28,7 +28,8 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Repeated-caller bypass** — opt-in: an unknown number that would otherwise be silently blocked gets let through once it retries enough times, with a heads-up on the ringing screen and a notification. Never applies to numbers matched by a manual block, pattern, country, spam, or schedule rule
 - **Keypad** — a dial pad tab, because taking the default-dialer role replaces the phone app. Also where an `ACTION_DIAL` intent from any other app lands, pre-filled
 - **Contact search** — the keypad's one field is both the number being dialled and a search box: type a name and matching contacts appear, type digits and they are matched against contact numbers as digits, so `611` finds `+34 611 99 88 77`. Tapping a result fills the number in, leaving the call itself one deliberate press away
-- **Call log** — every call with local timestamp, outcome, rule detail, and the contact's name when it matches one (list-detail two-pane on tablet)
+- **Call log** — a recents list: every call in **both directions**, with local timestamp, outcome, rule detail, and the contact's name when it matches one (list-detail two-pane on tablet). Outgoing calls are labelled as outgoing rather than "allowed", because they are never screened and no decision was made about them
+- **Caller identity on the call screen** — a ringing or dialling call shows the contact's name, or failing that the label you gave that number in your own block/allowlist, with the number kept underneath
 - **Call back** — tap any number in the call log to return the call, or the Call back button on a missed-call notification
 - **Actionable notifications** — a blocked, missed or repeat-caller notification carries the buttons that outcome allows (Call back, Block, Always allow), and tapping the notification itself opens the call log with that caller's actions already open
 - **Copy number** — copy phone numbers to clipboard from the call log
@@ -140,9 +141,18 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 A complete 25-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product, the difference between reading code, watching a failing device, and actually proving a screen scrolls, and (newest) a default dialer that could not dial, and the manifest declaration that had been promising otherwise.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 118 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 120 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-14 (second):** the log that remembered half the calls, and the call screen that knew the name and did not say it.
+
+- **Outgoing calls were never logged at all.** The call log grew out of the rule engine, so a row was a *decision record* — and an outgoing call has no decision, because the screener deliberately never evaluates one. The result was a dialer whose history was missing every call its owner had placed. `CallLogEntry` now carries a `direction` column and outgoing calls are written to it.
+- **`3.sqm` rebuilds the table rather than using `ALTER TABLE ADD COLUMN`**, because the new column carries a `CHECK` constraint and a table built by `ADD COLUMN` is not guaranteed to compare equal to the `CREATE TABLE` that `verifyMigrations` diffs it against. Two traps came with that: `DROP TABLE` takes the index with it (`idx_call_log_action_time` has to be recreated, or Home's three window counts silently go back to full scans), and SQLDelight's migration compiler does not model the drop — without an explicit `DROP INDEX` first, generation fails with `Duplicate index name`.
+- **Outgoing rows are `ALLOWED` with a NULL `rule_type`** — the only value the action CHECK leaves, and the one that keeps them out of the blocked-call counters — but the log labels them **"Outgoing call"**, not "Allowed call". Reusing the allowed label would report a screening result for a call that was never screened.
+- **The call screen showed a bare number for everyone**, including people already in the address book: the app knew the name well enough to put it on the *notification* and dropped it on the one surface where "who is this?" is the whole question. It now shows the contact's name, or failing that the label the user gave that number in their own block/allowlist, with the number kept underneath.
+- **The lookup runs off the call-setup path** and is applied only if the call it was started for is still the one on screen — otherwise a slow provider query returning after the call ended would put the previous caller's name on the next caller's screen.
+- **Verified on hardware and emulator:** on the razr, `PRAGMA user_version` reads 4 after the upgrade, the row that was already in the log survived as INCOMING, and a call placed from the keypad appears as "Llamada saliente" above it. On the emulator, a call from a saved contact shows the contact name over the number, and a call from a labelled allowlist entry that is not a contact shows the label — read out of the view hierarchy, because the app's own ongoing-call heads-up notification covers the headline in a screenshot.
 
 **2026-08-14:** the keypad learned the address book, and a notification body finally does something.
 
