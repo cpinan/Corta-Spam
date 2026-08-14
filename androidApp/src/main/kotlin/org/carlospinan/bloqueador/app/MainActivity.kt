@@ -9,6 +9,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -349,7 +350,11 @@ class MainActivity : ComponentActivity() {
     private fun placeCall(number: String) {
         if (number.isBlank()) return
         val callIntent = Intent(Intent.ACTION_CALL)
-        callIntent.data = "tel:${number.trim()}".toUri()
+        // '#' has to be escaped or the tel: URI treats everything after it as a fragment and the
+        // number is truncated -- the keypad has a '#' key, so this is reachable by typing. '+' is
+        // left alone deliberately: encoding it to %2B breaks every international call. Same
+        // reasoning as CallActionReceiver.callBack.
+        callIntent.data = "tel:${Uri.encode(number.trim(), "+")}".toUri()
         try {
             startActivity(callIntent)
         } catch (e: ActivityNotFoundException) {
