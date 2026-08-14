@@ -32,8 +32,13 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // the app-op denied and the in-app grant route is load-bearing. 4 carries the onboarding
 // checklist row that exposes that route. versionName stays 0.1.0 because nothing has ever reached
 // a user under that name -- only the code had to move.
-val appVersionName = "1.2.0"
-val appVersionCode = 4
+// 5, because 4 was uploaded to the internal track on 2026-08-13 and a code is spent on upload
+// rather than on publication -- Play will not take it twice. 1.3.0 rather than 1.2.1 because this
+// is not a patch on 1.2.0: it adds contact search, call-log filters, outgoing calls in the log and
+// caller identity on the call screen, and it fixes a crash that killed the app on every answered
+// call, which made Telecom hand the live call to the preloaded dialer mid-conversation.
+val appVersionName = "1.3.0"
+val appVersionCode = 5
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
