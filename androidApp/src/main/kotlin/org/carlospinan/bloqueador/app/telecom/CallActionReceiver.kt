@@ -67,8 +67,11 @@ class CallActionReceiver :
             ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) ==
                 PackageManager.PERMISSION_GRANTED
         val action = if (granted) Intent.ACTION_CALL else Intent.ACTION_DIAL
+        // '+' is left unescaped deliberately: it is meaningful in a tel: number and encoding it
+        // to %2B breaks every international call. '#' still has to be escaped, or everything
+        // after it reads as a fragment.
         val callIntent =
-            Intent(action, "tel:${Uri.encode(number.trim())}".toUri())
+            Intent(action, "tel:${Uri.encode(number.trim(), "+")}".toUri())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!granted) {
             // ACTION_DIAL would otherwise be offered to every dialer on the device, including the

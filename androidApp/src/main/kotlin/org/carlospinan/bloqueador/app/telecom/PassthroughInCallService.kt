@@ -172,6 +172,13 @@ class PassthroughInCallService :
         )
 
         call.registerCallback(stateCallback)
+
+        // An InCallService is handed outgoing calls too. They still get the in-call UI above --
+        // this app owns it -- but they must never reach the rule engine: it would run the user's
+        // own blocklist against a number they just dialled, and a quiet-hours rule would end
+        // every outgoing call made inside the window. See CallDirectionPolicy.
+        if (!CallDirectionPolicy.isIncoming(call)) return
+
         if (call.state == Call.STATE_RINGING) {
             // Ring first, decide second. Evaluation touches the database and the contacts
             // provider, and a caller must never be dropped into silence because that was slow --
