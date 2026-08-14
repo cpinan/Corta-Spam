@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 508 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 524 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -28,6 +28,7 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - **Respuesta a llamadas repetidas** — opcional: un número desconocido que normalmente se bloquearía en silencio se deja pasar tras suficientes intentos, con un aviso en la pantalla de llamada entrante y una notificación. Nunca aplica a números bloqueados manualmente ni por patrón, país, spam u horario
 - **Teclado** — una pestaña con teclado de marcación, porque asumir el rol de marcador predeterminado sustituye a la app de teléfono. También es donde aterriza, ya relleno, un intent `ACTION_DIAL` de cualquier otra app
 - **Búsqueda de contactos** — el único campo del teclado es a la vez el número que se marca y un buscador: escribe un nombre y aparecen los contactos que coinciden, escribe dígitos y se comparan como dígitos con los números de tus contactos, así que `611` encuentra `+34 611 99 88 77`. Tocar un resultado rellena el número, y la llamada sigue estando a una pulsación deliberada de distancia
+- **Filtros del registro** — busca por nombre o número, filtra por dirección y resultado (Todas / Entrantes / Salientes / Bloqueadas) y por fecha (Hoy / Esta semana / Este mes)
 - **Registro de llamadas** — un historial de recientes: todas las llamadas en **ambos sentidos**, con hora local, resultado, detalle de la regla y el nombre del contacto cuando coincide (panel dividido en tablet). Las salientes se marcan como salientes y no como "permitidas", porque nunca se filtran y no hubo ninguna decisión sobre ellas
 - **Identidad de quien llama en la pantalla de llamada** — una llamada entrante o saliente muestra el nombre del contacto o, si no lo hay, la etiqueta que le pusiste a ese número en tus listas, con el número debajo
 - **Devolver llamada** — toca cualquier número en el registro para devolver la llamada, o el botón Devolver la llamada de la notificación de llamada perdida
@@ -143,9 +144,27 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 Un curso completo de 25 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto, la diferencia entre leer el código, ver fallar un dispositivo y demostrar de verdad que una pantalla se desplaza, y (el más nuevo) un marcador predeterminado que no sabía marcar, y la declaración del manifiesto que llevaba tiempo prometiendo lo contrario.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 120 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 127 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-14 (tercera):** contestar una llamada mataba la app, y cuatro fallos resultaron ser uno.
+
+- **La app se caía en el momento en que se contestaba una llamada.** Android 14 rechaza una notificación `CallStyle` que no esté ligada a un servicio en primer plano ni a un trabajo iniciado por el usuario y que no lleve un full-screen intent — y la rechaza lanzando `IllegalArgumentException` desde `notify()`, en el hilo principal, dentro de un `Call.Callback`. La notificación de "volver a la llamada" se publica justo cuando la llamada pasa a `ACTIVE` y no tenía ninguna de las tres:
+
+  ```
+  java.lang.IllegalArgumentException: 0|org.carlospinan.cortaspam|1002|null|10728 Not posted.
+  CallStyle notifications must be for a foreground service or user initated job or use a fullScreenIntent.
+      at IncomingCallNotifier.notifyOngoingCall(IncomingCallNotifier.kt:157)
+      at PassthroughInCallService$stateCallback$1.onStateChanged(PassthroughInCallService.kt:156)
+  Process org.carlospinan.cortaspam (pid 24913) has died: fg TOP
+  ```
+
+- **Ese único fallo era tres de los cuatro síntomas reportados.** Telecom responde a un marcador predeterminado muerto entregando la llamada en curso al preinstalado, así que la app de teléfono del sistema "tomaba el control" a mitad de conversación; la pantalla de llamada propia (con su icono) desaparecía junto con el proceso que la dibujaba; y su notificación de llamada perdida nunca llegaba, dejando solo la del sistema. La notificación de llamada entrante nunca se vio afectada — lleva un full-screen intent, que es justo por lo que todas las pruebas hasta ahora eran de llamadas que suenan y nunca se contestan.
+- **La notificación de llamada en curso ahora es normal**, con acción Colgar y un destino para volver a la llamada. `CallStyle` no aportaba nada ahí. `post()` además atrapa `RuntimeException`: una notificación nunca vale una llamada en curso, y este modo de fallo no puede volver a ser alcanzable desde ninguna notificación que la plataforma decida rechazar en el futuro.
+- **La notificación de llamada perdida del sistema se suprime como corresponde.** `MissedCallNotifierImpl` publica la suya salvo que el marcador predeterminado declare un receptor para `ACTION_SHOW_MISSED_CALLS_NOTIFICATION` — la prueba es que el receptor exista, no lo que haga. Está declarado con las dos grafías (`android.telecom.action` y `android.telephony.action`) y normalmente nunca se ejecutará, porque Telecom envía el broadcast con `READ_PHONE_STATE` y esta app deliberadamente no lo declara.
+- **El registro ganó filtros**: buscador (nombre o número), chips de dirección/resultado (Todas / Entrantes / Salientes / Bloqueadas) y chips de fecha (Hoy / Esta semana / Este mes). Los dos primeros son funciones puras sobre lo ya cargado, así que escribir nunca toca la base de datos; los de fecha van al ViewModel, porque una ventana temporal es otra consulta. Un resultado de filtro vacío tiene su propio mensaje — "aún no hay llamadas, agrega un número" es un consejo para un registro vacío y engañoso para una búsqueda sin coincidencias.
+- **Verificado en un emulador Pixel API 36**, que aplica la regla con la que se caía el razr: llamada simulada y contestada, la `InCallActivity` propia sigue en primer plano después, la notificación en curso publicada con su acción Colgar, el pid intacto antes y después de contestar, cero líneas `FATAL EXCEPTION` — y la notificación de Telecom sin actualizarse tras una nueva llamada perdida, es decir, ya no la publica. Los filtros se probaron en el razr sobre un registro real mixto.
 
 **2026-08-14 (segunda):** el registro que recordaba la mitad de las llamadas, y la pantalla de llamada que sabía el nombre y no lo decía.
 

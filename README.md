@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 508 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 524 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -28,6 +28,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Repeated-caller bypass** — opt-in: an unknown number that would otherwise be silently blocked gets let through once it retries enough times, with a heads-up on the ringing screen and a notification. Never applies to numbers matched by a manual block, pattern, country, spam, or schedule rule
 - **Keypad** — a dial pad tab, because taking the default-dialer role replaces the phone app. Also where an `ACTION_DIAL` intent from any other app lands, pre-filled
 - **Contact search** — the keypad's one field is both the number being dialled and a search box: type a name and matching contacts appear, type digits and they are matched against contact numbers as digits, so `611` finds `+34 611 99 88 77`. Tapping a result fills the number in, leaving the call itself one deliberate press away
+- **Call-log filters** — search by name or number, filter by direction and outcome (All / Incoming / Outgoing / Blocked), and by date (Today / This week / This month)
 - **Call log** — a recents list: every call in **both directions**, with local timestamp, outcome, rule detail, and the contact's name when it matches one (list-detail two-pane on tablet). Outgoing calls are labelled as outgoing rather than "allowed", because they are never screened and no decision was made about them
 - **Caller identity on the call screen** — a ringing or dialling call shows the contact's name, or failing that the label you gave that number in your own block/allowlist, with the number kept underneath
 - **Call back** — tap any number in the call log to return the call, or the Call back button on a missed-call notification
@@ -141,9 +142,27 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 A complete 25-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product, the difference between reading code, watching a failing device, and actually proving a screen scrolls, and (newest) a default dialer that could not dial, and the manifest declaration that had been promising otherwise.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 120 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 127 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-14 (third):** answering a call killed the app, and four bugs turned out to be one.
+
+- **The app crashed the moment a call was answered.** Android 14 refuses a `CallStyle` notification that is not tied to a foreground service or a user-initiated job and carries no full-screen intent — and it refuses it by throwing `IllegalArgumentException` out of `notify()`, on the main thread, inside a `Call.Callback`. The "return to call" notification is posted the instant a call goes `ACTIVE` and had none of the three:
+
+  ```
+  java.lang.IllegalArgumentException: 0|org.carlospinan.cortaspam|1002|null|10728 Not posted.
+  CallStyle notifications must be for a foreground service or user initated job or use a fullScreenIntent.
+      at IncomingCallNotifier.notifyOngoingCall(IncomingCallNotifier.kt:157)
+      at PassthroughInCallService$stateCallback$1.onStateChanged(PassthroughInCallService.kt:156)
+  Process org.carlospinan.cortaspam (pid 24913) has died: fg TOP
+  ```
+
+- **That one crash was three of the four reported symptoms.** Telecom answers a dead default dialer by handing the live call to the preloaded one, so the system phone app "took over" mid-conversation; the app's own call screen (icon and all) vanished with the process that was drawing it; and its missed-call notification never arrived, leaving only the platform's. The ringing notification was never affected — it carries a full-screen intent, which is why every test up to now had been of a call that rings and is never answered.
+- **The ongoing notification is now a plain one** with a Hang up action and a tap target back into the call. `CallStyle` bought nothing there. `post()` also swallows `RuntimeException` now: a notification is never worth a live call, and this failure mode must not be reachable from any future notification the platform decides to reject.
+- **The platform's missed-call notification is suppressed properly**, rather than by accident. `MissedCallNotifierImpl` posts its own unless the default dialer declares a receiver for `ACTION_SHOW_MISSED_CALLS_NOTIFICATION` — the test is the receiver existing, not what it does. It is declared for both the `android.telecom.action` and `android.telephony.action` spellings, and it will usually never fire, because Telecom sends the broadcast with `READ_PHONE_STATE` and this app deliberately does not hold it.
+- **The call log gained filters**: a search box (name or number), direction/outcome chips (All / Incoming / Outgoing / Blocked) and date chips (Today / This week / This month). The first two are pure functions over the loaded entries so typing never hits the database; the date chips go to the ViewModel, because a date window is a re-query. An empty *filter result* gets its own message — "no calls yet, add a number to start blocking" is advice for an empty log and misleading for a search that matched nothing.
+- **Verified on a Pixel API 36 emulator**, which enforces the rule the razr crashed on: a simulated call answered, the app's own `InCallActivity` still resumed afterwards, the ongoing notification posted with its Hang up action, the process id unchanged either side of the answer, zero `FATAL EXCEPTION` lines — and Telecom's missed-call notification not updating after a fresh missed call, i.e. no longer posting. The filters were driven on the razr against a real mixed log.
 
 **2026-08-14 (second):** the log that remembered half the calls, and the call screen that knew the name and did not say it.
 
