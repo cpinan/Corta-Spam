@@ -217,7 +217,11 @@ fun AppNavHost(
                 val state by callLogViewModel.state.collectAsState()
                 CallLogScreen(
                     entries = state.entries,
-                    filter = filter,
+                    // The ViewModel's filter, not the route argument: the screen's own date chips
+                    // change it, and the route argument would stay at whatever the user arrived
+                    // with, leaving the wrong chip selected from the first tap onwards.
+                    filter = state.filter,
+                    onSelectTimeFilter = { callLogViewModel.onIntent(CallLogIntent.SetFilter(it)) },
                     contactNames = state.contactNames,
                     onBlockNumber = { number -> blockListViewModel.onIntent(BlockListIntent.AddBlockedNumber(number)) },
                     onAllowlistNumber = { number -> blockListViewModel.onIntent(BlockListIntent.AddAllowlistedNumber(number)) },

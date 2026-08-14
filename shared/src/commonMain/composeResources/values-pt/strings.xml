@@ -261,6 +261,15 @@
     <string name="call_log_review_label">Precisa de revisão</string>
     <string name="call_log_allowed_label">Chamada permitida</string>
     <string name="call_log_outgoing_label">Chamada efetuada</string>
+    <string name="call_log_filter_all">Todas</string>
+    <string name="call_log_filter_incoming">Recebidas</string>
+    <string name="call_log_filter_outgoing">Efetuadas</string>
+    <string name="call_log_filter_blocked">Bloqueadas</string>
+    <string name="call_log_filter_today">Hoje</string>
+    <string name="call_log_filter_week">Esta semana</string>
+    <string name="call_log_filter_month">Este mês</string>
+    <string name="call_log_search_hint">Buscar nome ou número</string>
+    <string name="call_log_no_matches">Nenhuma chamada corresponde a este filtro.</string>
     <string name="call_log_time_label">Horário</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">Agora mesmo</string>

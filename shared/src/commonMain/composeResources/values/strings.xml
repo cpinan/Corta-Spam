@@ -234,6 +234,15 @@
     <string name="call_log_blocked_label">Blocked call</string>
     <string name="call_log_allowed_label">Allowed call</string>
     <string name="call_log_outgoing_label">Outgoing call</string>
+    <string name="call_log_filter_all">All</string>
+    <string name="call_log_filter_incoming">Incoming</string>
+    <string name="call_log_filter_outgoing">Outgoing</string>
+    <string name="call_log_filter_blocked">Blocked</string>
+    <string name="call_log_filter_today">Today</string>
+    <string name="call_log_filter_week">This week</string>
+    <string name="call_log_filter_month">This month</string>
+    <string name="call_log_search_hint">Search name or number</string>
+    <string name="call_log_no_matches">No calls match this filter.</string>
     <string name="call_log_review_label">Needs review</string>
     <string name="call_log_time_label">Time</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>

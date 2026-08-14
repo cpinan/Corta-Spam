@@ -1,8 +1,10 @@
 package org.carlospinan.bloqueador.app.calllog
 
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.carlospinan.bloqueador.app.rules.CallDirection
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
@@ -147,6 +149,71 @@ class CallLogScreenUiTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Block this number").assertDoesNotExist()
+    }
+
+    /** The chips have to filter the list that is on screen, not merely render. */
+    @Test
+    fun `the outgoing chip hides incoming calls`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry, outgoingEntry),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Outgoing").performClick()
+
+        composeTestRule.onNodeWithText("+34600111222").assertExists()
+        composeTestRule.onNodeWithText("+34611223344").assertDoesNotExist()
+    }
+
+    @Test
+    fun `searching narrows the log to the matching number`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry, allowedEntry),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("600987")
+
+        composeTestRule.onNodeWithText("+34600987654").assertExists()
+        composeTestRule.onNodeWithText("+34611223344").assertDoesNotExist()
+    }
+
+    /**
+     * "No calls yet" is advice for an empty log; for an empty *filter result* it is wrong, and it
+     * sends the user looking for a bug in the screening instead of in their own filter.
+     */
+    @Test
+    fun `a filter that matches nothing says so, not that the log is empty`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("zzz")
+
+        composeTestRule.onNodeWithText("No calls match this filter.").assertExists()
+    }
+
+    @Test
+    fun `a date chip asks the ViewModel rather than filtering on screen`() {
+        var requested: String? = null
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                onBack = {},
+                onSelectTimeFilter = { requested = it },
+            )
+        }
+
+        composeTestRule.onNodeWithText("This week").performClick()
+
+        assertEquals("week", requested)
     }
 
     @Test

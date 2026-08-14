@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.calllog
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,11 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,11 +51,20 @@ import cortaspam.shared.generated.resources.call_log_delete_recording
 import cortaspam.shared.generated.resources.call_log_delete_recording_confirm
 import cortaspam.shared.generated.resources.call_log_detail_placeholder
 import cortaspam.shared.generated.resources.call_log_empty_hint
+import cortaspam.shared.generated.resources.call_log_filter_all
+import cortaspam.shared.generated.resources.call_log_filter_blocked
+import cortaspam.shared.generated.resources.call_log_filter_incoming
+import cortaspam.shared.generated.resources.call_log_filter_month
+import cortaspam.shared.generated.resources.call_log_filter_outgoing
+import cortaspam.shared.generated.resources.call_log_filter_today
+import cortaspam.shared.generated.resources.call_log_filter_week
+import cortaspam.shared.generated.resources.call_log_no_matches
 import cortaspam.shared.generated.resources.call_log_outgoing_label
 import cortaspam.shared.generated.resources.call_log_play_recording
 import cortaspam.shared.generated.resources.call_log_recording_label
 import cortaspam.shared.generated.resources.call_log_review_label
 import cortaspam.shared.generated.resources.call_log_rule_label
+import cortaspam.shared.generated.resources.call_log_search_hint
 import cortaspam.shared.generated.resources.call_log_time_label
 import cortaspam.shared.generated.resources.call_log_title
 import cortaspam.shared.generated.resources.call_log_title_month
@@ -89,10 +103,22 @@ fun CallLogScreen(
     onPlayRecording: (String) -> Unit = {},
     onDeleteRecording: (Long) -> Unit = {},
     callLogRequest: CallLogRequest? = null,
+    /**
+     * Changes the date window. Handled by the ViewModel rather than here because it re-queries,
+     * unlike the direction filter and the search box, which only narrow what is already loaded.
+     */
+    onSelectTimeFilter: (String) -> Unit = {},
 ) {
     var selectedNumber by remember { mutableStateOf<String?>(null) }
     var selectedEntry by remember { mutableStateOf<CallLogEntryData?>(null) }
+    var directionFilter by rememberSaveable { mutableStateOf(CallLogDirectionFilter.ALL) }
+    var query by rememberSaveable { mutableStateOf("") }
     val windowSizeClass = rememberWindowSizeClass()
+
+    val visibleEntries =
+        remember(entries, directionFilter, query, contactNames) {
+            filterCallLog(entries, directionFilter, query, contactNames)
+        }
 
     // A notification tap arrives as a request to act on one caller, so the screen opens with that
     // caller's actions already up -- the point of the tap was Block/Call back/Copy, and making
@@ -132,7 +158,8 @@ fun CallLogScreen(
             if (windowSizeClass == WindowSizeClass.Expanded) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     CallLogListPane(
-                        entries = entries,
+                        entries = visibleEntries,
+                        allEntriesEmpty = entries.isEmpty(),
                         title = title,
                         contactNames = contactNames,
                         selectedEntry = selected,
@@ -140,6 +167,16 @@ fun CallLogScreen(
                         modifier = Modifier.width(340.dp).fillMaxHeight(),
                         onPlayRecording = onPlayRecording,
                         onDeleteRecording = onDeleteRecording,
+                        filterBar = {
+                            CallLogFilterBar(
+                                directionFilter = directionFilter,
+                                onDirectionFilter = { directionFilter = it },
+                                timeFilter = filter,
+                                onTimeFilter = onSelectTimeFilter,
+                                query = query,
+                                onQuery = { query = it },
+                            )
+                        },
                     )
                     CallLogDetailPane(
                         entry = selected,
@@ -170,7 +207,18 @@ fun CallLogScreen(
                         style = MaterialTheme.typography.headlineMedium,
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    CallLogFilterBar(
+                        directionFilter = directionFilter,
+                        onDirectionFilter = { directionFilter = it },
+                        timeFilter = filter,
+                        onTimeFilter = onSelectTimeFilter,
+                        query = query,
+                        onQuery = { query = it },
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     if (entries.isEmpty()) {
                         Text(
@@ -178,9 +226,18 @@ fun CallLogScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    } else if (visibleEntries.isEmpty()) {
+                        // An empty log and an empty *filter result* are different problems, and
+                        // the hint for the first one ("add a number to start blocking") is
+                        // nonsense advice for the second.
+                        Text(
+                            text = stringResource(Res.string.call_log_no_matches),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     } else {
                         LazyColumn {
-                            items(entries, key = { it.id }) { entry ->
+                            items(visibleEntries, key = { it.id }) { entry ->
                                 CallLogEntryRow(
                                     entry = entry,
                                     contactNames = contactNames,
@@ -253,9 +310,70 @@ fun CallLogScreen(
     }
 }
 
+/**
+ * Search box, direction/outcome chips, and date-window chips.
+ *
+ * Two rows of chips rather than one: they answer different questions ("which calls" and "when"),
+ * and a single row that mixed them would let the user pick two things that look mutually
+ * exclusive and are not. Each row scrolls horizontally, because the labels are translated and a
+ * row that fits in English wraps or clips in Spanish.
+ */
+@Composable
+private fun CallLogFilterBar(
+    directionFilter: CallLogDirectionFilter,
+    onDirectionFilter: (CallLogDirectionFilter) -> Unit,
+    timeFilter: String,
+    onTimeFilter: (String) -> Unit,
+    query: String,
+    onQuery: (String) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQuery,
+            label = { Text(stringResource(Res.string.call_log_search_hint)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            DIRECTION_CHIPS.forEach { (value, label) ->
+                FilterChip(
+                    selected = directionFilter == value,
+                    onClick = { onDirectionFilter(value) },
+                    label = { Text(stringResource(label)) },
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TIME_CHIPS.forEach { (value, label) ->
+                FilterChip(
+                    // "review" is reachable from Home but has no chip: it is a queue to work
+                    // through, not a date window, and it would sit in this row claiming to be one.
+                    selected = timeFilter == value,
+                    onClick = { onTimeFilter(value) },
+                    label = { Text(stringResource(label)) },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun CallLogListPane(
     entries: List<CallLogEntryData>,
+    allEntriesEmpty: Boolean,
     title: String,
     contactNames: Map<String, String>,
     selectedEntry: CallLogEntryData?,
@@ -263,6 +381,7 @@ private fun CallLogListPane(
     modifier: Modifier = Modifier,
     onPlayRecording: (String) -> Unit = {},
     onDeleteRecording: (Long) -> Unit = {},
+    filterBar: @Composable () -> Unit = {},
 ) {
     Column(modifier = modifier.padding(16.dp)) {
         Text(
@@ -270,11 +389,21 @@ private fun CallLogListPane(
             style = MaterialTheme.typography.headlineMedium,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        if (entries.isEmpty()) {
+        filterBar()
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (allEntriesEmpty) {
             Text(
                 text = stringResource(Res.string.call_log_empty_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else if (entries.isEmpty()) {
+            Text(
+                text = stringResource(Res.string.call_log_no_matches),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -579,6 +708,23 @@ private fun RecordingControls(
 }
 
 private const val NO_REQUEST_APPLIED = -1L
+
+private val DIRECTION_CHIPS =
+    listOf(
+        CallLogDirectionFilter.ALL to Res.string.call_log_filter_all,
+        CallLogDirectionFilter.INCOMING to Res.string.call_log_filter_incoming,
+        CallLogDirectionFilter.OUTGOING to Res.string.call_log_filter_outgoing,
+        CallLogDirectionFilter.BLOCKED to Res.string.call_log_filter_blocked,
+    )
+
+/** The values [CallLogViewModel]'s date filter understands, minus "review", which is not a date. */
+private val TIME_CHIPS =
+    listOf(
+        "all" to Res.string.call_log_filter_all,
+        "today" to Res.string.call_log_filter_today,
+        "week" to Res.string.call_log_filter_week,
+        "month" to Res.string.call_log_filter_month,
+    )
 
 private fun formatTimestamp(epochMillis: Long): String {
     val now = currentTimeMillis()

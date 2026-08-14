@@ -261,6 +261,15 @@
     <string name="call_log_review_label">समीक्षा आवश्यक</string>
     <string name="call_log_allowed_label">अनुमत कॉल</string>
     <string name="call_log_outgoing_label">बाहर जाने वाली कॉल</string>
+    <string name="call_log_filter_all">सभी</string>
+    <string name="call_log_filter_incoming">इनकमिंग</string>
+    <string name="call_log_filter_outgoing">आउटगोइंग</string>
+    <string name="call_log_filter_blocked">ब्लॉक की गईं</string>
+    <string name="call_log_filter_today">आज</string>
+    <string name="call_log_filter_week">इस सप्ताह</string>
+    <string name="call_log_filter_month">इस महीने</string>
+    <string name="call_log_search_hint">नाम या नंबर खोजें</string>
+    <string name="call_log_no_matches">इस फ़िल्टर से कोई कॉल मेल नहीं खाती।</string>
     <string name="call_log_time_label">समय</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">अभी-अभी</string>

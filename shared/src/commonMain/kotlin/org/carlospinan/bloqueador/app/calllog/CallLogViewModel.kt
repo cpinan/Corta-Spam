@@ -21,6 +21,12 @@ import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 data class CallLogUiState(
     val entries: List<CallLogEntryData> = emptyList(),
     val contactNames: Map<String, String> = emptyMap(),
+    /**
+     * The active date window. Exposed rather than read back from the navigation route, because
+     * the screen's own chips change it too — a route argument would keep reporting whatever the
+     * user navigated in with, and the selected chip would be wrong from the first tap.
+     */
+    val filter: String = "all",
 )
 
 sealed interface CallLogIntent {
@@ -55,7 +61,7 @@ class CallLogViewModel(
             filterFlow,
             contactNamesFlow,
         ) { entries, filter, contactNames ->
-            CallLogUiState(entries = applyFilter(entries, filter), contactNames = contactNames)
+            CallLogUiState(entries = applyFilter(entries, filter), contactNames = contactNames, filter = filter)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CallLogUiState())
 
     init {
