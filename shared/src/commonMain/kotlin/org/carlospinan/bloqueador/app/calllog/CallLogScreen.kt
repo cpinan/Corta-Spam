@@ -66,6 +66,7 @@ import cortaspam.shared.generated.resources.call_log_review_label
 import cortaspam.shared.generated.resources.call_log_rule_label
 import cortaspam.shared.generated.resources.call_log_search_hint
 import cortaspam.shared.generated.resources.call_log_time_label
+import cortaspam.shared.generated.resources.call_log_time_now
 import cortaspam.shared.generated.resources.call_log_title
 import cortaspam.shared.generated.resources.call_log_title_month
 import cortaspam.shared.generated.resources.call_log_title_review
@@ -75,9 +76,6 @@ import cortaspam.shared.generated.resources.ic_allowlist
 import cortaspam.shared.generated.resources.ic_blocked_number
 import cortaspam.shared.generated.resources.ic_call_log
 import cortaspam.shared.generated.resources.ic_unknown_call
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
@@ -509,7 +507,7 @@ private fun CallLogDetailPane(
             }
             CallLogDetailRow(
                 stringResource(Res.string.call_log_time_label),
-                formatTimestamp(entry.timestamp),
+                rememberTimestampLabel(entry.timestamp),
             )
 
             Spacer(modifier = Modifier.height(18.dp))
@@ -628,7 +626,7 @@ private fun CallLogEntryRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatTimestamp(entry.timestamp),
+                    text = rememberTimestampLabel(entry.timestamp),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -726,17 +724,16 @@ private val TIME_CHIPS =
         "month" to Res.string.call_log_filter_month,
     )
 
-private fun formatTimestamp(epochMillis: Long): String {
-    val now = currentTimeMillis()
-    if (now - epochMillis < 60_000L) return "Now"
-    val instant = Instant.fromEpochMilliseconds(epochMillis)
-    val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    val month =
-        local.month.name
-            .lowercase()
-            .replaceFirstChar { it.uppercase() }
-            .take(3)
-    val hour = local.hour.toString().padStart(2, '0')
-    val minute = local.minute.toString().padStart(2, '0')
-    return "$month ${local.dayOfMonth}, ${local.year} · $hour:$minute"
+/**
+ * "Now" for the last minute, and the platform's own localized date and time after that.
+ *
+ * Composable because the "Now" case is a translated string; the rest is delegated to
+ * [formatCallTimestamp], which is where the locale actually gets honoured. The one-minute window
+ * is what makes a call that just ended read as current rather than as a clock time the user has
+ * to compare against their own.
+ */
+@Composable
+private fun rememberTimestampLabel(epochMillis: Long): String {
+    val nowLabel = stringResource(Res.string.call_log_time_now)
+    return if (currentTimeMillis() - epochMillis < 60_000L) nowLabel else formatCallTimestamp(epochMillis)
 }

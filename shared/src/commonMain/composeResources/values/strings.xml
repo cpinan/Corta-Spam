@@ -245,6 +245,7 @@
     <string name="call_log_no_matches">No calls match this filter.</string>
     <string name="call_log_review_label">Needs review</string>
     <string name="call_log_time_label">Time</string>
+    <string name="call_log_time_now">Now</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">Just now</string>
     <string name="call_log_action_label">Action</string>

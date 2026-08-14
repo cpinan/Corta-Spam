@@ -271,6 +271,7 @@
     <string name="call_log_search_hint">नाम या नंबर खोजें</string>
     <string name="call_log_no_matches">इस फ़िल्टर से कोई कॉल मेल नहीं खाती।</string>
     <string name="call_log_time_label">समय</string>
+    <string name="call_log_time_now">अभी</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">अभी-अभी</string>
     <string name="call_log_action_label">कार्रवाई</string>

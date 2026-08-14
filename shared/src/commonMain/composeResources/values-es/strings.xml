@@ -150,6 +150,7 @@
     <string name="call_log_search_hint">Buscar nombre o número</string>
     <string name="call_log_no_matches">Ninguna llamada coincide con este filtro.</string>
     <string name="call_log_time_label">Hora</string>
+    <string name="call_log_time_now">Ahora</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">Ahora mismo</string>
     <string name="call_log_action_label">Acción</string>
