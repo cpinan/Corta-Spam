@@ -139,6 +139,7 @@
     <string name="call_log_blocked_label">Llamada bloqueada</string>
     <string name="call_log_review_label">Necesita revisión</string>
     <string name="call_log_allowed_label">Llamada permitida</string>
+    <string name="call_log_outgoing_label">Llamada saliente</string>
     <string name="call_log_time_label">Hora</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">Ahora mismo</string>

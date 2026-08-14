@@ -53,6 +53,19 @@ interface CallLogRepository {
         decision: RuleDecision,
     ): Long
 
+    /**
+     * Log a call the user placed, returning the new row's id.
+     *
+     * Separate from [logCall] because there is no [RuleDecision] to pass: the screener never
+     * evaluates an outgoing call — running the user's own blocklist against a number they just
+     * dialled once hung the phone up on them — so there is no rule, no reason and nothing to
+     * fabricate one from. The row exists so the log reads as a recents list.
+     */
+    suspend fun logOutgoingCall(
+        number: String,
+        timestamp: Long,
+    ): Long
+
     /** Point [entryId] at a finished recording. */
     suspend fun attachRecording(
         entryId: Long,
@@ -76,7 +89,23 @@ data class CallLogEntryData(
     val ruleDetail: String?,
     /** Auto-responder recording for this call, or null -- which is the case for almost every row. */
     val recordingPath: String? = null,
+    /**
+     * Which way the call went. Defaulted, because every row written before the column existed is
+     * an incoming one -- an outgoing call was not logged at all.
+     */
+    val direction: CallDirection = CallDirection.INCOMING,
 )
+
+/**
+ * Incoming or outgoing, as stored in `CallLogEntry.direction`.
+ *
+ * Named to match the stored strings exactly: the mapping from the database is `valueOf`, so a
+ * rename here silently turns every existing row into the fallback.
+ */
+enum class CallDirection {
+    INCOMING,
+    OUTGOING,
+}
 
 data class BlockedStats(
     val today: Int,

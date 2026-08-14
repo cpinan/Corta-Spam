@@ -82,6 +82,30 @@ class SqlCallLogRepository(
                         rule_type = decision.ruleTypeTag,
                         rule_id = decision.loggedRuleId,
                         rule_detail = decision.loggedDetail,
+                        direction = CallDirection.INCOMING.name,
+                    ).value
+                queries.lastInsertRowId().executeAsOne()
+            }
+        }
+
+    override suspend fun logOutgoingCall(
+        number: String,
+        timestamp: Long,
+    ): Long =
+        withContext(dispatcher) {
+            // ALLOWED with no rule tag: the call was never screened, and "BLOCKED" is the only
+            // other value the CHECK constraint permits. Stats count blocked rows, so an outgoing
+            // row can never inflate the blocked-calls counters.
+            queries.transactionWithResult {
+                queries
+                    .insertCallLogEntry(
+                        number = number,
+                        timestamp = timestamp,
+                        action = "ALLOWED",
+                        rule_type = null,
+                        rule_id = null,
+                        rule_detail = null,
+                        direction = CallDirection.OUTGOING.name,
                     ).value
                 queries.lastInsertRowId().executeAsOne()
             }
@@ -157,5 +181,8 @@ class SqlCallLogRepository(
             ruleId = rule_id,
             ruleDetail = rule_detail,
             recordingPath = recording_path,
+            // A row written by a future version with a direction this build has never heard of
+            // reads as INCOMING rather than crashing the whole call log on one bad string.
+            direction = CallDirection.entries.firstOrNull { it.name == direction } ?: CallDirection.INCOMING,
         )
 }

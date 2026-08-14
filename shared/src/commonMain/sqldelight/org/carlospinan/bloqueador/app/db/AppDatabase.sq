@@ -46,7 +46,13 @@ CREATE TABLE CallLogEntry (
     -- of rows: recording is off by default and only ever runs on an auto-answered blocked call).
     -- The file lives in app-internal storage; clearCallLog cannot delete it, so the caller that
     -- clears the log must delete the files too -- see CallLogRepository.clearAll.
-    recording_path TEXT
+    recording_path TEXT,
+    -- Which way the call went. Outgoing rows carry no rule decision at all: the screener
+    -- deliberately never evaluates a call the user placed (see CallDirectionPolicy), so they are
+    -- always ALLOWED with a NULL rule_type and exist only so this log is a recents list rather
+    -- than an incoming-only history. Defaults to INCOMING, which is what every row written
+    -- before this column existed was.
+    direction TEXT NOT NULL DEFAULT 'INCOMING' CHECK (direction IN ('INCOMING', 'OUTGOING'))
 );
 
 -- BlockedNumber queries
@@ -136,8 +142,8 @@ DELETE FROM CountryRule WHERE id = ?;
 
 -- CallLogEntry queries
 insertCallLogEntry:
-INSERT INTO CallLogEntry(number, timestamp, action, rule_type, rule_id, rule_detail)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO CallLogEntry(number, timestamp, action, rule_type, rule_id, rule_detail, direction)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 selectRecentCallLogEntries:
 SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT ?;

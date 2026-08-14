@@ -45,12 +45,14 @@ class DatabaseDriverTest {
             rule_type = "MANUAL",
             rule_id = null,
             rule_detail = "Manually blocked",
+            direction = "INCOMING",
         )
         val entries = database.appDatabaseQueries.selectAllCallLogEntries().executeAsList()
 
         assertEquals(1, entries.size)
         assertEquals("BLOCKED", entries.first().action)
         assertEquals("MANUAL", entries.first().rule_type)
+        assertEquals("INCOMING", entries.first().direction)
     }
 
     @Test

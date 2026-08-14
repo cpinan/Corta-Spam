@@ -318,4 +318,59 @@ class SqlCallLogRepositoryTest {
             // stat can never disagree. Anchoring buckets at `now` used to break this.
             assertEquals(repo.blockedStats().today, repo.blockedByDay(daysBack = 7).first().count)
         }
+
+    /**
+     * The direction column against the real CHECK constraint. A value the constraint rejects
+     * fails here and nowhere else — the Kotlin enum compiles whatever it is named.
+     */
+    @Test
+    fun outgoingCallsAreLoggedWithTheirDirectionAndNoRule() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+
+            repo.logOutgoingCall("+34600123456", now)
+
+            val entry = repo.allEntries().first().single()
+            assertEquals(CallDirection.OUTGOING, entry.direction)
+            assertEquals("+34600123456", entry.number)
+            // No decision was made, so nothing may be reported as one.
+            assertEquals("ALLOWED", entry.action)
+            assertNull(entry.ruleType)
+            assertNull(entry.ruleId)
+            assertNull(entry.ruleDetail)
+        }
+
+    @Test
+    fun screenedCallsStayIncoming() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+
+            repo.logCall("+34600123456", now, RuleDecision.DefaultBlock)
+
+            assertEquals(
+                CallDirection.INCOMING,
+                repo
+                    .allEntries()
+                    .first()
+                    .single()
+                    .direction,
+            )
+        }
+
+    /**
+     * A call the user placed must never move the blocked-call counters. It is written as ALLOWED
+     * precisely so it cannot, and this is the assertion that keeps that true if the value ever
+     * changes.
+     */
+    @Test
+    fun outgoingCallsDoNotCountAsBlocked() =
+        runTest {
+            val repo = SqlCallLogRepository(createTestDatabase(), Dispatchers.Unconfined)
+
+            repo.logOutgoingCall("+34600123456", now)
+            repo.logOutgoingCall("+34600999999", now)
+
+            assertEquals(0, repo.blockedStats().today)
+            assertEquals(0, repo.blockedCountThisMonth())
+        }
 }

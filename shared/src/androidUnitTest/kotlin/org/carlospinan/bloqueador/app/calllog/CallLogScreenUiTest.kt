@@ -4,6 +4,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.carlospinan.bloqueador.app.rules.CallDirection
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +41,36 @@ class CallLogScreenUiTest {
             ruleId = null,
             ruleDetail = null,
         )
+
+    private val outgoingEntry =
+        CallLogEntryData(
+            id = 3L,
+            number = "+34600111222",
+            timestamp = 1234567890L,
+            action = "ALLOWED",
+            ruleType = null,
+            ruleId = null,
+            ruleDetail = null,
+            direction = CallDirection.OUTGOING,
+        )
+
+    /**
+     * An outgoing call is stored as ALLOWED because that is the only value the CHECK constraint
+     * leaves, but it was never screened — labelling it "Allowed call" would report a decision
+     * the app never made.
+     */
+    @Test
+    fun `an outgoing call is labelled as outgoing, not allowed`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(outgoingEntry),
+                onBack = {},
+            )
+        }
+        composeTestRule.onNodeWithText("+34600111222").assertExists()
+        composeTestRule.onNodeWithText("Outgoing call", substring = true).assertExists()
+        composeTestRule.onNodeWithText("Allowed call", substring = true).assertDoesNotExist()
+    }
 
     @Test
     fun `blocked entry shows number and the localized status`() {

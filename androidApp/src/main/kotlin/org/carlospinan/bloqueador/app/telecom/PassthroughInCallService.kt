@@ -177,7 +177,24 @@ class PassthroughInCallService :
         // this app owns it -- but they must never reach the rule engine: it would run the user's
         // own blocklist against a number they just dialled, and a quiet-hours rule would end
         // every outgoing call made inside the window. See CallDirectionPolicy.
-        if (!CallDirectionPolicy.isIncoming(call)) return
+        if (!CallDirectionPolicy.isIncoming(call)) {
+            // Logged, though: with only incoming calls written, the app that had replaced the
+            // phone app showed a history missing every call its owner had placed. No decision is
+            // recorded because none was made -- see CallLogRepository.logOutgoingCall.
+            if (number.isNotBlank()) {
+                serviceScope.launch {
+                    try {
+                        callLogRepository.logOutgoingCall(number, currentTimestamp())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // A history row is not worth taking down a live call for.
+                        Log.e(TAG, "Could not log an outgoing call", e)
+                    }
+                }
+            }
+            return
+        }
 
         if (call.state == Call.STATE_RINGING) {
             // Ring first, decide second. Evaluation touches the database and the contacts

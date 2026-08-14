@@ -1,0 +1,45 @@
+-- Call direction, so the log is a recents list instead of an incoming-only history.
+--
+-- Named 3.sqm because 1.sqm takes the squashed databases/1.db baseline from version 1 to 2 and
+-- 2.sqm takes 2 to 3; this one takes 3 to 4. Mis-numbering this is silent — the generated guard
+-- still runs and verifySqlDelightMigration still passes, leaving a hole only PRAGMA user_version
+-- on a device exposes. ./scripts/device_check.sh asserts it.
+--
+-- The rebuild-table dance rather than ALTER TABLE ADD COLUMN, even though SQLite would accept
+-- the plain form here: the new column carries a CHECK constraint, and a table built by ADD
+-- COLUMN is not guaranteed to compare equal to the CREATE TABLE in AppDatabase.sq, which is
+-- exactly what verifyMigrations diffs. Rebuilding replays the .sq definition verbatim, so the
+-- migrated schema and a fresh install cannot drift. Contrast 2.sqm, whose recording_path is a
+-- bare nullable column with no constraint at all.
+--
+-- Existing rows are INCOMING: every call this app had ever logged arrived at the phone, because
+-- an outgoing call was never written at all.
+CREATE TABLE CallLogEntry_new (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    number TEXT NOT NULL,
+    timestamp INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
+    action TEXT NOT NULL CHECK (action IN ('ALLOWED', 'BLOCKED')),
+    rule_type TEXT CHECK (rule_type IN ('MANUAL', 'PATTERN', 'COUNTRY', 'CONTACTS', 'SPAM', 'ACTION', 'AUTO_RESPONDER', 'SCHEDULE', 'REVIEW', 'REPEATED_ALLOWED', NULL)),
+    rule_id INTEGER,
+    rule_detail TEXT,
+    recording_path TEXT,
+    direction TEXT NOT NULL DEFAULT 'INCOMING' CHECK (direction IN ('INCOMING', 'OUTGOING'))
+);
+
+-- Columns listed explicitly: the tables differ by one column, so SELECT * would not line up.
+INSERT INTO CallLogEntry_new (id, number, timestamp, action, rule_type, rule_id, rule_detail, recording_path, direction)
+SELECT id, number, timestamp, action, rule_type, rule_id, rule_detail, recording_path, 'INCOMING' FROM CallLogEntry;
+
+-- Dropping the table takes its indexes with it in SQLite, so this line changes nothing at
+-- runtime. SQLDelight's migration compiler does not model that, and without it the CREATE INDEX
+-- at the bottom fails generation with "Duplicate index name idx_call_log_action_time".
+DROP INDEX idx_call_log_action_time;
+
+DROP TABLE CallLogEntry;
+
+ALTER TABLE CallLogEntry_new RENAME TO CallLogEntry;
+
+-- DROP TABLE took the index with it. Without this line the Home screen's three window counts and
+-- the seven-day chart go back to full table scans of a log that only the user can ever shrink,
+-- and nothing fails — it just gets slower the longer the app is used.
+CREATE INDEX idx_call_log_action_time ON CallLogEntry(action, timestamp DESC);

@@ -260,6 +260,7 @@
     <string name="call_log_blocked_label">ब्लॉक की गई कॉल</string>
     <string name="call_log_review_label">समीक्षा आवश्यक</string>
     <string name="call_log_allowed_label">अनुमत कॉल</string>
+    <string name="call_log_outgoing_label">बाहर जाने वाली कॉल</string>
     <string name="call_log_time_label">समय</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>
     <string name="call_log_just_now">अभी-अभी</string>

@@ -233,6 +233,7 @@
     <string name="call_log_detail_placeholder">Select a call to see details</string>
     <string name="call_log_blocked_label">Blocked call</string>
     <string name="call_log_allowed_label">Allowed call</string>
+    <string name="call_log_outgoing_label">Outgoing call</string>
     <string name="call_log_review_label">Needs review</string>
     <string name="call_log_time_label">Time</string>
     <string name="call_log_time_format">MMM d, yyyy · HH:mm</string>

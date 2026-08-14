@@ -46,6 +46,7 @@ import cortaspam.shared.generated.resources.call_log_delete_recording
 import cortaspam.shared.generated.resources.call_log_delete_recording_confirm
 import cortaspam.shared.generated.resources.call_log_detail_placeholder
 import cortaspam.shared.generated.resources.call_log_empty_hint
+import cortaspam.shared.generated.resources.call_log_outgoing_label
 import cortaspam.shared.generated.resources.call_log_play_recording
 import cortaspam.shared.generated.resources.call_log_recording_label
 import cortaspam.shared.generated.resources.call_log_review_label
@@ -58,6 +59,7 @@ import cortaspam.shared.generated.resources.call_log_title_today
 import cortaspam.shared.generated.resources.call_log_title_week
 import cortaspam.shared.generated.resources.ic_allowlist
 import cortaspam.shared.generated.resources.ic_blocked_number
+import cortaspam.shared.generated.resources.ic_call_log
 import cortaspam.shared.generated.resources.ic_unknown_call
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -66,6 +68,7 @@ import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.contacts.contactDisplayName
+import org.carlospinan.bloqueador.app.rules.CallDirection
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser.sameNumber
 import org.carlospinan.bloqueador.app.rules.currentTimeMillis
@@ -442,20 +445,26 @@ private fun CallLogEntryRow(
 ) {
     val isBlocked = entry.action == "BLOCKED"
     val isReview = entry.ruleType == "REVIEW"
+    // Direction is read first: an outgoing call carries no rule decision at all, so labelling it
+    // "Allowed call" would report a screening result for a call that was never screened.
+    val isOutgoing = entry.direction == CallDirection.OUTGOING
     val actionColor =
         when {
+            isOutgoing -> MaterialTheme.colorScheme.onSurfaceVariant
             isBlocked -> MaterialTheme.colorScheme.error
             isReview -> MaterialTheme.colorScheme.tertiary
             else -> Color(0xFF4CAF50)
         }
     val statusIcon =
         when {
+            isOutgoing -> Res.drawable.ic_call_log
             isBlocked -> Res.drawable.ic_blocked_number
             isReview -> Res.drawable.ic_unknown_call
             else -> Res.drawable.ic_allowlist
         }
     val statusLabel =
         when {
+            isOutgoing -> stringResource(Res.string.call_log_outgoing_label)
             isBlocked -> stringResource(Res.string.call_log_blocked_label)
             isReview -> stringResource(Res.string.call_log_review_label)
             else -> stringResource(Res.string.call_log_allowed_label)

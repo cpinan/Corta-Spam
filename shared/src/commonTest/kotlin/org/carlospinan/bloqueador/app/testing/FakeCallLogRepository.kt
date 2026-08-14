@@ -56,6 +56,18 @@ internal class FakeCallLogRepository(
         decision: RuleDecision,
     ): Long = nextId++.also { loggedIds += it }
 
+    /** Numbers passed to [logOutgoingCall], in order. */
+    val loggedOutgoing = mutableListOf<String>()
+
+    override suspend fun logOutgoingCall(
+        number: String,
+        timestamp: Long,
+    ): Long =
+        nextId++.also {
+            loggedIds += it
+            loggedOutgoing += number
+        }
+
     override suspend fun attachRecording(
         entryId: Long,
         path: String,
