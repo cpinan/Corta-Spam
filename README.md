@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 524 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 528 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -145,6 +145,12 @@ A complete 25-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 127 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-14 (fourth):** dates spoke English to everyone, and the store screenshots were nine days stale.
+
+- **The call log's timestamps were never localized.** They were assembled in `commonMain` from `local.month.name` — an English enum constant — cut to three letters, then day, year and a 24-hour clock in that fixed order. Every other string on the screen was translated, so es/pt/hi readers got a fully localized call log whose dates read "Aug 14, 2026". Now delegated to each platform's own formatter (`DateTimeFormatter.ofLocalizedDateTime`, `NSDateFormatter`), because twelve month names per locale plus field order and clock convention is knowledge both platforms already have. Spanish reads `14 ago 2026, 3:18 p.m.`
+- **Found by screenshotting the app in Spanish**, not by a test — which is the second time that pass has caught a shipping localization bug in this project. The regression test asserts that the locale is honoured rather than pinning exact wording, since CLDR changes month abbreviations between releases; three of its four cases fail against the old formatter.
+- **Store screenshots retaken** on a Pixel API 36 emulator running the **release** build, five per language, with seeded data that uses only `+34 900` service-range numbers and invented contacts. The set now covers the keypad with contact search and the call log with its filters — neither of which existed when the old shots were taken. Raw captures in `docs/store/`, 9:16 padded copies for upload in `docs/store/play/`.
 
 **2026-08-14 (third):** answering a call killed the app, and four bugs turned out to be one.
 

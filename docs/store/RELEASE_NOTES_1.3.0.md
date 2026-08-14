@@ -60,7 +60,8 @@ because this is not a patch on what 1.2.0 shipped.
 ## Verified before this cut
 
 `./scripts/verify.sh --release` green — both platforms, ktlint, Android Lint, SQLDelight migration
-verification, **524 tests**, plus the R8/minified build.
+verification, **528 tests**, plus the R8/minified build. Re-run after the timestamp-localization
+fix below; the uploaded artifact is the 15:41 rebuild, not the 15:18 one.
 
 **Artifact audited on the APK, never the source manifest:** `versionCode='5' versionName='1.3.0'`,
 targetSdk 36, `android.hardware.microphone` as `uses-feature-not-required`, `faketouch` the only
@@ -70,8 +71,8 @@ targetSdk 36, `android.hardware.microphone` as `uses-feature-not-required`, `fak
 checking this time: the new missed-call receiver names `READ_PHONE_STATE` in its
 `android:permission` attribute, and the string does appear in the merged manifest, but as an
 enforcement on senders rather than a `uses-permission`. The badging dump is the proof.
-`jarsigner -verify` → `jar verified`, `CN=Carlos Pinan`. R8 mapping present (43 MB, same
-timestamp as the artifacts — 2026-08-14 15:18).
+`jarsigner -verify` → `jar verified`, `CN=Carlos Pinan`. R8 mapping present, same timestamp as
+the artifacts (2026-08-14 15:41).
 
 **On a `Pixel_8_Pro_API_36` emulator, running the R8 release build, not a debug one:**
 
@@ -87,6 +88,12 @@ timestamp as the artifacts — 2026-08-14 15:18).
 - **Rule decisions still land**: with the planted database's `default_action=BLOCK`, the first test
   call was blocked and rejected (`BLOCKED|INCOMING` in the log); switched to `ALLOW`, the next one
   rang through and was answered (`ALLOWED|INCOMING`).
+
+**One bug was found after the first cut and fixed before upload.** Taking the Spanish store
+screenshots showed the call log's dates still in English — "Aug 14, 2026" — because they were
+assembled from an English enum constant in shared code. Every one of the app's non-English locales
+was affected. Fixed by delegating to the platform date formatters, re-verified, and the artifact
+rebuilt. The screenshots in `docs/store/` are from that rebuilt release build.
 
 **On the razr 50 ultra (API 36), on the debug build of the same commits:** ringing works — the
 oldest open risk in this project, and the first time it has been proven off an emulator. Contact

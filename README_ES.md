@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 524 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 528 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -147,6 +147,12 @@ Un curso completo de 25 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 127 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-14 (cuarta):** las fechas hablaban inglés a todo el mundo, y las capturas de la tienda tenían nueve días.
+
+- **Las fechas del registro nunca se tradujeron.** Se armaban en `commonMain` a partir de `local.month.name` — una constante enum en inglés — recortada a tres letras, más día, año y reloj de 24 horas en ese orden fijo. Todo lo demás en pantalla sí estaba traducido, así que quien lee en es/pt/hi veía un registro completamente localizado con fechas que decían "Aug 14, 2026". Ahora se delega al formateador de cada plataforma (`DateTimeFormatter.ofLocalizedDateTime`, `NSDateFormatter`), porque doce nombres de mes por idioma más el orden de los campos y el formato de hora es conocimiento que ambas plataformas ya tienen. En español se lee `14 ago 2026, 3:18 p.m.`
+- **Lo encontró una captura de pantalla en español**, no una prueba — la segunda vez que ese paso descubre un fallo de localización ya publicado en este proyecto. La prueba de regresión verifica que se respete el idioma en vez de fijar el texto exacto, porque CLDR cambia las abreviaturas de los meses entre versiones; tres de sus cuatro casos fallan con el formateador anterior.
+- **Capturas de la tienda rehechas** en un emulador Pixel API 36 con la compilación **release**, cinco por idioma, con datos sembrados que solo usan números del rango de servicio `+34 900` y contactos inventados. El set ahora incluye el teclado con búsqueda de contactos y el registro con sus filtros, que no existían cuando se tomaron las anteriores. Capturas originales en `docs/store/`, copias 9:16 para subir en `docs/store/play/`.
 
 **2026-08-14 (tercera):** contestar una llamada mataba la app, y cuatro fallos resultaron ser uno.
 
