@@ -8,7 +8,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 458 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 472 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — desglose de hitos con criterios de aceptación
@@ -86,7 +86,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 
 ```sh
 ./gradlew :shared:testDebugUnitTest          # 406 pruebas, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 52 pruebas, clases exclusivas de Android (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 66 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
 ```
@@ -140,9 +140,19 @@ Agrega nuevos idiomas creando un archivo `values-<código>/strings.xml` con la m
 
 Un curso completo de 25 módulos en HTML recorre cada capa de la app — Gradle, KMM, Compose, navegación, layouts adaptativos, SQLDelight, Koin DI, permisos, Telecom/InCallService, motor de reglas, i18n, testing, CI, depuración en iOS, notificaciones de llamadas/UX de permisos, cómo extender el motor de precedencia con seguridad, gestión de estado (MVVM + MVI bien hecho, incluyendo cuándo *no* forzar el patrón), dobles de prueba a escala (cómo consolidar fakes duplicados entre los source sets de prueba de KMP), cómo probar la capa de persistencia contra un motor SQLite real, cómo auditar código que se publica pero nunca se ejecuta, políticas de plataforma y las promesas que hace tu app, la UX de permisos como problema de diseño (pedirlos, explicarlos y darse cuenta cuando te los quitan) un mismo comportamiento escrito dos veces y arreglado una, más las dos funcionalidades cuya implementación obvia habría roto el producto, la diferencia entre leer el código, ver fallar un dispositivo y demostrar de verdad que una pantalla se desplaza, y (el más nuevo) un marcador predeterminado que no sabía marcar, y la declaración del manifiesto que llevaba tiempo prometiendo lo contrario.
 
-Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 108 preguntas de evaluación.
+Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 110 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-13 (novena):** el filtro filtraba al propio usuario. Llamadas salientes, y pruebas para hacer una.
+
+- **Llamar a un número de tu propia lista de bloqueo hacía que el teléfono te colgara.** Un `InCallService` recibe *todas* las llamadas, en ambos sentidos — es el precio de ser dueño de la interfaz en llamada — y `onCallAdded` solo condicionaba el *timbre* al estado. La evaluación no estaba condicionada a nada, así que el motor de reglas se ejecutaba contra números que la persona había marcado: una coincidencia llamaba a `call.reject()` sobre la llamada que acababa de hacer. **Una regla de horario silencioso bloquea todo lo que no esté en la lista de permitidos, así que dentro de esa franja se habría cortado toda llamada saliente.** Con el autorespondedor activado no es siquiera un corte: la app contesta y reproduce el saludo del propio usuario dentro de su propia llamada.
+- **Tan viejo como el servicio, y alcanzable desde ayer.** Hasta que llegó el teclado, la única forma de llamar desde dentro de la app era una fila del registro. Una funcionalidad no solo añade superficie: vuelve alcanzables caminos que ya existían. «Lleva meses funcionando» hablaba del tráfico, no de la corrección.
+- **Corregido con una comprobación de dirección extraída a `CallDirectionPolicy`**, por lo mismo que se extrajeron `RingerPolicy` y `NotificationPolicy`: ninguna prueba unitaria puede construir el servicio. `Call.Details.callDirection` manda desde la API 29; por debajo, la señal es el estado en `onCallAdded` (Telecom añade una entrante ya sonando). **Un estado desconocido se resuelve como *no* entrante**: no filtrar una llamada es una molestia, cortar una que la persona hizo es que el teléfono se rompa, y el valor por defecto va del lado del error pequeño. El return temprano va *después* de lanzar la interfaz en llamada: una saliente sigue necesitando la pantalla de esta app y su notificación de volver a la llamada.
+- **Pruebas del escenario de llamada**, que son las que lo encontraron: la tabla de verdad de la dirección y el camino de Devolver la llamada — con permiso lanza `ACTION_CALL`, sin permiso abre el teclado propio ya relleno, el intent de reserva va fijado a este paquete para que nunca ofrezca el marcador al que sustituye, un número vacío no lanza nada, y devolver la llamada descarta la notificación y reinicia el contador de intentos.
+- **También cazaron un fallo escrito una hora antes:** `Uri.encode(number)` convierte `+` en `%2B` y rompe todos los números internacionales. `Uri.encode(number, "+")` conserva el `+` y sigue escapando el `#`. Lo encontró una sola aserción sobre una cadena `tel:` literal.
+- De 458 a 472 pruebas (`:androidApp` de 52 a 66). La comprobación de dirección se vio fallar antes de dar su prueba por buena. `./scripts/verify.sh` en verde.
+- **Sigue sin verificarse en hardware:** que una llamada saliente se complete intacta y que una franja de horario silencioso ya no la corte.
 
 **2026-08-13 (octava):** el marcador predeterminado no sabía marcar. Teclado, devolver la llamada y una notificación por interlocutor.
 

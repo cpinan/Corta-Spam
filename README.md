@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 458 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 472 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -86,7 +86,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 
 ```sh
 ./gradlew :shared:testDebugUnitTest          # 406 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 52 tests, Android-only classes (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 66 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -138,9 +138,19 @@ Add new locales by creating a `values-<code>/strings.xml` file following the sam
 
 A complete 25-module HTML course walks through every layer of the app — Gradle, KMM, Compose, Navigation, adaptive layouts, SQLDelight, Koin DI, permissions, Telecom/InCallService, rule engine, i18n, testing, CI, iOS debugging, call notifications/permission UX, extending the precedence engine safely, state management (MVVM + MVI done right, including when *not* to force the pattern), test doubles at scale (consolidating duplicated fakes across KMP test source sets), testing the persistence layer against a real SQLite engine, auditing for code that ships but never runs, platform policy and the claims your app makes, permission UX as a design problem — asking, explaining, and noticing when a permission is taken back — one behaviour written twice and fixed once, plus the two features whose obvious implementation would have broken the product, the difference between reading code, watching a failing device, and actually proving a screen scrolls, and (newest) a default dialer that could not dial, and the manifest declaration that had been promising otherwise.
 
-Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 108 quiz questions included.
+Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 110 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-13 (ninth):** the screener was screening the user. Outgoing calls, and tests for placing one.
+
+- **Calling a number on your own blocklist made your phone hang up on you.** An `InCallService` receives *every* call, in both directions — that is the price of owning the in-call UI — and `onCallAdded` gated only the *ringing* on call state. The evaluation was gated on nothing, so the rule engine ran against numbers the user had dialled: a match called `call.reject()` on the call they placed. **A quiet-hours rule blocks everything not allowlisted, so inside that window every outgoing call would have been terminated.** With the auto-responder enabled it is not a hang-up at all — the app answers and plays the user's own greeting into their own call.
+- **As old as the service, and reachable as of yesterday.** Placing a call from inside the app was only possible through a call-log row until the keypad shipped. A feature does not only add surface, it makes existing paths reachable; "fine for months" was a statement about traffic, not correctness.
+- **Fixed with a direction check extracted to `CallDirectionPolicy`**, for the reason `RingerPolicy` and `NotificationPolicy` were extracted: no unit test can construct the service. `Call.Details.callDirection` is authoritative from API 29; below it, the state at `onCallAdded` is the signal (Telecom adds an incoming call already ringing). **An unrecognised state resolves to *not* incoming** — failing to screen one call is a nuisance, ending a call the user placed is the phone breaking, and the default belongs on the side of the smaller mistake. The early return sits *after* the in-call UI is launched: an outgoing call still needs this app's screen and its return-to-call notification.
+- **Tests for the calling scenario**, which is what found it: the direction truth table, and the notification Call back path — permission granted places `ACTION_CALL`, denied opens this app's own keypad pre-filled, the fallback is pinned to this package so it can never offer the dialer this app replaced, a blank number starts nothing, and calling back dismisses the notification and resets that caller's attempt count.
+- **They also caught a bug written an hour earlier:** `Uri.encode(number)` escapes `+` to `%2B`, breaking every international number. `Uri.encode(number, "+")` keeps the plus and still escapes the `#`. One assertion on a literal `tel:` string found it.
+- 458 → 472 tests (`:androidApp` 52 → 66). The direction check was watched failing before its test was kept. `./scripts/verify.sh` green.
+- **Still unverified on hardware:** that an outgoing call now completes untouched, and that a quiet-hours window no longer ends one.
 
 **2026-08-13 (eighth):** the default dialer could not dial. Keypad, call back, and one notification per caller.
 
