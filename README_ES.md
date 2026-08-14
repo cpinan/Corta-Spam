@@ -144,6 +144,15 @@ Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualqui
 
 ## Cambios recientes
 
+**2026-08-13 (décima):** versión 1.2.0 sobre el código 4, generada para pruebas internas.
+
+- **El artefacto es `corta-spam-1.2.0-4-release.aab`** (5,21 MB). Nombre de versión para la Console, solo interno y por debajo del límite de 50 caracteres: `1.2.0 (4) internal — keypad, call back, outgoing fix`. Las notas para probadores, en ambos idiomas, están en `docs/store/RELEASE_NOTES_1.2.0.md`.
+- **El código de versión 4 se reutiliza, no se salta.** Un código se gasta al subirlo, no al publicarlo, y los dos artefactos anteriores con código 4 (0.1.0 y 1.1.4) quedaron obsoletos antes de llegar a la Console. Están en `bundle/release/superseded/`; el nombre del archivo es lo único que los distingue del que hay que subir. Si Play rechaza la subida porque ya conoce el código 4, la suposición era falsa y toca recompilar con el 5.
+- **El nombre pasa a 1.2.0 y no a 1.1.5** porque esto añade una funcionalidad en vez de arreglar una: la 1.1.4 no podía hacer ninguna llamada.
+- **Auditado sobre el APK, nunca sobre el manifiesto fuente:** `versionCode='4' versionName='1.2.0'`, targetSdk 36, `android.hardware.microphone` como `uses-feature-not-required`, sin `READ_PHONE_STATE`, `faketouch` como único `uses-implied-feature`, `jar verified` con `CN=Carlos Pinan`, mapping de R8 presente y es/hi/pt empaquetados. `./scripts/verify.sh` en verde antes de generarlo.
+- **Las notas se pasaron del límite en el primer intento** — 574 caracteres en español y 522 en inglés frente a los 500 de Play — que es justo para lo que `RELEASE_TEMPLATE.md` pide contarlas en vez de estimarlas. Recortadas a 494 y 473.
+- **Para qué sirven las pruebas internas aquí:** ningún dispositivo físico ha ejecutado el teclado, el botón de devolver la llamada ni el arreglo de las salientes, y el timbre nunca se ha probado fuera de un emulador.
+
 **2026-08-13 (novena):** el filtro filtraba al propio usuario. Llamadas salientes, y pruebas para hacer una.
 
 - **Llamar a un número de tu propia lista de bloqueo hacía que el teléfono te colgara.** Un `InCallService` recibe *todas* las llamadas, en ambos sentidos — es el precio de ser dueño de la interfaz en llamada — y `onCallAdded` solo condicionaba el *timbre* al estado. La evaluación no estaba condicionada a nada, así que el motor de reglas se ejecutaba contra números que la persona había marcado: una coincidencia llamaba a `call.reject()` sobre la llamada que acababa de hacer. **Una regla de horario silencioso bloquea todo lo que no esté en la lista de permitidos, así que dentro de esa franja se habría cortado toda llamada saliente.** Con el autorespondedor activado no es siquiera un corte: la app contesta y reproduce el saludo del propio usuario dentro de su propia llamada.

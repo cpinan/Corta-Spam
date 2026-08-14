@@ -142,6 +142,15 @@ Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any bro
 
 ## Recent Fixes
 
+**2026-08-13 (tenth):** version 1.2.0 on code 4, cut for internal testing.
+
+- **The artifact is `corta-spam-1.2.0-4-release.aab`** (5.21 MB). Release name for the Console, internal only and under the 50-character cap: `1.2.0 (4) internal — keypad, call back, outgoing fix`. Tester notes in both languages live in `docs/store/RELEASE_NOTES_1.2.0.md`.
+- **Version code 4 is reused, not skipped.** A code is spent on upload, not on publication, and both previously built code-4 artifacts (0.1.0 and 1.1.4) were superseded before either reached the Console. They are in `bundle/release/superseded/`; the filename is the only thing separating them from the one to upload. If Play refuses the upload because it has seen code 4, that assumption was wrong and the fix is a rebuild at 5.
+- **The name went to 1.2.0 rather than 1.1.5** because this adds a feature rather than fixing one: 1.1.4 could not place a call at all.
+- **Audited on the APK, never the source manifest:** `versionCode='4' versionName='1.2.0'`, targetSdk 36, `android.hardware.microphone` as `uses-feature-not-required`, no `READ_PHONE_STATE`, `faketouch` the only `uses-implied-feature`, `jar verified` as `CN=Carlos Pinan`, R8 mapping present, es/hi/pt all packaged. `./scripts/verify.sh` green before the cut.
+- **The release notes went over the cap on the first pass** — 574 characters of Spanish and 522 of English against Play's 500 — which is exactly why `RELEASE_TEMPLATE.md` says to count them rather than estimate. Trimmed to 494 and 473.
+- **What internal testing is for here:** no physical device has run the keypad, the call-back button or the outgoing-call fix, and ringing has never been proven off an emulator.
+
 **2026-08-13 (ninth):** the screener was screening the user. Outgoing calls, and tests for placing one.
 
 - **Calling a number on your own blocklist made your phone hang up on you.** An `InCallService` receives *every* call, in both directions — that is the price of owning the in-call UI — and `onCallAdded` gated only the *ringing* on call state. The evaluation was gated on nothing, so the rule engine ran against numbers the user had dialled: a match called `call.reject()` on the call they placed. **A quiet-hours rule blocks everything not allowlisted, so inside that window every outgoing call would have been terminated.** With the auto-responder enabled it is not a hang-up at all — the app answers and plays the user's own greeting into their own call.
