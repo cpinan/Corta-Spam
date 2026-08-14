@@ -231,9 +231,13 @@
     <!-- Navegación -->
     <string name="nav_keypad">Teclado</string>
     <string name="keypad_title">Teclado</string>
-    <string name="keypad_hint">Escribe un número</string>
+    <string name="keypad_hint">Nombre o número</string>
     <string name="keypad_call">Llamar</string>
     <string name="keypad_delete">Borrar el último dígito</string>
+    <string name="keypad_no_matches">Ningún contacto coincide con lo que escribiste.</string>
+    <string name="keypad_more_matches">Hay más contactos que coinciden. Sigue escribiendo para acotar la lista.</string>
+    <string name="keypad_contacts_denied">Permite el acceso a tus contactos para buscarlos desde el teclado.</string>
+    <string name="keypad_contact_row">%1$s, %2$s</string>
     <string name="nav_home">Inicio</string>
     <string name="nav_log">Registro</string>
     <string name="nav_lists">Listas</string>

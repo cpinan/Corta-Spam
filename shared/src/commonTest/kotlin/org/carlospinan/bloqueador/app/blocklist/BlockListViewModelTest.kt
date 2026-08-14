@@ -28,6 +28,8 @@ class BlockListViewModelTest {
 
         override suspend fun contactNames(): Map<String, String> = names
 
+        override suspend fun contacts(): List<org.carlospinan.bloqueador.app.contacts.Contact> = emptyList()
+
         override fun hasPermission(): Boolean = granted
     }
 

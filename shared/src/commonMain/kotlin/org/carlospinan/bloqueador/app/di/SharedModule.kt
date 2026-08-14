@@ -9,6 +9,7 @@ import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.db.DriverFactory
 import org.carlospinan.bloqueador.app.db.createDatabase
 import org.carlospinan.bloqueador.app.home.HomeViewModel
+import org.carlospinan.bloqueador.app.keypad.KeypadViewModel
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 import org.carlospinan.bloqueador.app.rules.SqlCallLogRepository
@@ -49,5 +50,6 @@ val sharedModule =
         factory { SettingsViewModel(get(), get()) }
         factory { AutoResponderViewModel(get()) }
         factory { StatsViewModel(get()) }
+        factory { KeypadViewModel(get()) }
         factory { BackupViewModel(get()) }
     }

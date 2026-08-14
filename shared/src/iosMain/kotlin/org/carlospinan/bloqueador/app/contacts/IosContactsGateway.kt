@@ -5,5 +5,7 @@ class IosContactsGateway : ContactsGateway {
 
     override suspend fun contactNames(): Map<String, String> = emptyMap()
 
+    override suspend fun contacts(): List<Contact> = emptyList()
+
     override fun hasPermission(): Boolean = false
 }

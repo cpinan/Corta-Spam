@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
@@ -20,6 +21,8 @@ class CallLogViewModelTest {
         override suspend fun contactNumbers(): Set<String> = emptySet()
 
         override suspend fun contactNames(): Map<String, String> = names
+
+        override suspend fun contacts(): List<Contact> = emptyList()
 
         override fun hasPermission(): Boolean = granted
     }

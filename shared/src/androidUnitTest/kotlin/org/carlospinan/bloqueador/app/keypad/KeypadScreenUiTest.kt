@@ -5,17 +5,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.carlospinan.bloqueador.app.contacts.Contact
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -117,6 +122,100 @@ class KeypadScreenUiTest {
 
         composeTestRule.onNodeWithText("Call").performClick()
         assertEquals("+34600123456", called)
+    }
+
+    /**
+     * The search half of the screen. Without it, taking ROLE_DIALER left the user with no way to
+     * call anyone whose number they could not type from memory.
+     */
+    @Test
+    fun `typing a name shows the matching contact`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts =
+                    listOf(
+                        Contact(name = "Ana Torres", number = "+34 611 99 88 77"),
+                        Contact(name = "Juana Ruiz", number = "600 111 222"),
+                    ),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Ana Torres").assertDoesNotExist()
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Ana")
+
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+        composeTestRule.onNodeWithText("Juana Ruiz").assertDoesNotExist()
+    }
+
+    /** Typed digits search the address book too -- the field is one input, not two. */
+    @Test
+    fun `typing digits on the pad finds a contact by number`() {
+        composeTestRule.setContent {
+            KeypadScreen(contacts = listOf(Contact(name = "Ana Torres", number = "+34 611 99 88 77")))
+        }
+
+        composeTestRule.onNodeWithText("6").performClick()
+        composeTestRule.onNodeWithText("1").performClick()
+        composeTestRule.onNodeWithText("1").performClick()
+
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+    }
+
+    /**
+     * Picking a contact fills the field rather than dialling, and the number it fills is the one
+     * that gets called: a result that put the *name* in the dialler would call nobody.
+     */
+    @Test
+    fun `picking a contact fills the number and calls it`() {
+        var called: String? = null
+        composeTestRule.setContent {
+            KeypadScreen(
+                onCall = { called = it },
+                contacts = listOf(Contact(name = "Ana Torres", number = "+34 611 99 88 77")),
+            )
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Ana")
+        composeTestRule.onNodeWithText("Ana Torres").performClick()
+
+        assertEquals(null, called)
+        // The results list pushes the pad down: without the scroll the button is below the fold
+        // and the tap lands on nothing, which is exactly what a user would see too.
+        composeTestRule.onNodeWithText("Call").performScrollTo().performClick()
+        assertEquals("+34 611 99 88 77", called)
+    }
+
+    /** An empty result set has to say so, or a missing contact reads as a broken search box. */
+    @Test
+    fun `a query with no match says so`() {
+        composeTestRule.setContent {
+            KeypadScreen(contacts = listOf(Contact(name = "Ana Torres", number = "+34611998877")))
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("zzz")
+
+        composeTestRule.onNodeWithText("No contact matches what you typed.").assertExists()
+    }
+
+    /**
+     * Without the permission the results area would just be permanently empty, which looks
+     * exactly like an address book with nobody in it.
+     */
+    @Test
+    fun `without the contacts permission the screen offers to ask for it`() {
+        var asked = false
+        composeTestRule.setContent {
+            KeypadScreen(
+                contactsPermissionGranted = false,
+                onRequestContactsPermission = { asked = true },
+            )
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Ana")
+
+        composeTestRule.onNodeWithText("Grant contacts permission").performClick()
+        assertTrue(asked)
     }
 
     /**

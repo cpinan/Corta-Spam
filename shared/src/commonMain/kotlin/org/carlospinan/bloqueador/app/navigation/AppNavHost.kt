@@ -45,7 +45,9 @@ import org.carlospinan.bloqueador.app.home.HomeIntent
 import org.carlospinan.bloqueador.app.home.HomeScreen
 import org.carlospinan.bloqueador.app.home.HomeViewModel
 import org.carlospinan.bloqueador.app.keypad.DialRequest
+import org.carlospinan.bloqueador.app.keypad.KeypadIntent
 import org.carlospinan.bloqueador.app.keypad.KeypadScreen
+import org.carlospinan.bloqueador.app.keypad.KeypadViewModel
 import org.carlospinan.bloqueador.app.settings.InfoScreen
 import org.carlospinan.bloqueador.app.settings.SettingsIntent
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
@@ -171,9 +173,17 @@ fun AppNavHost(
             }
 
             composable(Routes.KEYPAD) {
+                val keypadViewModel = koinViewModel<KeypadViewModel>()
+                val keypadState by keypadViewModel.state.collectAsState()
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    keypadViewModel.onIntent(KeypadIntent.RefreshContacts)
+                }
                 KeypadScreen(
                     dialRequest = dialRequest,
                     onCall = onCallBack ?: {},
+                    contacts = keypadState.contacts,
+                    contactsPermissionGranted = keypadState.contactsPermissionGranted,
+                    onRequestContactsPermission = onRequestContactsPermission ?: {},
                 )
             }
 

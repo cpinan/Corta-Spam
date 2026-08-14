@@ -218,9 +218,13 @@
     <!-- नेविगेशन -->
     <string name="nav_keypad">कीपैड</string>
     <string name="keypad_title">कीपैड</string>
-    <string name="keypad_hint">नंबर डालें</string>
+    <string name="keypad_hint">नाम या नंबर</string>
     <string name="keypad_call">कॉल करें</string>
     <string name="keypad_delete">आख़िरी अंक मिटाएँ</string>
+    <string name="keypad_no_matches">आपने जो लिखा उससे कोई संपर्क मेल नहीं खाता।</string>
+    <string name="keypad_more_matches">और भी संपर्क मेल खाते हैं। सूची छोटी करने के लिए लिखते रहें।</string>
+    <string name="keypad_contacts_denied">कीपैड से संपर्क खोजने के लिए संपर्कों तक पहुँच की अनुमति दें।</string>
+    <string name="keypad_contact_row">%1$s, %2$s</string>
     <string name="nav_home">होम</string>
     <string name="nav_log">लॉग</string>
     <string name="nav_lists">सूचियाँ</string>

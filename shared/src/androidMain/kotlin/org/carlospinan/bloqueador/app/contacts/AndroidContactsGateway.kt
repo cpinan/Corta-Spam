@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
+import java.text.Collator
 
 class AndroidContactsGateway(
     private val context: Context,
@@ -21,6 +22,8 @@ class AndroidContactsGateway(
     override suspend fun contactNumbers(): Set<String> = snapshot().numbers
 
     override suspend fun contactNames(): Map<String, String> = snapshot().names
+
+    override suspend fun contacts(): List<Contact> = snapshot().contacts
 
     /**
      * Cached for [CACHE_TTL_MILLIS], because this runs on the ringing-call path.
@@ -47,6 +50,12 @@ class AndroidContactsGateway(
         withContext(Dispatchers.IO) {
             val numbers = mutableSetOf<String>()
             val names = mutableMapOf<String, String>()
+            val contacts = mutableListOf<Contact>()
+            // One row per phone entry, and the same number arrives twice whenever a card is
+            // synced from two accounts. Deduplicated on (name, digits) rather than on the number
+            // alone: a household landline saved under two people is two search results, and
+            // dropping one of them hides a contact the user went looking for.
+            val seen = mutableSetOf<Pair<String, String>>()
             val uri: Uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
             val projection =
                 arrayOf(
@@ -80,13 +89,20 @@ class AndroidContactsGateway(
                             // putIfAbsent semantics: the first contact to claim a key keeps it, so
                             // a later card sharing a national number cannot rename an exact match.
                             keys.forEach { key -> names.getOrPut(key) { name } }
+                            if (seen.add(name to PhoneNumberParser.normalizeForComparison(raw))) {
+                                contacts.add(Contact(name = name, number = raw.trim()))
+                            }
                         }
                     }
                 }
             } finally {
                 cursor?.close()
             }
-            ContactsSnapshot(numbers, names)
+            // Sorted here rather than by the cursor: ordering by DISPLAY_NAME in SQLite is
+            // bytewise, which files every accented name after Z -- and "Ángela" belongs with the
+            // A's in all four locales this app ships in. Collator is the locale-aware comparison.
+            val byName = compareBy<Contact, String>(Collator.getInstance()) { it.name }
+            ContactsSnapshot(numbers, names, contacts.sortedWith(byName))
         }
 
     override fun hasPermission(): Boolean =
@@ -96,6 +112,7 @@ class AndroidContactsGateway(
     private data class ContactsSnapshot(
         val numbers: Set<String>,
         val names: Map<String, String>,
+        val contacts: List<Contact>,
     )
 
     private companion object {

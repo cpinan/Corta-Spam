@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.rules.domain
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
@@ -23,6 +24,8 @@ private class FakeContactsGateway(
     override suspend fun contactNumbers(): Set<String> = numbers
 
     override suspend fun contactNames(): Map<String, String> = emptyMap()
+
+    override suspend fun contacts(): List<Contact> = emptyList()
 
     override fun hasPermission(): Boolean = granted
 }
