@@ -7,13 +7,16 @@ import android.app.NotificationManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.carlospinan.bloqueador.app.MainActivity
 import org.carlospinan.bloqueador.app.R
+import org.carlospinan.bloqueador.app.ShowCallLogIntent
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -153,5 +156,49 @@ class IncomingCallNotifierTest {
 
         val actions = activeFor("+34600123456")!!.actions.orEmpty().map { it.title.toString() }
         assertTrue("Call back" in actions, "expected a call-back action, got $actions")
+    }
+
+    /**
+     * The body of a finished-call notification used to do nothing at all -- no content intent, so
+     * a tap dismissed the only surface reporting the call and left the log two screens away.
+     */
+    @Test
+    fun `tapping a finished call opens the call log on that caller`() {
+        IncomingCallNotifier.notifyCallResult(context, "+34600123456", R.string.notification_missed_call_title, null)
+
+        val contentIntent = activeFor("+34600123456")!!.contentIntent
+        assertNotNull(contentIntent, "the notification body has no content intent")
+        val intent = Shadows.shadowOf(contentIntent).savedIntent
+        assertEquals("+34600123456", ShowCallLogIntent.numberFrom(intent))
+    }
+
+    /**
+     * Two callers must not share one PendingIntent: `FLAG_UPDATE_CURRENT` would rewrite the first
+     * notification's number to the second's, and the tap would open the wrong caller.
+     */
+    @Test
+    fun `each caller's notification opens its own number`() {
+        IncomingCallNotifier.notifyCallResult(context, "+34600123456", R.string.notification_missed_call_title, null)
+        IncomingCallNotifier.notifyCallResult(context, "+34600999999", R.string.notification_missed_call_title, null)
+
+        val first = Shadows.shadowOf(activeFor("+34600123456")!!.contentIntent).savedIntent
+        val second = Shadows.shadowOf(activeFor("+34600999999")!!.contentIntent).savedIntent
+        assertEquals("+34600123456", ShowCallLogIntent.numberFrom(first))
+        assertEquals("+34600999999", ShowCallLogIntent.numberFrom(second))
+    }
+
+    /** There is no caller to look up, so the tap opens the app rather than an empty search. */
+    @Test
+    fun `a withheld number's notification opens the app itself`() {
+        IncomingCallNotifier.notifyCallResult(context, "", R.string.notification_missed_call_title, null)
+
+        val contentIntent =
+            manager.activeNotifications
+                .first()
+                .notification.contentIntent
+        assertNotNull(contentIntent, "the notification body has no content intent")
+        val intent = Shadows.shadowOf(contentIntent).savedIntent
+        assertNull(ShowCallLogIntent.numberFrom(intent))
+        assertEquals(MainActivity::class.java.name, intent.component?.className)
     }
 }

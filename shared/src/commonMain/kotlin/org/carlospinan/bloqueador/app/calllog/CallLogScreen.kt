@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,6 +67,7 @@ import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.contacts.contactDisplayName
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
+import org.carlospinan.bloqueador.app.rules.PhoneNumberParser.sameNumber
 import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.carlospinan.bloqueador.app.rules.storedBlockReasonText
 import org.jetbrains.compose.resources.painterResource
@@ -83,10 +85,33 @@ fun CallLogScreen(
     onBack: () -> Unit,
     onPlayRecording: (String) -> Unit = {},
     onDeleteRecording: (Long) -> Unit = {},
+    callLogRequest: CallLogRequest? = null,
 ) {
     var selectedNumber by remember { mutableStateOf<String?>(null) }
     var selectedEntry by remember { mutableStateOf<CallLogEntryData?>(null) }
     val windowSizeClass = rememberWindowSizeClass()
+
+    // A notification tap arrives as a request to act on one caller, so the screen opens with that
+    // caller's actions already up -- the point of the tap was Block/Call back/Copy, and making
+    // the user find the row again in a log of hundreds is the navigation the notification was
+    // supposed to save. Applied once per request id: dismissing the dialog must not reopen it on
+    // the next recomposition.
+    var appliedRequestId by remember { mutableStateOf(NO_REQUEST_APPLIED) }
+    LaunchedEffect(callLogRequest, entries, windowSizeClass) {
+        val request = callLogRequest ?: return@LaunchedEffect
+        if (request.id == appliedRequestId) return@LaunchedEffect
+        if (windowSizeClass == WindowSizeClass.Expanded) {
+            // The two-pane layout has no dialog: its detail pane is driven by an entry, so the
+            // request waits for the log to load rather than resolving to nothing.
+            val entry =
+                entries.firstOrNull { sameNumber(it.number, request.number) }
+                    ?: return@LaunchedEffect
+            selectedEntry = entry
+        } else {
+            selectedNumber = request.number
+        }
+        appliedRequestId = request.id
+    }
 
     val title =
         when (filter) {
@@ -543,6 +568,8 @@ private fun RecordingControls(
         )
     }
 }
+
+private const val NO_REQUEST_APPLIED = -1L
 
 private fun formatTimestamp(epochMillis: Long): String {
     val now = currentTimeMillis()

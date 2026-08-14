@@ -18,7 +18,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import org.carlospinan.bloqueador.app.MainActivity
 import org.carlospinan.bloqueador.app.R
+import org.carlospinan.bloqueador.app.ShowCallLogIntent
 
 /**
  * Posts the full-screen-intent notification Telecom's default-dialer contract expects us to
@@ -199,6 +201,7 @@ object IncomingCallNotifier {
                 .setContentText(text)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
+                .setContentIntent(callLogPendingIntent(context, notificationNumber))
 
         // Posting to the same id already replaced the previous notification; what was missing was
         // any sign that it had happened, so five calls from one spammer looked like one call.
@@ -262,6 +265,32 @@ object IncomingCallNotifier {
         ;
 
         internal fun intentAction(): String = broadcastAction
+    }
+
+    /**
+     * Opens the call log on this caller when the notification body is tapped.
+     *
+     * A withheld number gets the app's normal launch intent instead: there is nothing to look up,
+     * and a tap that opens the log filtered to the empty string would show an empty screen. The
+     * request code is the notification's own id, so each caller keeps its own PendingIntent --
+     * see [ruleActionPendingIntent] for what happens when two of them collide.
+     */
+    private fun callLogPendingIntent(
+        context: Context,
+        number: String,
+    ): PendingIntent {
+        val intent =
+            if (number.isBlank()) {
+                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            } else {
+                ShowCallLogIntent.forNumber(context, number)
+            }
+        return PendingIntent.getActivity(
+            context,
+            historyNotificationId(number),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     /**

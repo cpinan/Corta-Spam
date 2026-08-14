@@ -38,6 +38,7 @@ import org.carlospinan.bloqueador.app.blocklist.ManualBlockListScreen
 import org.carlospinan.bloqueador.app.blocklist.PatternRuleScreen
 import org.carlospinan.bloqueador.app.blocklist.ScheduleRuleScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogIntent
+import org.carlospinan.bloqueador.app.calllog.CallLogRequest
 import org.carlospinan.bloqueador.app.calllog.CallLogScreen
 import org.carlospinan.bloqueador.app.calllog.CallLogViewModel
 import org.carlospinan.bloqueador.app.credits.CreditsScreen
@@ -109,6 +110,7 @@ fun AppNavHost(
     onRequestMicPermission: (() -> Unit)? = null,
     onPlayRecording: ((String) -> Unit)? = null,
     dialRequest: DialRequest? = null,
+    callLogRequest: CallLogRequest? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -121,6 +123,16 @@ fun AppNavHost(
     LaunchedEffect(dialRequest) {
         if (dialRequest == null) return@LaunchedEffect
         navController.navigate(Routes.KEYPAD) {
+            popUpTo(Routes.HOME)
+            launchSingleTop = true
+        }
+    }
+
+    // Same shape for a tapped call notification: the destination is the call log, and the screen
+    // itself opens the actions for the caller once it gets there.
+    LaunchedEffect(callLogRequest) {
+        if (callLogRequest == null) return@LaunchedEffect
+        navController.navigate(Routes.callLogRoute()) {
             popUpTo(Routes.HOME)
             launchSingleTop = true
         }
@@ -214,6 +226,7 @@ fun AppNavHost(
                     onBack = { navController.popBackStack() },
                     onPlayRecording = onPlayRecording ?: {},
                     onDeleteRecording = { entryId -> callLogViewModel.onIntent(CallLogIntent.DeleteRecording(entryId)) },
+                    callLogRequest = callLogRequest,
                 )
             }
 

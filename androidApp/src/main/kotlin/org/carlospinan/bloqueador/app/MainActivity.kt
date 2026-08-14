@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import org.carlospinan.bloqueador.app.calllog.CallLogRequest
 import org.carlospinan.bloqueador.app.keypad.DialRequest
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingIntent
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingScreen
@@ -193,10 +194,26 @@ class MainActivity : ComponentActivity() {
         intent?.action = Intent.ACTION_MAIN
     }
 
+    /** The caller a tapped blocked/missed/repeat-caller notification wants the call log opened on. */
+    private var callLogRequest by mutableStateOf<CallLogRequest?>(null)
+    private var callLogRequestCount = 0L
+
+    private fun consumeCallLogIntent(intent: Intent?) {
+        val number = ShowCallLogIntent.numberFrom(intent) ?: return
+        callLogRequestCount += 1
+        callLogRequest = CallLogRequest(number = number, id = callLogRequestCount)
+        // Same reason the dial intent is cleared: a rotation must not reopen a caller's actions
+        // the user has already dealt with and navigated away from.
+        intent?.removeExtra(ShowCallLogIntent.EXTRA_NUMBER)
+        intent?.data = null
+        intent?.action = Intent.ACTION_MAIN
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         consumeDialIntent(intent)
+        consumeCallLogIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -204,6 +221,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         refreshPermissionStatus()
         consumeDialIntent(intent)
+        consumeCallLogIntent(intent)
 
         setContent {
             val state by viewModel.state.collectAsState()
@@ -303,6 +321,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onPlayRecording = { path -> recordingPlayer.play(path) },
                                 dialRequest = dialRequest,
+                                callLogRequest = callLogRequest,
                             )
                         }
                     },
