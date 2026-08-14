@@ -32,7 +32,7 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // the app-op denied and the in-app grant route is load-bearing. 4 carries the onboarding
 // checklist row that exposes that route. versionName stays 0.1.0 because nothing has ever reached
 // a user under that name -- only the code had to move.
-val appVersionName = "1.1.4"
+val appVersionName = "1.2.0"
 val appVersionCode = 4
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
