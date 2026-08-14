@@ -244,6 +244,49 @@ object IncomingCallNotifier {
     }
 
     /**
+     * Posts a missed-call notification Telecom asked us to show, without disturbing the counter.
+     *
+     * Two differences from [notifyCallResult], both because this arrives *after* the call rather
+     * than as part of handling it: the attempt count is not incremented (Telecom's report of a
+     * call and this app's own record of it are the same call, and counting both would tell the
+     * user a single caller had tried twice), and an existing notification for that number is
+     * left alone rather than replaced.
+     */
+    fun notifyMissedCallFromTelecom(
+        context: Context,
+        number: String,
+        @StringRes titleRes: Int,
+    ) {
+        if (!canPostNotifications(context)) return
+        val id = historyNotificationId(repeatedCalls.representativeFor(number))
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return
+        if (manager.activeNotifications.any { it.id == id }) return
+
+        val displayName =
+            ContactNameLookup.displayNameFor(context, number)
+                ?: number.ifBlank { context.getString(R.string.notification_unknown_caller) }
+        val builder =
+            NotificationCompat
+                .Builder(context, HISTORY_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.sym_call_missed)
+                .setContentTitle(context.getString(titleRes))
+                .setContentText(displayName)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                .setContentIntent(callLogPendingIntent(context, number))
+        if (number.isNotBlank()) {
+            setOf(CallResultAction.CALL_BACK, CallResultAction.BLOCK).forEach { action ->
+                builder.addAction(
+                    action.iconRes,
+                    context.getString(action.labelRes),
+                    ruleActionPendingIntent(context, action, number),
+                )
+            }
+        }
+        post(context, id, builder.build())
+    }
+
+    /**
      * One-tap rule buttons on a finished call's notification.
      *
      * Which of them a given notification carries is decided per call outcome, not offered as a

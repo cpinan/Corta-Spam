@@ -186,6 +186,30 @@ class IncomingCallNotifierTest {
     }
 
     /**
+     * Telecom's own missed-call notification is suppressed by declaring a receiver, and the
+     * broadcast it delegates with describes the same call this app already handled. Posting it
+     * again must not read as a second attempt by that caller.
+     */
+    @Test
+    fun `a delegated missed call does not duplicate one already posted`() {
+        IncomingCallNotifier.notifyCallResult(context, "+34600123456", R.string.notification_missed_call_title, null)
+
+        IncomingCallNotifier.notifyMissedCallFromTelecom(context, "+34600123456", R.string.notification_missed_call_title)
+
+        assertEquals(1, manager.activeNotifications.size)
+        assertNull(subTextOf(activeFor("+34600123456")!!), "the delegated copy counted as a second attempt")
+    }
+
+    @Test
+    fun `a delegated missed call this app never saw is posted with its actions`() {
+        IncomingCallNotifier.notifyMissedCallFromTelecom(context, "+34600999999", R.string.notification_missed_call_title)
+
+        val actions = activeFor("+34600999999")!!.actions.orEmpty().map { it.title.toString() }
+        assertTrue("Call back" in actions, "expected a call-back action, got $actions")
+        assertTrue("Block" in actions, "expected a block action, got $actions")
+    }
+
+    /**
      * The body of a finished-call notification used to do nothing at all -- no content intent, so
      * a tap dismissed the only surface reporting the call and left the log two screens away.
      */

@@ -107,6 +107,29 @@
         <receiver
             android:name=".telecom.CallActionReceiver"
             android:exported="false" />
+
+        <!-- Declared so Telecom stops posting its own missed-call notification beside this
+             app's: MissedCallNotifierImpl delegates to the default dialer if — and only if —
+             the dialer has a receiver for this action, and the test is the receiver existing,
+             not what it does. Both action spellings are declared because AOSP has sent this
+             under android.telecom.action and android.telephony.action at different times, and a
+             filter that does not match buys nothing and fails silently.
+
+             exported="true" is required for Telecom to see and reach it. It is guarded with
+             READ_PHONE_STATE, which is also the permission Telecom sends the broadcast with —
+             so no other app can spoof a missed call, and this app (which deliberately does not
+             hold READ_PHONE_STATE) simply does not receive it. See the receiver's KDoc: the
+             suppression is the point, and the notification the user sees comes from
+             PassthroughInCallService handling the missed call itself. -->
+        <receiver
+            android:name=".telecom.MissedCallNotificationReceiver"
+            android:exported="true"
+            android:permission="android.permission.READ_PHONE_STATE">
+            <intent-filter>
+                <action android:name="android.telecom.action.SHOW_MISSED_CALLS_NOTIFICATION" />
+                <action android:name="android.telephony.action.SHOW_MISSED_CALLS_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
