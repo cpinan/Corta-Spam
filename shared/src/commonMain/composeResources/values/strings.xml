@@ -232,7 +232,7 @@
     <string name="blocklist_duplicate_allowlist_body">This number is in your Allowlist. Manual block takes priority — it will still be blocked.</string>
     <string name="blocklist_add_block">Add to Block List</string>
     <string name="blocklist_duplicate_blocked_title">Number already blocked</string>
-    <string name="blocklist_duplicate_blocked_body">This number is in your Manual Block list. Adding it to the Allowlist won\'t override the block.</string>
+    <string name="blocklist_duplicate_blocked_body">This number is in your Manual Block list. Adding it to the Allowlist won't override the block.</string>
     <string name="blocklist_add_allowlist">Add to Allowlist</string>
     <!-- Schedule presets -->
     <string name="schedule_quick_presets">Quick presets</string>
