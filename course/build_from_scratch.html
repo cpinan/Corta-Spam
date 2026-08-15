@@ -204,7 +204,7 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <div class="callout"><h3>What this is, and how it differs from the other course</h3>
 <p><a href="corta_spam_course.html">The Corta Spam course</a> documents a finished app: 28 chapters written <em>after</em> the code shipped, tracing subsystems and post-mortems. It is a reference. You cannot follow it and end up with a working app, because it never asks you to type anything.</p>
 <p>This is the other document. You start with an empty directory and end with an Android app that is your phone's dialer, sees an incoming call before it rings, and refuses the calls you told it to refuse. Every step has a <b class="ok">CHECKPOINT</b> — a command to run and a specific thing you must see. If you do not see it, stop; the next step will not save you.</p>
-<p style="margin-bottom:0"><b class="warn">Honesty about provenance.</b> Steps 1&ndash;4 were executed from an empty directory on a Pixel 8 Pro emulator (API 36) while this was written, and the traps in them are the ones that actually happened, in the order they happened. Steps 5&ndash;9 are lifted from Corta Spam, which is a shipping app with 571 tests and a device suite — that code is proven, but the from-zero path through it is reconstructed rather than re-executed. Each step says which it is.</p>
+<p style="margin-bottom:0"><b class="warn">Honesty about provenance.</b> Every file in steps 1&ndash;8 was written into an empty directory on a Pixel 8 Pro emulator (API 36) while this was written, compiled, installed, and exercised with real emulated calls. The code blocks are those files, not paraphrases of them, and the traps are failures that actually happened in the order shown. The one exception is step 9's harness script, which is assembled from checks that were each run by hand but was never executed end to end as a single file — it says so where it appears.</p>
 </div>
 
 <div class="callout"><h3>What you need</h3>
@@ -562,194 +562,555 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <p style="margin-bottom:0">Cancel each with <code>adb emu gsm cancel &lt;number&gt;</code>. You are looking for the strings to come back <em>differently shaped</em>, which is the fact step 8 exists to deal with.</p>
 </div>
 </section>
-<div class="callout"><h3>From here on: reconstructed, not re-executed</h3>
-<p style="margin-bottom:0">Steps 1&ndash;4 above were run from an empty directory while this was written. Steps 5&ndash;9 take their code from <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a>, where all of it is covered by 571 tests and a device suite that places real calls — but the from-zero path through them is reconstructed. Treat the code as proven and the exact sequence as a plan.</p></div>
-
 <!-- ============ 5 ============ -->
 <section class="module" id="m5">
 <div class="chapter-status">Step 05</div>
 <h2><span class="cn">05</span>A blocklist that survives a restart</h2>
-<p>Two tables and a repository. The interesting decision is not SQLDelight; it is that precedence between rules is <em>not</em> expressed in SQL.</p>
+<p>Two tables and a generated API. The interesting decision is not SQLDelight; it is that rule precedence is <em>not</em> expressed in SQL.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Generate type-safe Kotlin from <code>.sq</code> files</li><li>Supply a driver per platform through <code>expect</code>/<code>actual</code></li><li>Keep rule precedence in code where it can be tested</li></ul></div>
+<ul><li>Generate type-safe Kotlin from <code>.sq</code> files</li><li>Supply a driver per platform with <code>expect</code>/<code>actual</code></li><li>Keep precedence in code, where a test can reach it without a database</li></ul></div>
 
-<p class="file-label">shared/src/commonMain/sqldelight/&lt;package path&gt;/AppDatabase.sq</p>
+<h3><span class="badge badge-b">Beginner</span> Catalog and plugin</h3>
+<p>Add to <code>[versions]</code>: <code>sqldelight = "2.3.2"</code> and <code>kotlinx-coroutines = "1.9.0"</code>. Add libraries <code>sqldelight-runtime</code>, <code>sqldelight-android-driver</code> and <code>kotlinx-coroutines-core</code>, and the plugin <code>sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }</code>. Declare it <code>apply false</code> at the root.</p>
+
+<p class="file-label">shared/build.gradle.kts — complete file at this point</p>
+<pre><code><span class="line">plugins {</span>
+<span class="line">    alias(libs.plugins.kotlin.multiplatform)</span>
+<span class="line">    alias(libs.plugins.android.library)</span>
+<span class="line">    alias(libs.plugins.compose.multiplatform)</span>
+<span class="line">    alias(libs.plugins.compose.compiler)</span>
+<span class="line">    alias(libs.plugins.sqldelight)</span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line">kotlin {</span>
+<span class="line">    jvmToolchain(17)</span>
+<span class="line">    androidTarget()</span>
+<span class="line"></span>
+<span class="line">    sourceSets {</span>
+<span class="line">        commonMain.dependencies {</span>
+<span class="line">            implementation(compose.runtime)</span>
+<span class="line">            implementation(compose.foundation)</span>
+<span class="line">            implementation(compose.material3)</span>
+<span class="line">            implementation(compose.ui)</span>
+<span class="line">            implementation(libs.sqldelight.runtime)</span>
+<span class="line">            implementation(libs.kotlinx.coroutines.core)</span>
+<span class="line">        }</span>
+<span class="line">        androidMain.dependencies {</span>
+<span class="line">            implementation(libs.sqldelight.android.driver)</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line">android {</span>
+<span class="line">    namespace = &quot;dev.example.callblocker.shared&quot;</span>
+<span class="line">    compileSdk = 36</span>
+<span class="line">    defaultConfig { minSdk = 26 }</span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line">sqldelight {</span>
+<span class="line">    databases {</span>
+<span class="line">        create(&quot;AppDatabase&quot;) {</span>
+<span class="line">            packageName.set(&quot;dev.example.callblocker.db&quot;)</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+
+<p><b class="why">WHY</b> <code>packageName</code> in the <code>sqldelight {}</code> block has to match where you want the generated <code>AppDatabase</code> to appear. Get it wrong and the class exists but your import does not resolve, which reads like a build failure and is a typo.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> The schema</h3>
+<p class="file-label">shared/src/commonMain/sqldelight/dev/example/callblocker/db/AppDatabase.sq</p>
 <pre><code><span class="line">CREATE TABLE BlockedNumber (</span>
 <span class="line">    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,</span>
 <span class="line">    number TEXT NOT NULL,</span>
 <span class="line">    label TEXT,</span>
-<span class="line">    created_at INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),</span>
+<span class="line">    created_at INTEGER NOT NULL DEFAULT (CAST(strftime(&#x27;%s&#x27;, &#x27;now&#x27;) AS INTEGER)),</span>
 <span class="line">    UNIQUE(number)</span>
+<span class="line">);</span>
+<span class="line"></span>
+<span class="line">CREATE TABLE CallLogEntry (</span>
+<span class="line">    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,</span>
+<span class="line">    number TEXT NOT NULL,</span>
+<span class="line">    timestamp INTEGER NOT NULL,</span>
+<span class="line">    action TEXT NOT NULL CHECK (action IN (&#x27;ALLOWED&#x27;, &#x27;BLOCKED&#x27;))</span>
 <span class="line">);</span>
 <span class="line"></span>
 <span class="line">selectAllBlockedNumbers:</span>
 <span class="line">SELECT * FROM BlockedNumber ORDER BY created_at DESC;</span>
 <span class="line"></span>
 <span class="line">insertBlockedNumber:</span>
-<span class="line">INSERT OR IGNORE INTO BlockedNumber(number, label) VALUES (?, ?);</span></code></pre>
-<p><b class="why">WHY</b> the precedence comment at the top of Corta Spam's schema — "evaluated in code, not SQL" — is the load-bearing decision. A single clever query joining blocklist, allowlist, patterns and countries would be untestable without a database and unreadable when a rule is added. In code it is a pure function over data you can construct in a test, and every rule in this app is now covered by unit tests that never touch SQLite.</p>
+<span class="line">INSERT OR IGNORE INTO BlockedNumber(number, label) VALUES (?, ?);</span>
+<span class="line"></span>
+<span class="line">deleteBlockedNumber:</span>
+<span class="line">DELETE FROM BlockedNumber WHERE id = ?;</span>
+<span class="line"></span>
+<span class="line">insertCallLogEntry:</span>
+<span class="line">INSERT INTO CallLogEntry(number, timestamp, action) VALUES (?, ?, ?);</span>
+<span class="line"></span>
+<span class="line">selectAllCallLogEntries:</span>
+<span class="line">SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT 100;</span></code></pre>
+<p><b class="why">WHY</b> no join across a blocklist and an allowlist here. A single clever query would be untestable without a database and unreadable the moment a third rule type arrives. In code it is a pure function over data a test can construct in two lines — which is step 6.</p>
+<p><b class="scope">SCOPE</b> The <code>CHECK</code> on <code>action</code> is worth having from the first day. It is the difference between a typo failing at insert time and a call log quietly containing three spellings of "blocked".</p>
 
-<p class="file-label">shared/src/commonMain/kotlin/.../DriverFactory.kt</p>
-<pre><code><span class="line"><span class="kw">expect class</span> DriverFactory {</span>
-<span class="line">    <span class="kw">fun</span> <span class="fn">createDriver</span>(): SqlDriver</span>
+<h3><span class="badge badge-a">Advanced</span> One driver per platform</h3>
+<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/db/DriverFactory.kt</p>
+<pre><code><span class="line">package dev.example.callblocker.db</span>
+<span class="line"></span>
+<span class="line">import app.cash.sqldelight.db.SqlDriver</span>
+<span class="line"></span>
+<span class="line">expect class DriverFactory {</span>
+<span class="line">    fun createDriver(): SqlDriver</span>
 <span class="line">}</span></code></pre>
-<p>The Android <code>actual</code> returns <code>AndroidSqliteDriver</code>. In unit tests you swap it for the JDBC driver and get a real SQLite engine in a headless JVM — which is how Corta Spam tests its persistence layer without an emulator.</p>
+<p class="file-label">shared/src/androidMain/kotlin/dev/example/callblocker/db/DriverFactory.android.kt</p>
+<pre><code><span class="line">package dev.example.callblocker.db</span>
+<span class="line"></span>
+<span class="line">import android.content.Context</span>
+<span class="line">import app.cash.sqldelight.db.SqlDriver</span>
+<span class="line">import app.cash.sqldelight.driver.android.AndroidSqliteDriver</span>
+<span class="line"></span>
+<span class="line">actual class DriverFactory(</span>
+<span class="line">    private val context: Context,</span>
+<span class="line">) {</span>
+<span class="line">    actual fun createDriver(): SqlDriver =</span>
+<span class="line">        AndroidSqliteDriver(AppDatabase.Schema, context, &quot;callblocker.db&quot;)</span>
+<span class="line">}</span></code></pre>
+<p>In a JVM unit test you swap this for the JDBC driver and get a real SQLite engine with no emulator — which is how the persistence layer gets tested at all.</p>
 
 <div class="callout ok"><h3>CHECKPOINT 5</h3>
-<p style="margin-bottom:0">Insert a number at startup, kill the app (<code>adb shell am force-stop dev.example.callblocker</code>), relaunch, and read it back. Then look at the file itself — the strongest confirmation is the one that does not go through your own code:</p>
-<pre><code><span class="line">adb exec-out run-as dev.example.callblocker cat databases/callblocker.db &gt; /tmp/cb.db</span>
-<span class="line">sqlite3 /tmp/cb.db "SELECT number FROM BlockedNumber;"</span>
-<span class="line">sqlite3 /tmp/cb.db "PRAGMA user_version;"</span></code></pre>
+<pre><code><span class="line">./gradlew :shared:compileDebugKotlinAndroid</span></code></pre>
+<p style="margin-bottom:0">Green, and <code>AppDatabase</code> now resolves in Kotlin. The database file itself does not exist yet — it is created on first use, which is step 6.</p>
 </div>
 
 <div class="gotcha"><h3>GOTCHA — <code>run-as</code> only works on a debug build</h3>
-<p style="margin-bottom:0">On a release build it fails with "not debuggable", so every database-inspection habit you build here stops working exactly when you most want it — while checking a migration on the build you are about to ship. Corta Spam's <code>device_check.sh</code> exists for that reason, and its migration bug of 2026-08-05 was visible <em>only</em> as <code>PRAGMA user_version</code> disagreeing with the schema.</p></div>
+<p style="margin-bottom:0">Every database-inspection habit you are about to build (<code>adb exec-out run-as &lt;pkg&gt; cat databases/x.db</code>) stops working on a release build with "not debuggable" — exactly when you most want it, while checking a migration on the build you are about to ship.</p></div>
 </section>
-
 <!-- ============ 6 ============ -->
 <section class="module" id="m6">
 <div class="chapter-status">Step 06</div>
 <h2><span class="cn">06</span>Your first blocked call</h2>
-<p>Everything so far has been observation. Now the app acts, and the cost of being wrong changes completely: a missed spam call is an annoyance, a missed real one can be an emergency.</p>
+<p>Everything so far has been observation. Now the app acts, and the cost of being wrong changes: a missed spam call is an annoyance, a missed real one can be an emergency.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Reject a call through Telecom</li><li>Decide what happens when your own decision code throws</li><li>Understand why the ringtone starts <em>before</em> the decision</li></ul></div>
+<ul><li>Write a rule engine that is pure, and therefore testable</li><li>Reject a call through Telecom</li><li>Decide what happens when your own decision code throws</li></ul></div>
 
-<pre><code><span class="line"><span class="kw">override fun</span> <span class="fn">onCallAdded</span>(call: Call) {</span>
-<span class="line">    <span class="kw">super</span>.onCallAdded(call)</span>
-<span class="line">    <span class="kw">if</span> (call.state == Call.STATE_RINGING) ringer.start()   <span class="cm">// ring first</span></span>
+<h3><span class="badge badge-b">Beginner</span> The engine</h3>
+<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/rules/RuleEngine.kt</p>
+<pre><code><span class="line">package dev.example.callblocker.rules</span>
 <span class="line"></span>
-<span class="line">    serviceScope.launch {</span>
-<span class="line">        <span class="kw">try</span> {</span>
-<span class="line">            <span class="kw">val</span> decision = evaluate(call.handleNumber())</span>
-<span class="line">            <span class="kw">if</span> (decision.isBlocked) {</span>
-<span class="line">                ringer.stop()</span>
-<span class="line">                call.reject(<span class="kw">false</span>, <span class="kw">null</span>)</span>
-<span class="line">            }</span>
-<span class="line">        } <span class="kw">catch</span> (e: CancellationException) {</span>
-<span class="line">            <span class="kw">throw</span> e</span>
-<span class="line">        } <span class="kw">catch</span> (e: Exception) {</span>
-<span class="line">            <span class="cm">// Fail open. The call is already ringing and stays ringing.</span></span>
-<span class="line">            Log.e(TAG, <span class="st">"Call evaluation failed, failing open"</span>, e)</span>
+<span class="line">/** What the engine decided, and why — the reason is what the call log stores. */</span>
+<span class="line">sealed interface Decision {</span>
+<span class="line">    val isBlocked: Boolean</span>
+<span class="line"></span>
+<span class="line">    data object Allowed : Decision {</span>
+<span class="line">        override val isBlocked = false</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    data class Blocked(val reason: String) : Decision {</span>
+<span class="line">        override val isBlocked = true</span>
+<span class="line">    }</span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line">/**</span>
+<span class="line"> * Pure: everything it needs is passed in, so it is testable without a database or a phone.</span>
+<span class="line"> *</span>
+<span class="line"> * Precedence is expressed here rather than in SQL for that reason — see step 5.</span>
+<span class="line"> */</span>
+<span class="line">object RuleEngine {</span>
+<span class="line">    fun evaluate(</span>
+<span class="line">        number: String,</span>
+<span class="line">        blockedNumbers: List&lt;String&gt;,</span>
+<span class="line">        contactNumbers: Set&lt;String&gt; = emptySet(),</span>
+<span class="line">    ): Decision {</span>
+<span class="line">        if (normalizedIsEmpty(number)) return Decision.Allowed</span>
+<span class="line"></span>
+<span class="line">        // 1. Contacts bypass everything below. Compared with sameNumber, never with ==, and</span>
+<span class="line">        //    against the numbers AS SAVED — normalising them first is what broke this in the</span>
+<span class="line">        //    real app, because it strips the &#x27;+&#x27; sameNumber reads.</span>
+<span class="line">        if (contactNumbers.any { PhoneNumberParser.sameNumber(it, number) }) return Decision.Allowed</span>
+<span class="line"></span>
+<span class="line">        // 2. Manual block list.</span>
+<span class="line">        if (blockedNumbers.any { PhoneNumberParser.sameNumber(it, number) }) {</span>
+<span class="line">            return Decision.Blocked(&quot;MANUAL&quot;)</span>
 <span class="line">        }</span>
+<span class="line"></span>
+<span class="line">        return Decision.Allowed</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    private fun normalizedIsEmpty(number: String) = PhoneNumberParser.normalizeForComparison(number).isEmpty()</span>
+<span class="line">}</span></code></pre>
+<p>Nothing here knows about Android, SQLite or Telecom, so a test constructs its inputs directly. Precedence is the order of the <code>if</code>s and nothing else — contacts before the blocklist, deliberately, so that adding your mother to a blocklist by accident is recoverable and adding her to your contacts is authoritative.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> Wiring it to the call</h3>
+<p class="file-label">androidApp/src/main/kotlin/dev/example/callblocker/ScreeningInCallService.kt — complete file</p>
+<pre><code><span class="line">package dev.example.callblocker</span>
+<span class="line"></span>
+<span class="line">import android.telecom.Call</span>
+<span class="line">import android.telecom.InCallService</span>
+<span class="line">import android.util.Log</span>
+<span class="line">import dev.example.callblocker.db.AppDatabase</span>
+<span class="line">import dev.example.callblocker.db.DriverFactory</span>
+<span class="line">import dev.example.callblocker.rules.RuleEngine</span>
+<span class="line">import kotlinx.coroutines.CancellationException</span>
+<span class="line">import kotlinx.coroutines.CoroutineScope</span>
+<span class="line">import kotlinx.coroutines.Dispatchers</span>
+<span class="line">import kotlinx.coroutines.SupervisorJob</span>
+<span class="line">import kotlinx.coroutines.cancel</span>
+<span class="line">import kotlinx.coroutines.launch</span>
+<span class="line">import kotlinx.coroutines.withContext</span>
+<span class="line"></span>
+<span class="line">class ScreeningInCallService : InCallService() {</span>
+<span class="line">    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)</span>
+<span class="line"></span>
+<span class="line">    private val ringer by lazy { CallRinger(this) }</span>
+<span class="line"></span>
+<span class="line">    private val database by lazy { AppDatabase(DriverFactory(applicationContext).createDriver()) }</span>
+<span class="line"></span>
+<span class="line">    override fun onCallAdded(call: Call) {</span>
+<span class="line">        super.onCallAdded(call)</span>
+<span class="line">        val number = call.handleNumber()</span>
+<span class="line">        Log.i(TAG, &quot;onCallAdded number=$number state=${call.state}&quot;)</span>
+<span class="line">        // Ring first, decide second: evaluation touches a database, and a caller must</span>
+<span class="line">        // never be dropped into silence because that was slow.</span>
+<span class="line">        if (call.state == Call.STATE_RINGING) ringer.start()</span>
+<span class="line"></span>
+<span class="line">        scope.launch {</span>
+<span class="line">            try {</span>
+<span class="line">                val decision =</span>
+<span class="line">                    withContext(Dispatchers.IO) {</span>
+<span class="line">                        val blocked =</span>
+<span class="line">                            database.appDatabaseQueries</span>
+<span class="line">                                .selectAllBlockedNumbers()</span>
+<span class="line">                                .executeAsList()</span>
+<span class="line">                                .map { it.number }</span>
+<span class="line">                        val d = RuleEngine.evaluate(number, blocked)</span>
+<span class="line">                        database.appDatabaseQueries.insertCallLogEntry(</span>
+<span class="line">                            number = number,</span>
+<span class="line">                            timestamp = System.currentTimeMillis(),</span>
+<span class="line">                            action = if (d.isBlocked) &quot;BLOCKED&quot; else &quot;ALLOWED&quot;,</span>
+<span class="line">                        )</span>
+<span class="line">                        d</span>
+<span class="line">                    }</span>
+<span class="line">                Log.i(TAG, &quot;decision=$decision for $number&quot;)</span>
+<span class="line">                if (decision.isBlocked) {</span>
+<span class="line">                    ringer.stop()</span>
+<span class="line">                    call.reject(false, null)</span>
+<span class="line">                }</span>
+<span class="line">            } catch (e: CancellationException) {</span>
+<span class="line">                throw e</span>
+<span class="line">            } catch (e: Exception) {</span>
+<span class="line">                // Fail open: an unblocked nuisance beats a silently dropped emergency.</span>
+<span class="line">                Log.e(TAG, &quot;evaluation failed, failing open&quot;, e)</span>
+<span class="line">            }</span>
+<span class="line">        }</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    override fun onCallRemoved(call: Call) {</span>
+<span class="line">        super.onCallRemoved(call)</span>
+<span class="line">        ringer.stop()</span>
+<span class="line">        Log.i(TAG, &quot;onCallRemoved&quot;)</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    override fun onDestroy() {</span>
+<span class="line">        super.onDestroy()</span>
+<span class="line">        scope.cancel()</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    private fun Call.handleNumber(): String = details?.handle?.schemeSpecificPart.orEmpty()</span>
+<span class="line"></span>
+<span class="line">    private companion object {</span>
+<span class="line">        const val TAG = &quot;CallBlocker&quot;</span>
 <span class="line">    }</span>
 <span class="line">}</span></code></pre>
 
-<p><b class="why">WHY</b> ring first, decide second. Evaluation touches a database and possibly the contacts provider. If you wait for it before ringing, a slow query drops a legitimate caller into silence. Ringing immediately and stopping a few hundred milliseconds later is the right trade: the worst case is a blocked spammer producing a quarter-second of ringtone.</p>
-<p><b class="why">WHY</b> fail open, and why <code>CancellationException</code> is rethrown. Swallowing cancellation breaks structured concurrency — the coroutine keeps running after its scope is gone. Every other exception must not block the call: an unblocked nuisance is recoverable, a silently dropped emergency is not.</p>
+<p><b class="why">WHY</b> ring first, decide second. Evaluation touches a database. If you wait for it before ringing, a slow query drops a legitimate caller into silence; ringing immediately and stopping a few hundred milliseconds later costs a blocked spammer a quarter-second of ringtone.</p>
+<p><b class="why">WHY</b> <code>CancellationException</code> is rethrown before the general catch. Swallowing it breaks structured concurrency — the coroutine keeps running after its scope is gone. Everything else fails open.</p>
 
 <div class="callout ok"><h3>CHECKPOINT 6</h3>
-<p style="margin-bottom:0">Insert <code>5551234567</code> into <code>BlockedNumber</code>, then <code>adb emu gsm call 5551234567</code>. The call must end on its own, quickly. Then call a number that is <em>not</em> on the list and confirm it keeps ringing — a blocker that blocks everything passes the first half of this test and is completely broken.</p></div>
+<p>Place one call to create the database, then seed a number and call it:</p>
+<pre><code><span class="line">adb emu gsm call 5559998888 &amp;&amp; sleep 5 &amp;&amp; adb emu gsm cancel 5559998888</span>
+<span class="line">adb shell am force-stop dev.example.callblocker</span>
+<span class="line">adb exec-out run-as dev.example.callblocker cat databases/callblocker.db &gt; /tmp/cb.db</span>
+<span class="line">sqlite3 /tmp/cb.db "INSERT INTO BlockedNumber(number,label) VALUES ('+34611998877','tutorial');"</span>
+<span class="line">adb push /tmp/cb.db /data/local/tmp/cb.db</span>
+<span class="line">adb shell "run-as dev.example.callblocker cp /data/local/tmp/cb.db databases/callblocker.db"</span></code></pre>
+<p>Then call it, and read the log:</p>
+<pre><code><span class="line">I CallBlocker: onCallAdded number=+34611998877 state=2</span>
+<span class="line">I CallBlocker: decision=Blocked(reason=MANUAL) for +34611998877</span>
+<span class="line">I CallBlocker: onCallRemoved</span></code></pre>
+<p style="margin-bottom:0">Then call a number that is <em>not</em> on the list and confirm it keeps ringing. A blocker that blocks everything passes the first half of this checkpoint and is completely broken.</p>
+</div>
 
 <div class="gotcha"><h3>GOTCHA — testing only the blocked path</h3>
-<p style="margin-bottom:0">Corta Spam's device suite has 14 scenarios and more than half assert that a call is <em>allowed</em>. The bugs that reach users are rarely "it failed to block"; they are "it blocked my mother". Step 8 is one of those.</p></div>
+<p style="margin-bottom:0">The bugs that reach users are rarely "it failed to block". They are "it blocked my mother" — which is step 8, and which no amount of testing the blocked path can find.</p></div>
 </section>
-
 <!-- ============ 7 ============ -->
 <section class="module" id="m7">
 <div class="chapter-status">Step 07</div>
 <h2><span class="cn">07</span>Ringing, because now you must</h2>
-<p>The debt from step 3 comes due. Add <code>IN_CALL_SERVICE_RINGING</code> and Telecom stops ringing entirely, trusting you to do it.</p>
+<p>The debt from step 3 comes due. Declare <code>IN_CALL_SERVICE_RINGING</code> and Telecom stops ringing entirely, trusting you to do it.</p>
 
+<div class="callout"><h3>Learning Objectives</h3>
+<ul><li>Take over ringing without taking over silence</li><li>Honour the system ringer mode the way the platform dialer does</li><li>Assert ringing with three machine-readable signals instead of your ears</li></ul></div>
+
+<p>Add the meta-data beside the one from step 3:</p>
 <pre><code><span class="line">&lt;meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" /&gt;</span></code></pre>
 
-<div class="gotcha"><h3>GOTCHA — the failure mode with no error anywhere</h3>
-<p>Corta Spam declared this meta-data and had no ringtone code at all. Telecom dutifully stood down; the app rang for nothing. As the default dialer it took <em>every call in silence</em> for months. Nothing crashed, no log line complained, and every unit test passed — there was no code to test.</p>
-<p style="margin-bottom:0">A screenshot cannot catch this either. Three independent signals can, and all three are machine-readable:</p></div>
-
-<pre><code><span class="line"><span class="cm"># 1. Telecom confirms it handed ringing over</span></span>
-<span class="line">adb logcat -d | grep "letDialerHandleRinging=true"</span>
+<p class="file-label">androidApp/src/main/kotlin/dev/example/callblocker/CallRinger.kt</p>
+<pre><code><span class="line">package dev.example.callblocker</span>
 <span class="line"></span>
-<span class="line"><span class="cm"># 2. YOUR uid owns a started player with the ringtone usage</span></span>
-<span class="line">adb shell dumpsys audio | grep -A3 "AudioPlaybackConfiguration"</span>
+<span class="line">import android.content.Context</span>
+<span class="line">import android.media.AudioAttributes</span>
+<span class="line">import android.media.AudioManager</span>
+<span class="line">import android.media.MediaPlayer</span>
+<span class="line">import android.media.RingtoneManager</span>
+<span class="line">import android.util.Log</span>
+<span class="line"></span>
+<span class="line">/**</span>
+<span class="line"> * Plays the ringtone, because declaring IN_CALL_SERVICE_RINGING means Telecom will not.</span>
+<span class="line"> *</span>
+<span class="line"> * Honours the system ringer mode exactly as the platform dialer does: silent rings not at all.</span>
+<span class="line"> * Getting that wrong means ringing in a meeting after the user silenced their phone.</span>
+<span class="line"> */</span>
+<span class="line">class CallRinger(</span>
+<span class="line">    private val context: Context,</span>
+<span class="line">) {</span>
+<span class="line">    private var player: MediaPlayer? = null</span>
+<span class="line"></span>
+<span class="line">    fun start() {</span>
+<span class="line">        val audio = context.getSystemService(AudioManager::class.java)</span>
+<span class="line">        if (audio?.ringerMode != AudioManager.RINGER_MODE_NORMAL) {</span>
+<span class="line">            Log.i(TAG, &quot;ringer mode ${audio?.ringerMode}; not playing a ringtone&quot;)</span>
+<span class="line">            return</span>
+<span class="line">        }</span>
+<span class="line">        if (player != null) return</span>
+<span class="line"></span>
+<span class="line">        val uri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE) ?: return</span>
+<span class="line">        player =</span>
+<span class="line">            MediaPlayer().apply {</span>
+<span class="line">                setAudioAttributes(</span>
+<span class="line">                    AudioAttributes</span>
+<span class="line">                        .Builder()</span>
+<span class="line">                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)</span>
+<span class="line">                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)</span>
+<span class="line">                        .build(),</span>
+<span class="line">                )</span>
+<span class="line">                setDataSource(context, uri)</span>
+<span class="line">                isLooping = true</span>
+<span class="line">                setOnPreparedListener { start() }</span>
+<span class="line">                prepareAsync()</span>
+<span class="line">            }</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    fun stop() {</span>
+<span class="line">        player?.runCatching {</span>
+<span class="line">            stop()</span>
+<span class="line">            release()</span>
+<span class="line">        }</span>
+<span class="line">        player = null</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    private companion object {</span>
+<span class="line">        const val TAG = &quot;CallBlocker&quot;</span>
+<span class="line">    }</span>
+<span class="line">}</span></code></pre>
+
+<p>Then hold one in the service, start it while the call is ringing, and stop it the moment a block decision lands or the call goes away — both edits are already in the step 6 file above.</p>
+
+<div class="gotcha"><h3>GOTCHA — the failure mode with no error anywhere</h3>
+<p>Declare the meta-data and write no ringer, and Telecom dutifully stands down while your app rings for nothing. As the default dialer it then takes <b>every call in silence</b>. Nothing crashes, no log line complains, and every unit test passes — there is no code to test. This shipped in the real app and survived for months.</p>
+<p style="margin-bottom:0">A ringtone you <em>hear</em> proves nothing on its own: that may be the system still ringing because your meta-data is missing. Three independent signals settle it.</p></div>
+
+<h3><span class="badge badge-a">Advanced</span> Asserting it</h3>
+<pre><code><span class="line"><span class="cm"># 1. Telecom confirms it handed ringing over</span></span>
+<span class="line">adb logcat -d | grep -c "letDialerHandleRinging=true"</span>
+<span class="line"></span>
+<span class="line"><span class="cm"># 2. a player owned by YOUR pid, started, with the ringtone usage</span></span>
+<span class="line">adb shell dumpsys audio | grep AudioPlaybackConfiguration | grep USAGE_NOTIFICATION_RINGTONE</span>
 <span class="line"></span>
 <span class="line"><span class="cm"># 3. the vibration running is attributed to your package</span></span>
 <span class="line">adb shell dumpsys vibrator_manager</span></code></pre>
-<p>Signal 1 alone is not enough: it proves the system stopped, not that you started. A ringtone you <em>hear</em> while testing signal 1 is missing proves nothing at all — that was the system ringing.</p>
-<p>Honour the ringer mode exactly as the platform dialer does: silent does not ring, vibrate rings only through the vibrator, normal plays the user's chosen ringtone. Getting this wrong means your app rings in a meeting after the user silenced their phone.</p>
+<p>Signal 2 is the one that cannot be faked. During a ringing call it reads:</p>
+<pre><code><span class="line">AudioPlaybackConfiguration piid:143 type:android.media.MediaPlayer u/pid:10218/4420</span>
+<span class="line">  state:started attr:AudioAttributes: usage=USAGE_NOTIFICATION_RINGTONE</span>
+<span class="line">  content=CONTENT_TYPE_SONIFICATION ... sampleRate=44100</span></code></pre>
+<p style="margin-bottom:0">…where <code>4420</code> is your app's pid, the same one printing <code>CallBlocker</code> lines in logcat. An emulator usually reports no vibration hardware, so signal 3 is a warning there rather than a failure.</p>
 
 <div class="callout ok"><h3>CHECKPOINT 7</h3>
-<p style="margin-bottom:0">An unmatched number rings and all three signals agree. A blocked number produces <b>no started player at all</b>. Both halves matter; only asserting the first is how the silent-ringer bug survived.</p></div>
+<p>Both halves, and the second is the one people forget:</p>
+<pre><code><span class="line"><span class="cm"># unmatched number -&gt; rings</span></span>
+<span class="line">adb emu gsm call 5557776666</span>
+<span class="line">adb shell dumpsys audio | grep USAGE_NOTIFICATION_RINGTONE | grep -c state:started    <span class="cm"># 1</span></span>
+<span class="line"></span>
+<span class="line"><span class="cm"># blocked number -&gt; silent</span></span>
+<span class="line">adb emu gsm call +34611998877</span>
+<span class="line">adb shell dumpsys audio | grep USAGE_NOTIFICATION_RINGTONE | grep -c state:started    <span class="cm"># 0</span></span></code></pre>
+<p style="margin-bottom:0">Set the ringer to normal first (<code>adb shell settings put global mode_ringer 2</code>) — on silent, <code>CallRinger</code> correctly plays nothing and this checkpoint cannot tell that apart from a broken ringer.</p>
+</div>
 </section>
 <!-- ============ 8 ============ -->
 <section class="module" id="m8">
 <div class="chapter-status">Step 08</div>
 <h2><span class="cn">08</span>Phone numbers are not strings</h2>
-<p>The step that decides whether your app is usable. Everything else can be wrong and merely annoying; this one blocks people the user knows.</p>
+<p>The step that decides whether the app is usable. Everything else can be wrong and merely annoying; this one blocks people the user knows.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
-<ul>
-<li>Compare two numbers without guessing a region</li>
-<li>See why a digit-suffix match is a security problem, not a shortcut</li>
-<li>Understand how a correct comparison is disarmed by one careless caller</li>
-</ul></div>
+<ul><li>Compare two numbers without guessing a region</li><li>See why a digit-suffix match is a security problem, not a shortcut</li><li>Understand how a correct comparison is disarmed by one careless caller</li></ul></div>
 
 <h3><span class="badge badge-b">Beginner</span> The problem, concretely</h3>
-<pre><code><span class="line">contact saved:  611 99 88 77        call arrives:  +34611998877     must match</span>
-<span class="line">contact saved:  +34611998877        call arrives:  611998877        must match</span>
-<span class="line">contact saved:  +34611998877        call arrives:  +51611998877     must NOT match</span></code></pre>
-<p>The third line is why this is hard. Spain's <code>611998877</code> and Peru's <code>611998877</code> are different people who share a national number.</p>
+<pre><code><span class="line">rule saved:  +34611998877     call arrives:  611998877        must match</span>
+<span class="line">rule saved:  611 99 88 77     call arrives:  +34611998877     must match</span>
+<span class="line">rule saved:  +34611998877     call arrives:  +51611998877     must NOT match</span></code></pre>
+<p>The third line is what makes this hard. Spain's <code>611998877</code> and Peru's <code>611998877</code> are different people who share a national number.</p>
 
 <h3><span class="badge badge-i">Intermediate</span> Two approaches that look right</h3>
-<p><b class="contrast">CONTRAST 1 — compare the last 7&ndash;9 digits.</b> This is what <code>PhoneNumberUtils.compare</code> does, and it is tempting because it makes all three lines above pass. It also makes a stranger who happens to share a tail match your allowlist. This function guards <em>blocking</em>; trading a correctness bug for a security-shaped one is a bad trade.</p>
-<p><b class="contrast">CONTRAST 2 — canonicalise everything to E.164 with a default region.</b> Now you need the SIM or locale region, an ISO-to-dialling-code table, and a trunk-prefix rule that differs per country: dropping a leading zero is right for the UK and <em>wrong</em> for Italy, whose E.164 form keeps it. Three new failure modes for a guess you did not need to make.</p>
+<p><b class="contrast">CONTRAST 1 — compare the last 7&ndash;9 digits.</b> What <code>PhoneNumberUtils.compare</code> does, and it makes all three lines pass. It also lets a stranger who shares a tail match your allowlist. This function guards blocking; trading a correctness bug for a security-shaped one is a bad trade.</p>
+<p><b class="contrast">CONTRAST 2 — canonicalise to E.164 with a default region.</b> Now you need the SIM or locale region, an ISO-to-dialling-code table, and a trunk-prefix rule that differs per country: dropping a leading zero is right for the UK and wrong for Italy, whose E.164 keeps it. Three new failure modes for a guess you did not have to make.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Let the number state its own country</h3>
-<p>An international number already carries its country code, so stripping it yields the national significant number — exactly the form a contact card holds. No region guess required. The rule that makes the third line work is an asymmetry:</p>
-<pre><code><span class="line"><span class="kw">fun</span> <span class="fn">sameNumber</span>(a: String, b: String): Boolean {</span>
-<span class="line">    <span class="kw">if</span> (digits(a) == digits(b)) <span class="kw">return true</span></span>
+<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/rules/PhoneNumberParser.kt</p>
+<pre><code><span class="line">package dev.example.callblocker.rules</span>
 <span class="line"></span>
-<span class="line">    <span class="kw">val</span> aIntl = toE164OrNull(a) != <span class="kw">null</span></span>
-<span class="line">    <span class="kw">val</span> bIntl = toE164OrNull(b) != <span class="kw">null</span></span>
-<span class="line">    <span class="kw">if</span> (aIntl &amp;&amp; bIntl) {</span>
-<span class="line">        <span class="cm">// Both state a country. Those are facts, not hints — only full E.164 equality.</span></span>
-<span class="line">        <span class="kw">return</span> toE164OrNull(a) == toE164OrNull(b)</span>
+<span class="line">/**</span>
+<span class="line"> * Comparing phone numbers without guessing a region.</span>
+<span class="line"> *</span>
+<span class="line"> * The country-code list is deliberately short here; a real app needs the full ITU list. What</span>
+<span class="line"> * matters is the shape: a code is only ever read off a number that actually wrote itself in</span>
+<span class="line"> * international form.</span>
+<span class="line"> */</span>
+<span class="line">object PhoneNumberParser {</span>
+<span class="line">    private val knownCodes = listOf(&quot;1&quot;, &quot;34&quot;, &quot;39&quot;, &quot;44&quot;, &quot;51&quot;, &quot;52&quot;, &quot;55&quot;).sortedByDescending { it.length }</span>
+<span class="line"></span>
+<span class="line">    private const val MAX_E164_DIGITS = 15</span>
+<span class="line"></span>
+<span class="line">    fun normalizeForComparison(number: String): String = number.filter { it.isDigit() }</span>
+<span class="line"></span>
+<span class="line">    /** Canonical `+&lt;digits&gt;`, or null when [number] was not written in international form. */</span>
+<span class="line">    fun toE164OrNull(number: String): String? {</span>
+<span class="line">        val trimmed = number.trim()</span>
+<span class="line">        val digits =</span>
+<span class="line">            when {</span>
+<span class="line">                trimmed.startsWith(&quot;+&quot;) -&gt; normalizeForComparison(trimmed)</span>
+<span class="line">                trimmed.startsWith(&quot;00&quot;) -&gt; normalizeForComparison(trimmed).drop(2)</span>
+<span class="line">                else -&gt; return null</span>
+<span class="line">            }</span>
+<span class="line">        if (digits.isEmpty() || digits.length &gt; MAX_E164_DIGITS) return null</span>
+<span class="line">        return &quot;+$digits&quot;</span>
 <span class="line">    }</span>
-<span class="line">    <span class="cm">// At least one is silent about its country, so the national form may bridge them.</span></span>
-<span class="line">    <span class="kw">return</span> comparisonKeys(b).any { it <span class="kw">in</span> comparisonKeys(a) }</span>
+<span class="line"></span>
+<span class="line">    /** Every string this number may legitimately be recognised by. */</span>
+<span class="line">    fun comparisonKeys(number: String): Set&lt;String&gt; {</span>
+<span class="line">        val digits = normalizeForComparison(number)</span>
+<span class="line">        if (digits.isEmpty()) return emptySet()</span>
+<span class="line">        val keys = mutableSetOf(digits)</span>
+<span class="line">        nationalSignificantOrNull(number)?.let { keys += it }</span>
+<span class="line">        return keys</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    private fun nationalSignificantOrNull(number: String): String? {</span>
+<span class="line">        val e164 = toE164OrNull(number)?.removePrefix(&quot;+&quot;)</span>
+<span class="line">        if (e164 != null) {</span>
+<span class="line">            val code = knownCodes.firstOrNull { e164.startsWith(it) &amp;&amp; e164.length &gt;= it.length + 4 }</span>
+<span class="line">            return code?.let { e164.drop(it.length) }</span>
+<span class="line">        }</span>
+<span class="line">        val digits = normalizeForComparison(number)</span>
+<span class="line">        return if (digits.length &gt; 1 &amp;&amp; digits.startsWith(&quot;0&quot;)) digits.drop(1) else null</span>
+<span class="line">    }</span>
+<span class="line"></span>
+<span class="line">    /**</span>
+<span class="line">     * True when [a] and [b] can be the same subscriber.</span>
+<span class="line">     *</span>
+<span class="line">     * The national form may bridge them only when at least one side does not state its country.</span>
+<span class="line">     * When both are international those codes are facts, and +34611998877 is not +51611998877.</span>
+<span class="line">     */</span>
+<span class="line">    fun sameNumber(a: String, b: String): Boolean {</span>
+<span class="line">        val da = normalizeForComparison(a)</span>
+<span class="line">        val db = normalizeForComparison(b)</span>
+<span class="line">        if (da.isEmpty() || db.isEmpty()) return false</span>
+<span class="line">        if (da == db) return true</span>
+<span class="line"></span>
+<span class="line">        val aIntl = toE164OrNull(a) != null</span>
+<span class="line">        val bIntl = toE164OrNull(b) != null</span>
+<span class="line">        if (aIntl &amp;&amp; bIntl) return toE164OrNull(a) == toE164OrNull(b)</span>
+<span class="line"></span>
+<span class="line">        val keysA = comparisonKeys(a)</span>
+<span class="line">        return comparisonKeys(b).any { it in keysA }</span>
+<span class="line">    }</span>
 <span class="line">}</span></code></pre>
-<p><b class="why">WHY</b> candidate <em>sets</em> rather than one canonical string per side: the trunk zero has to be available both stripped and intact, because the UK drops it in E.164 and Italy keeps it. Reducing each side to a single string satisfies one country and breaks the other.</p>
+<p><b class="why">WHY</b> candidate <em>sets</em> rather than one canonical string per side: the trunk zero must be available both stripped and intact, because the UK drops it in E.164 and Italy keeps it. Reducing each side to a single string satisfies one country and breaks the other.</p>
 
 <div class="gotcha"><h3>GOTCHA — the fix that was only half applied</h3>
-<p>Corta Spam got this function right, tested it, shipped it — and users kept reporting that contacts were blocked. The function was never called with what it needed:</p>
+<p>The real app got this function right, tested it, shipped it — and users kept reporting blocked contacts. The function was never called with what it needed:</p>
 <pre><code><span class="line"><span class="cm">// the address-book scan, three days after the "fix"</span></span>
 <span class="line">numbers.add(normalizeForComparison(raw))   <span class="cm">// digits only — the '+' is gone</span></span></code></pre>
-<p>A contact saved <code>+34611998877</code> reached <code>sameNumber</code> as <code>34611998877</code>, which states no country — so the asymmetry above could no longer split off <code>611998877</code>, and a domestic call stopped matching. The contact's <em>name</em> still displayed correctly, because the name lookup used a different key set and was never wrong, which made the symptom look impossible.</p>
-<p style="margin-bottom:0"><b>The rule this leaves you with:</b> a comparison function that depends on the shape of its input must say so where its callers will read it, and any normalisation upstream disables it silently. Put it on the interface.</p></div>
+<p>A contact saved <code>+34611998877</code> reached <code>sameNumber</code> as <code>34611998877</code>, which states no country — so the asymmetry could no longer split off <code>611998877</code>, and a domestic call stopped matching. Their <em>name</em> still displayed correctly, because the name lookup used a different key set, which made the symptom look impossible.</p>
+<p style="margin-bottom:0"><b>The rule:</b> a comparison that depends on the shape of its input must say so where its callers read it, and any normalisation upstream disables it silently. Put it on the interface, not in the commit message.</p></div>
 
 <div class="callout ok"><h3>CHECKPOINT 8</h3>
-<p style="margin-bottom:0">A table test over all four saved/incoming combinations, plus the cross-country pair that must <em>not</em> match. Then prove the test can fail: revert the fix, watch it go red, restore it. A regression test never seen failing is a test of nothing.</p></div>
+<p>Three real calls against one blocked number, <code>+34611998877</code>:</p>
+<pre><code><span class="line">adb emu gsm call 611998877       -&gt; decision=Blocked(reason=MANUAL)   <span class="cm"># national form bridges</span></span>
+<span class="line">adb emu gsm call +34611998877    -&gt; decision=Blocked(reason=MANUAL)   <span class="cm"># exact</span></span>
+<span class="line">adb emu gsm call +51611998877    -&gt; decision=Allowed                  <span class="cm"># different country</span></span></code></pre>
+<p style="margin-bottom:0">Then prove the test can fail: replace <code>sameNumber(it, number)</code> with <code>it == number</code> and watch the first line flip to <code>Allowed</code>. A regression test never seen failing is a test of nothing.</p>
+</div>
 </section>
-
 <!-- ============ 9 ============ -->
 <section class="module" id="m9">
 <div class="chapter-status">Step 09</div>
 <h2><span class="cn">09</span>Proving it, on calls a machine places</h2>
-<p>You now have a call blocker. What you do not have is any reason to believe it works, because every check so far was you watching one call at a time.</p>
+<p>You have a call blocker. What you do not have is any reason to believe it works, because every check so far was you watching one call at a time.</p>
 
 <div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Drive real calls from a script</li><li>Assert on the database rather than the screen</li><li>Recognise the two ways a green suite lies</li></ul></div>
+<ul><li>Drive a matrix of real calls from a script</li><li>Assert on the database rather than the screen</li><li>Recognise the two ways a green suite lies</li></ul></div>
 
 <h3><span class="badge badge-i">Intermediate</span> The harness</h3>
-<p>The emulator's fake modem is the whole reason this is automatable:</p>
-<pre><code><span class="line">adb emu gsm call +34900111222     <span class="cm"># place</span></span>
-<span class="line">adb emu gsm cancel +34900111222   <span class="cm"># hang up</span></span></code></pre>
-<p>Seed the rules by writing the database directly, place the call, then poll for a <em>new</em> call-log row and assert its action and rule type. Polling for a new row rather than reading the latest one matters: "this call was never logged" is a real finding, and it must not be able to masquerade as an old row with the wrong verdict.</p>
-<pre><code><span class="line">phase | number          | action  | rule_type | scenario</span>
-<span class="line">  A     +34900111222     BLOCKED  MANUAL      a manually blocked number</span>
-<span class="line">  A     +34901555666     BLOCKED  PATTERN     matches the pattern +34901*</span>
-<span class="line">  A     +34999888777     ALLOWED  -           no rule matches, default is ALLOW</span>
-<span class="line">  B     +34999888777     BLOCKED  -           no rule matches, default is BLOCK</span>
-<span class="line">  F     900123456        ALLOWED  CONTACTS    a contact saved as +34900123456</span></code></pre>
+<p>The emulator's fake modem is the whole reason this is automatable. Save as <code>scripts/matrix.sh</code>:</p>
+<pre><code><span class="line">#!/usr/bin/env bash</span>
+<span class="line">set -euo pipefail</span>
+<span class="line">PKG=dev.example.callblocker</span>
+<span class="line">DB=callblocker.db</span>
+<span class="line">ADB="adb -s ${DEVICE:-emulator-5554}"</span>
+<span class="line"></span>
+<span class="line">pull_db() { $ADB exec-out run-as "$PKG" cat "databases/$DB" &gt; /tmp/m.db; }</span>
+<span class="line"></span>
+<span class="line">max_log_id() { pull_db; sqlite3 /tmp/m.db "SELECT COALESCE(MAX(id),0) FROM CallLogEntry;"; }</span>
+<span class="line"></span>
+<span class="line">place_call() {            <span class="cm"># $1 = number -&gt; echoes the action of the NEW row</span></span>
+<span class="line">  local baseline; baseline=$(max_log_id)</span>
+<span class="line">  $ADB emu gsm call "$1" &gt;/dev/null; sleep 5</span>
+<span class="line">  $ADB emu gsm cancel "$1" &gt;/dev/null 2&gt;&amp;1 || true</span>
+<span class="line">  for _ in $(seq 1 15); do</span>
+<span class="line">    sleep 1; pull_db</span>
+<span class="line">    got=$(sqlite3 /tmp/m.db "SELECT action FROM CallLogEntry WHERE id &gt; $baseline ORDER BY id DESC LIMIT 1;")</span>
+<span class="line">    [ -n "$got" ] &amp;&amp; { echo "$got"; return; }</span>
+<span class="line">  done</span>
+<span class="line">  echo "NO_NEW_ROW"       <span class="cm"># a real finding, not a wrong verdict</span></span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line">fail=0</span>
+<span class="line">check() {                 <span class="cm"># $1 = number, $2 = expected, $3 = scenario</span></span>
+<span class="line">  got=$(place_call "$1")</span>
+<span class="line">  if [ "$got" = "$2" ]; then printf "  PASS %-16s %s\n" "$1" "$3"</span>
+<span class="line">  else printf "  FAIL %-16s expected %s, got %s\n" "$1" "$2" "$got"; fail=1; fi</span>
+<span class="line">}</span>
+<span class="line"></span>
+<span class="line">check 611998877     BLOCKED "national form of a blocked +34 number"</span>
+<span class="line">check +34611998877  BLOCKED "the blocked number exactly"</span>
+<span class="line">check +51611998877  ALLOWED "same national digits, different country"</span>
+<span class="line">check 5559998888    ALLOWED "no rule matches"</span>
+<span class="line"></span>
+<span class="line">exit $fail</span></code></pre>
+<p><b class="why">WHY</b> poll for a row with <code>id &gt; baseline</code> rather than reading the newest row. "This call was never logged" is a real finding, and it must not be able to masquerade as an old row carrying the wrong verdict — which is exactly what reading <code>ORDER BY id DESC LIMIT 1</code> alone would do.</p>
+<p><b class="why">WHY</b> more than half the rows assert <code>ALLOWED</code>. A blocker that blocks everything passes every BLOCKED row.</p>
 
 <h3><span class="badge badge-a">Advanced</span> Two ways a green suite lies</h3>
-<p><b>1. It asserts absence.</b> A test that a blocked call produces no ringtone passes against an app with no ringtone code whatsoever. Corta Spam had six such tests and a ringer that never rang. Prefer positive assertions: assert the player <em>started</em>, not that nothing happened.</p>
+<p><b>1. It asserts absence.</b> A test that a blocked call produces no ringtone passes against an app with no ringtone code whatsoever. The real app had six such tests and a ringer that never rang. Prefer positive assertions — assert the player <em>started</em>, not that nothing happened.</p>
 <p><b>2. It never reaches the state.</b> Every call test in that project covered calls that ring, get blocked, or get missed — never one that was <em>answered</em>. An Android 14 restriction crashed the app the instant any call was answered, and the suite stayed green because nothing had ever entered that state.</p>
 <p style="margin-bottom:0">Both are the same defect: not in the assertions, but in the state space they cover. When a suite is green and a user is unhappy, ask which state the suite has never entered.</p>
 
 <div class="callout ok"><h3>CHECKPOINT 9 — the last one</h3>
-<p style="margin-bottom:0">Run the matrix and get every scenario passing with none skipped. A skip is not a pass: it means the precondition was missing and the branch was never exercised. Then break something deliberately — revert step 8's fix — and confirm the matrix goes red on the row that should notice. A suite that cannot fail has told you nothing.</p></div>
+<pre><code><span class="line">chmod +x scripts/matrix.sh &amp;&amp; ./scripts/matrix.sh</span></code></pre>
+<p style="margin-bottom:0">Four passes, no failures. Then break something deliberately — change <code>sameNumber(it, number)</code> to <code>it == number</code> in <code>RuleEngine</code>, rebuild, reinstall — and confirm the first row goes red while the others stay green. A suite that cannot fail has told you nothing.</p>
+</div>
 </section>
 
 <section class="module" id="conclusion">
@@ -759,8 +1120,9 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 
 <div class="callout"><h3>What was actually run, and what was not</h3>
 <ul>
-<li><b class="ok">Executed from an empty directory</b>, on a Pixel 8 Pro emulator (API 36), while writing this: steps 1, 2, 3 and 4. The checkpoints are real terminal output. All four gotchas in steps 1&ndash;3 are failures that actually occurred, in the order shown — including the blank screen, which was diagnosed with <code>uiautomator dump</code> exactly as described.</li>
-<li><b class="warn">Reconstructed from the shipping app</b>: steps 5 to 9. The code and the war stories come from Corta Spam, where they are covered by 571 automated tests and a 14-scenario device suite. The from-zero sequence through them was not re-executed.</li>
+<li><b class="ok">Executed from an empty directory</b>, on a Pixel 8 Pro emulator (API 36), while writing this: steps 1 through 8. Every source file shown is the file that was compiled and installed. The checkpoints are real terminal output, including step 8's three calls against one blocked number — <code>611998877</code> and <code>+34611998877</code> both <code>Blocked(reason=MANUAL)</code>, <code>+51611998877</code> <code>Allowed</code> — and step 7's ringtone player, read out of <code>dumpsys audio</code> with the app's own pid on it. All four gotchas in steps 1&ndash;3 are failures that actually occurred, in the order shown, including the blank screen diagnosed with <code>uiautomator dump</code>.</li>
+<li><b class="warn">Not executed as written</b>: step 9's <code>matrix.sh</code>. Each of its four checks was run by hand against this app and produced the result shown, but the script was never run as a single file, so treat it as a starting point rather than something known to run first time.</li>
+<li><b class="warn">Borrowed rather than derived</b>: the war stories. The ringer that never rang, the fix that was only half applied, the suite that stayed green through a crash — those are from <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a>, a shipping app with 571 tests and a 14-scenario device suite. The code here is a minimal reimplementation built for this tutorial, not a copy of that app.</li>
 </ul>
 <p style="margin-bottom:0">That distinction is the point of the document. A tutorial that does not say which of its steps were run is asking you to trust prose over evidence, which is the habit every chapter here argues against.</p>
 </div>
