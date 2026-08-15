@@ -34,10 +34,17 @@ import cortaspam.shared.generated.resources.autoresponder_error_empty
 import cortaspam.shared.generated.resources.autoresponder_error_too_long
 import cortaspam.shared.generated.resources.autoresponder_experimental_badge
 import cortaspam.shared.generated.resources.autoresponder_grant_mic
+import cortaspam.shared.generated.resources.autoresponder_how_blocked_only
+import cortaspam.shared.generated.resources.autoresponder_how_it_works
+import cortaspam.shared.generated.resources.autoresponder_how_recording_mic
+import cortaspam.shared.generated.resources.autoresponder_how_speaker
+import cortaspam.shared.generated.resources.autoresponder_how_storage
 import cortaspam.shared.generated.resources.autoresponder_mic_permission_required
 import cortaspam.shared.generated.resources.autoresponder_pick_audio
 import cortaspam.shared.generated.resources.autoresponder_recording
 import cortaspam.shared.generated.resources.autoresponder_recording_desc
+import cortaspam.shared.generated.resources.autoresponder_recording_inactive_greeting
+import cortaspam.shared.generated.resources.autoresponder_recording_inactive_responder_off
 import cortaspam.shared.generated.resources.autoresponder_script_hint
 import cortaspam.shared.generated.resources.autoresponder_test
 import cortaspam.shared.generated.resources.autoresponder_title
@@ -207,19 +214,34 @@ fun AutoResponderScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary,
                                     )
-                                    // Only shown once recording is actually on. Warning about a
+                                    // Everything that stops the switch from producing a recording,
+                                    // said out loud. A switch left on while the auto-responder was
+                                    // off recorded nothing and explained nothing, which reads as a
+                                    // feature that does not work -- and is how it was reported.
+                                    // Only shown once recording is actually on: warning about a
                                     // microphone the user has not asked to use would be the same
                                     // permanent nag the contacts button used to be.
-                                    if (!micPermissionGranted) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = stringResource(Res.string.autoresponder_mic_permission_required),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
-                                        TextButton(onClick = onRequestMicPermission) {
-                                            Text(stringResource(Res.string.autoresponder_grant_mic))
+                                    when (recordingReadiness(state.config, micPermissionGranted)) {
+                                        RecordingReadiness.AutoResponderOff ->
+                                            RecordingBlockedNote(
+                                                stringResource(Res.string.autoresponder_recording_inactive_responder_off),
+                                            )
+
+                                        RecordingReadiness.GreetingInvalid ->
+                                            RecordingBlockedNote(
+                                                stringResource(Res.string.autoresponder_recording_inactive_greeting),
+                                            )
+
+                                        RecordingReadiness.MicPermissionMissing -> {
+                                            RecordingBlockedNote(
+                                                stringResource(Res.string.autoresponder_mic_permission_required),
+                                            )
+                                            TextButton(onClick = onRequestMicPermission) {
+                                                Text(stringResource(Res.string.autoresponder_grant_mic))
+                                            }
                                         }
+
+                                        RecordingReadiness.Ready, RecordingReadiness.Off -> Unit
                                     }
                                 }
                             }
@@ -229,8 +251,59 @@ fun AutoResponderScreen(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    HowItWorksCard()
                 }
             }
         }
     }
+}
+
+/**
+ * What the feature does, and — more usefully — what it cannot do.
+ *
+ * Both halves of this screen depend on acoustic coupling through the handset, which is the only
+ * route Android leaves a third-party app: the real call-audio streams need `CAPTURE_AUDIO_OUTPUT`,
+ * a signature|privileged permission, and holding the dialer role does not grant it. That makes
+ * the greeting and the recording best-effort *by construction*, and several manufacturers refuse
+ * the microphone outright during a call. Saying so here is the difference between a limitation
+ * and a bug report: without it, a phone that records nothing looks like an app that is broken.
+ */
+@Composable
+private fun HowItWorksCard() {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.autoresponder_how_it_works),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            listOf(
+                Res.string.autoresponder_how_blocked_only,
+                Res.string.autoresponder_how_speaker,
+                Res.string.autoresponder_how_recording_mic,
+                Res.string.autoresponder_how_storage,
+            ).forEach { line ->
+                Text(
+                    text = stringResource(line),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+        }
+    }
+}
+
+/** One reason the recording switch will not do anything yet. */
+@Composable
+private fun RecordingBlockedNote(text: String) {
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+    )
 }

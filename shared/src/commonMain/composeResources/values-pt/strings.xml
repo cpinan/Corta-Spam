@@ -214,6 +214,13 @@
     <string name="autoresponder_recording_desc">Desativado por padrão. Grava pelo microfone, por isso alguns telefones não captam nada.</string>
     <string name="autoresponder_mic_permission_required">É necessário acesso ao microfone para gravar.</string>
     <string name="autoresponder_grant_mic">Conceder acesso ao microfone</string>
+    <string name="autoresponder_how_it_works">Como funciona</string>
+    <string name="autoresponder_how_blocked_only">Somente chamadas bloqueadas são atendidas e recebem a saudação. Uma chamada que passa toca normalmente e nunca é saudada nem gravada.</string>
+    <string name="autoresponder_how_speaker">A saudação toca no alto-falante do telefone e quem liga a ouve pelo microfone. Teste em uma chamada real antes de depender disso.</string>
+    <string name="autoresponder_how_recording_mic">A gravação capta o microfone, não a chamada. O Android reserva o áudio da chamada para o fabricante do telefone, então em muitos aparelhos nada é gravado ou a gravação sai em silêncio. É o aparelho, não uma falha deste app.</string>
+    <string name="autoresponder_how_storage">As gravações ficam neste telefone, aparecem na chamada dentro do Registro de chamadas e são apagadas junto com ela. Nada é enviado.</string>
+    <string name="autoresponder_recording_inactive_responder_off">A gravação não vai rodar: o atendedor acima está desligado, então nenhuma chamada é atendida para gravar.</string>
+    <string name="autoresponder_recording_inactive_greeting">A gravação não vai rodar enquanto a saudação acima não for válida.</string>
     <string name="autoresponder_consent_hint">Roteiro deve incluir: "Esta chamada pode ser gravada"</string>
     <string name="autoresponder_error_empty">Roteiro ou áudio necessário quando ativado.</string>
     <string name="autoresponder_error_too_long">Roteiro muito longo (máx. 500 caracteres).</string>

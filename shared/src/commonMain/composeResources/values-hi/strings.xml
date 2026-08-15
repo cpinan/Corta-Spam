@@ -214,6 +214,13 @@
     <string name="autoresponder_recording_desc">डिफ़ॉल्ट रूप से बंद। माइक्रोफ़ोन से रिकॉर्ड करता है, इसलिए कुछ फ़ोन कुछ भी कैप्चर नहीं करते।</string>
     <string name="autoresponder_mic_permission_required">रिकॉर्ड करने के लिए माइक्रोफ़ोन एक्सेस चाहिए।</string>
     <string name="autoresponder_grant_mic">माइक्रोफ़ोन एक्सेस दें</string>
+    <string name="autoresponder_how_it_works">यह कैसे काम करता है</string>
+    <string name="autoresponder_how_blocked_only">केवल ब्लॉक की गई कॉल का ही जवाब दिया जाता है और संदेश सुनाया जाता है। जो कॉल फ़िल्टर से निकल जाती है वह सामान्य रूप से बजती है और उसका न संदेश चलता है न रिकॉर्डिंग होती है।</string>
+    <string name="autoresponder_how_speaker">संदेश फ़ोन के लाउडस्पीकर से बजता है और कॉल करने वाला उसे माइक्रोफ़ोन के ज़रिए सुनता है। इस पर भरोसा करने से पहले असली कॉल पर जाँच लें।</string>
+    <string name="autoresponder_how_recording_mic">रिकॉर्डिंग माइक्रोफ़ोन को पकड़ती है, कॉल को नहीं। Android कॉल का ऑडियो फ़ोन बनाने वाली कंपनी के लिए सुरक्षित रखता है, इसलिए कई फ़ोन पर कुछ भी रिकॉर्ड नहीं होता या रिकॉर्डिंग खाली रहती है। यह फ़ोन की सीमा है, इस ऐप की खराबी नहीं।</string>
+    <string name="autoresponder_how_storage">रिकॉर्डिंग इसी फ़ोन पर रहती है, कॉल लॉग में उस कॉल के साथ दिखती है और उसी के साथ मिट जाती है। कुछ भी अपलोड नहीं होता।</string>
+    <string name="autoresponder_recording_inactive_responder_off">रिकॉर्डिंग नहीं चलेगी: ऊपर वाला ऑटो-उत्तर बंद है, इसलिए रिकॉर्ड करने के लिए कोई कॉल उठाई ही नहीं जाती।</string>
+    <string name="autoresponder_recording_inactive_greeting">जब तक ऊपर का संदेश मान्य नहीं होता, रिकॉर्डिंग नहीं चलेगी।</string>
     <string name="autoresponder_consent_hint">स्क्रिप्ट में शामिल होना चाहिए: "यह कॉल रिकॉर्ड की जा सकती है"</string>
     <string name="autoresponder_error_empty">सक्षम होने पर स्क्रिप्ट या ऑडियो फ़ाइल आवश्यक है।</string>
     <string name="autoresponder_error_too_long">स्क्रिप्ट बहुत लंबी है (अधिकतम 500 अक्षर)।</string>

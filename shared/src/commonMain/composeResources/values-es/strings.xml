@@ -238,6 +238,13 @@
     <string name="autoresponder_recording_desc">Desactivado por defecto. Graba por el micrófono, así que algunos teléfonos no captan nada.</string>
     <string name="autoresponder_mic_permission_required">Se necesita acceso al micrófono para grabar.</string>
     <string name="autoresponder_grant_mic">Conceder acceso al micrófono</string>
+    <string name="autoresponder_how_it_works">Cómo funciona</string>
+    <string name="autoresponder_how_blocked_only">Solo se contestan y saludan las llamadas bloqueadas. Una llamada que pasa el filtro suena con normalidad y nunca se saluda ni se graba.</string>
+    <string name="autoresponder_how_speaker">El saludo suena por el altavoz del teléfono y quien llama lo oye a través del micrófono. Pruébalo en una llamada real antes de confiar en ello.</string>
+    <string name="autoresponder_how_recording_mic">La grabación capta el micrófono, no la llamada. Android reserva el audio de la llamada para el fabricante del teléfono, así que en muchos móviles no se graba nada o la grabación sale en silencio. Es el teléfono, no un fallo de esta app.</string>
+    <string name="autoresponder_how_storage">Las grabaciones se quedan en este teléfono, aparecen en la llamada dentro del Registro de llamadas y se borran junto con ella. No se sube nada.</string>
+    <string name="autoresponder_recording_inactive_responder_off">La grabación no se ejecutará: el contestador de arriba está desactivado, así que no se contesta ninguna llamada para grabarla.</string>
+    <string name="autoresponder_recording_inactive_greeting">La grabación no se ejecutará hasta que el saludo de arriba sea válido.</string>
     <string name="autoresponder_consent_hint">El guion debe incluir: "Esta llamada puede ser grabada"</string>
     <string name="autoresponder_error_empty">Se requiere guion o archivo de audio cuando está activado.</string>
     <string name="autoresponder_error_too_long">El guion es demasiado largo (máx. 500 caracteres).</string>

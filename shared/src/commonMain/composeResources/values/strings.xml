@@ -202,6 +202,13 @@
     <string name="autoresponder_recording_desc">Off by default. Records through the microphone, so some phones capture nothing.</string>
     <string name="autoresponder_mic_permission_required">Microphone access is needed to record.</string>
     <string name="autoresponder_grant_mic">Grant microphone access</string>
+    <string name="autoresponder_how_it_works">How this works</string>
+    <string name="autoresponder_how_blocked_only">Only blocked calls are answered and greeted. A call that gets through rings normally and is never greeted or recorded.</string>
+    <string name="autoresponder_how_speaker">The greeting plays through your phone's loudspeaker, and the caller hears it through the microphone. Test it on a real call before relying on it.</string>
+    <string name="autoresponder_how_recording_mic">Recording captures the microphone, not the call. Android reserves call audio for the phone manufacturer, so on many phones nothing is recorded, or the recording is silent. That is the phone, not a fault in this app.</string>
+    <string name="autoresponder_how_storage">Recordings stay on this phone, appear on the call in the Call Log, and are deleted along with it. Nothing is uploaded.</string>
+    <string name="autoresponder_recording_inactive_responder_off">Recording will not run: the auto-responder above is off, so no call is answered to record.</string>
+    <string name="autoresponder_recording_inactive_greeting">Recording will not run until the greeting above is valid.</string>
     <string name="autoresponder_consent_hint">Script must include: "This call may be recorded"</string>
     <string name="autoresponder_error_empty">Script or audio file required when enabled.</string>
     <string name="autoresponder_error_too_long">Script is too long (max 500 characters).</string>
