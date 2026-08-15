@@ -70,10 +70,10 @@ format.
   internationally, called from a domestic line. Phase E covers the mirror image and passed against
   the broken build, which is why F had to exist. ([`3298d48`](../../commit/3298d48))
 - **Course chapter 28**, "The Fix That Was Only Half Applied". ([`850688b`](../../commit/850688b))
-- **`course/build_from_scratch.html`** — a build-along tutorial, nine steps from an empty directory to a
+- **`docs/build-from-scratch.html`** — a build-along tutorial, nine steps from an empty directory to a
   working call blocker. Distinct from the existing course, which documents finished code and cannot be
   followed. Steps 1–4 were executed from zero on an emulator; the document states which later steps were
-  not.
+  not. Published on GitHub Pages: https://cpinan.github.io/Corta-Spam/build-from-scratch.html
 
 ### Changed
 

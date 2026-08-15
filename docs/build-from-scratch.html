@@ -1,250 +1,214 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Call Blocker, from an empty directory — a build-along KMP tutorial</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Call Blocker, from an empty directory</title>
+<meta name="description" content="A build-along Kotlin Multiplatform tutorial: nine steps from an empty directory to an Android app that holds the dialer role and blocks calls.">
 <style>
-/* ========== TEMPEST-STYLE THEME ==========
-   Dark by default, cyan/magenta accents, monospace for anything the compiler reads. */
 :root{
-  --bg:#0B0F14; --panel:#111823; --panel-2:#0E141D;
-  --text:#DDE6F2; --muted:#8899AE; --line:#1E2A3A;
-  --cyan:#4FD6E0; --magenta:#FF6BD6; --amber:#FFC46B; --green:#5BE49B; --red:#FF6B6B;
-  --code-bg:#0A0F17;
-  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-  --radius:6px;
+  --ground:#FAFBFC; --raised:#FFFFFF; --sunken:#F1F4F6; --edge:#DDE3E8;
+  --ink:#12181D; --ink-2:#48555F; --ink-3:#71808B;
+  --accent:#B4701A; --accent-soft:#F6E7D2;
+  --pass:#2F7A4C; --pass-soft:#E2F1E7;
+  --trap:#B23A2E; --trap-soft:#FBE6E3;
+  --term-bg:#12181D; --term-ink:#DCE5EC;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --measure:68ch; --r:10px;
 }
-[data-theme="light"]{
-  --bg:#FBFAF7; --panel:#FFFFFF; --panel-2:#F3F1EC;
-  --text:#121A24; --muted:#5B6675; --line:#E2DED6;
-  --cyan:#0E7C86; --magenta:#B5127F; --amber:#8A5A00; --green:#0B7A48; --red:#B3261E;
-  --code-bg:#F3F1EC;
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0F1519; --raised:#161E24; --sunken:#111A1F; --edge:#26333B;
+    --ink:#E4EBF0; --ink-2:#A2B1BC; --ink-3:#76858F;
+    --accent:#E0912F; --accent-soft:#2A2015;
+    --pass:#5FBE85; --pass-soft:#14251B;
+    --trap:#E8776A; --trap-soft:#2A1714;
+    --term-bg:#080C0F; --term-ink:#DCE5EC;
+  }
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:16px}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  background:var(--bg);color:var(--text);line-height:1.75;
-  -webkit-font-smoothing:antialiased;
+:root[data-theme="dark"]{
+  --ground:#0F1519; --raised:#161E24; --sunken:#111A1F; --edge:#26333B;
+  --ink:#E4EBF0; --ink-2:#A2B1BC; --ink-3:#76858F;
+  --accent:#E0912F; --accent-soft:#2A2015;
+  --pass:#5FBE85; --pass-soft:#14251B;
+  --trap:#E8776A; --trap-soft:#2A1714;
+  --term-bg:#080C0F; --term-ink:#DCE5EC;
 }
-.wrap{max-width:860px;margin:0 auto;padding:0 20px}
-a{color:var(--cyan)}
-
-/* ---------- header ---------- */
-.header{border-bottom:1px solid var(--line);background:var(--panel-2);padding:34px 0 26px}
-.header h1{font-size:1.75rem;letter-spacing:-.02em;font-weight:650}
-.header h1 .dim{color:var(--muted);font-weight:400}
-.header .sub{color:var(--muted);margin-top:8px}
-.header .stack{font-family:var(--mono);font-size:.82rem;color:var(--cyan);margin-top:10px}
-.header-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
-.theme-btn{
-  background:transparent;color:var(--muted);border:1px solid var(--line);
-  border-radius:var(--radius);padding:7px 12px;cursor:pointer;font-family:var(--mono);font-size:.78rem;
+:root[data-theme="light"]{
+  --ground:#FAFBFC; --raised:#FFFFFF; --sunken:#F1F4F6; --edge:#DDE3E8;
+  --ink:#12181D; --ink-2:#48555F; --ink-3:#71808B;
+  --accent:#B4701A; --accent-soft:#F6E7D2;
+  --pass:#2F7A4C; --pass-soft:#E2F1E7;
+  --trap:#B23A2E; --trap-soft:#FBE6E3;
+  --term-bg:#12181D; --term-ink:#DCE5EC;
 }
-.theme-btn:hover{color:var(--text);border-color:var(--cyan)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+     line-height:1.7;-webkit-font-smoothing:antialiased}
+.shell{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;
+       grid-template-columns:minmax(0,1fr) 250px;gap:56px;align-items:start}
+main{min-width:0;max-width:var(--measure);padding:8px 0 96px}
+h1,h2,h3{text-wrap:balance;line-height:1.22;letter-spacing:-.021em;margin:0}
+h1{font-size:clamp(2rem,4.6vw,2.9rem);font-weight:760}
+h2{font-size:clamp(1.4rem,2.6vw,1.85rem);font-weight:720}
+h3{font-size:1.03rem;font-weight:700;margin:34px 0 8px;letter-spacing:-.008em}
+p{margin:14px 0}
+a{color:var(--accent);text-underline-offset:3px}
+code{font-family:var(--mono);font-size:.855em;background:var(--sunken);
+     border:1px solid var(--edge);border-radius:5px;padding:.1em .34em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
-/* ---------- progress ---------- */
-.progress-wrap{margin:26px 0 8px}
-.progress-label{font-family:var(--mono);font-size:.82rem;color:var(--muted);margin-bottom:8px}
-.progress-label b{color:var(--cyan);font-weight:600}
-.progress-bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
-.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--magenta));transition:width .35s}
+/* ---- masthead ---- */
+.mast{border-bottom:1px solid var(--edge);background:var(--raised)}
+.mast .shell{display:block;padding-top:44px;padding-bottom:38px;max-width:1180px}
+.kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+        color:var(--accent);margin:0 0 14px}
+.mast p.lede{max-width:60ch;color:var(--ink-2);font-size:1.06rem;margin:16px 0 0}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px;padding:0;list-style:none}
+.facts li{font-family:var(--mono);font-size:.74rem;color:var(--ink-2);
+          border:1px solid var(--edge);border-radius:999px;padding:5px 12px;background:var(--ground)}
 
-/* ---------- horizontal chapter rail ---------- */
-.toc{margin:18px 0 40px}
-.toc h2{font-family:var(--mono);font-size:.8rem;color:var(--muted);font-weight:500;
-  text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px}
-.toc-rail{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:thin}
-.toc-rail::-webkit-scrollbar{height:6px}
-.toc-rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-.toc-rail a{
-  flex:0 0 auto;font-family:var(--mono);font-size:.78rem;text-decoration:none;
-  color:var(--muted);background:var(--panel);border:1px solid var(--line);
-  border-radius:var(--radius);padding:8px 11px;white-space:nowrap;transition:.15s;
+/* ---- step rail ---- */
+.rail{position:sticky;top:20px;padding:24px 0 40px;display:flex;flex-direction:column;gap:2px}
+.rail-h{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+        color:var(--ink-3);margin:0 0 10px}
+.rail-item{display:grid;grid-template-columns:2.1em 1fr;gap:8px;align-items:baseline;
+           padding:7px 10px;border-radius:7px;text-decoration:none;color:var(--ink-2);
+           font-size:.845rem;line-height:1.4;border-left:2px solid transparent}
+.rail-item:hover{background:var(--sunken);color:var(--ink)}
+.rail-item.on{background:var(--sunken);color:var(--ink);border-left-color:var(--accent);font-weight:600}
+.rail-n{font-family:var(--mono);font-size:.76rem;color:var(--ink-3)}
+.rail-item.on .rail-n{color:var(--accent)}
+
+/* ---- steps ---- */
+.step{padding:64px 0 8px;border-top:1px solid var(--edge);margin-top:48px;scroll-margin-top:20px}
+.step:first-of-type{border-top:0;margin-top:0}
+.step-eyebrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.step-n{font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;
+        color:var(--accent);font-weight:600}
+.prov{font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;padding:3px 9px;border-radius:999px;
+      border:1px solid var(--edge);color:var(--ink-3)}
+.prov-run{color:var(--pass);background:var(--pass-soft);border-color:transparent}
+.prov-partial{color:var(--accent);background:var(--accent-soft);border-color:transparent}
+.step-blurb{color:var(--ink-2);font-size:1.02rem;margin:10px 0 0}
+.tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:var(--ink-3);
+     border:1px solid var(--edge);border-radius:5px;padding:2px 7px;margin-right:9px;
+     vertical-align:.14em;font-weight:500}
+
+/* ---- code ---- */
+figure.code{margin:20px 0;border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;
+            background:var(--term-bg);position:relative}
+.code-tab{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.755rem;
+          color:var(--term-ink);background:rgba(255,255,255,.055);padding:9px 14px;
+          border-bottom:1px solid rgba(255,255,255,.09);letter-spacing:.01em}
+.code-tab .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+figure.code pre{margin:0;padding:15px 16px;overflow-x:auto}
+figure.code code{background:none;border:0;padding:0;color:var(--term-ink);
+                 font-size:.795rem;line-height:1.72;display:block}
+figure.code .line{display:block;white-space:pre}
+.copy{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:.68rem;
+      color:var(--term-ink);background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);
+      border-radius:6px;padding:4px 9px;cursor:pointer;opacity:0;transition:opacity .14s}
+figure.code:hover .copy,.copy:focus-visible{opacity:1}
+figure.code.plain .copy{top:8px}
+.kw{color:#E4A2E8}.st{color:#8FD69A}.fn{color:#78C6E0}.cm{color:#7E8F9B;font-style:italic}.at{color:#E8C07A}
+
+/* ---- blocks ---- */
+aside{border-radius:var(--r);padding:16px 20px;margin:22px 0}
+aside p:first-of-type{margin-top:0}aside p:last-child,aside ul:last-child{margin-bottom:0}
+aside ul{margin:8px 0;padding-left:20px}aside li{margin:5px 0}
+.goals{background:var(--sunken);border:1px solid var(--edge)}
+.goals-label,.note-label,.cp-label,.trap-label{font-family:var(--mono);font-size:.7rem;
+      letter-spacing:.13em;text-transform:uppercase;margin:0 0 6px;font-weight:600}
+.goals-label{color:var(--ink-3)}
+.note{background:var(--sunken);border:1px solid var(--edge)}
+.note-label{color:var(--ink-3);text-transform:none;letter-spacing:.02em;font-size:.79rem}
+.cp{background:var(--pass-soft);border:1px solid transparent;border-left:3px solid var(--pass)}
+.cp-label{color:var(--pass)}
+.cp figure.code{margin:12px 0}
+.trap{background:var(--trap-soft);border:1px solid transparent;border-left:3px solid var(--trap)}
+.trap-label{color:var(--trap);text-transform:none;letter-spacing:.02em;font-size:.85rem;font-weight:700}
+.trap figure.code{margin:12px 0}
+.lbl{font-family:var(--mono);font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;
+     font-weight:700;margin-right:5px}
+.lbl-why{color:var(--accent)}.lbl-contrast{color:var(--ink-3)}.lbl-scope{color:var(--ink-3)}
+.lbl-ok{color:var(--pass)}.lbl-warn{color:var(--accent)}
+
+/* ---- outro ---- */
+.outro{border-top:1px solid var(--edge);margin-top:56px;padding-top:56px}
+.themer{position:fixed;right:18px;bottom:18px;z-index:9;font-family:var(--mono);font-size:.72rem;
+        background:var(--raised);color:var(--ink-2);border:1px solid var(--edge);border-radius:999px;
+        padding:8px 15px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.09)}
+@media (max-width:980px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding:16px 0;
+        border-bottom:1px solid var(--edge)}
+  .rail-h{display:none}
+  .rail-item{flex:none;grid-template-columns:auto;border-left:0;border-bottom:2px solid transparent}
+  .rail-item.on{border-left:0;border-bottom-color:var(--accent)}
+  .rail-t{display:none}
+  main{max-width:none}
 }
-.toc-rail a .n{color:var(--cyan);margin-right:7px}
-.toc-rail a:hover{border-color:var(--cyan);color:var(--text)}
-.toc-rail a.visited{border-color:var(--green)}
-.toc-rail a.visited .n{color:var(--green)}
-
-/* ---------- chapters ---------- */
-.module{
-  background:var(--panel);border:1px solid var(--line);border-radius:10px;
-  padding:30px 28px;margin:0 0 22px;scroll-margin-top:16px;
-}
-.chapter-status{
-  display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--green);border:1px solid var(--green);
-  border-radius:3px;padding:2px 8px;margin-bottom:14px;opacity:.85
-}
-.module h2{font-size:1.42rem;letter-spacing:-.015em;margin-bottom:10px;font-weight:640}
-.module h2 .cn{font-family:var(--mono);color:var(--cyan);font-size:1rem;margin-right:10px}
-.module h3{font-size:1.02rem;margin:26px 0 9px;font-weight:620}
-.module p{margin-bottom:13px}
-.module ul,.module ol{margin:0 0 13px 22px}
-.module li{margin-bottom:6px}
-
-/* ---------- badges ---------- */
-.badge{display:inline-block;font-family:var(--mono);font-size:.66rem;text-transform:uppercase;
-  letter-spacing:.06em;padding:2px 7px;border-radius:3px;margin-right:9px;vertical-align:middle}
-.badge-b{background:rgba(91,228,155,.13);color:var(--green);border:1px solid rgba(91,228,155,.3)}
-.badge-i{background:rgba(255,196,107,.13);color:var(--amber);border:1px solid rgba(255,196,107,.3)}
-.badge-a{background:rgba(255,107,214,.13);color:var(--magenta);border:1px solid rgba(255,107,214,.3)}
-
-/* ---------- callouts ---------- */
-.callout{background:var(--panel-2);border:1px solid var(--line);border-left:2px solid var(--cyan);
-  border-radius:var(--radius);padding:15px 18px;margin:18px 0}
-.callout h3{margin:0 0 8px;font-size:.95rem}
-.callout ul{margin-bottom:0}
-.note{border-left:2px solid var(--line);padding:2px 0 2px 16px;margin:16px 0;color:var(--text)}
-.note .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;
-  display:block;margin-bottom:5px;font-weight:600}
-.note.gotcha{border-left-color:var(--red)}   .note.gotcha .tag{color:var(--red)}
-.note.why{border-left-color:var(--cyan)}     .note.why .tag{color:var(--cyan)}
-.note.verified{border-left-color:var(--green)}  .note.verified .tag{color:var(--green)}
-.note.contrast{border-left-color:var(--magenta)}.note.contrast .tag{color:var(--magenta)}
-.note.scope{border-left-color:var(--amber)}  .note.scope .tag{color:var(--amber)}
-
-/* ---------- done-when ---------- */
-.donewhen{border:1px dashed var(--line);border-radius:var(--radius);padding:14px 18px;margin:22px 0 0}
-.donewhen h4{font-family:var(--mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:8px;font-weight:600}
-.donewhen ul{margin:0 0 0 20px;font-size:.93rem}
-
-/* ---------- code ---------- */
-pre{background:var(--code-bg);border:1px solid var(--line);border-radius:var(--radius);
-  padding:14px 16px;overflow-x:auto;margin:14px 0;font-size:.84rem;line-height:1.6}
-code{font-family:var(--mono);font-size:.88em}
-p code,li code{background:var(--code-bg);border:1px solid var(--line);
-  padding:1px 5px;border-radius:3px;color:var(--cyan)}
-pre code{background:none;border:none;padding:0;color:var(--text)}
-.line{display:block}
-.filepath{font-family:var(--mono);font-size:.74rem;color:var(--muted);
-  margin:16px 0 -8px;padding-left:2px}
-
-/* ---------- tables ---------- */
-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem}
-th,td{border:1px solid var(--line);padding:8px 11px;text-align:left}
-th{background:var(--panel-2);font-weight:600}
-
-/* ---------- quiz ---------- */
-.quiz{margin-top:26px;border-top:1px solid var(--line);padding-top:20px}
-.quiz > h3{font-family:var(--mono);font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 14px}
-.quiz-item{margin:16px 0;padding-bottom:14px;border-bottom:1px solid var(--line)}
-.quiz-item:last-child{border-bottom:none;padding-bottom:0}
-.quiz-item p{margin-bottom:8px;font-weight:600;font-size:.95rem}
-.quiz-item button{
-  background:transparent;color:var(--cyan);border:1px solid var(--line);
-  border-radius:var(--radius);padding:5px 11px;cursor:pointer;font-family:var(--mono);font-size:.75rem}
-.quiz-item button:hover{border-color:var(--cyan)}
-.quiz-item .answer{display:none;margin-top:9px;padding:10px 13px;background:var(--panel-2);
-  border-left:2px solid var(--green);border-radius:var(--radius);font-size:.9rem}
-.quiz-item .answer.show{display:block}
-
-.footer{border-top:1px solid var(--line);margin-top:46px;padding:26px 0 60px;
-  color:var(--muted);font-size:.86rem}
-.footer a{color:var(--cyan)}
-
-@media(max-width:600px){
-  .header h1{font-size:1.35rem}
-  .module{padding:22px 18px}
-  .header-bar{flex-direction:column}
-}
-@media print{
-  .header,.toc,.footer,.theme-btn,.progress-wrap{display:none}
-  .module{border:none;page-break-inside:avoid;background:#fff}
-  body{font-size:11pt;color:#000;background:#fff}
-  .quiz .answer{display:block!important}
-}
-</style>
-<style>
-/* Additions for the build-along document; everything else is shared with the main course. */
-b.ok{color:var(--green)} b.warn{color:var(--amber)} b.why{color:var(--cyan)}
-b.contrast{color:var(--magenta)} b.scope{color:var(--amber)}
-.callout.ok{border-left:3px solid var(--green)}
-.gotcha{background:var(--panel-2);border-left:3px solid var(--red);border-radius:var(--radius);
-        padding:14px 18px;margin:18px 0}
-.gotcha h3{margin-top:0;color:var(--red);font-size:.95rem;letter-spacing:.02em}
-.file-label{font-family:var(--mono);font-size:.8rem;color:var(--muted);margin:14px 0 -8px}
-/* Syntax spans. The main course emits these too but never styled them, so its code
-   blocks render flat; defined here rather than there to keep that file untouched. */
-code .kw{color:var(--magenta)} code .st{color:var(--green)} code .fn{color:var(--cyan)}
-code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 
-<div class="header"><div class="wrap"><div class="header-bar">
-<div>
-<h1>Call Blocker, <span class="dim">from an empty directory</span></h1>
-<p class="sub">A build-along Kotlin Multiplatform tutorial. Nine steps, each ending in something you can run and look at.</p>
-<p class="stack">Kotlin Multiplatform · Compose Multiplatform · Telecom · SQLDelight · adb</p>
-</div>
-<button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">Light</button>
-</div></div></div>
+<div class="mast"><div class="shell">
+  <p class="kicker">Build-along tutorial &middot; Kotlin Multiplatform &middot; Android Telecom</p>
+  <h1>Call Blocker, from an empty directory</h1>
+  <p class="lede">Nine steps to an Android app that is your phone's dialer, sees an incoming call
+  before it rings, and refuses the calls you told it to. Every step ends in a command to run and a
+  specific thing you must see.</p>
+  <ul class="facts">
+    <li>9 steps</li><li>~2 hours</li><li>JDK 17 &middot; Android SDK 36</li>
+    <li>emulator required from step 3</li>
+  </ul>
+</div></div>
 
-<div class="wrap">
-
-<div class="progress-wrap">
-  <div class="progress-label"><b><span id="progress-count">0</span> / <span id="progress-total">9</span></b> steps done · <span id="progress-written">9 / 9 steps written</span></div>
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-</div>
-
-<nav class="toc" id="toc">
-  <h2>Steps</h2>
-  <div class="toc-rail" id="toc-rail"></div>
-</nav>
-<header>
-<h1>Call Blocker, from an empty directory</h1>
-<p class="sub">A build-along Kotlin Multiplatform tutorial. Nine steps, each ending in something you can run and look at.</p>
-</header>
-
-<div class="callout"><h3>What this is, and how it differs from the other course</h3>
+<div class="shell">
+<main>
+  <aside class="note"><p class="note-label">What this is, and how it differs from the other course</p>
 <p><a href="corta_spam_course.html">The Corta Spam course</a> documents a finished app: 28 chapters written <em>after</em> the code shipped, tracing subsystems and post-mortems. It is a reference. You cannot follow it and end up with a working app, because it never asks you to type anything.</p>
-<p>This is the other document. You start with an empty directory and end with an Android app that is your phone's dialer, sees an incoming call before it rings, and refuses the calls you told it to refuse. Every step has a <b class="ok">CHECKPOINT</b> — a command to run and a specific thing you must see. If you do not see it, stop; the next step will not save you.</p>
-<p style="margin-bottom:0"><b class="warn">Honesty about provenance.</b> Every file in steps 1&ndash;8 was written into an empty directory on a Pixel 8 Pro emulator (API 36) while this was written, compiled, installed, and exercised with real emulated calls. The code blocks are those files, not paraphrases of them, and the traps are failures that actually happened in the order shown. The one exception is step 9's harness script, which is assembled from checks that were each run by hand but was never executed end to end as a single file — it says so where it appears.</p>
-</div>
+<p>This is the other document. You start with an empty directory and end with an Android app that is your phone's dialer, sees an incoming call before it rings, and refuses the calls you told it to refuse. Every step has a <b class="lbl lbl-ok">CHECKPOINT</b> — a command to run and a specific thing you must see. If you do not see it, stop; the next step will not save you.</p>
+<p style="margin-bottom:0"><b class="lbl lbl-warn">Honesty about provenance.</b> Every file in steps 1&ndash;8 was written into an empty directory on a Pixel 8 Pro emulator (API 36) while this was written, compiled, installed, and exercised with real emulated calls. The code blocks are those files, not paraphrases of them, and the traps are failures that actually happened in the order shown. The one exception is step 9's harness script, which is assembled from checks that were each run by hand but was never executed end to end as a single file — it says so where it appears.</p>
+</aside>
 
-<div class="callout"><h3>What you need</h3>
+<aside class="note"><p class="note-label">What you need</p>
 <ul>
 <li>JDK 17. Everything here sets <code>jvmToolchain(17)</code>; a different JDK is the most common first failure.</li>
 <li>Android SDK with API 36 installed, and <code>sdk.dir</code> in <code>local.properties</code>.</li>
 <li>An emulator, or a phone you are willing to make the default dialer. <b>Emulator strongly preferred</b> — from step 3 onwards you need to place real calls, and <code>adb emu gsm call</code> is the only way to do that without a second phone.</li>
 <li>A Gradle wrapper. Copy <code>gradlew</code>, <code>gradlew.bat</code> and <code>gradle/wrapper/</code> from any recent project, or run <code>gradle wrapper --gradle-version 8.14.3</code> if you have Gradle installed.</li>
 </ul>
-</div>
+</aside>
 
-<!-- ============ 1 ============ -->
-<section class="module" id="m1">
-<div class="chapter-status">Step 01</div>
-<h2><span class="cn">01</span>An empty directory that compiles</h2>
+
+  <section class="step" id="m1"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 01</span><span class="prov prov-run">ran from zero</span></p><h2>An empty directory that compiles</h2><p class="step-blurb">No app yet. A green build, so every later failure is readable.</p></header>
 <p>No app yet, no UI, nothing to look at. The goal is a green build, because every later failure is easier to read when you know the build itself is sound.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
+<aside class="goals"><p class="goals-label">You will be able to</p>
 <ul>
 <li>Lay out a two-module KMP project: a shared module and an Android app</li>
 <li>Pin every version in one place with a version catalog</li>
 <li>Understand why the root build file declares plugins it does not apply</li>
-</ul></div>
+</ul></aside>
 
-<h3><span class="badge badge-b">Beginner</span> Five files</h3>
+<h3><span class="tag">basics</span> Five files</h3>
 <p>Create these, and nothing else. Paths are relative to your project root.</p>
 
-<p class="file-label">gradle/libs.versions.toml</p>
-<pre><code><span class="line">[versions]</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>gradle/libs.versions.toml</figcaption><pre><code><span class="line">[versions]</span>
 <span class="line">kotlin = "2.2.20"</span>
 <span class="line">agp = "8.13.2"</span>
 <span class="line"></span>
 <span class="line">[plugins]</span>
 <span class="line">kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }</span>
 <span class="line">android-application = { id = "com.android.application", version.ref = "agp" }</span>
-<span class="line">android-library = { id = "com.android.library", version.ref = "agp" }</span></code></pre>
+<span class="line">android-library = { id = "com.android.library", version.ref = "agp" }</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>The catalog is the single place a version number appears. Without it you get versions scattered across build files, and the failure mode is not a clear error — it is two modules resolving different copies of the same library and a cryptic crash at runtime.</p>
 
-<p class="file-label">settings.gradle.kts</p>
-<pre><code><span class="line">rootProject.name = "CallBlocker"</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>settings.gradle.kts</figcaption><pre><code><span class="line">rootProject.name = "CallBlocker"</span>
 <span class="line"></span>
 <span class="line">pluginManagement {</span>
 <span class="line">    repositories { google(); gradlePluginPortal(); mavenCentral() }</span>
@@ -255,18 +219,16 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">}</span>
 <span class="line"></span>
 <span class="line">include(":shared")</span>
-<span class="line">include(":androidApp")</span></code></pre>
+<span class="line">include(":androidApp")</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p class="file-label">build.gradle.kts (root)</p>
-<pre><code><span class="line">plugins {</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>build.gradle.kts (root)</figcaption><pre><code><span class="line">plugins {</span>
 <span class="line">    alias(libs.plugins.kotlin.multiplatform) apply false</span>
 <span class="line">    alias(libs.plugins.android.application) apply false</span>
 <span class="line">    alias(libs.plugins.android.library) apply false</span>
-<span class="line">}</span></code></pre>
-<p><b class="why">WHY</b> <code>apply false</code>. The root project is not itself a Kotlin or Android module — it has no source. Declaring the plugins here puts them on the classpath once, at a single version, so the module build files can <code>alias(...)</code> them without repeating a version. Applying them at the root would try to make the root an Android module, which it is not.</p>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-why">WHY</b> <code>apply false</code>. The root project is not itself a Kotlin or Android module — it has no source. Declaring the plugins here puts them on the classpath once, at a single version, so the module build files can <code>alias(...)</code> them without repeating a version. Applying them at the root would try to make the root an Android module, which it is not.</p>
 
-<p class="file-label">shared/build.gradle.kts</p>
-<pre><code><span class="line">plugins {</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/build.gradle.kts</figcaption><pre><code><span class="line">plugins {</span>
 <span class="line">    alias(libs.plugins.kotlin.multiplatform)</span>
 <span class="line">    alias(libs.plugins.android.library)</span>
 <span class="line">}</span>
@@ -280,41 +242,36 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    namespace = "dev.example.callblocker.shared"</span>
 <span class="line">    compileSdk = 36</span>
 <span class="line">    defaultConfig { minSdk = 26 }</span>
-<span class="line">}</span></code></pre>
-<p><b class="scope">SCOPE</b> One target, <code>androidTarget()</code>. A real KMP project adds <code>iosArm64()</code> and friends here, and Corta Spam does. Adding iOS now buys you nothing and costs you a Kotlin/Native toolchain download plus a second class of build error to debug while you are still trying to get one platform running.</p>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-scope">SCOPE</b> One target, <code>androidTarget()</code>. A real KMP project adds <code>iosArm64()</code> and friends here, and Corta Spam does. Adding iOS now buys you nothing and costs you a Kotlin/Native toolchain download plus a second class of build error to debug while you are still trying to get one platform running.</p>
 
-<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/Greeting.kt</p>
-<pre><code><span class="line"><span class="kw">package</span> dev.example.callblocker</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/commonMain/kotlin/dev/example/callblocker/Greeting.kt</figcaption><pre><code><span class="line"><span class="kw">package</span> dev.example.callblocker</span>
 <span class="line"></span>
-<span class="line"><span class="kw">fun</span> <span class="fn">greeting</span>(): String = <span class="st">"Call blocker, shared module"</span></span></code></pre>
+<span class="line"><span class="kw">fun</span> <span class="fn">greeting</span>(): String = <span class="st">"Call blocker, shared module"</span></span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<div class="callout ok"><h3>CHECKPOINT 1</h3>
-<pre><code><span class="line">./gradlew :shared:compileDebugKotlinAndroid</span></code></pre>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
+<figure class="code plain"><pre><code><span class="line">./gradlew :shared:compileDebugKotlinAndroid</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">You must see <code>BUILD SUCCESSFUL</code>. First run downloads a lot and takes a minute or two. There is no app to install yet — that is correct.</p>
-</div>
+</aside>
 
-<div class="gotcha"><h3>GOTCHA — "plugin not found" on the first sync</h3>
-<p style="margin-bottom:0">Almost always <code>pluginManagement</code> missing <code>google()</code>. The Android Gradle Plugin does not live on Maven Central, and the error names the plugin rather than the repository, so it reads like a version problem.</p></div>
+<aside class="trap"><p class="trap-label">"plugin not found" on the first sync</p>
+<p style="margin-bottom:0">Almost always <code>pluginManagement</code> missing <code>google()</code>. The Android Gradle Plugin does not live on Maven Central, and the error names the plugin rather than the repository, so it reads like a version problem.</p></aside>
 </section>
-<!-- ============ 2 ============ -->
-<section class="module" id="m2">
-<div class="chapter-status">Step 02</div>
-<h2><span class="cn">02</span>A Composable you can actually see</h2>
+<section class="step" id="m2"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 02</span><span class="prov prov-run">ran from zero</span></p><h2>A Composable you can actually see</h2><p class="step-blurb">One line of text on a device. Three traps, all of which looked fine.</p></header>
 <p>One line of text, on a device. This step has three traps in it and every one of them produced a build or a screen that looked fine.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
+<aside class="goals"><p class="goals-label">You will be able to</p>
 <ul>
 <li>Wire Compose Multiplatform into a shared module and consume it from an Android app</li>
 <li>Know which Kotlin plugin the app module wants, and what it costs to pick the other one</li>
 <li>Learn the difference between "the build is green" and "the feature works"</li>
-</ul></div>
+</ul></aside>
 
-<h3><span class="badge badge-b">Beginner</span> Adding Compose to the catalog</h3>
+<h3><span class="tag">basics</span> Adding Compose to the catalog</h3>
 <p>Add to <code>[versions]</code>: <code>compose-multiplatform = "1.11.1"</code> and <code>androidx-activityCompose = "1.9.3"</code>. Add the plugins <code>compose-multiplatform</code> (<code>org.jetbrains.compose</code>) and <code>compose-compiler</code> (<code>org.jetbrains.kotlin.plugin.compose</code>, version.ref <code>kotlin</code>), plus the library <code>androidx-activity-compose</code>. Declare both new plugins <code>apply false</code> in the root build file.</p>
-<p><b class="why">WHY</b> two Compose plugins. <code>org.jetbrains.compose</code> supplies the multiplatform artifacts — the <code>compose.runtime</code>, <code>compose.material3</code> accessors. <code>kotlin.plugin.compose</code> is the compiler plugin that rewrites your <code>@Composable</code> functions. Since Kotlin 2.0 the second is versioned with Kotlin, not with Compose, which is why its <code>version.ref</code> is <code>kotlin</code>. Getting this pair wrong produces "This version of the Compose Compiler requires Kotlin version ...", which names versions that both look correct.</p>
+<p><b class="lbl lbl-why">WHY</b> two Compose plugins. <code>org.jetbrains.compose</code> supplies the multiplatform artifacts — the <code>compose.runtime</code>, <code>compose.material3</code> accessors. <code>kotlin.plugin.compose</code> is the compiler plugin that rewrites your <code>@Composable</code> functions. Since Kotlin 2.0 the second is versioned with Kotlin, not with Compose, which is why its <code>version.ref</code> is <code>kotlin</code>. Getting this pair wrong produces "This version of the Compose Compiler requires Kotlin version ...", which names versions that both look correct.</p>
 
-<p class="file-label">shared/build.gradle.kts — add to the existing file</p>
-<pre><code><span class="line">kotlin {</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/build.gradle.kts — add to the existing file</figcaption><pre><code><span class="line">kotlin {</span>
 <span class="line">    sourceSets {</span>
 <span class="line">        commonMain.dependencies {</span>
 <span class="line">            implementation(compose.runtime)</span>
@@ -323,10 +280,9 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">            implementation(compose.ui)</span>
 <span class="line">        }</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/App.kt</p>
-<pre><code><span class="line"><span class="kw">package</span> dev.example.callblocker</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/commonMain/kotlin/dev/example/callblocker/App.kt</figcaption><pre><code><span class="line"><span class="kw">package</span> dev.example.callblocker</span>
 <span class="line"></span>
 <span class="line"><span class="kw">import</span> androidx.compose.material3.MaterialTheme</span>
 <span class="line"><span class="kw">import</span> androidx.compose.material3.Surface</span>
@@ -340,11 +296,10 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">            Text(<span class="st">"Call blocker — nothing blocked yet"</span>)</span>
 <span class="line">        }</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<h3><span class="badge badge-i">Intermediate</span> The app module</h3>
-<p class="file-label">androidApp/build.gradle.kts</p>
-<pre><code><span class="line">plugins {</span>
+<h3><span class="tag">going deeper</span> The app module</h3>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/build.gradle.kts</figcaption><pre><code><span class="line">plugins {</span>
 <span class="line">    alias(libs.plugins.kotlin.android)</span>
 <span class="line">    alias(libs.plugins.android.application)</span>
 <span class="line">    alias(libs.plugins.compose.multiplatform)</span>
@@ -374,25 +329,23 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    implementation(project(<span class="st">":shared"</span>))</span>
 <span class="line">    implementation(compose.runtime)</span>
 <span class="line">    implementation(libs.androidx.activity.compose)</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<div class="gotcha"><h3>GOTCHA 1 — the app module is <em>not</em> a KMP module</h3>
+<aside class="trap"><p class="trap-label">1 — the app module is <em>not</em> a KMP module</p>
 <p>Using <code>kotlin.multiplatform</code> here instead of <code>kotlin.android</code> is the obvious-looking choice and it fails like this:</p>
-<pre><code><span class="line">A problem was found with the configuration of task ':androidApp:processDebugMainManifest'.</span>
+<figure class="code plain"><pre><code><span class="line">A problem was found with the configuration of task ':androidApp:processDebugMainManifest'.</span>
 <span class="line">  property 'mainManifest' specifies file '.../androidApp/src/androidMain/AndroidManifest.xml'</span>
-<span class="line">  which doesn't exist.</span></code></pre>
-<p style="margin-bottom:0">With the KMP plugin, AGP expects the Android source set layout — <code>src/androidMain/</code>, not <code>src/main/</code>. Either layout works, but you must pick one knowingly. This tutorial uses <code>kotlin.android</code> and <code>src/main/</code>, which is what Corta Spam does: the app module is one platform's shell, all the shared code is in <code>:shared</code>, and there is nothing multiplatform about it to justify the extra ceremony.</p></div>
+<span class="line">  which doesn't exist.</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p style="margin-bottom:0">With the KMP plugin, AGP expects the Android source set layout — <code>src/androidMain/</code>, not <code>src/main/</code>. Either layout works, but you must pick one knowingly. This tutorial uses <code>kotlin.android</code> and <code>src/main/</code>, which is what Corta Spam does: the app module is one platform's shell, all the shared code is in <code>:shared</code>, and there is nothing multiplatform about it to justify the extra ceremony.</p></aside>
 
-<p class="file-label">androidApp/src/main/kotlin/dev/example/callblocker/MainActivity.kt</p>
-<pre><code><span class="line"><span class="kw">class</span> MainActivity : ComponentActivity() {</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/src/main/kotlin/dev/example/callblocker/MainActivity.kt</figcaption><pre><code><span class="line"><span class="kw">class</span> MainActivity : ComponentActivity() {</span>
 <span class="line">    <span class="kw">override fun</span> <span class="fn">onCreate</span>(savedInstanceState: Bundle?) {</span>
 <span class="line">        <span class="kw">super</span>.onCreate(savedInstanceState)</span>
 <span class="line">        setContent { App() }</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p class="file-label">androidApp/src/main/AndroidManifest.xml</p>
-<pre><code><span class="line">&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"&gt;</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/src/main/AndroidManifest.xml</figcaption><pre><code><span class="line">&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"&gt;</span>
 <span class="line">    &lt;application</span>
 <span class="line">        android:label="Call Blocker"</span>
 <span class="line">        android:theme="@android:style/Theme.Material.Light.NoActionBar"&gt;</span>
@@ -403,61 +356,56 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">            &lt;/intent-filter&gt;</span>
 <span class="line">        &lt;/activity&gt;</span>
 <span class="line">    &lt;/application&gt;</span>
-<span class="line">&lt;/manifest&gt;</span></code></pre>
+<span class="line">&lt;/manifest&gt;</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p class="file-label">gradle.properties</p>
-<pre><code><span class="line">org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>gradle.properties</figcaption><pre><code><span class="line">org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8</span>
 <span class="line">kotlin.code.style=official</span>
 <span class="line">android.useAndroidX=true</span>
-<span class="line">android.nonTransitiveRClass=true</span></code></pre>
+<span class="line">android.nonTransitiveRClass=true</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<div class="gotcha"><h3>GOTCHA 2 — <code>android.useAndroidX</code> is not optional, and nothing tells you until link time</h3>
+<aside class="trap"><p class="trap-label">2 — <code>android.useAndroidX</code> is not optional, and nothing tells you until link time</p>
 <p>Skip that file and the build gets all the way to <code>:androidApp:checkDebugAarMetadata</code> before failing with a wall of dependency paths:</p>
-<pre><code><span class="line">Configuration `:androidApp:debugRuntimeClasspath` contains AndroidX dependencies,</span>
+<figure class="code plain"><pre><code><span class="line">Configuration `:androidApp:debugRuntimeClasspath` contains AndroidX dependencies,</span>
 <span class="line">but the `android.useAndroidX` property is not enabled ...</span>
 <span class="line">  :androidApp:debugRuntimeClasspath -&gt; project :shared</span>
 <span class="line">    -&gt; org.jetbrains.compose.material3:material3:1.9.0</span>
-<span class="line">    -&gt; androidx.compose.material3:material3:1.4.0 ...</span></code></pre>
-<p style="margin-bottom:0">You did not add an AndroidX dependency; Compose Multiplatform's Android artifacts <em>are</em> AndroidX underneath. Every real project has this line already, which is exactly why no tutorial mentions it.</p></div>
+<span class="line">    -&gt; androidx.compose.material3:material3:1.4.0 ...</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p style="margin-bottom:0">You did not add an AndroidX dependency; Compose Multiplatform's Android artifacts <em>are</em> AndroidX underneath. Every real project has this line already, which is exactly why no tutorial mentions it.</p></aside>
 
-<div class="callout ok"><h3>CHECKPOINT 2</h3>
-<pre><code><span class="line">./gradlew :androidApp:assembleDebug</span>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
+<figure class="code plain"><pre><code><span class="line">./gradlew :androidApp:assembleDebug</span>
 <span class="line">adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk</span>
-<span class="line">adb shell am start -n dev.example.callblocker/.MainActivity</span></code></pre>
+<span class="line">adb shell am start -n dev.example.callblocker/.MainActivity</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>You must <b>see the sentence on the screen</b>. Not "the build passed", not "the activity started" — the words, with your eyes.</p>
-</div>
+</aside>
 
-<div class="gotcha"><h3>GOTCHA 3 — the checkpoint that passes while the screen is blank</h3>
+<aside class="trap"><p class="trap-label">3 — the checkpoint that passes while the screen is blank</p>
 <p>Without <code>NoActionBar</code> in the manifest above, all of this is true at once: <code>BUILD SUCCESSFUL</code>, the install succeeds, and:</p>
-<pre><code><span class="line">$ adb shell dumpsys activity activities | grep ResumedActivity:</span>
-<span class="line">  ResumedActivity: ActivityRecord{... dev.example.callblocker/.MainActivity}</span></code></pre>
+<figure class="code plain"><pre><code><span class="line">$ adb shell dumpsys activity activities | grep ResumedActivity:</span>
+<span class="line">  ResumedActivity: ActivityRecord{... dev.example.callblocker/.MainActivity}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>…and the screen shows an empty page with a title bar. Every signal says it works. Ask the device what it is actually drawing:</p>
-<pre><code><span class="line">$ adb shell uiautomator dump /sdcard/ui.xml &amp;&amp; adb shell cat /sdcard/ui.xml</span>
+<figure class="code plain"><pre><code><span class="line">$ adb shell uiautomator dump /sdcard/ui.xml &amp;&amp; adb shell cat /sdcard/ui.xml</span>
 <span class="line">text="Call blocker — nothing blocked yet" ... bounds="[0,0][777,72]"</span>
-<span class="line">resource-id="android:id/action_bar_container" ... bounds="[0,0][1344,319]" drawing-order="2"</span></code></pre>
-<p style="margin-bottom:0">Your text is at y=0&ndash;72. The platform's action bar covers y=0&ndash;319 and is drawn after it. The content was never missing; it was underneath. <code>uiautomator dump</code> is the tool to reach for whenever a screen is wrong in a way a screenshot cannot explain — it is the difference between "Compose is broken" and "one theme attribute".</p></div>
+<span class="line">resource-id="android:id/action_bar_container" ... bounds="[0,0][1344,319]" drawing-order="2"</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p style="margin-bottom:0">Your text is at y=0&ndash;72. The platform's action bar covers y=0&ndash;319 and is drawn after it. The content was never missing; it was underneath. <code>uiautomator dump</code> is the tool to reach for whenever a screen is wrong in a way a screenshot cannot explain — it is the difference between "Compose is broken" and "one theme attribute".</p></aside>
 
-<div class="callout"><h3>Still wrong, and deliberately left</h3>
-<p style="margin-bottom:0">With the theme fixed, the text now draws <em>under the status bar clock</em>. That is edge-to-edge display without insets handling, and the fix (<code>enableEdgeToEdge()</code> plus a windowInsets-aware layout) belongs with real layout work rather than here. Noting it and moving on is a deliberate choice — but noting it is not optional, because an unrecorded known-wrong thing is indistinguishable from an unnoticed one.</p></div>
+<aside class="note"><p class="note-label">Still wrong, and deliberately left</p>
+<p style="margin-bottom:0">With the theme fixed, the text now draws <em>under the status bar clock</em>. That is edge-to-edge display without insets handling, and the fix (<code>enableEdgeToEdge()</code> plus a windowInsets-aware layout) belongs with real layout work rather than here. Noting it and moving on is a deliberate choice — but noting it is not optional, because an unrecorded known-wrong thing is indistinguishable from an unnoticed one.</p></aside>
 </section>
-<!-- ============ 3 ============ -->
-<section class="module" id="m3">
-<div class="chapter-status">Step 03</div>
-<h2><span class="cn">03</span>Becoming the phone app</h2>
+<section class="step" id="m3"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 03</span><span class="prov prov-run">ran from zero</span></p><h2>Becoming the phone app</h2><p class="step-blurb">Take the dialer role now, while there is nothing to lose.</p></header>
 <p>This is the step that decides whether the project is possible. Android does not let an ordinary app watch incoming calls. To see a call before it rings you must <em>be</em> the dialer, and taking that role costs you the whole in-call experience — you now owe the user an answer screen, a ringtone, and a call log. Do it now, while there is nothing to lose.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
+<aside class="goals"><p class="goals-label">You will be able to</p>
 <ul>
 <li>Know what <code>ROLE_DIALER</code> actually requires of your manifest</li>
 <li>Bind an <code>InCallService</code> and confirm Telecom is talking to <em>yours</em></li>
 <li>Grant the role from adb so you can iterate without tapping through system dialogs</li>
-</ul></div>
+</ul></aside>
 
-<h3><span class="badge badge-i">Intermediate</span> Eligibility is decided by your manifest</h3>
+<h3><span class="tag">going deeper</span> Eligibility is decided by your manifest</h3>
 <p>The role is not something you ask for and receive. AOSP's <code>roles.xml</code> lists required components, and an app missing any of them is not offered in the "Phone app" picker at all — with no error explaining why. You need <b>both</b> <code>ACTION_DIAL</code> activity filters (with and without the <code>tel</code> scheme) and an <code>InCallService</code>.</p>
 
-<p class="file-label">androidApp/src/main/AndroidManifest.xml — inside &lt;application&gt;</p>
-<pre><code><span class="line">&lt;activity android:name=".MainActivity" android:exported="true"&gt;</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/src/main/AndroidManifest.xml — inside &lt;application&gt;</figcaption><pre><code><span class="line">&lt;activity android:name=".MainActivity" android:exported="true"&gt;</span>
 <span class="line">    &lt;intent-filter&gt;</span>
 <span class="line">        &lt;action android:name="android.intent.action.MAIN" /&gt;</span>
 <span class="line">        &lt;category android:name="android.intent.category.LAUNCHER" /&gt;</span>
@@ -481,11 +429,10 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    &lt;intent-filter&gt;</span>
 <span class="line">        &lt;action android:name="android.telecom.InCallService" /&gt;</span>
 <span class="line">    &lt;/intent-filter&gt;</span>
-<span class="line">&lt;/service&gt;</span></code></pre>
-<p><b class="why">WHY</b> <code>exported="true"</code> on a service you never want another app to call: Telecom is another process and must be able to bind it. The <code>android:permission</code> line is what makes that safe — only a caller holding <code>BIND_INCALL_SERVICE</code>, which is system-only, can connect.</p>
+<span class="line">&lt;/service&gt;</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-why">WHY</b> <code>exported="true"</code> on a service you never want another app to call: Telecom is another process and must be able to bind it. The <code>android:permission</code> line is what makes that safe — only a caller holding <code>BIND_INCALL_SERVICE</code>, which is system-only, can connect.</p>
 
-<p class="file-label">androidApp/src/main/kotlin/dev/example/callblocker/ScreeningInCallService.kt</p>
-<pre><code><span class="line"><span class="kw">class</span> ScreeningInCallService : InCallService() {</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/src/main/kotlin/dev/example/callblocker/ScreeningInCallService.kt</figcaption><pre><code><span class="line"><span class="kw">class</span> ScreeningInCallService : InCallService() {</span>
 <span class="line">    <span class="kw">override fun</span> <span class="fn">onCallAdded</span>(call: Call) {</span>
 <span class="line">        <span class="kw">super</span>.onCallAdded(call)</span>
 <span class="line">        <span class="kw">val</span> number = call.details?.handle?.schemeSpecificPart.orEmpty()</span>
@@ -498,84 +445,76 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    }</span>
 <span class="line"></span>
 <span class="line">    <span class="kw">private companion object</span> { <span class="kw">const val</span> TAG = <span class="st">"CallBlocker"</span> }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>Also declare the hardware you now depend on: <code>&lt;uses-feature android:name="android.hardware.telephony" android:required="true" /&gt;</code>. A device with no telephony has no calls to screen.</p>
 
-<h3><span class="badge badge-a">Advanced</span> Taking the role without touching the screen</h3>
+<h3><span class="tag">the hard part</span> Taking the role without touching the screen</h3>
 <p>In the finished app you request the role properly, through <code>RoleManager.createRequestRoleIntent(ROLE_DIALER)</code>, because that is the only way a real user can grant it. While developing, do it from adb:</p>
-<pre><code><span class="line">adb shell cmd role add-role-holder android.app.role.DIALER dev.example.callblocker</span>
-<span class="line">adb shell cmd role get-role-holders android.app.role.DIALER</span></code></pre>
+<figure class="code plain"><pre><code><span class="line">adb shell cmd role add-role-holder android.app.role.DIALER dev.example.callblocker</span>
+<span class="line">adb shell cmd role get-role-holders android.app.role.DIALER</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<div class="callout ok"><h3>CHECKPOINT 3</h3>
-<pre><code><span class="line">adb logcat -c</span>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
+<figure class="code plain"><pre><code><span class="line">adb logcat -c</span>
 <span class="line">adb emu gsm call 5551234567</span>
 <span class="line">sleep 6 &amp;&amp; adb emu gsm cancel 5551234567</span>
-<span class="line">adb logcat -d -s CallBlocker:I</span></code></pre>
+<span class="line">adb logcat -d -s CallBlocker:I</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>What must appear:</p>
-<pre><code><span class="line">I CallBlocker: onCallAdded number=5551234567 state=2</span>
-<span class="line">I CallBlocker: onCallRemoved</span></code></pre>
+<figure class="code plain"><pre><code><span class="line">I CallBlocker: onCallAdded number=5551234567 state=2</span>
+<span class="line">I CallBlocker: onCallRemoved</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0"><code>state=2</code> is <code>Call.STATE_RINGING</code>. You are now seeing a call before the user does, which is the entire premise of the app.</p>
-</div>
+</aside>
 
-<div class="gotcha"><h3>GOTCHA — the role says you, the calls go elsewhere</h3>
+<aside class="trap"><p class="trap-label">the role says you, the calls go elsewhere</p>
 <p>There are <em>two</em> mechanisms and they can disagree. <code>cmd role get-role-holders</code> can name your package while Telecom keeps binding a different app, because <code>telecom set-default-dialer</code> sets a separate override that wins. Symptom: no log line, and Telecom's own log naming somebody else:</p>
-<pre><code><span class="line">$ adb logcat -d | grep ComponentInfo | grep InCallService</span>
-<span class="line">InCallController: ... ComponentInfo{some.other.app/....PassthroughInCallService}</span></code></pre>
+<figure class="code plain"><pre><code><span class="line">$ adb logcat -d | grep ComponentInfo | grep InCallService</span>
+<span class="line">InCallController: ... ComponentInfo{some.other.app/....PassthroughInCallService}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Set both, and read Telecom's log rather than the role list when they disagree:
-<code>adb shell telecom set-default-dialer dev.example.callblocker</code>.</p></div>
+<code>adb shell telecom set-default-dialer dev.example.callblocker</code>.</p></aside>
 
-<div class="callout"><h3>What you now owe the user</h3>
-<p style="margin-bottom:0">Declaring <code>IN_CALL_SERVICE_UI</code> means the platform dialer's in-call screen no longer appears — yours is expected instead, and you do not have one yet. Until step 7 the emulator will ring with no answer UI. That is the debt this step takes on deliberately, and it is why taking the role early is right: discovering it after building a settings screen would mean rebuilding around it.</p></div>
+<aside class="note"><p class="note-label">What you now owe the user</p>
+<p style="margin-bottom:0">Declaring <code>IN_CALL_SERVICE_UI</code> means the platform dialer's in-call screen no longer appears — yours is expected instead, and you do not have one yet. Until step 7 the emulator will ring with no answer UI. That is the debt this step takes on deliberately, and it is why taking the role early is right: discovering it after building a settings screen would mean rebuilding around it.</p></aside>
 </section>
-
-<!-- ============ 4 ============ -->
-<section class="module" id="m4">
-<div class="chapter-status">Step 04</div>
-<h2><span class="cn">04</span>The number, and what it is not</h2>
+<section class="step" id="m4"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 04</span><span class="prov prov-run">ran from zero</span></p><h2>The number, and what it is not</h2><p class="step-blurb">A string chosen by the network, in whatever shape it felt like.</p></header>
 <p>You have a number in a log line. Before building anything on it, be clear about what it is: a string chosen by the network, in whatever format the network felt like, which may be empty.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
+<aside class="goals"><p class="goals-label">You will be able to</p>
 <ul>
 <li>Read the handle off a <code>Call</code> safely</li>
 <li>Know the three shapes an incoming handle really arrives in</li>
 <li>Reject the assumption that two numbers are the same when their strings are equal</li>
-</ul></div>
+</ul></aside>
 
-<h3><span class="badge badge-b">Beginner</span> Reading the handle</h3>
-<pre><code><span class="line"><span class="kw">private fun</span> Call.<span class="fn">handleNumber</span>(): String =</span>
-<span class="line">    details?.handle?.schemeSpecificPart.orEmpty()</span></code></pre>
+<h3><span class="tag">basics</span> Reading the handle</h3>
+<figure class="code plain"><pre><code><span class="line"><span class="kw">private fun</span> Call.<span class="fn">handleNumber</span>(): String =</span>
+<span class="line">    details?.handle?.schemeSpecificPart.orEmpty()</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>Both <code>details</code> and <code>handle</code> are genuinely nullable. A withheld or private caller arrives with <b>no handle at all</b>, and <code>orEmpty()</code> turning that into <code>""</code> is a decision you are making — that an unknown caller is a caller with an empty number, not a crash and not a null to thread through everything downstream.</p>
 
-<h3><span class="badge badge-i">Intermediate</span> Three shapes, one subscriber</h3>
+<h3><span class="tag">going deeper</span> Three shapes, one subscriber</h3>
 <p>The same person can reach you as any of these:</p>
-<pre><code><span class="line">+34611998877     international, states its country</span>
+<figure class="code plain"><pre><code><span class="line">+34611998877     international, states its country</span>
 <span class="line">0034611998877    international via the European access code</span>
-<span class="line">611998877        national — the network dropped the country entirely</span></code></pre>
-<p><b class="contrast">CONTRAST</b> The obvious move is to strip everything that is not a digit and compare. It is wrong, and the wrongness is not academic: <code>+34611998877</code> becomes <code>34611998877</code>, the national form stays <code>611998877</code>, and they are not equal — so a person in your contacts is treated as a stranger. Corta Spam shipped that bug, fixed it in the comparison function, and then <a href="corta_spam_course.html#m28">shipped it again</a> three days later because one caller normalised its input before handing it over.</p>
+<span class="line">611998877        national — the network dropped the country entirely</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-contrast">CONTRAST</b> The obvious move is to strip everything that is not a digit and compare. It is wrong, and the wrongness is not academic: <code>+34611998877</code> becomes <code>34611998877</code>, the national form stays <code>611998877</code>, and they are not equal — so a person in your contacts is treated as a stranger. Corta Spam shipped that bug, fixed it in the comparison function, and then <a href="corta_spam_course.html#m28">shipped it again</a> three days later because one caller normalised its input before handing it over.</p>
 <p>The whole of step 8 is this problem. For now, only take away the rule: <b>never compare phone numbers with <code>==</code></b>.</p>
 
-<div class="callout ok"><h3>CHECKPOINT 4</h3>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
 <p>Place three calls and confirm your log prints each handle as the network gave it:</p>
-<pre><code><span class="line">adb emu gsm call 5551234567</span>
+<figure class="code plain"><pre><code><span class="line">adb emu gsm call 5551234567</span>
 <span class="line">adb emu gsm call +34611998877</span>
-<span class="line">adb emu gsm call 611998877</span></code></pre>
+<span class="line">adb emu gsm call 611998877</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Cancel each with <code>adb emu gsm cancel &lt;number&gt;</code>. You are looking for the strings to come back <em>differently shaped</em>, which is the fact step 8 exists to deal with.</p>
-</div>
+</aside>
 </section>
-<!-- ============ 5 ============ -->
-<section class="module" id="m5">
-<div class="chapter-status">Step 05</div>
-<h2><span class="cn">05</span>A blocklist that survives a restart</h2>
+<section class="step" id="m5"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 05</span><span class="prov prov-run">ran from zero</span></p><h2>A blocklist that survives a restart</h2><p class="step-blurb">Two tables, and why precedence is not expressed in SQL.</p></header>
 <p>Two tables and a generated API. The interesting decision is not SQLDelight; it is that rule precedence is <em>not</em> expressed in SQL.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Generate type-safe Kotlin from <code>.sq</code> files</li><li>Supply a driver per platform with <code>expect</code>/<code>actual</code></li><li>Keep precedence in code, where a test can reach it without a database</li></ul></div>
+<aside class="goals"><p class="goals-label">You will be able to</p>
+<ul><li>Generate type-safe Kotlin from <code>.sq</code> files</li><li>Supply a driver per platform with <code>expect</code>/<code>actual</code></li><li>Keep precedence in code, where a test can reach it without a database</li></ul></aside>
 
-<h3><span class="badge badge-b">Beginner</span> Catalog and plugin</h3>
+<h3><span class="tag">basics</span> Catalog and plugin</h3>
 <p>Add to <code>[versions]</code>: <code>sqldelight = "2.3.2"</code> and <code>kotlinx-coroutines = "1.9.0"</code>. Add libraries <code>sqldelight-runtime</code>, <code>sqldelight-android-driver</code> and <code>kotlinx-coroutines-core</code>, and the plugin <code>sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }</code>. Declare it <code>apply false</code> at the root.</p>
 
-<p class="file-label">shared/build.gradle.kts — complete file at this point</p>
-<pre><code><span class="line">plugins {</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/build.gradle.kts — complete file at this point</figcaption><pre><code><span class="line">plugins {</span>
 <span class="line">    alias(libs.plugins.kotlin.multiplatform)</span>
 <span class="line">    alias(libs.plugins.android.library)</span>
 <span class="line">    alias(libs.plugins.compose.multiplatform)</span>
@@ -614,13 +553,12 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">            packageName.set(&quot;dev.example.callblocker.db&quot;)</span>
 <span class="line">        }</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p><b class="why">WHY</b> <code>packageName</code> in the <code>sqldelight {}</code> block has to match where you want the generated <code>AppDatabase</code> to appear. Get it wrong and the class exists but your import does not resolve, which reads like a build failure and is a typo.</p>
+<p><b class="lbl lbl-why">WHY</b> <code>packageName</code> in the <code>sqldelight {}</code> block has to match where you want the generated <code>AppDatabase</code> to appear. Get it wrong and the class exists but your import does not resolve, which reads like a build failure and is a typo.</p>
 
-<h3><span class="badge badge-i">Intermediate</span> The schema</h3>
-<p class="file-label">shared/src/commonMain/sqldelight/dev/example/callblocker/db/AppDatabase.sq</p>
-<pre><code><span class="line">CREATE TABLE BlockedNumber (</span>
+<h3><span class="tag">going deeper</span> The schema</h3>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/commonMain/sqldelight/dev/example/callblocker/db/AppDatabase.sq</figcaption><pre><code><span class="line">CREATE TABLE BlockedNumber (</span>
 <span class="line">    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,</span>
 <span class="line">    number TEXT NOT NULL,</span>
 <span class="line">    label TEXT,</span>
@@ -648,21 +586,19 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">INSERT INTO CallLogEntry(number, timestamp, action) VALUES (?, ?, ?);</span>
 <span class="line"></span>
 <span class="line">selectAllCallLogEntries:</span>
-<span class="line">SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT 100;</span></code></pre>
-<p><b class="why">WHY</b> no join across a blocklist and an allowlist here. A single clever query would be untestable without a database and unreadable the moment a third rule type arrives. In code it is a pure function over data a test can construct in two lines — which is step 6.</p>
-<p><b class="scope">SCOPE</b> The <code>CHECK</code> on <code>action</code> is worth having from the first day. It is the difference between a typo failing at insert time and a call log quietly containing three spellings of "blocked".</p>
+<span class="line">SELECT * FROM CallLogEntry ORDER BY timestamp DESC LIMIT 100;</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-why">WHY</b> no join across a blocklist and an allowlist here. A single clever query would be untestable without a database and unreadable the moment a third rule type arrives. In code it is a pure function over data a test can construct in two lines — which is step 6.</p>
+<p><b class="lbl lbl-scope">SCOPE</b> The <code>CHECK</code> on <code>action</code> is worth having from the first day. It is the difference between a typo failing at insert time and a call log quietly containing three spellings of "blocked".</p>
 
-<h3><span class="badge badge-a">Advanced</span> One driver per platform</h3>
-<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/db/DriverFactory.kt</p>
-<pre><code><span class="line">package dev.example.callblocker.db</span>
+<h3><span class="tag">the hard part</span> One driver per platform</h3>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/commonMain/kotlin/dev/example/callblocker/db/DriverFactory.kt</figcaption><pre><code><span class="line">package dev.example.callblocker.db</span>
 <span class="line"></span>
 <span class="line">import app.cash.sqldelight.db.SqlDriver</span>
 <span class="line"></span>
 <span class="line">expect class DriverFactory {</span>
 <span class="line">    fun createDriver(): SqlDriver</span>
-<span class="line">}</span></code></pre>
-<p class="file-label">shared/src/androidMain/kotlin/dev/example/callblocker/db/DriverFactory.android.kt</p>
-<pre><code><span class="line">package dev.example.callblocker.db</span>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/androidMain/kotlin/dev/example/callblocker/db/DriverFactory.android.kt</figcaption><pre><code><span class="line">package dev.example.callblocker.db</span>
 <span class="line"></span>
 <span class="line">import android.content.Context</span>
 <span class="line">import app.cash.sqldelight.db.SqlDriver</span>
@@ -673,29 +609,25 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">) {</span>
 <span class="line">    actual fun createDriver(): SqlDriver =</span>
 <span class="line">        AndroidSqliteDriver(AppDatabase.Schema, context, &quot;callblocker.db&quot;)</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>In a JVM unit test you swap this for the JDBC driver and get a real SQLite engine with no emulator — which is how the persistence layer gets tested at all.</p>
 
-<div class="callout ok"><h3>CHECKPOINT 5</h3>
-<pre><code><span class="line">./gradlew :shared:compileDebugKotlinAndroid</span></code></pre>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
+<figure class="code plain"><pre><code><span class="line">./gradlew :shared:compileDebugKotlinAndroid</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Green, and <code>AppDatabase</code> now resolves in Kotlin. The database file itself does not exist yet — it is created on first use, which is step 6.</p>
-</div>
+</aside>
 
-<div class="gotcha"><h3>GOTCHA — <code>run-as</code> only works on a debug build</h3>
-<p style="margin-bottom:0">Every database-inspection habit you are about to build (<code>adb exec-out run-as &lt;pkg&gt; cat databases/x.db</code>) stops working on a release build with "not debuggable" — exactly when you most want it, while checking a migration on the build you are about to ship.</p></div>
+<aside class="trap"><p class="trap-label"><code>run-as</code> only works on a debug build</p>
+<p style="margin-bottom:0">Every database-inspection habit you are about to build (<code>adb exec-out run-as &lt;pkg&gt; cat databases/x.db</code>) stops working on a release build with "not debuggable" — exactly when you most want it, while checking a migration on the build you are about to ship.</p></aside>
 </section>
-<!-- ============ 6 ============ -->
-<section class="module" id="m6">
-<div class="chapter-status">Step 06</div>
-<h2><span class="cn">06</span>Your first blocked call</h2>
+<section class="step" id="m6"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 06</span><span class="prov prov-run">ran from zero</span></p><h2>Your first blocked call</h2><p class="step-blurb">The app stops observing and starts acting. The cost of error changes.</p></header>
 <p>Everything so far has been observation. Now the app acts, and the cost of being wrong changes: a missed spam call is an annoyance, a missed real one can be an emergency.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Write a rule engine that is pure, and therefore testable</li><li>Reject a call through Telecom</li><li>Decide what happens when your own decision code throws</li></ul></div>
+<aside class="goals"><p class="goals-label">You will be able to</p>
+<ul><li>Write a rule engine that is pure, and therefore testable</li><li>Reject a call through Telecom</li><li>Decide what happens when your own decision code throws</li></ul></aside>
 
-<h3><span class="badge badge-b">Beginner</span> The engine</h3>
-<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/rules/RuleEngine.kt</p>
-<pre><code><span class="line">package dev.example.callblocker.rules</span>
+<h3><span class="tag">basics</span> The engine</h3>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/commonMain/kotlin/dev/example/callblocker/rules/RuleEngine.kt</figcaption><pre><code><span class="line">package dev.example.callblocker.rules</span>
 <span class="line"></span>
 <span class="line">/** What the engine decided, and why — the reason is what the call log stores. */</span>
 <span class="line">sealed interface Decision {</span>
@@ -737,12 +669,11 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    }</span>
 <span class="line"></span>
 <span class="line">    private fun normalizedIsEmpty(number: String) = PhoneNumberParser.normalizeForComparison(number).isEmpty()</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>Nothing here knows about Android, SQLite or Telecom, so a test constructs its inputs directly. Precedence is the order of the <code>if</code>s and nothing else — contacts before the blocklist, deliberately, so that adding your mother to a blocklist by accident is recoverable and adding her to your contacts is authoritative.</p>
 
-<h3><span class="badge badge-i">Intermediate</span> Wiring it to the call</h3>
-<p class="file-label">androidApp/src/main/kotlin/dev/example/callblocker/ScreeningInCallService.kt — complete file</p>
-<pre><code><span class="line">package dev.example.callblocker</span>
+<h3><span class="tag">going deeper</span> Wiring it to the call</h3>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/src/main/kotlin/dev/example/callblocker/ScreeningInCallService.kt — complete file</figcaption><pre><code><span class="line">package dev.example.callblocker</span>
 <span class="line"></span>
 <span class="line">import android.telecom.Call</span>
 <span class="line">import android.telecom.InCallService</span>
@@ -820,43 +751,39 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    private companion object {</span>
 <span class="line">        const val TAG = &quot;CallBlocker&quot;</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p><b class="why">WHY</b> ring first, decide second. Evaluation touches a database. If you wait for it before ringing, a slow query drops a legitimate caller into silence; ringing immediately and stopping a few hundred milliseconds later costs a blocked spammer a quarter-second of ringtone.</p>
-<p><b class="why">WHY</b> <code>CancellationException</code> is rethrown before the general catch. Swallowing it breaks structured concurrency — the coroutine keeps running after its scope is gone. Everything else fails open.</p>
+<p><b class="lbl lbl-why">WHY</b> ring first, decide second. Evaluation touches a database. If you wait for it before ringing, a slow query drops a legitimate caller into silence; ringing immediately and stopping a few hundred milliseconds later costs a blocked spammer a quarter-second of ringtone.</p>
+<p><b class="lbl lbl-why">WHY</b> <code>CancellationException</code> is rethrown before the general catch. Swallowing it breaks structured concurrency — the coroutine keeps running after its scope is gone. Everything else fails open.</p>
 
-<div class="callout ok"><h3>CHECKPOINT 6</h3>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
 <p>Place one call to create the database, then seed a number and call it:</p>
-<pre><code><span class="line">adb emu gsm call 5559998888 &amp;&amp; sleep 5 &amp;&amp; adb emu gsm cancel 5559998888</span>
+<figure class="code plain"><pre><code><span class="line">adb emu gsm call 5559998888 &amp;&amp; sleep 5 &amp;&amp; adb emu gsm cancel 5559998888</span>
 <span class="line">adb shell am force-stop dev.example.callblocker</span>
 <span class="line">adb exec-out run-as dev.example.callblocker cat databases/callblocker.db &gt; /tmp/cb.db</span>
 <span class="line">sqlite3 /tmp/cb.db "INSERT INTO BlockedNumber(number,label) VALUES ('+34611998877','tutorial');"</span>
 <span class="line">adb push /tmp/cb.db /data/local/tmp/cb.db</span>
-<span class="line">adb shell "run-as dev.example.callblocker cp /data/local/tmp/cb.db databases/callblocker.db"</span></code></pre>
+<span class="line">adb shell "run-as dev.example.callblocker cp /data/local/tmp/cb.db databases/callblocker.db"</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>Then call it, and read the log:</p>
-<pre><code><span class="line">I CallBlocker: onCallAdded number=+34611998877 state=2</span>
+<figure class="code plain"><pre><code><span class="line">I CallBlocker: onCallAdded number=+34611998877 state=2</span>
 <span class="line">I CallBlocker: decision=Blocked(reason=MANUAL) for +34611998877</span>
-<span class="line">I CallBlocker: onCallRemoved</span></code></pre>
+<span class="line">I CallBlocker: onCallRemoved</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Then call a number that is <em>not</em> on the list and confirm it keeps ringing. A blocker that blocks everything passes the first half of this checkpoint and is completely broken.</p>
-</div>
+</aside>
 
-<div class="gotcha"><h3>GOTCHA — testing only the blocked path</h3>
-<p style="margin-bottom:0">The bugs that reach users are rarely "it failed to block". They are "it blocked my mother" — which is step 8, and which no amount of testing the blocked path can find.</p></div>
+<aside class="trap"><p class="trap-label">testing only the blocked path</p>
+<p style="margin-bottom:0">The bugs that reach users are rarely "it failed to block". They are "it blocked my mother" — which is step 8, and which no amount of testing the blocked path can find.</p></aside>
 </section>
-<!-- ============ 7 ============ -->
-<section class="module" id="m7">
-<div class="chapter-status">Step 07</div>
-<h2><span class="cn">07</span>Ringing, because now you must</h2>
+<section class="step" id="m7"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 07</span><span class="prov prov-run">ran from zero</span></p><h2>Ringing, because now you must</h2><p class="step-blurb">Step 3's debt comes due: Telecom stops ringing and trusts you.</p></header>
 <p>The debt from step 3 comes due. Declare <code>IN_CALL_SERVICE_RINGING</code> and Telecom stops ringing entirely, trusting you to do it.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Take over ringing without taking over silence</li><li>Honour the system ringer mode the way the platform dialer does</li><li>Assert ringing with three machine-readable signals instead of your ears</li></ul></div>
+<aside class="goals"><p class="goals-label">You will be able to</p>
+<ul><li>Take over ringing without taking over silence</li><li>Honour the system ringer mode the way the platform dialer does</li><li>Assert ringing with three machine-readable signals instead of your ears</li></ul></aside>
 
 <p>Add the meta-data beside the one from step 3:</p>
-<pre><code><span class="line">&lt;meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" /&gt;</span></code></pre>
+<figure class="code plain"><pre><code><span class="line">&lt;meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" /&gt;</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
-<p class="file-label">androidApp/src/main/kotlin/dev/example/callblocker/CallRinger.kt</p>
-<pre><code><span class="line">package dev.example.callblocker</span>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>androidApp/src/main/kotlin/dev/example/callblocker/CallRinger.kt</figcaption><pre><code><span class="line">package dev.example.callblocker</span>
 <span class="line"></span>
 <span class="line">import android.content.Context</span>
 <span class="line">import android.media.AudioAttributes</span>
@@ -912,63 +839,59 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">    private companion object {</span>
 <span class="line">        const val TAG = &quot;CallBlocker&quot;</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
 
 <p>Then hold one in the service, start it while the call is ringing, and stop it the moment a block decision lands or the call goes away — both edits are already in the step 6 file above.</p>
 
-<div class="gotcha"><h3>GOTCHA — the failure mode with no error anywhere</h3>
+<aside class="trap"><p class="trap-label">the failure mode with no error anywhere</p>
 <p>Declare the meta-data and write no ringer, and Telecom dutifully stands down while your app rings for nothing. As the default dialer it then takes <b>every call in silence</b>. Nothing crashes, no log line complains, and every unit test passes — there is no code to test. This shipped in the real app and survived for months.</p>
-<p style="margin-bottom:0">A ringtone you <em>hear</em> proves nothing on its own: that may be the system still ringing because your meta-data is missing. Three independent signals settle it.</p></div>
+<p style="margin-bottom:0">A ringtone you <em>hear</em> proves nothing on its own: that may be the system still ringing because your meta-data is missing. Three independent signals settle it.</p></aside>
 
-<h3><span class="badge badge-a">Advanced</span> Asserting it</h3>
-<pre><code><span class="line"><span class="cm"># 1. Telecom confirms it handed ringing over</span></span>
+<h3><span class="tag">the hard part</span> Asserting it</h3>
+<figure class="code plain"><pre><code><span class="line"><span class="cm"># 1. Telecom confirms it handed ringing over</span></span>
 <span class="line">adb logcat -d | grep -c "letDialerHandleRinging=true"</span>
 <span class="line"></span>
 <span class="line"><span class="cm"># 2. a player owned by YOUR pid, started, with the ringtone usage</span></span>
 <span class="line">adb shell dumpsys audio | grep AudioPlaybackConfiguration | grep USAGE_NOTIFICATION_RINGTONE</span>
 <span class="line"></span>
 <span class="line"><span class="cm"># 3. the vibration running is attributed to your package</span></span>
-<span class="line">adb shell dumpsys vibrator_manager</span></code></pre>
+<span class="line">adb shell dumpsys vibrator_manager</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>Signal 2 is the one that cannot be faked. During a ringing call it reads:</p>
-<pre><code><span class="line">AudioPlaybackConfiguration piid:143 type:android.media.MediaPlayer u/pid:10218/4420</span>
+<figure class="code plain"><pre><code><span class="line">AudioPlaybackConfiguration piid:143 type:android.media.MediaPlayer u/pid:10218/4420</span>
 <span class="line">  state:started attr:AudioAttributes: usage=USAGE_NOTIFICATION_RINGTONE</span>
-<span class="line">  content=CONTENT_TYPE_SONIFICATION ... sampleRate=44100</span></code></pre>
+<span class="line">  content=CONTENT_TYPE_SONIFICATION ... sampleRate=44100</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">…where <code>4420</code> is your app's pid, the same one printing <code>CallBlocker</code> lines in logcat. An emulator usually reports no vibration hardware, so signal 3 is a warning there rather than a failure.</p>
 
-<div class="callout ok"><h3>CHECKPOINT 7</h3>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
 <p>Both halves, and the second is the one people forget:</p>
-<pre><code><span class="line"><span class="cm"># unmatched number -&gt; rings</span></span>
+<figure class="code plain"><pre><code><span class="line"><span class="cm"># unmatched number -&gt; rings</span></span>
 <span class="line">adb emu gsm call 5557776666</span>
 <span class="line">adb shell dumpsys audio | grep USAGE_NOTIFICATION_RINGTONE | grep -c state:started    <span class="cm"># 1</span></span>
 <span class="line"></span>
 <span class="line"><span class="cm"># blocked number -&gt; silent</span></span>
 <span class="line">adb emu gsm call +34611998877</span>
-<span class="line">adb shell dumpsys audio | grep USAGE_NOTIFICATION_RINGTONE | grep -c state:started    <span class="cm"># 0</span></span></code></pre>
+<span class="line">adb shell dumpsys audio | grep USAGE_NOTIFICATION_RINGTONE | grep -c state:started    <span class="cm"># 0</span></span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Set the ringer to normal first (<code>adb shell settings put global mode_ringer 2</code>) — on silent, <code>CallRinger</code> correctly plays nothing and this checkpoint cannot tell that apart from a broken ringer.</p>
-</div>
+</aside>
 </section>
-<!-- ============ 8 ============ -->
-<section class="module" id="m8">
-<div class="chapter-status">Step 08</div>
-<h2><span class="cn">08</span>Phone numbers are not strings</h2>
+<section class="step" id="m8"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 08</span><span class="prov prov-run">ran from zero</span></p><h2>Phone numbers are not strings</h2><p class="step-blurb">The step that decides whether the app is usable.</p></header>
 <p>The step that decides whether the app is usable. Everything else can be wrong and merely annoying; this one blocks people the user knows.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Compare two numbers without guessing a region</li><li>See why a digit-suffix match is a security problem, not a shortcut</li><li>Understand how a correct comparison is disarmed by one careless caller</li></ul></div>
+<aside class="goals"><p class="goals-label">You will be able to</p>
+<ul><li>Compare two numbers without guessing a region</li><li>See why a digit-suffix match is a security problem, not a shortcut</li><li>Understand how a correct comparison is disarmed by one careless caller</li></ul></aside>
 
-<h3><span class="badge badge-b">Beginner</span> The problem, concretely</h3>
-<pre><code><span class="line">rule saved:  +34611998877     call arrives:  611998877        must match</span>
+<h3><span class="tag">basics</span> The problem, concretely</h3>
+<figure class="code plain"><pre><code><span class="line">rule saved:  +34611998877     call arrives:  611998877        must match</span>
 <span class="line">rule saved:  611 99 88 77     call arrives:  +34611998877     must match</span>
-<span class="line">rule saved:  +34611998877     call arrives:  +51611998877     must NOT match</span></code></pre>
+<span class="line">rule saved:  +34611998877     call arrives:  +51611998877     must NOT match</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>The third line is what makes this hard. Spain's <code>611998877</code> and Peru's <code>611998877</code> are different people who share a national number.</p>
 
-<h3><span class="badge badge-i">Intermediate</span> Two approaches that look right</h3>
-<p><b class="contrast">CONTRAST 1 — compare the last 7&ndash;9 digits.</b> What <code>PhoneNumberUtils.compare</code> does, and it makes all three lines pass. It also lets a stranger who shares a tail match your allowlist. This function guards blocking; trading a correctness bug for a security-shaped one is a bad trade.</p>
-<p><b class="contrast">CONTRAST 2 — canonicalise to E.164 with a default region.</b> Now you need the SIM or locale region, an ISO-to-dialling-code table, and a trunk-prefix rule that differs per country: dropping a leading zero is right for the UK and wrong for Italy, whose E.164 keeps it. Three new failure modes for a guess you did not have to make.</p>
+<h3><span class="tag">going deeper</span> Two approaches that look right</h3>
+<p><b class="lbl lbl-contrast">CONTRAST 1 — compare the last 7&ndash;9 digits.</b> What <code>PhoneNumberUtils.compare</code> does, and it makes all three lines pass. It also lets a stranger who shares a tail match your allowlist. This function guards blocking; trading a correctness bug for a security-shaped one is a bad trade.</p>
+<p><b class="lbl lbl-contrast">CONTRAST 2 — canonicalise to E.164 with a default region.</b> Now you need the SIM or locale region, an ISO-to-dialling-code table, and a trunk-prefix rule that differs per country: dropping a leading zero is right for the UK and wrong for Italy, whose E.164 keeps it. Three new failure modes for a guess you did not have to make.</p>
 
-<h3><span class="badge badge-a">Advanced</span> Let the number state its own country</h3>
-<p class="file-label">shared/src/commonMain/kotlin/dev/example/callblocker/rules/PhoneNumberParser.kt</p>
-<pre><code><span class="line">package dev.example.callblocker.rules</span>
+<h3><span class="tag">the hard part</span> Let the number state its own country</h3>
+<figure class="code"><figcaption class="code-tab"><span class="dot" aria-hidden="true"></span>shared/src/commonMain/kotlin/dev/example/callblocker/rules/PhoneNumberParser.kt</figcaption><pre><code><span class="line">package dev.example.callblocker.rules</span>
 <span class="line"></span>
 <span class="line">/**</span>
 <span class="line"> * Comparing phone numbers without guessing a region.</span>
@@ -1035,36 +958,33 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">        val keysA = comparisonKeys(a)</span>
 <span class="line">        return comparisonKeys(b).any { it in keysA }</span>
 <span class="line">    }</span>
-<span class="line">}</span></code></pre>
-<p><b class="why">WHY</b> candidate <em>sets</em> rather than one canonical string per side: the trunk zero must be available both stripped and intact, because the UK drops it in E.164 and Italy keeps it. Reducing each side to a single string satisfies one country and breaks the other.</p>
+<span class="line">}</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-why">WHY</b> candidate <em>sets</em> rather than one canonical string per side: the trunk zero must be available both stripped and intact, because the UK drops it in E.164 and Italy keeps it. Reducing each side to a single string satisfies one country and breaks the other.</p>
 
-<div class="gotcha"><h3>GOTCHA — the fix that was only half applied</h3>
+<aside class="trap"><p class="trap-label">the fix that was only half applied</p>
 <p>The real app got this function right, tested it, shipped it — and users kept reporting blocked contacts. The function was never called with what it needed:</p>
-<pre><code><span class="line"><span class="cm">// the address-book scan, three days after the "fix"</span></span>
-<span class="line">numbers.add(normalizeForComparison(raw))   <span class="cm">// digits only — the '+' is gone</span></span></code></pre>
+<figure class="code plain"><pre><code><span class="line"><span class="cm">// the address-book scan, three days after the "fix"</span></span>
+<span class="line">numbers.add(normalizeForComparison(raw))   <span class="cm">// digits only — the '+' is gone</span></span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p>A contact saved <code>+34611998877</code> reached <code>sameNumber</code> as <code>34611998877</code>, which states no country — so the asymmetry could no longer split off <code>611998877</code>, and a domestic call stopped matching. Their <em>name</em> still displayed correctly, because the name lookup used a different key set, which made the symptom look impossible.</p>
-<p style="margin-bottom:0"><b>The rule:</b> a comparison that depends on the shape of its input must say so where its callers read it, and any normalisation upstream disables it silently. Put it on the interface, not in the commit message.</p></div>
+<p style="margin-bottom:0"><b>The rule:</b> a comparison that depends on the shape of its input must say so where its callers read it, and any normalisation upstream disables it silently. Put it on the interface, not in the commit message.</p></aside>
 
-<div class="callout ok"><h3>CHECKPOINT 8</h3>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
 <p>Three real calls against one blocked number, <code>+34611998877</code>:</p>
-<pre><code><span class="line">adb emu gsm call 611998877       -&gt; decision=Blocked(reason=MANUAL)   <span class="cm"># national form bridges</span></span>
+<figure class="code plain"><pre><code><span class="line">adb emu gsm call 611998877       -&gt; decision=Blocked(reason=MANUAL)   <span class="cm"># national form bridges</span></span>
 <span class="line">adb emu gsm call +34611998877    -&gt; decision=Blocked(reason=MANUAL)   <span class="cm"># exact</span></span>
-<span class="line">adb emu gsm call +51611998877    -&gt; decision=Allowed                  <span class="cm"># different country</span></span></code></pre>
+<span class="line">adb emu gsm call +51611998877    -&gt; decision=Allowed                  <span class="cm"># different country</span></span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Then prove the test can fail: replace <code>sameNumber(it, number)</code> with <code>it == number</code> and watch the first line flip to <code>Allowed</code>. A regression test never seen failing is a test of nothing.</p>
-</div>
+</aside>
 </section>
-<!-- ============ 9 ============ -->
-<section class="module" id="m9">
-<div class="chapter-status">Step 09</div>
-<h2><span class="cn">09</span>Proving it, on calls a machine places</h2>
+<section class="step" id="m9"><header class="step-head"><p class="step-eyebrow"><span class="step-n">Step 09</span><span class="prov prov-partial">checks ran, script did not</span></p><h2>Proving it, on calls a machine places</h2><p class="step-blurb">A harness, and the two ways a green suite lies.</p></header>
 <p>You have a call blocker. What you do not have is any reason to believe it works, because every check so far was you watching one call at a time.</p>
 
-<div class="callout"><h3>Learning Objectives</h3>
-<ul><li>Drive a matrix of real calls from a script</li><li>Assert on the database rather than the screen</li><li>Recognise the two ways a green suite lies</li></ul></div>
+<aside class="goals"><p class="goals-label">You will be able to</p>
+<ul><li>Drive a matrix of real calls from a script</li><li>Assert on the database rather than the screen</li><li>Recognise the two ways a green suite lies</li></ul></aside>
 
-<h3><span class="badge badge-i">Intermediate</span> The harness</h3>
+<h3><span class="tag">going deeper</span> The harness</h3>
 <p>The emulator's fake modem is the whole reason this is automatable. Save as <code>scripts/matrix.sh</code>:</p>
-<pre><code><span class="line">#!/usr/bin/env bash</span>
+<figure class="code plain"><pre><code><span class="line">#!/usr/bin/env bash</span>
 <span class="line">set -euo pipefail</span>
 <span class="line">PKG=dev.example.callblocker</span>
 <span class="line">DB=callblocker.db</span>
@@ -1098,83 +1018,75 @@ code .cm{color:var(--muted);font-style:italic} code .at{color:var(--amber)}
 <span class="line">check +51611998877  ALLOWED "same national digits, different country"</span>
 <span class="line">check 5559998888    ALLOWED "no rule matches"</span>
 <span class="line"></span>
-<span class="line">exit $fail</span></code></pre>
-<p><b class="why">WHY</b> poll for a row with <code>id &gt; baseline</code> rather than reading the newest row. "This call was never logged" is a real finding, and it must not be able to masquerade as an old row carrying the wrong verdict — which is exactly what reading <code>ORDER BY id DESC LIMIT 1</code> alone would do.</p>
-<p><b class="why">WHY</b> more than half the rows assert <code>ALLOWED</code>. A blocker that blocks everything passes every BLOCKED row.</p>
+<span class="line">exit $fail</span></code></pre><button class="copy" type="button">Copy</button></figure>
+<p><b class="lbl lbl-why">WHY</b> poll for a row with <code>id &gt; baseline</code> rather than reading the newest row. "This call was never logged" is a real finding, and it must not be able to masquerade as an old row carrying the wrong verdict — which is exactly what reading <code>ORDER BY id DESC LIMIT 1</code> alone would do.</p>
+<p><b class="lbl lbl-why">WHY</b> more than half the rows assert <code>ALLOWED</code>. A blocker that blocks everything passes every BLOCKED row.</p>
 
-<h3><span class="badge badge-a">Advanced</span> Two ways a green suite lies</h3>
+<h3><span class="tag">the hard part</span> Two ways a green suite lies</h3>
 <p><b>1. It asserts absence.</b> A test that a blocked call produces no ringtone passes against an app with no ringtone code whatsoever. The real app had six such tests and a ringer that never rang. Prefer positive assertions — assert the player <em>started</em>, not that nothing happened.</p>
 <p><b>2. It never reaches the state.</b> Every call test in that project covered calls that ring, get blocked, or get missed — never one that was <em>answered</em>. An Android 14 restriction crashed the app the instant any call was answered, and the suite stayed green because nothing had ever entered that state.</p>
 <p style="margin-bottom:0">Both are the same defect: not in the assertions, but in the state space they cover. When a suite is green and a user is unhappy, ask which state the suite has never entered.</p>
 
-<div class="callout ok"><h3>CHECKPOINT 9 — the last one</h3>
-<pre><code><span class="line">chmod +x scripts/matrix.sh &amp;&amp; ./scripts/matrix.sh</span></code></pre>
+<aside class="cp"><p class="cp-label">Checkpoint</p>
+<figure class="code plain"><pre><code><span class="line">chmod +x scripts/matrix.sh &amp;&amp; ./scripts/matrix.sh</span></code></pre><button class="copy" type="button">Copy</button></figure>
 <p style="margin-bottom:0">Four passes, no failures. Then break something deliberately — change <code>sameNumber(it, number)</code> to <code>it == number</code> in <code>RuleEngine</code>, rebuild, reinstall — and confirm the first row goes red while the others stay green. A suite that cannot fail has told you nothing.</p>
-</div>
+</aside>
 </section>
-
-<section class="module" id="conclusion">
-<h2>Where to go next</h2>
+  <section class="outro">
 <p>You have an app that is your phone's dialer, sees calls before they ring, blocks by rule, rings when it should and stays silent when it should not. What it does not have: an in-call screen worth using, a call log, notifications, quiet hours, contacts integration, more than one language, or an iOS target.</p>
 <p>All of those exist, built on exactly this skeleton, in <a href="corta_spam_course.html">the Corta Spam course</a> — 28 chapters of what happened after this point, including the bugs. Read chapter 20 ("Code That Ships But Never Runs") before you write your next feature, and chapter 28 before you write your next fix.</p>
 
-<div class="callout"><h3>What was actually run, and what was not</h3>
+<aside class="note"><p class="note-label">What was actually run, and what was not</p>
 <ul>
-<li><b class="ok">Executed from an empty directory</b>, on a Pixel 8 Pro emulator (API 36), while writing this: steps 1 through 8. Every source file shown is the file that was compiled and installed. The checkpoints are real terminal output, including step 8's three calls against one blocked number — <code>611998877</code> and <code>+34611998877</code> both <code>Blocked(reason=MANUAL)</code>, <code>+51611998877</code> <code>Allowed</code> — and step 7's ringtone player, read out of <code>dumpsys audio</code> with the app's own pid on it. All four gotchas in steps 1&ndash;3 are failures that actually occurred, in the order shown, including the blank screen diagnosed with <code>uiautomator dump</code>.</li>
-<li><b class="warn">Not executed as written</b>: step 9's <code>matrix.sh</code>. Each of its four checks was run by hand against this app and produced the result shown, but the script was never run as a single file, so treat it as a starting point rather than something known to run first time.</li>
-<li><b class="warn">Borrowed rather than derived</b>: the war stories. The ringer that never rang, the fix that was only half applied, the suite that stayed green through a crash — those are from <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a>, a shipping app with 571 tests and a 14-scenario device suite. The code here is a minimal reimplementation built for this tutorial, not a copy of that app.</li>
+<li><b class="lbl lbl-ok">Executed from an empty directory</b>, on a Pixel 8 Pro emulator (API 36), while writing this: steps 1 through 8. Every source file shown is the file that was compiled and installed. The checkpoints are real terminal output, including step 8's three calls against one blocked number — <code>611998877</code> and <code>+34611998877</code> both <code>Blocked(reason=MANUAL)</code>, <code>+51611998877</code> <code>Allowed</code> — and step 7's ringtone player, read out of <code>dumpsys audio</code> with the app's own pid on it. All four gotchas in steps 1&ndash;3 are failures that actually occurred, in the order shown, including the blank screen diagnosed with <code>uiautomator dump</code>.</li>
+<li><b class="lbl lbl-warn">Not executed as written</b>: step 9's <code>matrix.sh</code>. Each of its four checks was run by hand against this app and produced the result shown, but the script was never run as a single file, so treat it as a starting point rather than something known to run first time.</li>
+<li><b class="lbl lbl-warn">Borrowed rather than derived</b>: the war stories. The ringer that never rang, the fix that was only half applied, the suite that stayed green through a crash — those are from <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a>, a shipping app with 571 tests and a 14-scenario device suite. The code here is a minimal reimplementation built for this tutorial, not a copy of that app.</li>
 </ul>
 <p style="margin-bottom:0">That distinction is the point of the document. A tutorial that does not say which of its steps were run is asking you to trust prose over evidence, which is the habit every chapter here argues against.</p>
-</div>
+</aside>
 </section>
+</main>
 
+<nav class="rail" aria-label="Steps">
+  <p class="rail-h">The build</p>
+  <a class="rail-item" href="#m1"><span class="rail-n">01</span><span class="rail-t">An empty directory that compiles</span></a>
+<a class="rail-item" href="#m2"><span class="rail-n">02</span><span class="rail-t">A Composable you can actually see</span></a>
+<a class="rail-item" href="#m3"><span class="rail-n">03</span><span class="rail-t">Becoming the phone app</span></a>
+<a class="rail-item" href="#m4"><span class="rail-n">04</span><span class="rail-t">The number, and what it is not</span></a>
+<a class="rail-item" href="#m5"><span class="rail-n">05</span><span class="rail-t">A blocklist that survives a restart</span></a>
+<a class="rail-item" href="#m6"><span class="rail-n">06</span><span class="rail-t">Your first blocked call</span></a>
+<a class="rail-item" href="#m7"><span class="rail-n">07</span><span class="rail-t">Ringing, because now you must</span></a>
+<a class="rail-item" href="#m8"><span class="rail-n">08</span><span class="rail-t">Phone numbers are not strings</span></a>
+<a class="rail-item" href="#m9"><span class="rail-n">09</span><span class="rail-t">Proving it, on calls a machine places</span></a>
+</nav>
 </div>
 
+<button class="themer" type="button">Theme</button>
 <script>
-function toggleTheme(){
-  var h=document.documentElement,t=h.getAttribute('data-theme');
-  h.setAttribute('data-theme',t==='dark'?'light':'dark');
-  var b=document.querySelector('.theme-btn');
-  b.innerHTML=t==='dark'?'Dark':'Light';
-  localStorage.setItem('theme',t==='dark'?'light':'dark');
-}
-(function(){
-  var s=localStorage.getItem('theme');
-  if(s){document.documentElement.setAttribute('data-theme',s);
-  document.querySelector('.theme-btn').innerHTML=s==='dark'?'Light':'Dark';}
-})();
-
-(function(){
-  var rail=document.getElementById('toc-rail'),html='';
-  var steps=document.querySelectorAll('.module[id^="m"]');
-  steps.forEach(function(s,i){
-    var h=s.querySelector('h2');
-    var title=h?h.textContent.replace(/^\s*\d+/,'').trim():('Step '+(i+1));
-    html+='<a href="#'+s.id+'" onclick="markVisited('+(i+1)+')"><span class="n">'
-        +String(i+1).padStart(2,'0')+'</span> '+title+'</a>';
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click',function(){
+    var code=b.parentElement.querySelector('code');
+    navigator.clipboard.writeText(code.innerText).then(function(){
+      var t=b.textContent; b.textContent='Copied'; setTimeout(function(){b.textContent=t;},1200);
+    });
   });
-  rail.innerHTML=html;
-  document.getElementById('progress-total').textContent=steps.length;
-  document.getElementById('progress-written').textContent=steps.length+' / '+steps.length+' steps written';
-})();
-
-function markVisited(n){
-  var v=JSON.parse(localStorage.getItem('scratch_progress')||'[]');
-  if(v.indexOf(n)===-1){v.push(n);}
-  localStorage.setItem('scratch_progress',JSON.stringify(v));
-  updateProgress();
-}
-function updateProgress(){
-  var v=JSON.parse(localStorage.getItem('scratch_progress')||'[]');
-  var total=document.querySelectorAll('.module[id^="m"]').length;
-  var pct=total?Math.round(v.length/total*100):0;
-  document.getElementById('progress-fill').style.width=pct+'%';
-  document.getElementById('progress-count').textContent=v.length;
-  document.querySelectorAll('#toc-rail a').forEach(function(a,i){
-    if(v.indexOf(i+1)>-1)a.classList.add('visited');
+});
+var items=[].slice.call(document.querySelectorAll('.rail-item'));
+var steps=[].slice.call(document.querySelectorAll('.step'));
+var obs=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(!e.isIntersecting)return;
+    var i=steps.indexOf(e.target);
+    items.forEach(function(a,j){a.classList.toggle('on',j===i);});
   });
-}
-updateProgress();
+},{rootMargin:'-15% 0px -70% 0px'});
+steps.forEach(function(s){obs.observe(s);});
+var tb=document.querySelector('.themer');
+tb.addEventListener('click',function(){
+  var r=document.documentElement;
+  var dark=getComputedStyle(r).getPropertyValue('--ground').trim().toLowerCase()==='#0f1519';
+  r.setAttribute('data-theme',dark?'light':'dark');
+});
 </script>
 </body>
 </html>
