@@ -64,7 +64,8 @@ if [ "$LIST_ONLY" = 1 ]; then
   echo "phase | number | action | rule_type | scenario"
   echo "$MATRIX" | awk -F'|' '{printf "  %-5s %-16s %-8s %-10s %s\n", $1, $2, $3, $4, $5}'
   echo
-  echo "  plus: 3 calls to trip an ACTION rule, a contact saved in national format,"
+  echo "  plus: 3 calls to trip an ACTION rule, a contact saved in national format called"
+  echo "        in E.164 (phase E), a contact saved in E.164 called nationally (phase F),"
   echo "        and a repeated-caller bypass — each needs more than one call or the address book."
   exit 0
 fi
@@ -308,8 +309,14 @@ OUT=$(mktemp); trap 'rm -rf "$WORK" "$OUT"' EXIT
   # PhoneNumberParser requires code.length + 4 before it will read "34" as a country code -- so
   # the engine correctly declined to match and the scenario reported a contact-matching
   # regression that did not exist. The test data was the bug.
+  # The trailing `|| true` is load-bearing under `set -e -o pipefail`: `grep -v '^+'` exits 1 when
+  # it filters *everything* out, which is exactly the case this line is trying to detect -- an
+  # address book whose contacts are all international. Without it the pipeline's failure killed the
+  # whole script here, so the SKIP branch below could never run, phase E printed neither a result
+  # nor a reason, and the run ended on a bare `exit 1` with the summary line never reached. Another
+  # guard that had never once executed.
   NAT=$($ADB shell content query --uri content://com.android.contacts/data/phones --projection data1 2>/dev/null \
-        | sed -n 's/.*data1=//p' | tr -d '\r' | grep -v '^+' | head -1 | tr -cd '0-9')
+        | sed -n 's/.*data1=//p' | tr -d '\r' | grep -v '^+' | head -1 | tr -cd '0-9' || true)
   if [ -n "$NAT" ]; then
     got=$(place_call "+34${NAT}")
     if [ "$got" = "ALLOWED|CONTACTS" ]; then
@@ -322,6 +329,31 @@ OUT=$(mktemp); trap 'rm -rf "$WORK" "$OUT"' EXIT
     echo "    Seed one, e.g.:"
     echo "      $ADB shell content insert --uri content://com.android.contacts/raw_contacts --bind account_name:s:'' --bind account_type:s:''"
     echo "    then a phone_v2 data row with a number that has no leading '+'."
+  fi
+
+  echo
+  echo "=== phase F — a contact saved internationally, called from a domestic line ==="
+  echo "    (regression for the 2026-08-14 fix: the gateway digit-stripped the '+')"
+  # The mirror of phase E, and the half that was still broken for three days after E was fixed.
+  # PhoneNumberParser.sameNumber decides whether the national form may bridge two numbers by
+  # reading the leading '+', so AndroidContactsGateway handing it digit-normalised numbers made a
+  # contact saved '+34900123456' state no country -- and a call delivered as '900123456', which is
+  # ordinary for a domestic call, stopped matching it. Under default BLOCK the contacts path is the
+  # only thing that can let this through, so a regression here shows up as BLOCKED, not as a
+  # cosmetic miss.
+  seed B
+  INTL=$($ADB shell content query --uri content://com.android.contacts/data/phones --projection data1 2>/dev/null \
+         | sed -n 's/.*data1=//p' | tr -d '\r' | tr -d ' ' | grep '^+34' | head -1 || true)
+  if [ -n "$INTL" ]; then
+    NSN=${INTL#+34}
+    got=$(place_call "$NSN")
+    if [ "$got" = "ALLOWED|CONTACTS" ]; then
+      printf "    ${GREEN}PASS${NC} %-38s %s\n" "contact '$INTL' matched $NSN" "$got"
+    else
+      printf "    ${RED}FAIL${NC} %-38s expected ALLOWED/CONTACTS, got %s\n" "contact '$INTL' vs $NSN" "$got"
+    fi
+  else
+    printf "    ${YELLOW}SKIP${NC} no +34 contact in the address book\n"
   fi
 } | tee "$OUT"
 

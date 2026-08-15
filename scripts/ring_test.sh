@@ -111,6 +111,34 @@ case "$mode" in
      exit 2 ;;
 esac
 
+# Same reasoning as the ringer mode above, for the other setting that legitimately silences the
+# phone: with default_action=BLOCK, the unmatched number this test rings with is blocked by the
+# default path and CallRinger is stopped a few hundred milliseconds in — correctly. The test then
+# printed "Ringing FAILED. Users of this build would miss calls silently", which is both false and
+# the most alarming line in the suite. It is easy to hit by accident, because rule_matrix_test.sh
+# leaves the device on BLOCK when its last phase is one of the default-BLOCK ones.
+#
+# Read from the app database, not from a flag: nothing else knows what the user's default action is.
+# A release build has no run-as, so an unreadable database is not treated as a failure here.
+default_action=$($ADB exec-out run-as "$PKG" cat "databases/$DB" 2>/dev/null > /tmp/ring_test_db.$$ \
+  && python3 -c "
+import sqlite3, sys
+try:
+    r = sqlite3.connect('/tmp/ring_test_db.$$').execute(
+        \"SELECT value FROM AppSettings WHERE key='default_action'\").fetchone()
+    print(r[0] if r else 'ALLOW')
+except Exception:
+    print('')
+" || echo "")
+rm -f "/tmp/ring_test_db.$$"
+if [ "$default_action" = "BLOCK" ]; then
+  echo -e "${RED}Default action is BLOCK.${NC} The unmatched test number will be blocked, and the" >&2
+  echo "app will correctly stop ringing — this test cannot tell that apart from a broken ringer." >&2
+  echo "Fix: set Settings > Default action to Allow, or re-run after a phase that leaves it there." >&2
+  exit 2
+fi
+[ -n "$default_action" ] && echo "==> default action $default_action"
+
 # ---------------------------------------------------------------------------
 # Assertions, run while a call is ringing.
 # ---------------------------------------------------------------------------
