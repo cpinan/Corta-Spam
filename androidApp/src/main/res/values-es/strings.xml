@@ -34,4 +34,5 @@
         <item quantity="one">%1$d intento</item>
         <item quantity="other">%1$d intentos</item>
     </plurals>
+    <string name="autoresponder_audio_unreadable">Este archivo de audio no se puede usar: la app no recibió permiso permanente para leerlo. Elige un archivo del almacenamiento del dispositivo.</string>
 </resources>

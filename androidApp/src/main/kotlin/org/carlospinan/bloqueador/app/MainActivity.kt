@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.telecom.TelecomManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -58,11 +59,35 @@ class MainActivity : ComponentActivity() {
 
     private var audioPickResultCallback: ((String) -> Unit)? = null
 
+    /**
+     * `OpenDocument`, not `GetContent`, and the grant is taken persistably.
+     *
+     * The greeting URI is written to the database and read back days later by
+     * `PassthroughInCallService`, in another process lifetime, while a call is ringing.
+     * `GetContent` hands out a read grant scoped to this activity's task, which is gone by then:
+     * `setDataSource` threw, `AutoResponderAudio.playFile` swallowed it and called `onComplete`,
+     * and the blocked caller was answered and hung up on **without hearing anything**. Only
+     * ACTION_OPEN_DOCUMENT (which is what `OpenDocument` sends) returns a URI that
+     * `takePersistableUriPermission` will accept.
+     */
     private val audioPickerLauncher =
         registerForActivityResult(
-            ActivityResultContracts.GetContent(),
+            ActivityResultContracts.OpenDocument(),
         ) { uri ->
-            uri?.toString()?.let { audioPickResultCallback?.invoke(it) }
+            if (uri == null) return@registerForActivityResult
+            val persisted =
+                runCatching {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }.isSuccess
+            if (!persisted) {
+                // A provider that refuses to persist would leave a greeting that plays once in
+                // the test button and never again on a real call. Better to keep the previous
+                // choice than to save a URI that is already known to expire.
+                Log.w(TAG, "Could not persist read access to the chosen greeting audio")
+                Toast.makeText(this, R.string.autoresponder_audio_unreadable, Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
+            }
+            audioPickResultCallback?.invoke(uri.toString())
         }
 
     private val contactsPermissionLauncher =
@@ -257,7 +282,7 @@ class MainActivity : ComponentActivity() {
                             App(
                                 onPickAudio = { onResult ->
                                     audioPickResultCallback = onResult
-                                    audioPickerLauncher.launch("audio/*")
+                                    audioPickerLauncher.launch(arrayOf("audio/*"))
                                 },
                                 onTestGreeting = { script, audioUri ->
                                     testAudio.play(script, audioUri.ifBlank { null }, onComplete = {})

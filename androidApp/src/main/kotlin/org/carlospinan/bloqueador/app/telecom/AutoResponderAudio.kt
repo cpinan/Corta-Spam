@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import androidx.core.net.toUri
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,13 +44,22 @@ class AutoResponderAudio(
             }
     }
 
+    /**
+     * Plays the greeting, preferring the user's own recording and falling back to the script.
+     *
+     * The fallback is not decoration. A chosen audio file can stop being readable between the
+     * moment it was picked and the call that needs it — the provider is uninstalled, the SD card
+     * is out, the grant was never persistable — and the previous behaviour on any of those was to
+     * report completion having said nothing at all, so the caller was answered and hung up on in
+     * silence. The script is always available, so there is no reason to greet with nothing.
+     */
     fun play(
         script: String,
         audioUri: String?,
         onComplete: () -> Unit,
     ) {
         if (!audioUri.isNullOrBlank()) {
-            playFile(audioUri, onComplete)
+            playFile(audioUri, onComplete, onFailure = { speak(script, onComplete) })
         } else {
             speak(script, onComplete)
         }
@@ -96,6 +106,7 @@ class AutoResponderAudio(
     private fun playFile(
         uriString: String,
         onComplete: () -> Unit,
+        onFailure: () -> Unit,
     ) {
         try {
             mediaPlayer?.release()
@@ -118,13 +129,19 @@ class AutoResponderAudio(
                     setOnErrorListener { _, _, _ ->
                         release()
                         mediaPlayer = null
-                        onComplete()
+                        onFailure()
                         true
                     }
                     prepareAsync()
                 }
-        } catch (_: Exception) {
-            onComplete()
+        } catch (e: Exception) {
+            // SecurityException is the one that actually happens: a content URI whose read grant
+            // did not outlive the activity that picked it. IOException covers a file that has
+            // been deleted or moved since.
+            Log.w(TAG, "Could not open the greeting audio; falling back to the script", e)
+            mediaPlayer?.release()
+            mediaPlayer = null
+            onFailure()
         }
     }
 
@@ -136,5 +153,9 @@ class AutoResponderAudio(
         pendingSpeak = null
         mediaPlayer?.release()
         mediaPlayer = null
+    }
+
+    private companion object {
+        const val TAG = "AutoResponderAudio"
     }
 }
