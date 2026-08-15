@@ -45,6 +45,8 @@ import cortaspam.shared.generated.resources.call_log_action_block
 import cortaspam.shared.generated.resources.call_log_action_callback
 import cortaspam.shared.generated.resources.call_log_action_copy
 import cortaspam.shared.generated.resources.call_log_action_label
+import cortaspam.shared.generated.resources.call_log_action_remove_allowlist
+import cortaspam.shared.generated.resources.call_log_action_unblock
 import cortaspam.shared.generated.resources.call_log_allowed_label
 import cortaspam.shared.generated.resources.call_log_blocked_label
 import cortaspam.shared.generated.resources.call_log_delete_recording
@@ -59,6 +61,8 @@ import cortaspam.shared.generated.resources.call_log_filter_outgoing
 import cortaspam.shared.generated.resources.call_log_filter_today
 import cortaspam.shared.generated.resources.call_log_filter_week
 import cortaspam.shared.generated.resources.call_log_no_matches
+import cortaspam.shared.generated.resources.call_log_number_allowlisted
+import cortaspam.shared.generated.resources.call_log_number_blocked
 import cortaspam.shared.generated.resources.call_log_outgoing_label
 import cortaspam.shared.generated.resources.call_log_play_recording
 import cortaspam.shared.generated.resources.call_log_recording_label
@@ -80,6 +84,8 @@ import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.contacts.contactDisplayName
+import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
+import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CallDirection
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser.sameNumber
@@ -93,8 +99,17 @@ fun CallLogScreen(
     entries: List<CallLogEntryData>,
     filter: String = "all",
     contactNames: Map<String, String> = emptyMap(),
+    /**
+     * The user's manual block list as it stands now — not the decisions in [entries]. Both are
+     * shown, because they answer different questions; see [NumberRuleState].
+     */
+    blockedNumbers: List<BlockedNumberEntry> = emptyList(),
+    allowlistedNumbers: List<AllowlistedNumberEntry> = emptyList(),
     onBlockNumber: (String) -> Unit = {},
     onAllowlistNumber: (String) -> Unit = {},
+    /** Takes the rule's id, not the number: unblocking has to remove the row that matched. */
+    onUnblockNumber: (Long) -> Unit = {},
+    onRemoveFromAllowlist: (Long) -> Unit = {},
     onCopyNumber: (String) -> Unit = {},
     onCallBack: (String) -> Unit = {},
     onBack: () -> Unit,
@@ -116,6 +131,14 @@ fun CallLogScreen(
     val visibleEntries =
         remember(entries, directionFilter, query, contactNames) {
             filterCallLog(entries, directionFilter, query, contactNames)
+        }
+
+    // Computed once for the whole list rather than per row: every lookup is a sameNumber scan of
+    // both rule lists, and doing it inside the row composable ran rows × rules of them on every
+    // keystroke in the search box.
+    val ruleStates =
+        remember(entries, blockedNumbers, allowlistedNumbers) {
+            numberRuleStates(entries.map { it.number }, blockedNumbers, allowlistedNumbers)
         }
 
     // A notification tap arrives as a request to act on one caller, so the screen opens with that
@@ -160,6 +183,7 @@ fun CallLogScreen(
                         allEntriesEmpty = entries.isEmpty(),
                         title = title,
                         contactNames = contactNames,
+                        ruleStates = ruleStates,
                         selectedEntry = selected,
                         onEntryTap = { selectedEntry = it },
                         modifier = Modifier.width(340.dp).fillMaxHeight(),
@@ -179,12 +203,21 @@ fun CallLogScreen(
                     CallLogDetailPane(
                         entry = selected,
                         contactNames = contactNames,
+                        ruleState = selected?.let { ruleStates[it.number] } ?: NumberRuleState.None,
                         onBlockNumber = { number ->
                             onBlockNumber(number)
                             selectedEntry = null
                         },
                         onAllowlistNumber = { number ->
                             onAllowlistNumber(number)
+                            selectedEntry = null
+                        },
+                        onUnblockNumber = { ruleId ->
+                            onUnblockNumber(ruleId)
+                            selectedEntry = null
+                        },
+                        onRemoveFromAllowlist = { ruleId ->
+                            onRemoveFromAllowlist(ruleId)
                             selectedEntry = null
                         },
                         onCopyNumber = { number ->
@@ -240,6 +273,7 @@ fun CallLogScreen(
                                     entry = entry,
                                     contactNames = contactNames,
                                     onTap = { selectedNumber = entry.number },
+                                    ruleState = ruleStates[entry.number] ?: NumberRuleState.None,
                                     onPlayRecording = onPlayRecording,
                                     onDeleteRecording = onDeleteRecording,
                                 )
@@ -253,28 +287,59 @@ fun CallLogScreen(
 
     if (windowSizeClass != WindowSizeClass.Expanded) {
         selectedNumber?.let { number ->
+            // Read from the map when the number is one of the listed calls, and resolved directly
+            // otherwise: a notification tap can open this dialog for a caller whose row the
+            // current date window has filtered out.
+            val ruleState =
+                ruleStates[number] ?: numberRuleState(number, blockedNumbers, allowlistedNumbers)
             AlertDialog(
                 onDismissRequest = { selectedNumber = null },
                 title = { Text(contactDisplayName(number, contactNames)) },
                 text = {
                     Column {
+                        // One button that means one thing. Offering "Block this number" for a
+                        // number that is already blocked was the bug: the tap did nothing
+                        // visible, and nothing in the dialog said the number was on the list.
+                        NumberRuleStatusLine(ruleState)
                         TextButton(
                             onClick = {
-                                onBlockNumber(number)
+                                val blockedRuleId = ruleState.blockedRuleId
+                                if (blockedRuleId != null) onUnblockNumber(blockedRuleId) else onBlockNumber(number)
                                 selectedNumber = null
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(stringResource(Res.string.call_log_action_block))
+                            Text(
+                                stringResource(
+                                    if (ruleState.isBlocked) {
+                                        Res.string.call_log_action_unblock
+                                    } else {
+                                        Res.string.call_log_action_block
+                                    },
+                                ),
+                            )
                         }
                         TextButton(
                             onClick = {
-                                onAllowlistNumber(number)
+                                val allowlistedRuleId = ruleState.allowlistedRuleId
+                                if (allowlistedRuleId != null) {
+                                    onRemoveFromAllowlist(allowlistedRuleId)
+                                } else {
+                                    onAllowlistNumber(number)
+                                }
                                 selectedNumber = null
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(stringResource(Res.string.call_log_action_allowlist))
+                            Text(
+                                stringResource(
+                                    if (ruleState.isAllowlisted) {
+                                        Res.string.call_log_action_remove_allowlist
+                                    } else {
+                                        Res.string.call_log_action_allowlist
+                                    },
+                                ),
+                            )
                         }
                         TextButton(
                             onClick = {
@@ -374,6 +439,7 @@ private fun CallLogListPane(
     allEntriesEmpty: Boolean,
     title: String,
     contactNames: Map<String, String>,
+    ruleStates: Map<String, NumberRuleState>,
     selectedEntry: CallLogEntryData?,
     onEntryTap: (CallLogEntryData) -> Unit,
     modifier: Modifier = Modifier,
@@ -413,6 +479,7 @@ private fun CallLogListPane(
                         entry = entry,
                         contactNames = contactNames,
                         onTap = { onEntryTap(entry) },
+                        ruleState = ruleStates[entry.number] ?: NumberRuleState.None,
                         modifier =
                             if (isSelected) {
                                 Modifier.background(
@@ -435,8 +502,11 @@ private fun CallLogListPane(
 private fun CallLogDetailPane(
     entry: CallLogEntryData?,
     contactNames: Map<String, String>,
+    ruleState: NumberRuleState,
     onBlockNumber: (String) -> Unit,
     onAllowlistNumber: (String) -> Unit,
+    onUnblockNumber: (Long) -> Unit,
+    onRemoveFromAllowlist: (Long) -> Unit,
     onCopyNumber: (String) -> Unit,
     onCallBack: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -496,6 +566,10 @@ private fun CallLogDetailPane(
                 style = MaterialTheme.typography.headlineMedium,
             )
 
+            Spacer(modifier = Modifier.height(6.dp))
+
+            NumberRuleStatusLine(ruleState)
+
             Spacer(modifier = Modifier.height(18.dp))
 
             CallLogDetailRow(stringResource(Res.string.call_log_action_label), statusLabel, actionColor)
@@ -520,14 +594,40 @@ private fun CallLogDetailPane(
                     Text(stringResource(Res.string.call_log_action_callback))
                 }
                 androidx.compose.material3.OutlinedButton(
-                    onClick = { onAllowlistNumber(entry.number) },
+                    onClick = {
+                        val allowlistedRuleId = ruleState.allowlistedRuleId
+                        if (allowlistedRuleId != null) {
+                            onRemoveFromAllowlist(allowlistedRuleId)
+                        } else {
+                            onAllowlistNumber(entry.number)
+                        }
+                    },
                 ) {
-                    Text(stringResource(Res.string.call_log_action_allowlist))
+                    Text(
+                        stringResource(
+                            if (ruleState.isAllowlisted) {
+                                Res.string.call_log_action_remove_allowlist
+                            } else {
+                                Res.string.call_log_action_allowlist
+                            },
+                        ),
+                    )
                 }
                 androidx.compose.material3.OutlinedButton(
-                    onClick = { onBlockNumber(entry.number) },
+                    onClick = {
+                        val blockedRuleId = ruleState.blockedRuleId
+                        if (blockedRuleId != null) onUnblockNumber(blockedRuleId) else onBlockNumber(entry.number)
+                    },
                 ) {
-                    Text(stringResource(Res.string.call_log_action_block))
+                    Text(
+                        stringResource(
+                            if (ruleState.isBlocked) {
+                                Res.string.call_log_action_unblock
+                            } else {
+                                Res.string.call_log_action_block
+                            },
+                        ),
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -535,6 +635,49 @@ private fun CallLogDetailPane(
                 Text(stringResource(Res.string.call_log_action_copy))
             }
         }
+    }
+}
+
+/**
+ * "On your block list" / "On your allowlist", or nothing at all.
+ *
+ * Deliberately worded as a statement about the rule set rather than about the call. The row
+ * already says what happened to the call ("Blocked call"), and the two disagree often enough
+ * that reusing that wording here would read as a contradiction on the same screen.
+ */
+@Composable
+private fun NumberRuleStatusLine(
+    ruleState: NumberRuleState,
+    modifier: Modifier = Modifier,
+) {
+    // Block wins when both are set, because that is what the resolver does: a manual block is
+    // step 1 and overrides the allowlist. Showing "allowlisted" for a number that is in fact
+    // being blocked would be a lie the user has no way to catch.
+    val label =
+        when {
+            ruleState.isBlocked -> stringResource(Res.string.call_log_number_blocked)
+            ruleState.isAllowlisted -> stringResource(Res.string.call_log_number_allowlisted)
+            else -> return
+        }
+    val icon = if (ruleState.isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
+    val tint = if (ruleState.isBlocked) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = tint,
+        )
     }
 }
 
@@ -567,6 +710,7 @@ private fun CallLogEntryRow(
     contactNames: Map<String, String>,
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
+    ruleState: NumberRuleState = NumberRuleState.None,
     onPlayRecording: (String) -> Unit = {},
     onDeleteRecording: (Long) -> Unit = {},
 ) {
@@ -620,6 +764,7 @@ private fun CallLogEntryRow(
                     text = contactDisplayName(entry.number, contactNames),
                     style = MaterialTheme.typography.bodyLarge,
                 )
+                NumberRuleStatusLine(ruleState)
                 Text(
                     text = storedBlockReasonText(entry.ruleDetail) ?: statusLabel,
                     style = MaterialTheme.typography.bodySmall,

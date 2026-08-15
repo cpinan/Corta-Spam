@@ -6,6 +6,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
+import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.rules.CallDirection
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.junit.Rule
@@ -214,6 +216,130 @@ class CallLogScreenUiTest {
         composeTestRule.onNodeWithText("This week").performClick()
 
         assertEquals("week", requested)
+    }
+
+    // --- Rule state on the row and in the tap dialog -------------------------------------------
+    //
+    // The log used to show only what happened to each call, and to offer Block/Allow regardless
+    // of what the user's rules already said. Blocking an already-blocked caller looked identical
+    // to a broken button.
+
+    @Test
+    fun `a row for a number on the block list says so`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                blockedNumbers = listOf(BlockedNumberEntry(4L, blockedEntry.number, null, 0)),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("On your block list").assertExists()
+    }
+
+    @Test
+    fun `a row for a number on the allowlist says so`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(allowedEntry),
+                allowlistedNumbers = listOf(AllowlistedNumberEntry(5L, allowedEntry.number, null, 0)),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("On your allowlist").assertExists()
+    }
+
+    /**
+     * A call that was blocked by a rule the user has since deleted. The outcome label stays —
+     * that call really was blocked — but the number carries no badge and the action on offer is
+     * Block, not Unblock.
+     */
+    @Test
+    fun `a blocked call whose number is no longer on any list carries no badge`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Blocked call").assertExists()
+        composeTestRule.onNodeWithText("On your block list").assertDoesNotExist()
+    }
+
+    @Test
+    fun `tapping a blocked number offers unblock and returns the rule id`() {
+        var unblocked: Long? = null
+        var blockedAgain: String? = null
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                blockedNumbers = listOf(BlockedNumberEntry(42L, blockedEntry.number, null, 0)),
+                onUnblockNumber = { unblocked = it },
+                onBlockNumber = { blockedAgain = it },
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(blockedEntry.number).performClick()
+        composeTestRule.onNodeWithText("Unblock this number").performClick()
+
+        assertEquals(42L, unblocked)
+        assertEquals(null, blockedAgain)
+    }
+
+    @Test
+    fun `tapping a number that is not blocked still offers block`() {
+        var blocked: String? = null
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(allowedEntry),
+                onBlockNumber = { blocked = it },
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(allowedEntry.number).performClick()
+        composeTestRule.onNodeWithText("Unblock this number").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Block this number").performClick()
+
+        assertEquals(allowedEntry.number, blocked)
+    }
+
+    @Test
+    fun `tapping an allowlisted number offers removal from the allowlist`() {
+        var removed: Long? = null
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(allowedEntry),
+                allowlistedNumbers = listOf(AllowlistedNumberEntry(13L, allowedEntry.number, null, 0)),
+                onRemoveFromAllowlist = { removed = it },
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText(allowedEntry.number).performClick()
+        composeTestRule.onNodeWithText("Remove from allowlist").performClick()
+
+        assertEquals(13L, removed)
+    }
+
+    /**
+     * The rule was saved the way the user dials it and the call arrived in E.164. Matching the
+     * strings would have offered Block for a number that is already blocked.
+     */
+    @Test
+    fun `a rule saved nationally is recognised for an E164 call`() {
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                blockedNumbers = listOf(BlockedNumberEntry(1L, "611 22 33 44", null, 0)),
+                onBack = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("On your block list").assertExists()
     }
 
     @Test

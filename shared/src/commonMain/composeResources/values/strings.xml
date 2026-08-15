@@ -123,6 +123,10 @@
     <string name="call_log_action_allowlist">Add to allowlist</string>
     <string name="call_log_action_callback">Call back</string>
     <string name="call_log_action_copy">Copy number</string>
+    <string name="call_log_action_unblock">Unblock this number</string>
+    <string name="call_log_action_remove_allowlist">Remove from allowlist</string>
+    <string name="call_log_number_blocked">On your block list</string>
+    <string name="call_log_number_allowlisted">On your allowlist</string>
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="home_settings">Settings</string>

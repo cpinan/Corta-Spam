@@ -135,6 +135,10 @@
     <string name="call_log_action_allowlist">अनुमति सूची में जोड़ें</string>
     <string name="call_log_action_callback">वापस कॉल करें</string>
     <string name="call_log_action_copy">नंबर कॉपी करें</string>
+    <string name="call_log_action_unblock">इस नंबर को अनब्लॉक करें</string>
+    <string name="call_log_action_remove_allowlist">अनुमति सूची से हटाएँ</string>
+    <string name="call_log_number_blocked">आपकी ब्लॉक सूची में</string>
+    <string name="call_log_number_allowlisted">आपकी अनुमति सूची में</string>
 
     <!-- सेटिंग्स -->
     <string name="settings_title">सेटिंग्स</string>

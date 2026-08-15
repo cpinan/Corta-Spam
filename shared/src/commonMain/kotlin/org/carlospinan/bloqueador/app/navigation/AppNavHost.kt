@@ -215,8 +215,18 @@ fun AppNavHost(
                     callLogViewModel.onIntent(CallLogIntent.SetFilter(filter))
                 }
                 val state by callLogViewModel.state.collectAsState()
+                // The live rule set, so a row can say whether the caller is on a list right now
+                // and offer the action that is actually left to take. Comes from
+                // BlockListViewModel, which already owns every rule read and write this screen
+                // needs -- the alternative was a second RuleRepository dependency in
+                // CallLogViewModel and two independent copies of the same flows.
+                val blockListState by blockListViewModel.state.collectAsState()
                 CallLogScreen(
                     entries = state.entries,
+                    blockedNumbers = blockListState.blockedNumbers,
+                    allowlistedNumbers = blockListState.allowlistedNumbers,
+                    onUnblockNumber = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveBlockedNumber(id)) },
+                    onRemoveFromAllowlist = { id -> blockListViewModel.onIntent(BlockListIntent.RemoveAllowlistedNumber(id)) },
                     // The ViewModel's filter, not the route argument: the screen's own date chips
                     // change it, and the route argument would stay at whatever the user arrived
                     // with, leaving the wrong chip selected from the first tap onwards.

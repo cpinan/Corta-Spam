@@ -135,6 +135,10 @@
     <string name="call_log_action_allowlist">Adicionar aos permitidos</string>
     <string name="call_log_action_callback">Retornar chamada</string>
     <string name="call_log_action_copy">Copiar número</string>
+    <string name="call_log_action_unblock">Desbloquear este número</string>
+    <string name="call_log_action_remove_allowlist">Remover da lista de permitidos</string>
+    <string name="call_log_number_blocked">Na sua lista de bloqueio</string>
+    <string name="call_log_number_allowlisted">Na sua lista de permitidos</string>
 
     <!-- Ajustes -->
     <string name="settings_title">Ajustes</string>
