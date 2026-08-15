@@ -1,13 +1,18 @@
 package org.carlospinan.bloqueador.app.calllog
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,9 +32,25 @@ class CallLogViewModelTest {
         override fun hasPermission(): Boolean = granted
     }
 
+    /**
+     * Resets whatever a test installed, so a test that never sets one is not handed the previous
+     * test's dispatcher.
+     */
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     @Test
     fun `RefreshContactNames picks up a grant that landed after construction`() =
         runTest {
+            // The only test here that waits on work `viewModelScope` launched, so it is the only
+            // one that has to install a main dispatcher -- and it hung for a minute and failed on
+            // iOS without one. On Kotlin/Native the real Dispatchers.Main needs the platform run
+            // loop, which no unit test spins, so the coroutine that loads the names never ran and
+            // the collector below waited forever. The JVM's fallback happens to run it, which is
+            // why this passed there and only there. Same pattern as SettingsViewModelTest.
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             // The screen is already on top when the user grants contacts from Settings or the
             // onboarding checklist, so the ViewModel's init has already run and skipped the load.
             val contacts = FakeContactsGateway(granted = false)

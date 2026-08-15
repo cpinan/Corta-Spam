@@ -18,7 +18,7 @@ class ContactSearchTest {
     }
 
     @Test
-    fun `a name prefix matches, ignoring case`() {
+    fun `a name prefix matches while ignoring case`() {
         assertEquals(listOf(ana), ContactSearch.match(book, "ana t"))
         assertEquals(listOf(ana), ContactSearch.match(book, "ANA T"))
     }

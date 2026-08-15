@@ -43,6 +43,11 @@ if [ "$FAST" = false ]; then
   # Non-optional for anything under shared/src/commonMain. commonMain code that only ever ran on
   # Android has compiled fine here and broken on iOS more than once.
   TASKS+=(:shared:compileKotlinIosSimulatorArm64)
+  # commonTest as well as commonMain, because CI runs :shared:iosSimulatorArm64Test and this
+  # script did not compile a single line of it. Kotlin/Native rejects characters the JVM accepts
+  # in a backticked test name -- a comma is enough -- so three tests that had passed on the JVM
+  # for months failed the iOS job the first time it reached them, with nothing local to catch it.
+  TASKS+=(:shared:compileTestKotlinIosSimulatorArm64)
 fi
 
 if [ "$RELEASE" = true ]; then

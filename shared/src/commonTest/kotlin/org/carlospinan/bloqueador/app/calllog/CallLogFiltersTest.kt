@@ -39,14 +39,14 @@ class CallLogFiltersTest {
     }
 
     @Test
-    fun `incoming keeps blocked calls too, because they arrived`() {
+    fun `incoming keeps blocked calls too because they arrived`() {
         // A blocked call is an incoming call that was refused, not a third direction. Excluding
         // it here would make "Incoming" quietly mean "incoming and answered".
         assertEquals(listOf(incoming, blocked), filterCallLog(log, CallLogDirectionFilter.INCOMING, ""))
     }
 
     @Test
-    fun `blocked is an outcome, not a direction`() {
+    fun `blocked is an outcome rather than a direction`() {
         assertEquals(listOf(blocked), filterCallLog(log, CallLogDirectionFilter.BLOCKED, ""))
     }
 
