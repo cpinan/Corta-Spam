@@ -3377,9 +3377,127 @@ th{background:var(--panel-2);font-weight:600}
 </div>
 </section>
 
+<section class="module" id="m28">
+<div class="chapter-status">Chapter 28 done</div>
+<h2><span class="cn">28</span>The Fix That Was Only Half Applied</h2>
+<p>Three days after "contacts saved nationally are not allowlisted" was fixed, tested and shipped, the same complaint came back: <em>sometimes a contact is blocked even though it is in the agenda.</em> The comparison function was right. Its caller had quietly disarmed it.</p>
+
+<div class="callout"><h3>Learning Objectives</h3>
+<ul>
+<li>Recognise a fix that is correct in isolation and inert in place</li>
+<li>Write the contract a function needs from its callers where the callers can see it</li>
+<li>Tell a fact about an event apart from a fact about current state, in data and in UI</li>
+<li>Extract a pure function out of a cursor loop so a test can reach it at all</li>
+<li>Spot a shell guard that can never execute under <code>set -e -o pipefail</code></li>
+</ul></div>
+
+<h3><span class="badge badge-b">Beginner</span> Two facts that look like one</h3>
+<p>A call log row carries two different claims, and the app had only ever shown the first:</p>
+<ul>
+<li><strong>What happened to this call</strong> — <code>action = "BLOCKED"</code>, written once, at the moment the call arrived. History. It never changes.</li>
+<li><strong>Whether this number is on a list right now</strong> — a question about the rule set as it stands, which the user edits constantly.</li>
+</ul>
+<p>They disagree all the time. A call blocked last week by a rule since deleted is still a blocked call. A call that rang through yesterday may be from a number blocked this morning. The log showed only the first and offered "Block this number" regardless — so blocking an already-blocked caller was a tap that did nothing anyone could see, which is indistinguishable from a broken button.</p>
+
+<h3><span class="badge badge-i">Intermediate</span> The contract that lived in the wrong file</h3>
+<p><code>PhoneNumberParser.sameNumber</code> decides whether the <em>national</em> form may bridge two numbers, and it decides it by looking for a leading <code>+</code>:</p>
+<pre><code><span class="line"><span class="kw">val</span> aIsInternational = toE164OrNull(a) != <span class="kw">null</span></span>
+<span class="line"><span class="kw">val</span> bIsInternational = toE164OrNull(b) != <span class="kw">null</span></span>
+<span class="line"><span class="kw">if</span> (aIsInternational &amp;&amp; bIsInternational) {</span>
+<span class="line">    <span class="cm">// Both know their country; only the full E.164 digits can make them the same.</span></span>
+<span class="line">    <span class="kw">return</span> toE164OrNull(a) == toE164OrNull(b)</span>
+<span class="line">}</span></code></pre>
+<p>Meanwhile the address-book scan built the set it would be compared against like this:</p>
+<pre><code><span class="line">numbers.add(PhoneNumberParser.<span class="fn">normalizeForComparison</span>(raw))  <span class="cm">// digits only — the '+' is gone</span></span></code></pre>
+<p>So a contact saved <code>+34611998877</code> reached <code>sameNumber</code> as <code>34611998877</code>, which states no country. The function could no longer derive the national key <code>611998877</code> from it, and a call delivered in national form — ordinary for a domestic call — stopped matching. The contact was not allowlisted, and the next rule down the precedence list blocked someone the user has in their phone.</p>
+<p>The cruel part: the contact's <em>name</em> displayed correctly throughout, because the name map is keyed by every <code>comparisonKeys</code> form and was never wrong. The user sees a familiar name on a blocked call and reasonably concludes the app is broken in some unfathomable way.</p>
+<p>The fix is one line. The durable part is where the requirement now lives — on the interface every caller reads:</p>
+<pre><code><span class="line"><span class="cm">/**</span></span>
+<span class="line"><span class="cm"> * Phone numbers from the user's local contacts, **exactly as saved on the card**.</span></span>
+<span class="line"><span class="cm"> *</span></span>
+<span class="line"><span class="cm"> * Not normalized, and not digits. RulePrecedenceResolver compares this set with</span></span>
+<span class="line"><span class="cm"> * PhoneNumberParser.sameNumber, which reads the leading '+' ...</span></span>
+<span class="line"><span class="cm"> */</span></span>
+<span class="line"><span class="kw">suspend fun</span> <span class="fn">contactNumbers</span>(): Set&lt;String&gt;</span></code></pre>
+
+<h3><span class="badge badge-a">Advanced</span> Making the untestable testable, then proving it on a phone</h3>
+<p>The broken mapping lived inside a <code>ContentResolver</code> cursor loop — a place no unit test in this project could reach, which is why nothing caught it. The loop was split: reading rows stays in the gateway, deciding what a row <em>means</em> moves to a pure function that takes rows and returns a snapshot. Ten unit tests now hold that boundary, with no Android framework class in sight.</p>
+<pre><code><span class="line"><span class="at">@Test</span></span>
+<span class="line"><span class="kw">fun</span> <span class="fn">contactSavedInE164IsMatchedByANationalFormatCall</span>() {</span>
+<span class="line">    <span class="kw">val</span> snapshot = snapshotOf(<span class="st">"+34611998877"</span> to <span class="st">"Ana Torres"</span>)</span>
+<span class="line">    assertTrue(snapshot.numbers.any { PhoneNumberParser.sameNumber(it, <span class="st">"611998877"</span>) })</span>
+<span class="line">}</span></code></pre>
+<p>Watched failing first, against the old line: <code>got [34611998877]</code>. Then the same claim was made on a real call path, as phase F of <code>rule_matrix_test.sh</code> — a contact saved internationally, called from a domestic line, under a default action of BLOCK so only the contacts path can let it through. Reverting the fix, rebuilding and reinstalling produced the user's report verbatim:</p>
+<pre><code><span class="line">=== phase F — a contact saved internationally, called from a domestic line ===</span>
+<span class="line">    FAIL contact '+34900123456' vs 900123456    expected ALLOWED/CONTACTS, got BLOCKED|-</span></code></pre>
+<p>Phase E — the 08-11 regression, the opposite direction — passed against that same broken build. That is the whole argument for adding F rather than trusting E.</p>
+
+<div class="callout"><h3>Case Study: the guard that had never once run</h3>
+<p>Phase E looks for a national-format contact and skips itself politely when the address book has none. On an emulator whose contacts are all <code>+34…</code>, it did not skip. It killed the script:</p>
+<pre><code><span class="line">NAT=$($ADB shell content query ... | sed -n 's/.*data1=//p' | grep -v '^+' | head -1 | tr -cd '0-9')</span></code></pre>
+<p><code>grep -v</code> exits <code>1</code> when it filters <em>everything</em> out — which is precisely the condition this line exists to detect. Under <code>set -e -o pipefail</code> that ends the script on the spot: no result, no reason, no summary, exit 1. The <code>if [ -n "$NAT" ]</code> below it, and the friendly SKIP message inside it, had never executed in the script's life.</p>
+<p>It joins a list this project keeps rediscovering — the ringer that never rang, the spam list that could never match, the permission warning nobody could reach. <strong>Code that only runs on the unhappy path is code that has probably never run at all.</strong> The fix is four characters (<code>|| true</code>); the lesson is that the unhappy path deserves a test as much as the happy one.</p>
+</div>
+
+<h3><span class="badge badge-i">Intermediate</span> Saying what a feature cannot do</h3>
+<p>"Call recording is not working" turned out to be three different truths at once. Recording only ever runs on a call the auto-responder itself answered, so with the auto-responder off the switch was inert — and the screen said nothing. That reason is now computed, and testable:</p>
+<pre><code><span class="line"><span class="kw">fun</span> <span class="fn">recordingReadiness</span>(config: AutoResponderConfig, micPermissionGranted: Boolean = <span class="kw">true</span>) =</span>
+<span class="line">    <span class="kw">when</span> {</span>
+<span class="line">        !config.recordingEnabled -&gt; RecordingReadiness.Off</span>
+<span class="line">        !config.enabled          -&gt; RecordingReadiness.AutoResponderOff</span>
+<span class="line">        config.validate() !<span class="kw">is</span> ValidationResult.Ok -&gt; RecordingReadiness.GreetingInvalid</span>
+<span class="line">        !micPermissionGranted    -&gt; RecordingReadiness.MicPermissionMissing</span>
+<span class="line">        <span class="kw">else</span> -&gt; RecordingReadiness.Ready</span>
+<span class="line">    }</span></code></pre>
+<p>The other two truths cannot be computed at all. Android reserves the real call-audio sources behind <code>CAPTURE_AUDIO_OUTPUT</code>, a <code>signature|privileged</code> permission the dialer role does not grant, so recording captures the microphone acoustically — and several manufacturers hand the microphone exclusively to the telephony stack during a call. Whether that happens is knowable only on that device, at that moment. So the screen says it in prose instead of pretending to predict it. <strong>A limitation the user can read is not a bug report.</strong></p>
+
+<h3><span class="badge badge-a">Advanced</span> Two escapes, one of them shipped for months</h3>
+<p>This project has two string tables that look identical and are not. Under <code>androidApp/src/main/res</code>, aapt2 parses the file and <code>\'</code> is the <em>required</em> spelling of an apostrophe. Under <code>shared/src/commonMain/composeResources</code>, the Compose loader reads plain XML, where a backslash means nothing — so it survives into the UI:</p>
+<pre><code><span class="line">The greeting plays through your phone\'s loudspeaker</span></code></pre>
+<p>Found by screenshotting the screen on a device, which also revealed that <code>blocklist_duplicate_blocked_body</code> had been showing <code>won\'t override the block</code> for as long as it has existed. Nothing could have caught it: it compiles, the translation-completeness test only counts keys, and Android Lint cannot see that resource tree at all. It is a test now — one that walks the tree and fails on a literal <code>\'</code>.</p>
+
+<div class="callout"><h3>Key Takeaways</h3>
+<ul>
+<li>A correct function with one normalising caller is a broken feature</li>
+<li>Put the contract on the interface, not in the commit message</li>
+<li>"What happened" and "what is true now" are two facts; a UI that merges them lies about one</li>
+<li>Extracting a pure function out of an I/O loop is usually what makes the bug reachable</li>
+<li><code>grep -v</code> exiting 1 on an empty result will kill a <code>set -e</code> script at the exact moment its guard was meant to speak</li>
+<li>State a platform limit in the UI; the alternative is a user reporting the platform as your bug</li>
+</ul></div>
+
+<div class="quiz">
+<h3>Check Yourself</h3>
+<div class="quiz-item"><p><strong>1.</strong> <code>sameNumber</code> was already fixed and tested. How was the feature still broken?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Its caller normalised first. <code>AndroidContactsGateway</code> put <code>normalizeForComparison(raw)</code> into the set, stripping the <code>+</code> that <code>sameNumber</code> reads to decide whether the national form may bridge two numbers. Every existing test passed the function well-formed numbers directly, so the function was proven and the path through it was not.</div></div>
+<div class="quiz-item"><p><strong>2.</strong> Why did the contact's name still display correctly while the call was being blocked?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">The name map is keyed by every <code>comparisonKeys</code> form of each contact, so lookups by any spelling hit. Only the <em>numbers set</em> was digit-normalised. The two halves of the same scan disagreed, and the visible half was the correct one — which made the symptom look impossible and sent attention to the rule engine instead.</div></div>
+<div class="quiz-item"><p><strong>3.</strong> Phase E already tested "a contact meets a call in another format". Why did it not catch this?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">It tested the opposite direction: a contact saved nationally, called in E.164. That direction survives digit-normalisation, because a national contact has no <code>+</code> to lose. The broken direction is a contact saved in E.164 called nationally. Proven, not argued: phase E passed against the deliberately reverted build while phase F failed on it.</div></div>
+<div class="quiz-item"><p><strong>4.</strong> A row reads "Blocked call" and carries no "On your block list" badge. Is that a bug?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">No — it is the design. The label is what happened to that call; the badge is whether the number is on a list now. A call blocked by the default action, or by a rule the user has since deleted, is exactly this combination. Merging them would either rewrite history or claim a rule that no longer exists.</div></div>
+<div class="quiz-item"><p><strong>5.</strong> Why does the block/unblock action carry a rule id rather than a phone number?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Unblocking has to delete a specific row, and the row's number may be spelled differently from the call's — matched by <code>sameNumber</code>, not equality. Passing the number back would force the data layer to re-derive which rule was meant, and get it wrong for exactly the numbers this chapter is about.</div></div>
+<div class="quiz-item"><p><strong>6.</strong> Under <code>set -e -o pipefail</code>, why did a pipeline ending in <code>grep -v '^+'</code> kill the script?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer"><code>grep</code> exits 1 when it selects no lines, and <code>-v</code> selects nothing when every line matches the pattern being inverted — here, an address book that is entirely international. <code>pipefail</code> propagates that as the pipeline's status and <code>set -e</code> exits. The condition the line was written to detect was the condition that stopped it reporting anything.</div></div>
+<div class="quiz-item"><p><strong>7.</strong> Recording is switched on and nothing is ever recorded. Which reasons can the app state, and which can it not?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">It can state that the auto-responder is off, that the greeting fails validation, and that <code>RECORD_AUDIO</code> is not granted — all readable from config and permission state, and all covered by <code>RecordingReadiness</code>. It cannot state that this handset's telephony stack will refuse the microphone mid-call: that is knowable only on the device at the moment of the call. So it is documented in prose on the screen rather than predicted.</div></div>
+<div class="quiz-item"><p><strong>8.</strong> Why is <code>\'</code> right in one strings.xml and wrong in another?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because two different parsers read them. aapt2 processes Android resources and requires the escape. Compose Multiplatform resources are read as plain XML, where a backslash is a literal character — so the escape reaches the user. A bare <code>'</code> is valid XML, which makes the fix "delete the backslash" and the test "fail on any <code>\'</code> under composeResources".</div></div>
+</div>
+</section>
+
 <section class="module" id="conclusion">
 <h2>What You've Learned</h2>
-<div class="callout"><h3>27 Chapters, One Production App</h3>
+<div class="callout"><h3>28 Chapters, One Production App</h3>
 <p>You've walked through every layer of a real Kotlin Multiplatform Android + iOS app, including debugging real-world iOS compilation crashes:</p></div>
 
 <table style="width:100%;border-collapse:collapse;margin:24px 0">
@@ -3411,6 +3529,7 @@ th{background:var(--panel-2);font-weight:600}
 <tr><td style="padding:8px">Placing calls</td><td style="padding:8px">Inert manifest configuration; ACTION_DIAL vs ACTION_CALL; event identity; caller identity without a canonical key</td><td style="padding:8px">25</td></tr>
 <tr><td style="padding:8px">Platform restrictions</td><td style="padding:8px">CallStyle rules that throw; the dead-dialer fallback; notification delegation; untested call states</td><td style="padding:8px">27</td></tr>
 <tr><td style="padding:8px">Search &amp; actionable notifications</td><td style="padding:8px">Lossy gateway shapes; ranked matching; notification content intents; layout bugs only hardware shows</td><td style="padding:8px">26</td></tr>
+<tr><td style="padding:8px">Half-applied fixes</td><td style="padding:8px">Contracts disarmed by a caller; event facts vs current state; pure functions out of cursor loops; shell guards that never run; two XML escaping regimes</td><td style="padding:8px">28</td></tr>
 </table>
 
 <div class="callout"><h3>Design Decisions Recap</h3>
@@ -3421,7 +3540,7 @@ th{background:var(--panel-2);font-weight:600}
 
 <div class="footer"><div class="wrap">
 <p>Built from the <a href="https://github.com/cpinan/Corta-Spam">Corta Spam</a> open-source project (MIT License).</p>
-<p>528 automated tests (239 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
+<p>571 automated tests (306 of them also on the iOS simulator) · 4-language i18n · Adaptive for phone/tablet · Android + iOS · <a href="https://github.com/cpinan/Corta-Spam">github.com/cpinan/Corta-Spam</a></p>
 <p style="font-size:.8rem;color:var(--muted)">Last updated: 2026-08-14 — added Chapter 27 (the notification that hung up on the user: a CallStyle notification Android 14 refuses by throwing, on the main thread inside a Telecom callback, so answering a call killed the process and Telecom handed the live call to the preloaded dialer — three separate bug reports from one stack trace. Also suppressing the platform missed-call notification through its documented delegation hook rather than overriding it, and why three green signals hid a bug whose real gap was a call state the suite had never entered). Previously the same day: Chapter 26 and extended it the same day with the call log that recorded only incoming calls (a row was a decision record, and a call the user placed has no decision), the rebuild-table migration its new CHECK column needed, the two index traps that came with it — one of them a SQLDelight compiler artefact rather than a runtime one — and the call screen that knew the caller&#39;s name and printed the number instead. Chapter 26 (the data was already there, in the wrong shape: a contacts gateway whose two return types had both discarded what a search result needs, one keypad field that searches and dials at once, ranked matching over names and digits, an announced result cap, and the notification body that had no content intent at all — so the notification reporting a call could only be dismissed. Also the PendingIntent identity rule paid for a third time, and a layout bug no code review could find: with the soft keyboard up the results list pushed the Call button off the screen, so picking a contact hid the button that places the call). Previously: 2026-08-13 (eighth) — added Chapter 25 (the default dialer that could not dial: two <code>ACTION_DIAL</code> intent filters added for role eligibility that no Kotlin ever read, so the app volunteered for every <code>tel:</code> link on the device and dropped the number — inert <em>configuration</em>, which no source-level audit can find. Also why <code>DIAL</code> must not place a call, why an arriving intent needs an identity that value equality cannot express, how to give a notification a caller identity when the project's own matching rule is asymmetric and has no canonical form, and the bug that writing the calling tests uncovered: the service was screening <em>outgoing</em> calls, so a blocklisted number the user dialled — or any number at all during quiet hours — had the call they placed rejected by their own phone app). Previously: 2026-08-13 (seventh) — added Chapter 24 (two kinds of non-evidence: reading a modifier chain is not verification, and a device screenshot taken from an emulator that was already failing is not one either). Covers why every existing Home test passed against the reported bug (<code>assertExists</code> is true of a node clipped off the bottom of the window), forcing the overflow with a Robolectric window qualifier rather than assuming it, testing the screen inside the <code>AdaptiveScaffold</code> it actually ships in, and what the passing tests still do not prove. Previously: 2026-08-13 (fifth) — extended Chapter 20 with three device scripts that were reporting something other than what they measured: a rule-matrix harness reading the previous scenario's call-log row (4 false failures, and a shape that yields false passes too — the rule engine was innocent on all four, 13/13 after the fix), a contact regression test whose <code>sed</code> split "611 99 88 77" into "611" and dialled a number too short for the parser to read a country code from, a ringing test that grepped <code>userId=</code> when Android prints <code>appId=</code> and so had never once run on the hardware it exists for, and a crash check reading the device's entire persistent logcat that failed on another app's fatal before any database assertion ran. Previously: 2026-08-13 (fourth) — extended Chapter 20 with the ringer finally getting tests, eight days after the audit found it inert: extracting <code>RingerPolicy</code> so the decision leaves the untestable <code>MediaPlayer</code>/<code>Vibrator</code> class, a Robolectric test proving the plan is actually consumed rather than merely computed, and the check that matters — stubbing the vibration failed three of six tests, and the three that stayed green were the ones asserting absences, which is the shape a "covered" inert feature has. Previously: 2026-08-13 (third) — extended Chapter 23 with the third copy of the contact-matching behaviour, which is <code>ContactsContract.PhoneLookup</code> itself: it matches through a <code>NORMALIZED_NUMBER</code> column computed from the device's region at save time, so a contact saved nationally misses an E.164 call, and on a SIM-less emulator every contact reads as a stranger — meaning "silence unknown callers" was suppressing real contacts' missed calls. Covers why months passed without anyone noticing (the same lookup had only supplied a display name, where a miss degrades to a number) and the Telecom callback that had to read the number before launching a coroutine. Previously: 2026-08-13 (later) — added Chapter 23 (one behaviour written twice and fixed once: the contact-name lookup that was correct in the call log and single-key in the block lists, a permission check in <code>init</code> that runs before the permission arrives, a feature request whose literal reading would have left strangers' calls with no screen at all, and PendingIntent equality ignoring the extras that distinguish two notifications). Previously: 2026-08-13 — extended Chapter 21 with release economics: a fix that lives in a Console form still spends a version code, because Play will not re-review a code it has ruled on, and no artifact audit can see a form answer revert. Previously: 2026-08-12 — extended Chapter 21 with the second rejection of the same permission: the declaration form has two questions, and the one nobody read (pre-grant at install?) was the one being judged. Covers what declining the pre-grant costs — the permission is now off on every Android 14+ install — the checklist row added because the existing warning was ranked third on a screen that shows one, and the reason none of it had ever been rendered before: the project's only emulator was one API level below the feature. Previously: 2026-08-08 — added Chapter 22 (permission UX as three separate problems: explaining before asking, noticing a permission that gets taken back, and putting the warning on a screen people actually open), including the two bugs a real install on a razr 50 ultra found after every automated check was green: a screen that told the user they were protected while telling them screening was off, and warning cards that pushed the app itself below the fold. Previously: 2026-08-06 — Chapter 21 (a Play policy rejection that was wrong, and a recording toggle that four user-facing surfaces claimed and no code implemented). Previously: 2026-08-05 — reformatted into chapters with GOTCHA / WHY / VERIFIED / CONTRAST / SCOPE callouts and per-chapter "Done when" criteria, and added Chapter 20 (a full-codebase audit: six features that shipped, passed their tests, and never ran). Previously: Chapter 19 (testing persistence against a real SQLite engine: in-memory drivers in <code>androidUnitTest</code>, restart-hydration testing, round-tripping a sealed type through a CHECK constraint, and the Stats-screen labelling bug those tests caught).</p>
 </div></div>
 

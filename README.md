@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 528 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 571 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
@@ -23,7 +23,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Country blocking** — block all numbers from a country code, matched only against numbers actually written in international form (`+34…` or `0034…`), so blocking Morocco never blocks a Manhattan `212` number
 - **Repeat-caller rules** — block a number after it tries N times inside a window, optionally scoped to a pattern
 - **Quiet hours** — silence all calls on a schedule (TimePicker with presets: Night, Siesta, Work)
-- **Auto-responder (Experimental)** — answer blocked calls with TTS greeting or custom audio; "Test greeting" button previews it locally, no real call needed. The default greeting and the recording-consent phrase are localized, and playback forces the speaker so the caller can actually hear it
+- **Auto-responder (Experimental)** — answer blocked calls with TTS greeting or custom audio; "Test greeting" button previews it locally, no real call needed. The default greeting and the recording-consent phrase are localized, and playback forces the speaker so the caller can actually hear it. A "How this works" card states the real limits — only blocked calls are answered, and the greeting reaches the caller acoustically — and a custom audio file keeps a persisted read grant so it still plays days later, falling back to the spoken script if it ever cannot be opened
 - **Caller message recording (Experimental, off by default)** — records what a blocked caller says after the greeting, capped at 60s, playable and deletable from its call-log entry. Gated on both a consent phrase in your own greeting and the Android microphone permission. Records through the microphone, because Android reserves the actual call-audio sources for privileged apps — so on phones whose manufacturer locks the mic during a call it captures nothing
 - **Repeated-caller bypass** — opt-in: an unknown number that would otherwise be silently blocked gets let through once it retries enough times, with a heads-up on the ringing screen and a notification. Never applies to numbers matched by a manual block, pattern, country, spam, or schedule rule
 - **Keypad** — a dial pad tab, because taking the default-dialer role replaces the phone app. Also where an `ACTION_DIAL` intent from any other app lands, pre-filled
@@ -31,6 +31,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Call-log filters** — search by name or number, filter by direction and outcome (All / Incoming / Outgoing / Blocked), and by date (Today / This week / This month)
 - **Call log** — a recents list: every call in **both directions**, with local timestamp, outcome, rule detail, and the contact's name when it matches one (list-detail two-pane on tablet). Outgoing calls are labelled as outgoing rather than "allowed", because they are never screened and no decision was made about them
 - **Caller identity on the call screen** — a ringing or dialling call shows the contact's name, or failing that the label you gave that number in your own block/allowlist, with the number kept underneath
+- **Block state in the call log** — a row says whether that number is on your block list or allowlist *right now*, and tapping it offers Unblock / Remove from allowlist instead of the action you already took. Separate from the call's own outcome: a call blocked by a rule you have since deleted still reads "Blocked call" and carries no badge
 - **Call back** — tap any number in the call log to return the call, or the Call back button on a missed-call notification
 - **Actionable notifications** — a blocked, missed or repeat-caller notification carries the buttons that outcome allows (Call back, Block, Always allow), and tapping the notification itself opens the call log with that caller's actions already open
 - **Copy number** — copy phone numbers to clipboard from the call log
@@ -39,7 +40,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Adaptive layout** — bottom bar on phone, nav rail on tablet/landscape, content capped at 600dp
 - **Duplicate warnings** — warns when adding a number already present in the other list
 - **Precedence engine** — manual block overrides contacts and allowlist
-- **Contact normalization** — matches formatted contact numbers against raw incoming call numbers
+- **Contact matching** — a contact is recognised whichever way each side is written: saved `611 99 88 77` and called from `+34611998877`, or saved `+34611998877` and called from `900123456`. The country code is derived from the number itself rather than guessed from a region, so two numbers that both state a country are still told apart
 - **Permission checklist on first run** — after the default-dialer explainer, one screen lists every permission the app asks for and the single thing each is used for, with its system dialog behind an explicit Allow. Nothing on it is mandatory, and the microphone is named but only ever requested when call recording is switched on
 - **Permission warnings on Home** — if the app loses the dialer role, notifications, full-screen intent, or the call permission, a card says so above the blocked-call counters, with a button that fixes that specific thing. The same warnings appear in Settings
 - **Privacy & Terms** — in-app privacy policy and MIT license terms
@@ -89,8 +90,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 406 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 66 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 494 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 77 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -145,6 +146,20 @@ A complete 25-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 127 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-14 (fifth):** contacts were blocked anyway, the call log offered the action you had already taken, and the greeting nobody heard.
+
+- **A contact in the address book could still be blocked — the other half of the 08-11 fix.** `PhoneNumberParser.sameNumber` was made right three days ago, and then `AndroidContactsGateway` handed it numbers it had already run through `normalizeForComparison`, which strips the `+`. A contact saved `+34611998877` therefore arrived stating no country, so `sameNumber` could no longer split off its national form, and a call delivered as `611998877` — ordinary for a domestic call — stopped matching. The contact was not allowlisted and any pattern, country, quiet-hours or default-block rule blocked someone the user had in their phone. The call log showed their **name** the whole time, because the name map was keyed by `comparisonKeys` and was never wrong, which is what made it look inexplicable. The lesson is bigger than the line: `sameNumber` only works if every caller hands it numbers **as saved**, so any normalisation upstream silently disables it. That contract is now written on `ContactsGateway.contactNumbers`, and the cursor-loop mapping moved into a pure `buildContactsSnapshot` that unit tests can reach without a ContentResolver.
+- **Proven by A/B on a real call path, not by reasoning.** `rule_matrix_test.sh` gained a phase F — a contact saved internationally, called from a domestic line — and the fix was reverted, rebuilt and reinstalled to watch it fail: `BLOCKED|-`, the user's report reproduced exactly. Phase E still passed against the broken build, which is the point: the existing regression covered the opposite direction and could never have caught this.
+- **Phase E's own SKIP branch had never once executed.** Under `set -e -o pipefail`, the `grep -v '^+'` that looks for a national-format contact exits 1 when it filters everything out — which is precisely the case it exists to detect. The script died there instead, printing no result, no reason and no summary, and exiting 1. Another guard that had never run.
+- **The call log now says whether a number is on a list, and offers the action that is left.** It only ever showed what happened to each *call*, and offered Block and Add-to-allowlist regardless — so blocking an already-blocked caller was a tap that did nothing visible. Rows carry an "On your block list" / "On your allowlist" badge, and the tap dialog and tablet detail pane flip to **Unblock** and **Remove from allowlist**. The two facts are deliberately kept apart: a call blocked last week by a rule since deleted still reads "Blocked call" and carries no badge.
+- **The custom greeting was never played on a real call.** The picker used `GetContent()`, whose read grant is scoped to the picking activity's task and long gone by the time `PassthroughInCallService` reads the URI days later in another process. `setDataSource` threw, the blanket `catch` reported completion, and the blocked caller was answered and hung up on in silence. Now `ActionOpenDocument` plus `takePersistableUriPermission`, refusing to save a URI that cannot be persisted — and if the audio still fails to open, the script is spoken rather than nothing.
+- **The recorder belonged to the service, not the call.** With two calls in progress, whichever ended first stopped the other's recording and filed its audio under its own call-log row. It now lives on the per-call state. The TTS completion callback also mutated that state from a text-to-speech engine thread; it hops back onto the service scope first.
+- **"Recording is not working" was usually the app being silent about the truth.** Recording only ever runs on a call the auto-responder itself answered, so with the auto-responder off the switch was inert and said nothing. `RecordingReadiness` names the reason — responder off, greeting invalid, microphone not granted — and a "How this works" card states the limits the feature genuinely has: only blocked calls are answered, the greeting reaches the caller acoustically through the loudspeaker, and recording captures the microphone rather than the call, so some phones capture nothing. A limitation the user can read is not a bug report.
+- **Two strings shipped a literal backslash.** Compose Multiplatform resources are parsed as plain XML, where Android's `\'` apostrophe escape means nothing, so the auto-responder card read `your phone\'s loudspeaker` — and `blocklist_duplicate_blocked_body` had been showing `won\'t override the block` in the duplicate-number dialog for as long as it has existed. Nothing could catch it: it compiles, `TranslationCompletenessTest` only counts keys, and Android Lint cannot see that resource tree at all. Found by screenshotting the screen; now a test.
+- **`verify.sh` never compiled a line of `commonTest` for Kotlin/Native**, while CI runs `:shared:iosSimulatorArm64Test`. Two iOS-only failures got through as a result: Kotlin/Native rejects a comma inside a backticked test name (three tests, green on the JVM for months), and `viewModelScope` work never runs in a Native unit test without `Dispatchers.setMain`, so `CallLogViewModelTest` waited out `runTest`'s full one-minute timeout. Both fixed, and the compile task added to the script.
+- **`ring_test.sh` cried wolf after the rule matrix.** The matrix leaves the device on `default_action=BLOCK`, under which the unmatched number it rings with is blocked and CallRinger correctly stops — and the script printed "Ringing FAILED. Users of this build would miss calls silently." It now checks that precondition the way it already checked ringer mode, and refuses to run rather than lie.
+- 528 → 571 tests (`:shared` 406 → 494, `:androidApp` 66 → 77). The contacts fix, the escaping check and phase F were each watched failing first. `./scripts/verify.sh` green; on a Pixel API 36 emulator `rule_matrix_test.sh` reports 14 passed, 0 failed, 0 skipped, and `ring_test.sh auto` verifies both the ringing and the silence halves.
 
 **2026-08-14 (fourth):** dates spoke English to everyone, and the store screenshots were nine days stale.
 
