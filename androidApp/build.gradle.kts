@@ -37,8 +37,15 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // is not a patch on 1.2.0: it adds contact search, call-log filters, outgoing calls in the log and
 // caller identity on the call screen, and it fixes a crash that killed the app on every answered
 // call, which made Telecom hand the live call to the preloaded dialer mid-conversation.
-val appVersionName = "1.3.0"
-val appVersionCode = 5
+// 6, because 5 was uploaded to the internal track and is therefore spent. 1.4.0 rather than 1.3.1
+// because the headline change is not a patch: a number in the user's address book could still be
+// blocked. sameNumber was fixed on 2026-08-11, and AndroidContactsGateway went on handing it
+// digit-normalised numbers for three more days, which stripped the "+" the comparison reads --
+// so a contact saved internationally stopped matching a call delivered nationally. Also: the call
+// log now shows whether a number is on a list and toggles it, the auto-responder's custom greeting
+// survives to the call that needs it, and the recorder is owned per call rather than per service.
+val appVersionName = "1.4.0"
+val appVersionCode = 6
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
