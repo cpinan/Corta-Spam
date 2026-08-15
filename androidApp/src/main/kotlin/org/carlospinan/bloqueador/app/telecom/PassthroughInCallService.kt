@@ -63,11 +63,11 @@ class PassthroughInCallService :
     private var autoResponderAudio: AutoResponderAudio? = null
 
     /**
-     * Built only once a greeting has finished on a call the user asked to record. Kept at
-     * service scope, not per call, because only one call is ever auto-answered at a time.
+     * Per call, keyed by [Call]. Only ever touched from [serviceScope], which is confined to the
+     * main dispatcher: Telecom delivers its callbacks there, but the auto-responder's completion
+     * callbacks arrive on a TTS or MediaPlayer thread, and those used to mutate this map and the
+     * recorder field directly.
      */
-    private var autoResponderRecorder: AutoResponderRecorder? = null
-
     private val callStates = mutableMapOf<Call, CallState>()
 
     /**
@@ -107,6 +107,15 @@ class PassthroughInCallService :
 
         /** Disconnects the call once the recording hits its cap; cancelled if the caller hangs up first. */
         var recordingTimeout: Job? = null
+
+        /**
+         * This call's recorder, owned per call rather than by the service.
+         *
+         * It used to be a single service field, and `onCallRemoved` finalised it for *whichever*
+         * call ended — so with a second call in progress, one ending would stop the other call's
+         * recording and file its audio under the wrong call-log row.
+         */
+        var recorder: AutoResponderRecorder? = null
     }
 
     private val autoResponderCallback =
@@ -125,11 +134,17 @@ class PassthroughInCallService :
                     autoResponderAudio?.play(
                         script = config.script,
                         audioUri = config.audioUri.ifBlank { null },
+                        // Hops back onto serviceScope's main dispatcher: TTS reports completion
+                        // on its own engine thread and MediaPlayer on a playback thread, and the
+                        // work below reads and writes `callStates`, which every other path
+                        // touches from the main thread only.
                         onComplete = {
-                            if (config.recordingEnabled) {
-                                startRecordingAfterGreeting(call)
-                            } else {
-                                call.disconnect()
+                            serviceScope.launch {
+                                if (config.recordingEnabled) {
+                                    startRecordingAfterGreeting(call)
+                                } else {
+                                    call.disconnect()
+                                }
                             }
                         },
                     )
@@ -339,9 +354,9 @@ class PassthroughInCallService :
             return
         }
 
-        val recorder = AutoResponderRecorder(this).also { autoResponderRecorder = it }
+        val recorder = AutoResponderRecorder(this).also { state.recorder = it }
         if (!recorder.start(entryId)) {
-            autoResponderRecorder = null
+            state.recorder = null
             call.disconnect()
             return
         }
@@ -361,9 +376,10 @@ class PassthroughInCallService :
      * Runs on call removal rather than when the recorder hits its cap: the caller can hang up
      * at any point, and either way the file is only complete once `stop()` has returned.
      */
-    private fun finishRecording(entryId: Long?) {
-        val path = autoResponderRecorder?.stop()
-        autoResponderRecorder = null
+    private fun finishRecording(state: CallState?) {
+        val path = state?.recorder?.stop()
+        state?.recorder = null
+        val entryId = state?.logEntryId
         if (path == null || entryId == null) return
         serviceScope.launch { callLogRepository.attachRecording(entryId, path) }
     }
@@ -373,7 +389,7 @@ class PassthroughInCallService :
         val state = callStates.remove(call)
         state?.evaluation?.cancel()
         state?.recordingTimeout?.cancel()
-        finishRecording(state?.logEntryId)
+        finishRecording(state)
         call.unregisterCallback(autoResponderCallback)
         call.unregisterCallback(stateCallback)
 
@@ -423,8 +439,7 @@ class PassthroughInCallService :
         // cancel(), not stop(): the service is going away, so nothing is left to write the path
         // into the call log. Keeping the file would leave audio on disk that no row references
         // and no UI can reach or delete.
-        autoResponderRecorder?.cancel()
-        autoResponderRecorder = null
+        callStates.values.forEach { it.recorder?.cancel() }
         callStates.clear()
         serviceScope.cancel()
     }
