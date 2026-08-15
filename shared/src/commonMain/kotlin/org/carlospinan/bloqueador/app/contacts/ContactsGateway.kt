@@ -5,7 +5,15 @@ package org.carlospinan.bloqueador.app.contacts
  * Used to auto-allow contacts in the resolver (SPEC §2 gap #1).
  */
 interface ContactsGateway {
-    /** Returns phone numbers from the user's local contacts, normalized. */
+    /**
+     * Phone numbers from the user's local contacts, **exactly as saved on the card**.
+     *
+     * Not normalized, and not digits. `RulePrecedenceResolver` compares this set with
+     * [org.carlospinan.bloqueador.app.rules.PhoneNumberParser.sameNumber], which reads the
+     * leading `+` to decide whether the national form may bridge two numbers — stripping it here
+     * left a contact saved internationally unmatched by the same subscriber calling in national
+     * form, so patterns and quiet hours blocked people who were in the address book.
+     */
     suspend fun contactNumbers(): Set<String>
 
     /** Normalized number -> contact display name, for showing names instead of raw numbers in UI. */

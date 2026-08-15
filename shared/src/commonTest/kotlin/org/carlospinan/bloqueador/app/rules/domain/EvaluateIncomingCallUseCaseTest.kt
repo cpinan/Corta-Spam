@@ -6,6 +6,7 @@ import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
+import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.settings.DefaultAction
 import org.carlospinan.bloqueador.app.spam.SpamProviderClient
@@ -119,6 +120,47 @@ class EvaluateIncomingCallUseCaseTest {
 
             assertTrue(decision is RuleDecision.Allowlist)
             assertEquals(null, (decision as RuleDecision.Allowlist).label)
+        }
+
+    /**
+     * The reported bug: a number in the address book was blocked anyway, by a pattern rule.
+     *
+     * Both spellings of the same subscriber have to survive step 2, because neither side is
+     * under the app's control — the card is written by the user and the handle is written by the
+     * network, and a domestic call is routinely delivered without a country code. A contact that
+     * fails to match here falls through to the pattern rule below, which matches on digits alone
+     * and has no idea it is looking at somebody's mother.
+     */
+    @Test
+    fun contactIsAllowlistedWhicheverSideStatesItsCountry() =
+        runTest {
+            val savedForms = listOf("+34611998877", "611 99 88 77")
+            val incomingForms = listOf("+34611998877", "611998877")
+
+            for (saved in savedForms) {
+                for (incoming in incomingForms) {
+                    val ruleRepository =
+                        FakeRuleRepository().apply {
+                            // Matches every 9-digit Spanish mobile starting 611, contact or not.
+                            patternRulesFlow.value = listOf(PatternRuleEntry(1, "611*", "Mobile spam", true, 0))
+                        }
+                    val useCase =
+                        EvaluateIncomingCallUseCase(
+                            ruleRepository,
+                            FakeContactsGateway(granted = true, numbers = setOf(saved)),
+                            FakeSettingsRepository(autoAllowContacts = MutableStateFlow(true)),
+                            FakeSpamProviderRepository(),
+                            NoOpSpamClient,
+                        )
+
+                    val decision = useCase.evaluate(incoming)
+
+                    assertTrue(
+                        decision is RuleDecision.Allowlist,
+                        "contact saved \"$saved\" called from \"$incoming\" was $decision",
+                    )
+                }
+            }
         }
 
     @Test

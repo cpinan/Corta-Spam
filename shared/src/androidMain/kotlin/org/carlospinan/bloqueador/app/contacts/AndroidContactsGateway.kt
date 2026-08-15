@@ -9,8 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
-import java.text.Collator
 
 class AndroidContactsGateway(
     private val context: Context,
@@ -45,17 +43,12 @@ class AndroidContactsGateway(
             }
         }
 
-    /** One bulk ContentResolver scan producing both the number set and the number->name map. */
+    /**
+     * One bulk ContentResolver scan. The rows are handed straight to [buildContactsSnapshot],
+     * which owns every decision about number forms and is unit-tested without a provider.
+     */
     private suspend fun queryContacts(): ContactsSnapshot =
         withContext(Dispatchers.IO) {
-            val numbers = mutableSetOf<String>()
-            val names = mutableMapOf<String, String>()
-            val contacts = mutableListOf<Contact>()
-            // One row per phone entry, and the same number arrives twice whenever a card is
-            // synced from two accounts. Deduplicated on (name, digits) rather than on the number
-            // alone: a household landline saved under two people is two search results, and
-            // dropping one of them hides a contact the user went looking for.
-            val seen = mutableSetOf<Pair<String, String>>()
             val uri: Uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI
             val projection =
                 arrayOf(
@@ -73,47 +66,31 @@ class AndroidContactsGateway(
                         null,
                         null,
                     )
-                cursor?.let {
-                    val numberIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                    val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-                    while (it.moveToNext()) {
-                        val raw = it.getString(numberIndex)
-                        if (raw.isNullOrBlank()) continue
-                        // Every form this contact may be recognised by, not just its digits: a
-                        // card saved "611 99 88 77" has to be found when "+34611998877" calls.
-                        val keys = PhoneNumberParser.comparisonKeys(raw)
-                        if (keys.isEmpty()) continue
-                        numbers.add(PhoneNumberParser.normalizeForComparison(raw))
-                        val name = it.getString(nameIndex)
-                        if (!name.isNullOrBlank()) {
-                            // putIfAbsent semantics: the first contact to claim a key keeps it, so
-                            // a later card sharing a national number cannot rename an exact match.
-                            keys.forEach { key -> names.getOrPut(key) { name } }
-                            if (seen.add(name to PhoneNumberParser.normalizeForComparison(raw))) {
-                                contacts.add(Contact(name = name, number = raw.trim()))
-                            }
-                        }
-                    }
-                }
+                val rows = cursor?.let { readRows(it) } ?: emptyList()
+                buildContactsSnapshot(rows.asSequence())
             } finally {
                 cursor?.close()
             }
-            // Sorted here rather than by the cursor: ordering by DISPLAY_NAME in SQLite is
-            // bytewise, which files every accented name after Z -- and "Ángela" belongs with the
-            // A's in all four locales this app ships in. Collator is the locale-aware comparison.
-            val byName = compareBy<Contact, String>(Collator.getInstance()) { it.name }
-            ContactsSnapshot(numbers, names, contacts.sortedWith(byName))
         }
+
+    private fun readRows(cursor: Cursor): List<ContactRow> {
+        val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+        val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+        val rows = mutableListOf<ContactRow>()
+        while (cursor.moveToNext()) {
+            rows.add(
+                ContactRow(
+                    number = cursor.getString(numberIndex),
+                    displayName = cursor.getString(nameIndex),
+                ),
+            )
+        }
+        return rows
+    }
 
     override fun hasPermission(): Boolean =
         context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
-
-    private data class ContactsSnapshot(
-        val numbers: Set<String>,
-        val names: Map<String, String>,
-        val contacts: List<Contact>,
-    )
 
     private companion object {
         /** Elapsed-realtime, so it isn't skewed by a wall-clock adjustment. */
