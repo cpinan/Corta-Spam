@@ -260,8 +260,10 @@ class PassthroughInCallService :
                         }
                     } else if (decision is RuleDecision.AllowedAfterRepeatedAttempts) {
                         // Not blocked -- the call keeps ringing normally. The only extra step is
-                        // telling the user why an unrecognized number is getting through.
-                        InCallState.setRepeatedCallAttempts(decision.attempts)
+                        // telling the user why an unrecognized number is getting through. Keyed by
+                        // number: with a second call in progress this result would otherwise land
+                        // on the other caller's screen.
+                        InCallState.setRepeatedCallAttempts(number, decision.attempts)
                         if (shouldNotifyResult(number)) {
                             IncomingCallNotifier.notifyCallResult(
                                 this@PassthroughInCallService,

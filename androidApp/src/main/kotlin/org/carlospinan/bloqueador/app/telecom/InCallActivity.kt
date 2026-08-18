@@ -42,6 +42,7 @@ class InCallActivity : ComponentActivity() {
                     displayName = current.displayName,
                     dtmfDigits = current.dtmfDigits,
                     onDtmf = InCallState::playDtmf,
+                    otherCallCount = current.otherCallCount,
                 )
             } else {
                 LaunchedEffect(Unit) {

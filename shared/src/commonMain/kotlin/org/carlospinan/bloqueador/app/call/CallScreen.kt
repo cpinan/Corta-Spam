@@ -34,6 +34,7 @@ import cortaspam.shared.generated.resources.action_decline
 import cortaspam.shared.generated.resources.action_hang_up
 import cortaspam.shared.generated.resources.call_keypad_hide
 import cortaspam.shared.generated.resources.call_keypad_show
+import cortaspam.shared.generated.resources.call_other_call_active
 import cortaspam.shared.generated.resources.call_repeated_caller_hint
 import cortaspam.shared.generated.resources.call_status_active
 import cortaspam.shared.generated.resources.call_status_dialing
@@ -69,6 +70,11 @@ fun CallScreen(
     /** The tones already sent on this call, in order. */
     dtmfDigits: String = "",
     onDtmf: (Char) -> Unit = {},
+    /**
+     * Calls Telecom is holding besides this one. Said out loud rather than left implicit: showing
+     * one of two calls as though it were the only one is how a user hangs up on the wrong person.
+     */
+    otherCallCount: Int = 0,
 ) {
     var keypadRequested by rememberSaveable { mutableStateOf(false) }
     // Tones only mean anything on a connected call: Telecom drops playDtmfTone on a call that is
@@ -118,6 +124,14 @@ fun CallScreen(
                             text = stringResource(Res.string.call_repeated_caller_hint, repeatedCallAttempts),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (otherCallCount > 0) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(Res.string.call_other_call_active),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary,
                         )
                     }
                     if (dtmfDigits.isNotEmpty()) {

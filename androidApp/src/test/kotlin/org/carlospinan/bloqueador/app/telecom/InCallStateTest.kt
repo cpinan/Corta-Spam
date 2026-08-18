@@ -49,10 +49,10 @@ class InCallStateTest {
 
     @Test
     fun `repeated-attempt info arriving before a call is dropped, not buffered`() {
-        // setRepeatedCallAttempts copies the existing state, so with no state there is nothing
-        // to copy and the count is discarded. PassthroughInCallService therefore has to attach
-        // the call before reporting the attempt count, or the ringing screen shows no hint.
-        InCallState.setRepeatedCallAttempts(4)
+        // The count is filed against the call with that number, and with no calls attached
+        // there is none to file it against. PassthroughInCallService therefore has to attach the
+        // call before reporting the attempt count, or the ringing screen shows no hint.
+        InCallState.setRepeatedCallAttempts("+34600123456", 4)
 
         assertNull(InCallState.state.value)
     }

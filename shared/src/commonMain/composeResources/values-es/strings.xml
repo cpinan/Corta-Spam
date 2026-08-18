@@ -70,6 +70,7 @@
     <string name="action_hang_up">Colgar</string>
     <string name="call_keypad_show">Teclado</string>
     <string name="call_keypad_hide">Ocultar teclado</string>
+    <string name="call_other_call_active">Ya estás en otra llamada</string>
 
     <!-- Inicio -->
     <string name="home_title">Corta Spam</string>

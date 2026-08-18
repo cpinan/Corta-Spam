@@ -140,6 +140,42 @@ class CallScreenUiTest {
         composeTestRule.onNodeWithText("4021").assertExists()
     }
 
+    /**
+     * With call waiting, showing one of two calls as though it were the only one is how someone
+     * hangs up on the wrong person.
+     */
+    @Test
+    fun `a second call in progress is said out loud`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.RINGING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                otherCallCount = 1,
+            )
+        }
+
+        composeTestRule.onNodeWithText("You are already on another call").assertExists()
+    }
+
+    /** One call is the ordinary case and must stay silent about calls that do not exist. */
+    @Test
+    fun `a single call says nothing about other calls`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.ACTIVE,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("You are already on another call").assertDoesNotExist()
+    }
+
     /** Hanging up must never be the button that scrolled away behind the pad. */
     @Test
     fun `the keypad can be closed again`() {
