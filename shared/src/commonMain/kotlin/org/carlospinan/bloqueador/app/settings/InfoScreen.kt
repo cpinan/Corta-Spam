@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 
 @Composable
 fun InfoScreen(
@@ -22,7 +23,7 @@ fun InfoScreen(
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(
                 windowSizeClass = windowSizeClass,

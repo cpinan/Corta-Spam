@@ -23,6 +23,7 @@ import cortaspam.shared.generated.resources.credits_open_source_title
 import cortaspam.shared.generated.resources.settings_credits_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -44,7 +45,7 @@ fun CreditsScreen(
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(
                 windowSizeClass = windowSizeClass,

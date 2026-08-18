@@ -91,6 +91,7 @@ import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser.sameNumber
 import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.carlospinan.bloqueador.app.rules.storedBlockReasonText
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -174,7 +175,7 @@ fun CallLogScreen(
 
     val selected = selectedEntry
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             if (windowSizeClass == WindowSizeClass.Expanded) {
                 Row(modifier = Modifier.fillMaxSize()) {
@@ -527,7 +528,7 @@ private fun CallLogDetailPane(
                 when {
                     isBlocked -> MaterialTheme.colorScheme.error
                     isReview -> MaterialTheme.colorScheme.tertiary
-                    else -> Color(0xFF4CAF50)
+                    else -> MaterialTheme.colorScheme.primary
                 }
             val statusIcon =
                 when {
@@ -660,7 +661,7 @@ private fun NumberRuleStatusLine(
             else -> return
         }
     val icon = if (ruleState.isBlocked) Res.drawable.ic_blocked_number else Res.drawable.ic_allowlist
-    val tint = if (ruleState.isBlocked) MaterialTheme.colorScheme.error else Color(0xFF4CAF50)
+    val tint = if (ruleState.isBlocked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
 
     Row(
         modifier = modifier,
@@ -724,7 +725,7 @@ private fun CallLogEntryRow(
             isOutgoing -> MaterialTheme.colorScheme.onSurfaceVariant
             isBlocked -> MaterialTheme.colorScheme.error
             isReview -> MaterialTheme.colorScheme.tertiary
-            else -> Color(0xFF4CAF50)
+            else -> MaterialTheme.colorScheme.primary
         }
     val statusIcon =
         when {

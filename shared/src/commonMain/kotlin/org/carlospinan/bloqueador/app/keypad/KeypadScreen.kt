@@ -45,6 +45,7 @@ import cortaspam.shared.generated.resources.settings_grant_contacts
 import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactSearch
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -89,7 +90,7 @@ fun KeypadScreen(
     val matches = remember(contacts, typed) { ContactSearch.match(contacts, typed) }
     val focusManager = LocalFocusManager.current
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = modifier.fillMaxWidth()) {
             ScrollableScreenColumn(
                 contentPadding = PaddingValues(24.dp),

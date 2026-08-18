@@ -84,6 +84,7 @@ import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.permissions.PermissionWarnings
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -138,7 +139,7 @@ fun SettingsScreen(
     var showDefaultActionDialog by remember { mutableStateOf(false) }
     var selectedSection by remember { mutableStateOf(SettingsSection.Blocking) }
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             if (windowSizeClass == WindowSizeClass.Expanded) {
                 Row(modifier = Modifier.fillMaxSize()) {

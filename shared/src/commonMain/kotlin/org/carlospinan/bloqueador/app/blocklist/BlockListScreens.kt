@@ -118,6 +118,7 @@ import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
 import org.carlospinan.bloqueador.app.rules.ScheduleRuleEntry
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -137,7 +138,7 @@ fun ManualBlockListScreen(
     var showDuplicateWarning by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
@@ -261,7 +262,7 @@ fun AllowlistScreen(
     var showDuplicateWarning by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
@@ -381,7 +382,7 @@ fun PatternRuleScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
@@ -480,7 +481,7 @@ fun CountryRuleScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
@@ -572,7 +573,7 @@ fun BlockListHubScreen(
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
@@ -895,7 +896,7 @@ fun ScheduleRuleScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(
@@ -1194,7 +1195,7 @@ fun ActionRuleScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(

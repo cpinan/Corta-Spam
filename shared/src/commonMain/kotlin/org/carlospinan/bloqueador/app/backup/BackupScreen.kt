@@ -43,6 +43,7 @@ import cortaspam.shared.generated.resources.backup_view_example
 import kotlinx.coroutines.flow.Flow
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
@@ -121,7 +122,7 @@ fun BackupScreen(
         }
     }
 
-    MaterialTheme {
+    CortaSpamTheme {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
         ) { innerPadding ->

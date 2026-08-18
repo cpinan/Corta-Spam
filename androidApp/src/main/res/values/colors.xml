@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFF4E6</color>
+    <!-- CortaSpamTheme's light `background` (the mockups' bg token). Overridden in
+         values-night/. Kept as a colour resource rather than inline in the theme so the two
+         qualifiers cannot drift into different shapes. -->
+    <color name="window_background">#F4F5F2</color>
 </resources>

@@ -54,6 +54,7 @@ import cortaspam.shared.generated.resources.onboarding_requesting_indicator
 import cortaspam.shared.generated.resources.onboarding_subtitle
 import cortaspam.shared.generated.resources.onboarding_title
 import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -84,7 +85,7 @@ fun DialerOnboardingScreen(
         return
     }
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             when (state.dialerState) {
                 DialerOnboardingState.REQUESTING -> RequestingIndicatorScreen()

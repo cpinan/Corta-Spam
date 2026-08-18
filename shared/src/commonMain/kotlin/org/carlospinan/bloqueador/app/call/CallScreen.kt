@@ -41,6 +41,7 @@ import cortaspam.shared.generated.resources.call_status_ringing
 import cortaspam.shared.generated.resources.call_unknown_number
 import cortaspam.shared.generated.resources.ic_brand_app
 import org.carlospinan.bloqueador.app.keypad.DialPad
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -74,7 +75,7 @@ fun CallScreen(
     // still ringing or dialling, so offering the pad there would be a button that does nothing.
     val keypadVisible = keypadRequested && phase == CallUiPhase.ACTIVE
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),

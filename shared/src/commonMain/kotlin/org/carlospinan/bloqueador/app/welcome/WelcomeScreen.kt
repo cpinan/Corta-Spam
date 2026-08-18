@@ -25,12 +25,13 @@ import cortaspam.shared.generated.resources.welcome_get_started
 import cortaspam.shared.generated.resources.welcome_subtitle
 import cortaspam.shared.generated.resources.welcome_title
 import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun WelcomeScreen(onGetStarted: () -> Unit) {
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             ScrollableScreenColumn(
                 contentPadding = PaddingValues(32.dp),

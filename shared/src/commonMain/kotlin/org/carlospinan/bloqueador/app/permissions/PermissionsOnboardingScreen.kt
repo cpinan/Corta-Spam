@@ -43,6 +43,7 @@ import cortaspam.shared.generated.resources.permissions_phone_body
 import cortaspam.shared.generated.resources.permissions_phone_title
 import cortaspam.shared.generated.resources.permissions_subtitle
 import cortaspam.shared.generated.resources.permissions_title
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -64,7 +65,7 @@ fun PermissionsOnboardingScreen(
 ) {
     val allGranted = allRequestablePermissionsGranted(items)
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier =

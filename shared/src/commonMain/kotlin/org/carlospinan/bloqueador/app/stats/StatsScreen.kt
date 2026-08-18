@@ -27,6 +27,7 @@ import cortaspam.shared.generated.resources.stats_title
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.rules.DayStat
+import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -36,7 +37,7 @@ fun StatsScreen(
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
-    MaterialTheme {
+    CortaSpamTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Text(

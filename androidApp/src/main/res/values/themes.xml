@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The window behind Compose, which is not the same thing as the Compose theme.
+
+        Both activities used to name @android:style/Theme.Material.Light.NoActionBar directly, so
+        the window Android draws before the first frame — and the background behind any part of the
+        UI Compose does not paint — was white regardless of the system setting. That is the white
+        flash a full-screen call screen would show at night, arriving unbidden.
+
+        -night below swaps only the parent. There is no appcompat dependency in this project, so
+        DayNight comes from the resource qualifier rather than from a theme attribute; the
+        qualifier has worked since API 8 and this app's minSdk is 26.
+    -->
+    <style name="Theme.CortaSpam" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Matches CortaSpamTheme's light `background`, so the pre-Compose window and the first
+             composed frame are the same colour. -->
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

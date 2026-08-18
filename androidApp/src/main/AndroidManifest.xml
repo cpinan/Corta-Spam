@@ -47,7 +47,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.CortaSpam">
 
         <activity
             android:name=".MainActivity"
@@ -81,7 +81,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+            android:theme="@style/Theme.CortaSpam" />
 
         <!-- Mandatory in-call UI for the default dialer role. M1 scope: pure
              pass-through, no blocking logic. See docs/SPEC.md §1 correction:

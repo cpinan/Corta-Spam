@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Same theme, dark parent. See values/themes.xml for why this is a resource qualifier
+         rather than a DayNight theme attribute. -->
+    <style name="Theme.CortaSpam" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>
