@@ -66,6 +66,10 @@
     <string name="call_keypad_show">Keypad</string>
     <string name="call_keypad_hide">Hide keypad</string>
     <string name="call_other_call_active">You are already on another call</string>
+    <string name="call_status_holding">On hold</string>
+    <string name="call_status_disconnecting">Ending call…</string>
+    <string name="call_status_other">Call in progress</string>
+    <string name="action_resume">Resume</string>
     <!-- Home -->
     <string name="home_title">Corta Spam</string>
     <string name="home_blocking_enabled">Blocking is on — spam and blocked calls are filtered</string>

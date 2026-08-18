@@ -32,12 +32,16 @@ import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_answer
 import cortaspam.shared.generated.resources.action_decline
 import cortaspam.shared.generated.resources.action_hang_up
+import cortaspam.shared.generated.resources.action_resume
 import cortaspam.shared.generated.resources.call_keypad_hide
 import cortaspam.shared.generated.resources.call_keypad_show
 import cortaspam.shared.generated.resources.call_other_call_active
 import cortaspam.shared.generated.resources.call_repeated_caller_hint
 import cortaspam.shared.generated.resources.call_status_active
 import cortaspam.shared.generated.resources.call_status_dialing
+import cortaspam.shared.generated.resources.call_status_disconnecting
+import cortaspam.shared.generated.resources.call_status_holding
+import cortaspam.shared.generated.resources.call_status_other
 import cortaspam.shared.generated.resources.call_status_ringing
 import cortaspam.shared.generated.resources.call_unknown_number
 import cortaspam.shared.generated.resources.ic_brand_app
@@ -46,7 +50,32 @@ import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-enum class CallUiPhase { RINGING, DIALING, ACTIVE, OTHER }
+/**
+ * What the call is doing, as far as this screen is concerned.
+ *
+ * [HOLDING], [DISCONNECTING] and [OTHER] exist because they used to be one value that rendered no
+ * buttons at all. A held call, a call being torn down, a dual-SIM call waiting for an account to
+ * be picked and Telecom's simulated ringing all landed on it, and the user got a screen with a
+ * name on it and no way to end the call.
+ */
+enum class CallUiPhase {
+    RINGING,
+    DIALING,
+    ACTIVE,
+
+    /** Parked, usually because the user answered a second call. Resumable. */
+    HOLDING,
+
+    /** Already ending. Nothing to offer: the button it would show is the thing happening. */
+    DISCONNECTING,
+
+    /**
+     * Everything Telecom can report that this screen has no specific handling for. Still gets a
+     * hang-up button — whatever the state turns out to be, ending the call is the escape hatch,
+     * and having none is what made this a bug.
+     */
+    OTHER,
+}
 
 /**
  * The in-call UI. This app holds `ROLE_DIALER`, so this screen *is* the phone app's call screen —
@@ -64,6 +93,8 @@ fun CallScreen(
     onAnswer: () -> Unit,
     onDecline: () -> Unit,
     onHangUp: () -> Unit,
+    /** Takes a held call off hold. Only reachable from [CallUiPhase.HOLDING]. */
+    onResume: () -> Unit = {},
     repeatedCallAttempts: Int? = null,
     /** Contact name, or the user's own label for this number. Null when it is neither. */
     displayName: String? = null,
@@ -98,7 +129,9 @@ fun CallScreen(
                                 CallUiPhase.RINGING -> stringResource(Res.string.call_status_ringing)
                                 CallUiPhase.DIALING -> stringResource(Res.string.call_status_dialing)
                                 CallUiPhase.ACTIVE -> stringResource(Res.string.call_status_active)
-                                CallUiPhase.OTHER -> ""
+                                CallUiPhase.HOLDING -> stringResource(Res.string.call_status_holding)
+                                CallUiPhase.DISCONNECTING -> stringResource(Res.string.call_status_disconnecting)
+                                CallUiPhase.OTHER -> stringResource(Res.string.call_status_other)
                             },
                         style = MaterialTheme.typography.labelLarge,
                     )
@@ -185,29 +218,52 @@ fun CallScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                             ) {
-                                Button(
-                                    onClick = onDecline,
-                                    colors =
-                                        ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.error,
-                                        ),
-                                ) { Text(stringResource(Res.string.action_decline)) }
+                                HangUpButton(onClick = onDecline, label = stringResource(Res.string.action_decline))
                                 Button(onClick = onAnswer) { Text(stringResource(Res.string.action_answer)) }
                             }
 
-                        CallUiPhase.ACTIVE, CallUiPhase.DIALING ->
-                            Button(
-                                onClick = onHangUp,
-                                colors =
-                                    ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.error,
-                                    ),
-                            ) { Text(stringResource(Res.string.action_hang_up)) }
+                        CallUiPhase.HOLDING ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                            ) {
+                                HangUpButton(onClick = onHangUp, label = stringResource(Res.string.action_hang_up))
+                                Button(onClick = onResume) { Text(stringResource(Res.string.action_resume)) }
+                            }
 
-                        CallUiPhase.OTHER -> Unit
+                        // OTHER is in here on purpose. Whatever Telecom is reporting, the user
+                        // must be able to end the call; a screen with no button was the bug.
+                        CallUiPhase.ACTIVE, CallUiPhase.DIALING, CallUiPhase.OTHER ->
+                            HangUpButton(onClick = onHangUp, label = stringResource(Res.string.action_hang_up))
+
+                        // The call is already ending. A hang-up button here would be a control
+                        // for something the platform is doing anyway.
+                        CallUiPhase.DISCONNECTING -> Unit
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * The destructive action, in both places it appears.
+ *
+ * `contentColor` is passed explicitly: `ButtonDefaults.buttonColors(containerColor = …)` leaves
+ * the content at `onPrimary`, which was white-on-red by luck in the light scheme and a dark green
+ * on light coral in the dark one.
+ */
+@Composable
+private fun HangUpButton(
+    onClick: () -> Unit,
+    label: String,
+) {
+    Button(
+        onClick = onClick,
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError,
+            ),
+    ) { Text(label) }
 }

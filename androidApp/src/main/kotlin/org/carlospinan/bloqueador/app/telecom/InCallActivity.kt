@@ -38,6 +38,7 @@ class InCallActivity : ComponentActivity() {
                     onAnswer = InCallState::answer,
                     onDecline = InCallState::decline,
                     onHangUp = InCallState::hangUp,
+                    onResume = InCallState::resume,
                     repeatedCallAttempts = current.repeatedCallAttempts,
                     displayName = current.displayName,
                     dtmfDigits = current.dtmfDigits,

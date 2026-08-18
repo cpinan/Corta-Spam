@@ -11,6 +11,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The call screen showed a bare number for every caller, including the ones already in the
@@ -174,6 +175,69 @@ class CallScreenUiTest {
         }
 
         composeTestRule.onNodeWithText("You are already on another call").assertDoesNotExist()
+    }
+
+    /**
+     * Every phase except the one that is already ending must offer a way out. CallUiPhase.OTHER
+     * used to render no buttons at all, so a held call, a call being torn down, a dual-SIM call
+     * waiting for an account and Telecom's simulated ringing all produced a screen with a name on
+     * it and nothing to press.
+     */
+    @Test
+    fun `an unrecognised call state still offers a way to hang up`() {
+        var hungUp = false
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.OTHER,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = { hungUp = true },
+            )
+        }
+
+        composeTestRule.onNodeWithText("Hang up").performClick()
+
+        assertTrue(hungUp)
+    }
+
+    @Test
+    fun `a held call can be resumed or ended`() {
+        var resumed = false
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.HOLDING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onResume = { resumed = true },
+            )
+        }
+
+        composeTestRule.onNodeWithText("On hold").assertExists()
+        composeTestRule.onNodeWithText("Hang up").assertExists()
+        composeTestRule.onNodeWithText("Resume").performClick()
+
+        assertTrue(resumed)
+    }
+
+    /** The one phase with no button, because the thing the button would do is already happening. */
+    @Test
+    fun `a call already ending offers nothing to press`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.DISCONNECTING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Ending call\u2026").assertExists()
+        composeTestRule.onNodeWithText("Hang up").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Resume").assertDoesNotExist()
     }
 
     /** Hanging up must never be the button that scrolled away behind the pad. */
