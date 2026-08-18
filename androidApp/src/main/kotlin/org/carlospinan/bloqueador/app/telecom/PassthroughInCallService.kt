@@ -20,6 +20,7 @@ import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.contacts.contactDisplayName
 import org.carlospinan.bloqueador.app.contacts.isKnownContact
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 import org.carlospinan.bloqueador.app.rules.EmergencyNumbers
@@ -346,6 +347,7 @@ class PassthroughInCallService :
             try {
                 val name =
                     ContactNameLookup.displayNameFor(this@PassthroughInCallService, number)
+                        ?: contactNameFromAddressBook(number)
                         ?: ruleLabelFor(number)
                 if (name != null) InCallState.setDisplayName(number, name)
             } catch (e: CancellationException) {
@@ -355,6 +357,26 @@ class PassthroughInCallService :
                 Log.e(TAG, "Could not resolve a name for the caller", e)
             }
         }
+    }
+
+    /**
+     * The address book's own answer, for the numbers `PhoneLookup` cannot match.
+     *
+     * `PhoneLookup` matches through the provider's normalized `data4` column, which is derived
+     * from the device's default region: a contact saved nationally does not match a call in E.164
+     * unless the phone's region happens to agree, and with no SIM `data4` is null and *every*
+     * contact reads as a stranger. This is the same probe [ContactsGateway] gives the call log and
+     * the block lists — see [org.carlospinan.bloqueador.app.contacts.contactDisplayName], which
+     * derives the country code from the number itself and so has no region to be wrong about.
+     *
+     * It is the fallback rather than the first question only because it is the slower one: the
+     * gateway caches for five minutes, but the first call after a change pays for a full scan.
+     */
+    private suspend fun contactNameFromAddressBook(number: String): String? {
+        if (!contactsGateway.hasPermission()) return null
+        // contactDisplayName hands back the number itself when nobody claims it, which is not a
+        // name and must not be shown as one — the screen already falls back to the number.
+        return contactDisplayName(number, contactsGateway.contactNames()).takeIf { it != number }
     }
 
     /**
