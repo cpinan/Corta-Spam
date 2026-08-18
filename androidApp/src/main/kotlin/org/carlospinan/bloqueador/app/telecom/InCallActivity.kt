@@ -40,6 +40,8 @@ class InCallActivity : ComponentActivity() {
                     onHangUp = InCallState::hangUp,
                     repeatedCallAttempts = current.repeatedCallAttempts,
                     displayName = current.displayName,
+                    dtmfDigits = current.dtmfDigits,
+                    onDtmf = InCallState::playDtmf,
                 )
             } else {
                 LaunchedEffect(Unit) {

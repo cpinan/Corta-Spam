@@ -63,6 +63,8 @@
     <string name="action_decline">Decline</string>
     <string name="action_answer">Answer</string>
     <string name="action_hang_up">Hang up</string>
+    <string name="call_keypad_show">Keypad</string>
+    <string name="call_keypad_hide">Hide keypad</string>
     <!-- Home -->
     <string name="home_title">Corta Spam</string>
     <string name="home_blocking_enabled">Blocking is on — spam and blocked calls are filtered</string>

@@ -129,25 +129,7 @@ fun KeypadScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                KEY_ROWS.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        row.forEach { key ->
-                            OutlinedButton(
-                                onClick = { typed += key.digit },
-                                modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                            ) {
-                                Text(
-                                    text = key.digit,
-                                    style = MaterialTheme.typography.titleLarge,
-                                )
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                DialPad(onKey = { key -> typed += key })
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -292,15 +274,3 @@ private const val NO_REQUEST_APPLIED = -1L
 
 /** Enough to recognise the right contact without burying the pad below the fold. */
 private const val MAX_VISIBLE_MATCHES = 5
-
-private data class KeypadKey(
-    val digit: String,
-)
-
-private val KEY_ROWS: List<List<KeypadKey>> =
-    listOf(
-        listOf(KeypadKey("1"), KeypadKey("2"), KeypadKey("3")),
-        listOf(KeypadKey("4"), KeypadKey("5"), KeypadKey("6")),
-        listOf(KeypadKey("7"), KeypadKey("8"), KeypadKey("9")),
-        listOf(KeypadKey("*"), KeypadKey("0"), KeypadKey("#")),
-    )

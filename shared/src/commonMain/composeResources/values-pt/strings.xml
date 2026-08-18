@@ -68,6 +68,8 @@
     <string name="action_decline">Recusar</string>
     <string name="action_answer">Atender</string>
     <string name="action_hang_up">Desligar</string>
+    <string name="call_keypad_show">Teclado</string>
+    <string name="call_keypad_hide">Ocultar teclado</string>
 
     <!-- Início -->
     <string name="home_title">Corta Spam</string>

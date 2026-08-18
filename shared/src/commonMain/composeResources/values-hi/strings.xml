@@ -68,6 +68,8 @@
     <string name="action_decline">अस्वीकार करें</string>
     <string name="action_answer">उत्तर दें</string>
     <string name="action_hang_up">कॉल काटें</string>
+    <string name="call_keypad_show">कीपैड</string>
+    <string name="call_keypad_hide">कीपैड छिपाएँ</string>
 
     <!-- होम -->
     <string name="home_title">Corta Spam</string>

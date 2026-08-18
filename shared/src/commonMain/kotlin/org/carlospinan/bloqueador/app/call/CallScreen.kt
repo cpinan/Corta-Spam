@@ -12,12 +12,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,18 +32,29 @@ import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_answer
 import cortaspam.shared.generated.resources.action_decline
 import cortaspam.shared.generated.resources.action_hang_up
+import cortaspam.shared.generated.resources.call_keypad_hide
+import cortaspam.shared.generated.resources.call_keypad_show
 import cortaspam.shared.generated.resources.call_repeated_caller_hint
 import cortaspam.shared.generated.resources.call_status_active
 import cortaspam.shared.generated.resources.call_status_dialing
 import cortaspam.shared.generated.resources.call_status_ringing
 import cortaspam.shared.generated.resources.call_unknown_number
 import cortaspam.shared.generated.resources.ic_brand_app
+import org.carlospinan.bloqueador.app.keypad.DialPad
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-// M1: answer/decline/hang up only; no custom dialer chrome yet.
 enum class CallUiPhase { RINGING, DIALING, ACTIVE, OTHER }
 
+/**
+ * The in-call UI. This app holds `ROLE_DIALER`, so this screen *is* the phone app's call screen —
+ * whatever it cannot do, the user cannot do while on a call.
+ *
+ * [dtmfDigits] and [onDtmf] are that principle applied to automated menus: without a keypad
+ * during the call there is no way to press 1 for anything, so every bank, airline and doctor's
+ * surgery becomes unreachable. The digits already sent are shown because DTMF is fire-and-forget —
+ * nothing echoes them back, and a user who has lost count of a card number has no way to check.
+ */
 @Composable
 fun CallScreen(
     number: String,
@@ -47,7 +65,15 @@ fun CallScreen(
     repeatedCallAttempts: Int? = null,
     /** Contact name, or the user's own label for this number. Null when it is neither. */
     displayName: String? = null,
+    /** The tones already sent on this call, in order. */
+    dtmfDigits: String = "",
+    onDtmf: (Char) -> Unit = {},
 ) {
+    var keypadRequested by rememberSaveable { mutableStateOf(false) }
+    // Tones only mean anything on a connected call: Telecom drops playDtmfTone on a call that is
+    // still ringing or dialling, so offering the pad there would be a button that does nothing.
+    val keypadVisible = keypadRequested && phase == CallUiPhase.ACTIVE
+
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -93,40 +119,78 @@ fun CallScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    if (dtmfDigits.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = dtmfDigits,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
 
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_brand_app),
-                        contentDescription = null,
-                        modifier = Modifier.size(96.dp),
-                    )
+                    if (keypadVisible) {
+                        // Scrolls because it has to: in landscape the pad is taller than the
+                        // space between the caller's name and the hang-up button, and a pad that
+                        // pushed the hang-up button off screen would be worse than no pad.
+                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                            DialPad(onKey = onDtmf)
+                        }
+                    } else {
+                        Image(
+                            painter = painterResource(Res.drawable.ic_brand_app),
+                            contentDescription = null,
+                            modifier = Modifier.size(96.dp),
+                        )
+                    }
                 }
 
-                when (phase) {
-                    CallUiPhase.RINGING ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            Button(
-                                onClick = onDecline,
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                            ) { Text(stringResource(Res.string.action_decline)) }
-                            Button(onClick = onAnswer) { Text(stringResource(Res.string.action_answer)) }
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (phase == CallUiPhase.ACTIVE) {
+                        TextButton(onClick = { keypadRequested = !keypadRequested }) {
+                            Text(
+                                stringResource(
+                                    if (keypadVisible) Res.string.call_keypad_hide else Res.string.call_keypad_show,
+                                ),
+                            )
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
 
-                    CallUiPhase.ACTIVE, CallUiPhase.DIALING ->
-                        Button(
-                            onClick = onHangUp,
-                            modifier = Modifier.padding(bottom = 32.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                        ) { Text(stringResource(Res.string.action_hang_up)) }
+                    when (phase) {
+                        CallUiPhase.RINGING ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                            ) {
+                                Button(
+                                    onClick = onDecline,
+                                    colors =
+                                        ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.error,
+                                        ),
+                                ) { Text(stringResource(Res.string.action_decline)) }
+                                Button(onClick = onAnswer) { Text(stringResource(Res.string.action_answer)) }
+                            }
 
-                    CallUiPhase.OTHER -> Unit
+                        CallUiPhase.ACTIVE, CallUiPhase.DIALING ->
+                            Button(
+                                onClick = onHangUp,
+                                colors =
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                    ),
+                            ) { Text(stringResource(Res.string.action_hang_up)) }
+
+                        CallUiPhase.OTHER -> Unit
+                    }
                 }
             }
         }
