@@ -222,9 +222,15 @@ class CallScreenUiTest {
         assertTrue(resumed)
     }
 
-    /** The one phase with no button, because the thing the button would do is already happening. */
+    /**
+     * No call control, because the thing a hang-up button would do is already happening \u2014 but a
+     * door, because this was the one state the user could not leave. Telecom holds a disconnected
+     * call for as long as it likes before removing it, and until it does, this screen showed a
+     * finished call with nothing to press while Back deliberately refused to leave.
+     */
     @Test
-    fun `a call already ending offers nothing to press`() {
+    fun `a call already ending still offers a way off the screen`() {
+        var dismissed = false
         composeTestRule.setContent {
             CallScreen(
                 number = "+34611998877",
@@ -232,12 +238,34 @@ class CallScreenUiTest {
                 onAnswer = {},
                 onDecline = {},
                 onHangUp = {},
+                onDismiss = { dismissed = true },
             )
         }
 
         composeTestRule.onNodeWithText("Ending call\u2026").assertExists()
         composeTestRule.onNodeWithText("Hang up").assertDoesNotExist()
         composeTestRule.onNodeWithText("Resume").assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Close").performClick()
+
+        assertTrue(dismissed)
+    }
+
+    /** Leaving with a second call still on the line would take away its only UI. */
+    @Test
+    fun `a call ending beside a live one offers no way out`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.DISCONNECTING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                otherCallCount = 1,
+            )
+        }
+
+        composeTestRule.onNodeWithText("Close").assertDoesNotExist()
     }
 
     /** Hanging up must never be the button that scrolled away behind the pad. */

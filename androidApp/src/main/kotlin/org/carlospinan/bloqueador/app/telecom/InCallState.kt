@@ -93,6 +93,16 @@ object InCallState {
                 call: Call,
                 newState: Int,
             ) {
+                // A disconnected call is over, and waiting for `onCallRemoved` to say so is what
+                // stranded the user on a dead call screen. Telecom holds a call in
+                // STATE_DISCONNECTED for as long as it likes before removing it -- seconds on a
+                // real network -- and this screen renders that state with no buttons at all, while
+                // Back deliberately backgrounds the task instead of leaving. The call had ended
+                // and there was nothing to press and no way out. Ending the call ends the screen.
+                if (newState == Call.STATE_DISCONNECTED) {
+                    detach(call)
+                    return
+                }
                 // Guarded on identity: this callback is registered on every call, and without the
                 // check a background call changing state would rewrite the phase of the call the
                 // user is looking at.
@@ -129,6 +139,28 @@ object InCallState {
 
             CallStack.Removal.Promoted -> stack.primary?.let { show(it) }
         }
+    }
+
+    /**
+     * Drops every call and takes the screen down with them.
+     *
+     * For [PassthroughInCallService.onDestroy]. The `Call` objects belong to the service's binding
+     * to Telecom, so once that is gone `disconnect()` on them reaches nothing — and this is an
+     * `object`, which outlives the service. Without this, a service torn down while a call was
+     * still attached left a call screen the user could not leave and a hang-up button that did
+     * nothing, and the next call would promote that dead one back onto the screen when it ended.
+     */
+    fun clear() {
+        info.keys.forEach { it.unregisterCallback(callback) }
+        info.clear()
+        // Guarded rather than unconditional: touching the handler builds it, and it is lazy
+        // precisely so a test that never plays a tone needs no main looper.
+        if (dtmfCall != null) {
+            dtmfHandler.removeCallbacks(stopDtmfTone)
+            dtmfCall = null
+        }
+        stack.clear()
+        _state.value = null
     }
 
     /** Puts [call] on screen, restoring whatever was already known about it. */

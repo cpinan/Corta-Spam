@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_answer
+import cortaspam.shared.generated.resources.action_close
 import cortaspam.shared.generated.resources.action_decline
 import cortaspam.shared.generated.resources.action_hang_up
 import cortaspam.shared.generated.resources.action_resume
@@ -106,6 +107,12 @@ fun CallScreen(
      * one of two calls as though it were the only one is how a user hangs up on the wrong person.
      */
     otherCallCount: Int = 0,
+    /**
+     * Leaves the call screen without touching the call. Only reachable from
+     * [CallUiPhase.DISCONNECTING], where there is no call left to act on and the screen would
+     * otherwise be a dead end — Back deliberately backgrounds the task rather than leaving.
+     */
+    onDismiss: () -> Unit = {},
 ) {
     var keypadRequested by rememberSaveable { mutableStateOf(false) }
     // Tones only mean anything on a connected call: Telecom drops playDtmfTone on a call that is
@@ -236,9 +243,17 @@ fun CallScreen(
                         CallUiPhase.ACTIVE, CallUiPhase.DIALING, CallUiPhase.OTHER ->
                             HangUpButton(onClick = onHangUp, label = stringResource(Res.string.action_hang_up))
 
-                        // The call is already ending. A hang-up button here would be a control
-                        // for something the platform is doing anyway.
-                        CallUiPhase.DISCONNECTING -> Unit
+                        // The call is already ending, so a hang-up button here would be a control
+                        // for something the platform is doing anyway — but the screen still needs
+                        // a door. Telecom can sit on a disconnected call for seconds before it
+                        // removes it, and Back backgrounds the task rather than leaving, so this
+                        // state used to be a screen with nothing on it and no way off it. Not
+                        // offered while another call is live: leaving then would take away the
+                        // only UI for the call still on the line.
+                        CallUiPhase.DISCONNECTING ->
+                            if (otherCallCount == 0) {
+                                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+                            }
                     }
                 }
             }

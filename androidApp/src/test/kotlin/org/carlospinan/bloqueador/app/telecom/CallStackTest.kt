@@ -124,6 +124,29 @@ class CallStackTest {
         assertEquals(CallStack.Removal.Empty, stack.remove(call))
     }
 
+    /**
+     * The service being destroyed takes every call with it, and none of them gets promoted.
+     *
+     * Removing them one by one would promote the survivors, which is exactly wrong here: they are
+     * all unreachable together, and putting one back on screen gave the user a call screen whose
+     * hang-up button reached a dead binding.
+     */
+    @Test
+    fun `clearing drops every call without promoting one`() {
+        val stack = stack()
+        val first = FakeCall("+34611998877")
+        val second = FakeCall("+34600123456")
+        stack.add(first)
+        stack.add(second)
+
+        stack.clear()
+
+        assertNull(stack.primary)
+        assertEquals(0, stack.otherCount())
+        assertEquals(false, stack.contains(first))
+        assertEquals(false, stack.contains(second))
+    }
+
     /** Two distinct calls that happen to describe the same number are still two calls. */
     @Test
     fun `identity, not equality, decides which call is which`() {

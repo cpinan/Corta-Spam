@@ -56,6 +56,16 @@ internal class CallStack<T : Any>(
     fun otherCount(): Int = calls.count { it !== primary }
 
     /**
+     * Forgets every call at once, for the case where they have all stopped being reachable
+     * together — the owning `InCallService` being destroyed. Not the same as removing them one by
+     * one: there is no promotion to do, because none of them is controllable any more.
+     */
+    fun clear() {
+        calls.clear()
+        primary = null
+    }
+
+    /**
      * An enum rather than a sealed type carrying the promoted call: the caller reads [primary]
      * for that, and a `Promoted<T>` nested in a generic class needs its own type parameter, which
      * forced an unchecked cast at the one place that used it.

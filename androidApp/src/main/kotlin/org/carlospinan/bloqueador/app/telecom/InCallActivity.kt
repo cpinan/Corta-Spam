@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.carlospinan.bloqueador.app.call.CallScreen
+import org.carlospinan.bloqueador.app.call.CallUiPhase
 
 /**
  * Minimal in-call UI, launched by [PassthroughInCallService] because we
@@ -33,12 +34,18 @@ class InCallActivity : ComponentActivity() {
             val current = uiState
 
             if (current != null) {
-                // Back must not end the call UI. It used to `finish()` this activity while the
-                // call carried on, and as the default dialer there is no second app holding a
-                // call screen -- the user was left on a live call with nothing showing it. This
-                // backgrounds the task instead, exactly as pressing Home does, so the screen is
-                // still there to come back to.
-                BackHandler { moveTaskToBack(true) }
+                // Back must not end the call UI *while there is a call*. It used to `finish()`
+                // this activity while the call carried on, and as the default dialer there is no
+                // second app holding a call screen -- the user was left on a live call with
+                // nothing showing it. This backgrounds the task instead, exactly as pressing Home
+                // does, so the screen is still there to come back to.
+                //
+                // Once the call is ending there is nothing left to come back to, and backgrounding
+                // is the wrong answer: Telecom can hold a disconnected call for seconds before it
+                // removes it, and for that whole time Back was refusing to leave a screen about a
+                // call that had already ended. Then it leaves.
+                val ending = current.phase == CallUiPhase.DISCONNECTING && current.otherCallCount == 0
+                BackHandler { if (ending) finish() else moveTaskToBack(true) }
 
                 CallScreen(
                     number = current.number,
@@ -52,6 +59,7 @@ class InCallActivity : ComponentActivity() {
                     dtmfDigits = current.dtmfDigits,
                     onDtmf = InCallState::playDtmf,
                     otherCallCount = current.otherCallCount,
+                    onDismiss = ::finish,
                 )
             } else {
                 LaunchedEffect(Unit) {

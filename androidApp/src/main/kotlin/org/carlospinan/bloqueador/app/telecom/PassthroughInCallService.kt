@@ -399,6 +399,12 @@ class PassthroughInCallService :
 
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
+        // First, before any of the bookkeeping below. This is what takes the call screen down, and
+        // it used to be the last line of the method: anything above it that threw -- a recorder
+        // that would not stop, a notification the platform rejected -- left the user on a call
+        // screen for a call that no longer existed, with Back deliberately declining to leave it.
+        InCallState.detach(call)
+
         val state = callStates.remove(call)
         state?.evaluation?.cancel()
         state?.recordingTimeout?.cancel()
@@ -441,11 +447,16 @@ class PassthroughInCallService :
                 }
             }
         }
-        InCallState.detach(call)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        // The Call objects handed to this service are only usable through its binding to Telecom,
+        // and InCallState is an object that outlives the service. Leaving them behind left a call
+        // screen the user could not leave, whose hang-up button reached a dead adapter and did
+        // nothing — and left a dead call in the stack for the next call to promote back on to the
+        // screen when it ended.
+        InCallState.clear()
         ringer.stop()
         autoResponderAudio?.release()
         autoResponderAudio = null

@@ -77,6 +77,7 @@
     <string name="call_status_disconnecting">Finalizando llamada…</string>
     <string name="call_status_other">Llamada en curso</string>
     <string name="action_resume">Reanudar</string>
+    <string name="action_close">Cerrar</string>
 
     <!-- Inicio -->
     <string name="home_title">Corta Spam</string>
