@@ -22,6 +22,13 @@ format.
 
 ### Fixed
 
+- **Four Home tiles all landed on the unfiltered call log.** "Blocked today", "This week", "This
+  month" and "Pending review" each navigate to `call_log/<filter>`, and the destination read that
+  argument by casting `NavBackStackEntry.arguments` to `Map<String, *>` — a type it has never been.
+  The compiler flagged it on every build ("this cast can never succeed"); `as?` turned the
+  impossibility into null and the elvis replaced it with `"all"`. `CallLogViewModel.applyFilter`
+  handled all four values the whole time, and its unit tests passed, because they call it directly.
+  ([`70c8bea`](../../commit/70c8bea))
 - **A contact in the address book could still be blocked.** `AndroidContactsGateway` put contact
   numbers through `normalizeForComparison` before handing them to `PhoneNumberParser.sameNumber`,
   which strips the `+` that `sameNumber` reads to decide whether the national form may bridge two
@@ -57,6 +64,21 @@ format.
 
 ### Added
 
+- **A DTMF keypad on the in-call screen.** Holding `ROLE_DIALER` means this is the only call screen
+  the user has, and without a pad every automated menu ended at the first prompt. Offered on
+  `ACTIVE` calls only, because Telecom drops a tone played on a ringing or dialling call. The tone
+  is held 250 ms — below ~40 ms an ITU Q.24 receiver need not recognise it — and the digits already
+  sent are shown, because nothing on the line echoes them back. The twelve keys are now a `DialPad`
+  shared with the dialer screen. ([`578b779`](../../commit/578b779))
+- **The installed version in Settings**, `1.4.0 (6)`, read from `PackageManager` on Android and the
+  bundle's `Info.plist` on iOS rather than from a constant that could disagree with the artifact.
+  Both numbers, because a version name does not say which upload the user is on.
+  ([`acbe02c`](../../commit/acbe02c))
+- **Credits is no longer empty.** The maintainer, the AI pair used to write the code, and the
+  open-source libraries the app ships with — each with its SPDX identifier and project home. People
+  and licences are separate sections: one is a courtesy, the other an obligation. Test-only and
+  build-only dependencies are omitted, because none of them reach a device.
+  ([`81921bd`](../../commit/81921bd))
 - **Block state in the call log.** A row shows whether its number is on the block list or allowlist
   *right now*, and tapping it offers Unblock / Remove from allowlist instead of the action already
   taken. Kept separate from the call's own outcome: a call blocked by a rule since deleted still
