@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
@@ -16,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -23,6 +25,51 @@ import org.robolectric.annotation.GraphicsMode
 class HomeScreenUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    private fun setHome(
+        callInProgress: Boolean = false,
+        onReturnToCall: () -> Unit = {},
+    ) {
+        composeTestRule.setContent {
+            HomeScreen(
+                state = HomeUiState(blockingEnabled = true),
+                onNavigateToCallLog = {},
+                onNavigateToCallLogToday = {},
+                onNavigateToCallLogThisWeek = {},
+                onNavigateToCallLogThisMonth = {},
+                onNavigateToCallLogReview = {},
+                onNavigateToBlockList = {},
+                onNavigateToSettings = {},
+                onNavigateToStats = {},
+                onToggleBlocking = {},
+                callInProgress = callInProgress,
+                onReturnToCall = onReturnToCall,
+            )
+        }
+    }
+
+    /**
+     * Back on the call screen backgrounds it rather than ending it, and Home does the same. The
+     * ongoing-call notification is one way back; it is gone entirely when the user has switched
+     * notifications off, so this card is the other.
+     */
+    @Test
+    fun `a live call offers a way back to it`() {
+        var returned = false
+        setHome(callInProgress = true, onReturnToCall = { returned = true })
+
+        composeTestRule.onNodeWithText("A call is in progress").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Return to call").performClick()
+
+        assertTrue(returned)
+    }
+
+    @Test
+    fun `no call means no card`() {
+        setHome(callInProgress = false)
+
+        composeTestRule.onNodeWithText("A call is in progress").assertDoesNotExist()
+    }
 
     @Test
     fun `blocked today count displayed`() {

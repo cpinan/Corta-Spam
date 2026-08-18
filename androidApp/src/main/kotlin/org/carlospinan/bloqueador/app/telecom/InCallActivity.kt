@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +33,13 @@ class InCallActivity : ComponentActivity() {
             val current = uiState
 
             if (current != null) {
+                // Back must not end the call UI. It used to `finish()` this activity while the
+                // call carried on, and as the default dialer there is no second app holding a
+                // call screen -- the user was left on a live call with nothing showing it. This
+                // backgrounds the task instead, exactly as pressing Home does, so the screen is
+                // still there to come back to.
+                BackHandler { moveTaskToBack(true) }
+
                 CallScreen(
                     number = current.number,
                     phase = current.phase,

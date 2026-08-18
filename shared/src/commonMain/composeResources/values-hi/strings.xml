@@ -71,6 +71,8 @@
     <string name="call_keypad_show">कीपैड</string>
     <string name="call_keypad_hide">कीपैड छिपाएँ</string>
     <string name="call_other_call_active">आप पहले से दूसरी कॉल पर हैं</string>
+    <string name="home_call_in_progress">एक कॉल जारी है</string>
+    <string name="home_return_to_call">कॉल पर लौटें</string>
     <string name="call_status_holding">होल्ड पर</string>
     <string name="call_status_disconnecting">कॉल समाप्त हो रही है…</string>
     <string name="call_status_other">कॉल जारी है</string>

@@ -71,6 +71,8 @@
     <string name="call_keypad_show">Teclado</string>
     <string name="call_keypad_hide">Ocultar teclado</string>
     <string name="call_other_call_active">Ya estás en otra llamada</string>
+    <string name="home_call_in_progress">Hay una llamada en curso</string>
+    <string name="home_return_to_call">Volver a la llamada</string>
     <string name="call_status_holding">En espera</string>
     <string name="call_status_disconnecting">Finalizando llamada…</string>
     <string name="call_status_other">Llamada en curso</string>

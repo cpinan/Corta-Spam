@@ -33,8 +33,10 @@ import cortaspam.shared.generated.resources.home_blocked_today
 import cortaspam.shared.generated.resources.home_blocking_disabled
 import cortaspam.shared.generated.resources.home_blocking_enabled
 import cortaspam.shared.generated.resources.home_blocking_inert
+import cortaspam.shared.generated.resources.home_call_in_progress
 import cortaspam.shared.generated.resources.home_manage_block_list
 import cortaspam.shared.generated.resources.home_pending_review
+import cortaspam.shared.generated.resources.home_return_to_call
 import cortaspam.shared.generated.resources.home_settings
 import cortaspam.shared.generated.resources.home_title
 import cortaspam.shared.generated.resources.home_view_call_log
@@ -73,6 +75,9 @@ fun HomeScreen(
     onOpenNotificationSettings: () -> Unit = {},
     onOpenFullScreenIntentSettings: () -> Unit = {},
     onOpenAppSettings: () -> Unit = {},
+    /** Whether a call is up right now, so Home can offer the way back to it. */
+    callInProgress: Boolean = false,
+    onReturnToCall: () -> Unit = {},
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
@@ -88,6 +93,14 @@ fun HomeScreen(
                 // to see why before they read a "0 blocked today" that looks like good news.
                 // Capped at one card -- a fresh install that granted nothing produced four, which
                 // pushed the toggle and every counter below the fold on a 1080x2640 phone.
+                // Above even the permission warnings: a live call outranks configuration advice,
+                // and this card is the only route back to the call screen for a user who has
+                // turned notifications off and pressed Home.
+                if (callInProgress) {
+                    ReturnToCallCard(onClick = onReturnToCall)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 PermissionWarnings(
                     modifier = Modifier.fillMaxWidth(),
                     dialerRoleHeld = dialerRoleHeld,
@@ -152,6 +165,38 @@ fun HomeScreen(
                         Text(text = stringResource(Res.string.home_settings))
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * The way back to a call the user has left. Deliberately not gated on notifications being on:
+ * the ongoing-call notification is the other route back, and switching notifications off must not
+ * take away the only one.
+ */
+@Composable
+private fun ReturnToCallCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.home_call_in_progress),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Text(
+                    text = stringResource(Res.string.home_return_to_call),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             }
         }
     }

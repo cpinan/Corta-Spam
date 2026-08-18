@@ -114,6 +114,8 @@ fun AppNavHost(
     onPlayRecording: ((String) -> Unit)? = null,
     dialRequest: DialRequest? = null,
     callLogRequest: CallLogRequest? = null,
+    callInProgress: Boolean = false,
+    onReturnToCall: (() -> Unit)? = null,
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -167,6 +169,8 @@ fun AppNavHost(
                 }
                 HomeScreen(
                     state = state,
+                    callInProgress = callInProgress,
+                    onReturnToCall = onReturnToCall ?: {},
                     onNavigateToCallLog = { navController.navigate(Routes.callLogRoute()) { launchSingleTop = true } },
                     onNavigateToCallLogToday = { navController.navigate(Routes.callLogRoute("today")) { launchSingleTop = true } },
                     onNavigateToCallLogThisWeek = { navController.navigate(Routes.callLogRoute("week")) { launchSingleTop = true } },

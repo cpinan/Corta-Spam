@@ -29,6 +29,8 @@ fun App(
     onPlayRecording: ((String) -> Unit)? = null,
     dialRequest: DialRequest? = null,
     callLogRequest: CallLogRequest? = null,
+    callInProgress: Boolean = false,
+    onReturnToCall: (() -> Unit)? = null,
 ) {
     val navController = rememberNavController()
     AppNavHost(
@@ -52,6 +54,8 @@ fun App(
         micPermissionGranted = micPermissionGranted,
         onRequestMicPermission = onRequestMicPermission,
         onPlayRecording = onPlayRecording,
+        callInProgress = callInProgress,
+        onReturnToCall = onReturnToCall,
         dialRequest = dialRequest,
         callLogRequest = callLogRequest,
     )

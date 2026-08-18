@@ -66,6 +66,8 @@
     <string name="call_keypad_show">Keypad</string>
     <string name="call_keypad_hide">Hide keypad</string>
     <string name="call_other_call_active">You are already on another call</string>
+    <string name="home_call_in_progress">A call is in progress</string>
+    <string name="home_return_to_call">Return to call</string>
     <string name="call_status_holding">On hold</string>
     <string name="call_status_disconnecting">Ending call…</string>
     <string name="call_status_other">Call in progress</string>

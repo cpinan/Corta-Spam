@@ -35,6 +35,8 @@ import org.carlospinan.bloqueador.app.permissions.AppPermission
 import org.carlospinan.bloqueador.app.permissions.PermissionsOnboardingScreen
 import org.carlospinan.bloqueador.app.permissions.permissionChecklist
 import org.carlospinan.bloqueador.app.telecom.AutoResponderAudio
+import org.carlospinan.bloqueador.app.telecom.InCallActivity
+import org.carlospinan.bloqueador.app.telecom.InCallState
 import org.carlospinan.bloqueador.app.telecom.RecordingPlayer
 import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
 import org.koin.android.ext.android.inject
@@ -251,6 +253,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val state by viewModel.state.collectAsState()
+            // The route back to a call the user left with Back or Home. The ongoing-call
+            // notification is the other one, and it is gone entirely when notifications are
+            // switched off -- which would leave no way back at all.
+            val inCallState by InCallState.state.collectAsState()
 
             if (!state.welcomeShown) {
                 WelcomeScreen(
@@ -319,6 +325,13 @@ class MainActivity : ComponentActivity() {
                                 onCopyNumber = { number ->
                                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("phone_number", number))
+                                },
+                                callInProgress = inCallState != null,
+                                onReturnToCall = {
+                                    startActivity(
+                                        Intent(this@MainActivity, InCallActivity::class.java)
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                    )
                                 },
                                 contactsPermissionGranted = contactsPermissionGranted,
                                 dialerRoleHeld = state.dialerRoleHeld,
