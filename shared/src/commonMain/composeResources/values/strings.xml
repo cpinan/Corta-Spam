@@ -288,6 +288,8 @@ The app is fully open source. Every line of code can be audited independently at
     <string name="settings_credits_desc">People who helped build Corta Spam</string>
     <string name="credits_intro">Corta Spam is open source. These people contributed code, translations, bug reports, or the feedback that changed a decision.</string>
     <string name="credits_empty">Names are on the way. If you helped and are missing here, open an issue on GitHub.</string>
+    <string name="credits_open_source_title">Built with open source</string>
+    <string name="credits_open_source_intro">Corta Spam ships these libraries. Each is used under its own licence.</string>
     <string name="settings_version_title">Version</string>
     <string name="settings_version_desc">The build installed on this device</string>
     <string name="settings_version_value">%1$s (%2$s)</string>

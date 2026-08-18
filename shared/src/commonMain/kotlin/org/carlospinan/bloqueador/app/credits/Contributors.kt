@@ -15,10 +15,74 @@ data class Contributor(
 )
 
 /**
+ * A third-party library the shipped app is built out of.
+ *
+ * Listed separately from [Contributor] because the obligation is different: a person is credited
+ * as a courtesy, a library under Apache-2.0 or MIT is credited because its licence asks to be.
+ * [license] is the SPDX identifier and [url] the project's own home, so a reader can check the
+ * terms rather than take this screen's word for them.
+ *
+ * Test-only and build-only dependencies are deliberately absent — nothing of Robolectric or the
+ * Gradle plugins reaches a user's device, so crediting them here would misstate what is running.
+ */
+data class OpenSourceComponent(
+    val name: String,
+    val license: String,
+    val url: String,
+)
+
+/**
  * The people the Credits screen lists, in the order they are shown.
  *
- * Empty on purpose right now: the screen exists and is reachable, and it tells the user that
- * names are on the way rather than pretending nobody helped. Add entries here and nothing else
- * has to change — the screen renders whatever this holds.
+ * Add an entry here and nothing else has to change — the screen renders whatever this holds.
  */
-val CONTRIBUTORS: List<Contributor> = emptyList()
+val CONTRIBUTORS: List<Contributor> =
+    listOf(
+        Contributor(
+            name = "Carlos Eduardo Piñán Indacochea",
+            contribution = "Author and maintainer",
+        ),
+        Contributor(
+            name = "Claude (Anthropic)",
+            contribution = "AI pair programmer — code, tests and documentation, reviewed and merged by the maintainer",
+        ),
+    )
+
+/**
+ * The open-source libraries the app ships with, grouped the way a reader would look for them
+ * rather than the way the dependency graph resolves them: the whole Kotlin/Compose stack is one
+ * project to the person reading, not eleven Maven coordinates.
+ */
+val OPEN_SOURCE_COMPONENTS: List<OpenSourceComponent> =
+    listOf(
+        OpenSourceComponent(
+            name = "Kotlin and Kotlin Multiplatform",
+            license = "Apache-2.0",
+            url = "https://github.com/JetBrains/kotlin",
+        ),
+        OpenSourceComponent(
+            name = "Compose Multiplatform",
+            license = "Apache-2.0",
+            url = "https://github.com/JetBrains/compose-multiplatform",
+        ),
+        OpenSourceComponent(
+            name = "Jetpack Compose and AndroidX",
+            license = "Apache-2.0",
+            url = "https://github.com/androidx/androidx",
+        ),
+        OpenSourceComponent(
+            name = "kotlinx.coroutines, datetime and serialization",
+            license = "Apache-2.0",
+            url = "https://github.com/Kotlin",
+        ),
+        OpenSourceComponent(
+            name = "Koin",
+            license = "Apache-2.0",
+            url = "https://github.com/InsertKoinIO/koin",
+        ),
+        OpenSourceComponent(
+            name = "SQLDelight",
+            license = "Apache-2.0",
+            url = "https://github.com/sqldelight/sqldelight",
+        ),
+    )

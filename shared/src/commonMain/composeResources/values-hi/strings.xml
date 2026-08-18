@@ -198,6 +198,8 @@
     <string name="settings_credits_desc">Corta Spam बनाने में मदद करने वाले लोग</string>
     <string name="credits_intro">Corta Spam ओपन सोर्स है। इन लोगों ने कोड, अनुवाद, बग रिपोर्ट या ऐसी प्रतिक्रिया दी जिसने कोई फैसला बदला।</string>
     <string name="credits_empty">नाम जल्द ही जोड़े जाएंगे। अगर आपने मदद की है और यहाँ नहीं हैं, तो GitHub पर issue खोलें।</string>
+    <string name="credits_open_source_title">ओपन सोर्स से बना</string>
+    <string name="credits_open_source_intro">Corta Spam इन लाइब्रेरियों के साथ आता है। हर एक अपने लाइसेंस के तहत उपयोग होती है।</string>
     <string name="settings_version_title">संस्करण</string>
     <string name="settings_version_desc">इस डिवाइस पर इंस्टॉल किया गया बिल्ड</string>
     <string name="settings_version_value">%1$s (%2$s)</string>

@@ -198,6 +198,8 @@
     <string name="settings_credits_desc">Pessoas que ajudaram a construir o Corta Spam</string>
     <string name="credits_intro">O Corta Spam é open source. Estas pessoas contribuíram com código, traduções, relatos de erros ou o feedback que mudou uma decisão.</string>
     <string name="credits_empty">Os nomes chegarão em breve. Se você ajudou e não está aqui, abra uma issue no GitHub.</string>
+    <string name="credits_open_source_title">Construído com open source</string>
+    <string name="credits_open_source_intro">O Corta Spam inclui estas bibliotecas. Cada uma é usada sob a sua própria licença.</string>
     <string name="settings_version_title">Versão</string>
     <string name="settings_version_desc">A versão instalada neste dispositivo</string>
     <string name="settings_version_value">%1$s (%2$s)</string>
