@@ -50,6 +50,7 @@ import org.carlospinan.bloqueador.app.keypad.DialRequest
 import org.carlospinan.bloqueador.app.keypad.KeypadIntent
 import org.carlospinan.bloqueador.app.keypad.KeypadScreen
 import org.carlospinan.bloqueador.app.keypad.KeypadViewModel
+import org.carlospinan.bloqueador.app.settings.AppVersion
 import org.carlospinan.bloqueador.app.settings.InfoScreen
 import org.carlospinan.bloqueador.app.settings.SettingsIntent
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
@@ -57,6 +58,7 @@ import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.stats.StatsScreen
 import org.carlospinan.bloqueador.app.stats.StatsViewModel
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -388,6 +390,7 @@ fun AppNavHost(
                     onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) { launchSingleTop = true } },
                     onNavigateToTerms = { navController.navigate(Routes.TERMS_CONDITIONS) { launchSingleTop = true } },
                     onNavigateToCredits = { navController.navigate(Routes.CREDITS) { launchSingleTop = true } },
+                    appVersion = koinInject<AppVersion>(),
                     onBack = { navController.popBackStack() },
                 )
             }

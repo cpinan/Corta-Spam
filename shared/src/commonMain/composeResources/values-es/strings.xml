@@ -222,6 +222,9 @@
     <string name="settings_credits_desc">Personas que ayudaron a crear Corta Spam</string>
     <string name="credits_intro">Corta Spam es de código abierto. Estas personas aportaron código, traducciones, informes de errores o los comentarios que cambiaron una decisión.</string>
     <string name="credits_empty">Los nombres llegarán pronto. Si has ayudado y no apareces aquí, abre una incidencia en GitHub.</string>
+    <string name="settings_version_title">Versión</string>
+    <string name="settings_version_desc">La versión instalada en este dispositivo</string>
+    <string name="settings_version_value">%1$s (%2$s)</string>
 
     <!-- Auto-respondedor -->
     <string name="settings_autoresponder">Auto-respondedor (Experimental)</string>

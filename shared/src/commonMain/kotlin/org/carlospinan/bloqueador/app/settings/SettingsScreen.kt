@@ -39,6 +39,7 @@ import cortaspam.shared.generated.resources.autoresponder_experimental_badge
 import cortaspam.shared.generated.resources.ic_autoresponder
 import cortaspam.shared.generated.resources.ic_backup
 import cortaspam.shared.generated.resources.ic_blocking
+import cortaspam.shared.generated.resources.ic_brand_app
 import cortaspam.shared.generated.resources.ic_contacts
 import cortaspam.shared.generated.resources.ic_default_action
 import cortaspam.shared.generated.resources.ic_privacy
@@ -76,6 +77,9 @@ import cortaspam.shared.generated.resources.settings_show_notifications_desc
 import cortaspam.shared.generated.resources.settings_terms_desc
 import cortaspam.shared.generated.resources.settings_terms_title
 import cortaspam.shared.generated.resources.settings_title
+import cortaspam.shared.generated.resources.settings_version_desc
+import cortaspam.shared.generated.resources.settings_version_title
+import cortaspam.shared.generated.resources.settings_version_value
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveContent
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
@@ -124,6 +128,8 @@ fun SettingsScreen(
     onNavigateToPrivacy: () -> Unit = {},
     onNavigateToTerms: () -> Unit = {},
     onNavigateToCredits: () -> Unit = {},
+    /** Shown at the end of About. Null only in tests that do not care which build they render. */
+    appVersion: AppVersion? = null,
     onBack: () -> Unit,
     // Injectable so a test can exercise the Expanded layout without a wide container,
     // the same shape AdaptiveScaffold already uses.
@@ -196,6 +202,10 @@ fun SettingsScreen(
                                 TermsItem(onNavigateToTerms)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 CreditsItem(onNavigateToCredits)
+                                if (appVersion != null) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    VersionItem(appVersion)
+                                }
                             }
                         }
                     }
@@ -272,6 +282,14 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     CreditsItem(onNavigateToCredits)
+
+                    // Last, and on every layout: the first thing a bug report has to establish is
+                    // which build it is about, and "scroll to the bottom of Settings" is the
+                    // instruction every other phone app has already taught the user.
+                    if (appVersion != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        VersionItem(appVersion)
+                    }
                 }
             }
         }
@@ -560,6 +578,27 @@ private fun CreditsItem(onClick: () -> Unit) {
     )
 }
 
+/**
+ * The build the user is on. Not clickable — there is nowhere for it to go, and a row that looks
+ * tappable and is not is worse than a plain one.
+ */
+@Composable
+private fun VersionItem(appVersion: AppVersion) {
+    SettingInfo(
+        title = stringResource(Res.string.settings_version_title),
+        description = stringResource(Res.string.settings_version_desc),
+        icon = Res.drawable.ic_brand_app,
+        value =
+            stringResource(
+                Res.string.settings_version_value,
+                appVersion.name,
+                // As a string, not an Int: the code is a Long, and the argument goes through the
+                // multiplatform resource formatter rather than Android's String.format.
+                appVersion.code.toString(),
+            ),
+    )
+}
+
 @Composable
 private fun SettingToggle(
     title: String,
@@ -610,8 +649,26 @@ private fun SettingDropdown(
     value: String,
     onClick: () -> Unit,
 ) {
+    SettingInfo(
+        title = title,
+        description = description,
+        icon = icon,
+        value = value,
+        modifier = Modifier.clickable(onClick = onClick),
+    )
+}
+
+/** A settings row that states something instead of changing it: icon, title, description, value. */
+@Composable
+private fun SettingInfo(
+    title: String,
+    description: String,
+    icon: DrawableResource,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),

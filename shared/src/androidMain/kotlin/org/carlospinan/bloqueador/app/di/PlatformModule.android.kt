@@ -8,6 +8,8 @@ import org.carlospinan.bloqueador.app.db.DriverFactory
 import org.carlospinan.bloqueador.app.onboarding.AndroidDefaultDialerGateway
 import org.carlospinan.bloqueador.app.onboarding.DefaultDialerGateway
 import org.carlospinan.bloqueador.app.onboarding.DialerOnboardingViewModel
+import org.carlospinan.bloqueador.app.settings.AppVersion
+import org.carlospinan.bloqueador.app.settings.readAppVersion
 import org.carlospinan.bloqueador.app.shared.R
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
@@ -19,6 +21,9 @@ actual fun platformModule(): Module =
         single<DefaultDialerGateway> { AndroidDefaultDialerGateway(androidContext()) }
         single<ContactsGateway> { AndroidContactsGateway(androidContext()) }
         factory { DialerOnboardingViewModel(get(), get()) }
+        // Read from the installed package rather than from a constant, so the number on the
+        // settings screen is the build's own and cannot drift from it.
+        single<AppVersion> { androidContext().readAppVersion() }
         // Read through the Android resource system so the untouched greeting is in the user's
         // language rather than the English constant baked into commonMain.
         single {

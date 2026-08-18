@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.junit.Rule
@@ -25,6 +26,7 @@ class SettingsScreenUiTest {
         showGrantContacts: Boolean = false,
         notificationsPermissionGranted: Boolean = true,
         onNavigateToAutoResponder: () -> Unit = {},
+        appVersion: AppVersion? = null,
     ) {
         composeTestRule.setContent {
             SettingsScreen(
@@ -38,10 +40,41 @@ class SettingsScreenUiTest {
                 onRequestContactsPermission = {},
                 onNavigateToAutoResponder = onNavigateToAutoResponder,
                 onNavigateToBackup = {},
+                appVersion = appVersion,
                 onBack = {},
                 windowSizeClass = windowSizeClass,
             )
         }
+    }
+
+    /**
+     * A bug report that does not say which build it is about costs a round trip to find out, and
+     * the app had no screen anywhere that answered the question.
+     */
+    @Test
+    fun `compact settings shows the running version and build number`() {
+        setContent(
+            windowSizeClass = WindowSizeClass.Compact,
+            appVersion = AppVersion(name = "1.4.0", code = 6),
+        )
+
+        composeTestRule.onNodeWithText("Version").performScrollTo().assertExists()
+        composeTestRule.onNodeWithText("1.4.0 (6)").assertExists()
+    }
+
+    /** The tablet layout files it under About, where the rest of the app's identity already is. */
+    @Test
+    fun `expanded settings shows the version in the About section`() {
+        setContent(
+            windowSizeClass = WindowSizeClass.Expanded,
+            appVersion = AppVersion(name = "1.4.0", code = 6),
+        )
+
+        composeTestRule.onNodeWithText("1.4.0 (6)").assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("About").performClick()
+
+        composeTestRule.onNodeWithText("1.4.0 (6)").assertExists()
     }
 
     @Test
