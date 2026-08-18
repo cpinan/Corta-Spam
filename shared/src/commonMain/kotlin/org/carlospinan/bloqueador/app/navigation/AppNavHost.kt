@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import androidx.savedstate.read
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.privacy_policy_body
 import cortaspam.shared.generated.resources.settings_privacy_title
@@ -209,8 +210,12 @@ fun AppNavHost(
                     callLogViewModel.onIntent(CallLogIntent.RefreshContactNames)
                 }
 
-                @Suppress("UNCHECKED_CAST")
-                val filter = (backStackEntry.arguments as? Map<String, *>)?.get("filter") as? String ?: "all"
+                // Read through SavedState, not by casting to Map. `arguments` has never been a
+                // Map -- the compiler said so ("this cast can never succeed") and the `as?` then
+                // swallowed it into null, so every entry point fell through to "all". Home's
+                // "Blocked today", "This week", "This month" and "Pending review" tiles all
+                // navigated to a filtered route and all landed on the unfiltered list.
+                val filter = backStackEntry.arguments?.read { getStringOrNull("filter") } ?: "all"
                 LaunchedEffect(filter) {
                     callLogViewModel.onIntent(CallLogIntent.SetFilter(filter))
                 }
