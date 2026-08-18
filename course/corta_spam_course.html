@@ -3902,6 +3902,23 @@ th{background:var(--panel-2);font-weight:600}
 <p><strong>When a codebase already documents an API as unreliable, every remaining caller of it is a bug that has not been reported yet.</strong> Grep for the API, not for the symptom.</p>
 <p>The fix keeps <code>PhoneLookup</code> first and falls back to the gateway, for a reason worth naming: the fallback is the slower question. It runs on the call-setup path, and the gateway's five-minute cache is cold on the first call after any change.</p>
 
+<h3><span class="badge badge-a">Advanced</span> A condition with two halves that move separately</h3>
+<p>The same screen later gained the thing every phone app has and this one did not: it turns off while the handset is against an ear. That mattered more after the previous section than before it — a screen carrying one button can survive a cheek; a screen carrying Mute, Speaker and Hang up cannot.</p>
+<p><code>PROXIMITY_SCREEN_OFF_WAKE_LOCK</code> is worth knowing precisely because of what it is <em>not</em>: it can only blank the display, never keep it awake, and it is sensor-driven, so holding it costs nothing while the phone is on a table. The decision about when to hold it goes where every other decision in this package goes — a pure function, because the activity cannot be constructed in a test and blanking at the wrong moment takes the screen away from someone trying to press something:</p>
+<pre><code><span class="line"><span class="kw">fun</span> <span class="fn">shouldBlankScreen</span>(phase: <span class="ty">CallUiPhase</span>, speakerOn: <span class="ty">Boolean</span>): <span class="ty">Boolean</span> {</span>
+<span class="line">    <span class="kw">if</span> (speakerOn) <span class="kw">return false</span></span>
+<span class="line">    <span class="kw">return</span> phase == <span class="ty">CallUiPhase</span>.ACTIVE || phase == <span class="ty">CallUiPhase</span>.DIALING</span>
+<span class="line">}</span></code></pre>
+<p><code>RINGING</code> is absent deliberately, and it is the case worth testing explicitly: Answer and Decline <em>are</em> the screen for an incoming call, and a phone that rang in a pocket must not arrive at the ear already unanswerable.</p>
+<p>The interesting bug was not in the policy. The lock was taken and released from a <code>LaunchedEffect</code> keyed on that function's answer, which is correct while the screen is in front of the user and wrong the moment it is not:</p>
+<ul>
+<li>Home → <code>onPause</code> releases the lock. Correct: the launcher must not blank when a hand passes over it.</li>
+<li>Return to the still-connected call → the effect does not re-run, because its key never changed while the screen was away. The lock is gone and nothing asks for it back.</li>
+</ul>
+<p><strong>The condition had two halves moving independently</strong> — what the call is doing, and whether this screen is what the user is looking at — and only one of them was keyed. The fix remembers the policy's answer and re-applies it on resume, so the lock is held exactly when both halves are true.</p>
+<p>One detail on the way out: releasing with <code>RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY</code>, so hanging up with the phone still at the ear does not flash the screen on against the user's face.</p>
+<p>None of this was reachable on the emulator by ordinary means — it has a proximity sensor but no earpiece, so Telecom refuses to leave the loudspeaker and the shipping build correctly never takes the lock there. It was verified by A/B: a throwaway build with the speaker guard removed, <code>dumpsys power</code> showing <code>PROXIMITY_SCREEN_OFF_WAKE_LOCK 'CortaSpam:InCallProximity'</code> held by the app's uid, and then — the step that matters — the same probe with the <code>onResume</code> fix deleted again, to watch the lock stay released on return rather than merely reasoning that it would.</p>
+
 <div class="quiz">
 <h3>Quiz</h3>
 <div class="quiz-item"><p><strong>1.</strong> <code>DISCONNECTING</code> deliberately shows no hang-up button, and that reasoning was correct. What was missing?</p>
@@ -3927,6 +3944,9 @@ th{background:var(--panel-2);font-weight:600}
 <div class="quiz-item"><p><strong>6.</strong> Every scripted device suite passed and the reported bug was still unreproduced. What made the emulator structurally unable to show it?</p>
 <button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
 <div class="answer">Its fake modem answers and tears down calls instantly, so no call is ever observably <code>DIALING</code> and none lingers in <code>STATE_DISCONNECTED</code> — the exact state the bug lives in. It also refuses to hold two calls, so call waiting is unreachable too. Green suites proved the happy path; they were not evidence about the defect, and the README says which is which rather than reporting one number.</div></div>
+<div class="quiz-item"><p><strong>7.</strong> The proximity wake lock was taken from a <code>LaunchedEffect</code> keyed on the policy's answer, and released in <code>onPause</code>. Why did returning to a live call leave the screen unprotected?</p>
+<button onclick="this.nextElementSibling.classList.toggle('show')">Show answer</button>
+<div class="answer">Because the condition has two halves that move independently — what the call is doing, and whether this screen is in front of the user — and only the first was keyed. <code>onPause</code> released the lock behind the effect's back; on return the key was unchanged, so nothing re-ran. The answer is now remembered and re-applied in <code>onResume</code>. It was reproduced on a device by deleting the fix again and watching the lock stay released, not inferred.</div></div>
 </div>
 </section>
 
