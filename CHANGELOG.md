@@ -22,6 +22,22 @@ format.
 
 ### Fixed
 
+- **Call waiting stranded the surviving call.** `InCallState` held one `Call` in one field, so a
+  second call overwrote the first — and when that second call ended, the state was cleared while
+  the first was still connected. `InCallActivity` finished, and the ongoing-call notification's
+  Hang up action routed to a null field and did nothing. Three defects of the same single field
+  went with it: a background call rewrote the on-screen call's phase, caller names and
+  repeat-attempt counts landed on the wrong call, and a held DTMF tone was stopped against
+  whichever call was on screen when the handler fired. ([`0b2bbcb`](../../commit/0b2bbcb))
+- **Four call states rendered no buttons at all.** A held call, a call being torn down, a dual-SIM
+  call waiting for a phone account, and Telecom's simulated ringing all fell to `CallUiPhase.OTHER`,
+  which showed a caller's name and nothing to press. `HOLDING` and `DISCONNECTING` are now real
+  phases, `HOLDING` offers Resume, and `OTHER` keeps a hang-up button as the escape hatch.
+  ([`66ed139`](../../commit/66ed139))
+- **Back threw away the call screen.** It called `finish()` while the call carried on. It now
+  backgrounds the task, and Home shows a "Return to call" card — the ongoing-call notification was
+  the only route back and is not posted at all when notifications are off.
+  ([`52e3b95`](../../commit/52e3b95))
 - **Four Home tiles all landed on the unfiltered call log.** "Blocked today", "This week", "This
   month" and "Pending review" each navigate to `call_log/<filter>`, and the destination read that
   argument by casting `NavBackStackEntry.arguments` to `Map<String, *>` — a type it has never been.
@@ -64,6 +80,21 @@ format.
 
 ### Added
 
+- **Dark mode.** Every screen opened a bare `MaterialTheme { }` — Material 3's baseline light
+  palette, whatever the system was set to — and both activities named
+  `Theme.Material.Light.NoActionBar` directly, so even the window behind Compose was white. The
+  colours are transcribed from `design/mockups.html`, which has carried a light and dark pair since
+  the UI was designed. Each screen themes itself: `InCallActivity` draws `CallScreen` outside the
+  nav host, so a root-only theme would have missed the one screen that most needs this.
+  ([`1ef10a6`](../../commit/1ef10a6))
+- **An emergency callback exemption, on by default.** For 30 minutes after the user calls the
+  emergency services, every incoming call is let through — checked before every rule, including a
+  manual block. Without it, a callback from a number not in the address book was blocked by the
+  default action, quiet hours or a country rule, and with the auto-responder on it was answered,
+  read a greeting and hung up on. Uses `PROPERTY_EMERGENCY_CALLBACK_MODE` plus the last emergency
+  number this app saw dialled, so it needs no new permission. Also makes `RuleDecision.isBlocked`
+  an exhaustive `when`, since the old `!is` chain would have classified the new decision as
+  blocked. ([`7ad9fcb`](../../commit/7ad9fcb))
 - **A DTMF keypad on the in-call screen.** Holding `ROLE_DIALER` means this is the only call screen
   the user has, and without a pad every automated menu ended at the first prompt. Offered on
   `ACTIVE` calls only, because Telecom drops a tone played on a ringing or dialling call. The tone
