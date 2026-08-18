@@ -16,6 +16,17 @@
          the vibration the platform dialer would otherwise have produced. See CallRinger. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- PROXIMITY_SCREEN_OFF_WAKE_LOCK, for turning the in-call screen off while the handset is
+         against a face. Owning the in-call UI means owning this too: without it a cheek rests on
+         a screen carrying Hang up, Mute and Speaker. It is a *screen-off* lock — it can only
+         blank the display, never keep it awake — and it is held solely while a call is connected
+         or dialling and not on the loudspeaker. See ProximityPolicy.
+
+         Normal permission: no runtime dialog, no Play declaration form. It also implies no
+         uses-feature, so unlike RECORD_AUDIO it costs no device support; the code checks
+         isWakeLockLevelSupported and does nothing at all on a phone without the sensor. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <!-- Auto-responder call recording, off by default and gated behind a consent line in the
          user's own greeting. Records MediaRecorder.AudioSource.MIC only: the real call-audio
          sources need CAPTURE_AUDIO_OUTPUT, which is signature|privileged and not available to
