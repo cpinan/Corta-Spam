@@ -24,6 +24,7 @@
     <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
     <string name="reason_repeated_calls">Chamadas repetidas (%1$d em %2$d min)</string>
     <string name="reason_quiet_hours">Horas de silêncio</string>
+    <string name="reason_emergency_callback">Retorno de chamada de emergência</string>
     <string name="reason_no_matching_rule">Nenhuma regra corresponde (padrão: bloquear)</string>
     <string name="share_backup_chooser_title">Compartilhar backup</string>
     <plurals name="reason_allowed_after_repeated">

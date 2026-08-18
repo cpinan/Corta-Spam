@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.reason_allowed_after_repeated
 import cortaspam.shared.generated.resources.reason_country
+import cortaspam.shared.generated.resources.reason_emergency_callback
 import cortaspam.shared.generated.resources.reason_manually_blocked
 import cortaspam.shared.generated.resources.reason_no_matching_rule
 import cortaspam.shared.generated.resources.reason_pattern_match
@@ -30,6 +31,7 @@ fun blockReasonText(reason: BlockReason): String =
         is BlockReason.Spam -> stringResource(Res.string.reason_spam, reason.source, reason.confidencePercent)
         is BlockReason.RepeatedCalls -> stringResource(Res.string.reason_repeated_calls, reason.attempts, reason.windowMinutes)
         is BlockReason.QuietHours -> stringResource(Res.string.reason_quiet_hours)
+        is BlockReason.EmergencyCallback -> stringResource(Res.string.reason_emergency_callback)
         is BlockReason.NoMatchingRule -> stringResource(Res.string.reason_no_matching_rule)
         // A plural, not a format string: "Called 1 times" is wrong in every locale we ship.
         is BlockReason.AllowedAfterRepeatedAttempts ->

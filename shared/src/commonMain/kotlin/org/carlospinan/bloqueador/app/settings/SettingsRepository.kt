@@ -37,6 +37,24 @@ interface SettingsRepository {
     /** 0 = disabled. Otherwise, attempts within 24h before an unknown (default-blocked) number is let through. */
     val repeatedCallerBypassCount: Flow<Int>
 
+    /**
+     * Whether every incoming call is let through for a while after the user calls the emergency
+     * services. On by default: the alternative is an app whose own defaults can silence an
+     * ambulance ringing back, and worse, answer it with a recorded greeting.
+     *
+     * StateFlow for the same reason as [notificationsEnabled] -- read from Telecom callbacks.
+     */
+    val emergencyCallbackExemption: StateFlow<Boolean>
+
+    /**
+     * When this app last saw the user dial a number [EmergencyNumbers] recognises, in epoch
+     * milliseconds, or [EmergencyCallPolicy.NEVER].
+     *
+     * Persisted rather than held in memory because the process can die between the emergency call
+     * and the callback -- which is exactly the moment it must not be forgotten.
+     */
+    val lastEmergencyCallAtMillis: StateFlow<Long>
+
     suspend fun setBlockingEnabled(enabled: Boolean)
 
     suspend fun setAutoAllowContacts(enabled: Boolean)
@@ -48,6 +66,11 @@ interface SettingsRepository {
     suspend fun setNotifyUnknownCallers(enabled: Boolean)
 
     suspend fun setRepeatedCallerBypassCount(count: Int)
+
+    suspend fun setEmergencyCallbackExemption(enabled: Boolean)
+
+    /** Records that an emergency call has just been placed. See [lastEmergencyCallAtMillis]. */
+    suspend fun recordEmergencyCall(timestampMillis: Long)
 
     val welcomeShown: Boolean
 

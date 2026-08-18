@@ -22,6 +22,7 @@ import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.contacts.isKnownContact
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
+import org.carlospinan.bloqueador.app.rules.EmergencyNumbers
 import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RuleRepository
@@ -203,6 +204,12 @@ class PassthroughInCallService :
             if (number.isNotBlank()) {
                 serviceScope.launch {
                     try {
+                        // Before the log write, and outside its failure handling: if the user has
+                        // just dialled 112 the callback window matters more than the history row,
+                        // and a database error on the row must not cost them the exemption.
+                        if (EmergencyNumbers.isWellKnown(number)) {
+                            settingsRepository.recordEmergencyCall(currentTimestamp())
+                        }
                         callLogRepository.logOutgoingCall(number, currentTimestamp())
                     } catch (e: CancellationException) {
                         throw e
@@ -228,7 +235,11 @@ class PassthroughInCallService :
         state.evaluation =
             serviceScope.launch {
                 try {
-                    val decision = evaluateIncomingCall.evaluate(number)
+                    val decision =
+                        evaluateIncomingCall.evaluate(
+                            number = number,
+                            inEmergencyCallbackMode = call.isInEmergencyCallbackMode(),
+                        )
                     state.logEntryId =
                         callLogRepository.logCall(
                             number = number,
@@ -445,6 +456,14 @@ class PassthroughInCallService :
         callStates.clear()
         serviceScope.cancel()
     }
+
+    /**
+     * The platform's own answer to "did this device just place an emergency call", read off the
+     * call rather than from telephony state -- `Call.Details.PROPERTY_EMERGENCY_CALLBACK_MODE`
+     * needs no permission, and `TelephonyManager` would need `READ_PHONE_STATE`, which this app
+     * deliberately does not declare.
+     */
+    private fun Call.isInEmergencyCallbackMode(): Boolean = details?.hasProperty(Call.Details.PROPERTY_EMERGENCY_CALLBACK_MODE) == true
 
     private fun Call.handleNumber(): String =
         details

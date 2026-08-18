@@ -71,6 +71,11 @@ sealed interface BlockReason {
     data class AllowedAfterRepeatedAttempts(
         val attempts: Int,
     ) : BlockReason
+
+    /** Let through untouched because the user had just called the emergency services. */
+    @Serializable
+    @SerialName("emergency_callback")
+    data object EmergencyCallback : BlockReason
 }
 
 /**

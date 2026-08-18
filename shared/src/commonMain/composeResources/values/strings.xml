@@ -143,6 +143,8 @@
     <string name="settings_show_notifications_desc">When off, this app posts no notifications at all, including the incoming-call alert.</string>
     <string name="settings_repeated_caller_bypass">Answer repeated unknown callers</string>
     <string name="settings_repeated_caller_bypass_desc">If an unknown number retries enough times, let it ring through instead of blocking it. Only applies when Default action below is set to Block.</string>
+    <string name="settings_emergency_exemption">Emergency callback exemption</string>
+    <string name="settings_emergency_exemption_desc">Let every call through for 30 minutes after you call the emergency services, whatever your rules say</string>
 
     <!-- Settings section headers, used by the Expanded (tablet) list-detail layout -->
     <string name="settings_section_blocking">Blocking</string>
@@ -327,6 +329,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
     <string name="reason_repeated_calls">Repeated calls (%1$d in %2$d min)</string>
     <string name="reason_quiet_hours">Quiet hours</string>
+    <string name="reason_emergency_callback">Emergency callback</string>
     <string name="reason_no_matching_rule">No matching rule (default: block)</string>
     <string name="backup_export_success">Exported successfully.</string>
     <string name="backup_export_failed">Export failed: %1$s</string>

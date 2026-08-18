@@ -30,6 +30,7 @@ object BlockReasonStrings {
             is BlockReason.RepeatedCalls ->
                 context.getString(R.string.reason_repeated_calls, reason.attempts, reason.windowMinutes)
             is BlockReason.QuietHours -> context.getString(R.string.reason_quiet_hours)
+            is BlockReason.EmergencyCallback -> context.getString(R.string.reason_emergency_callback)
             is BlockReason.NoMatchingRule -> context.getString(R.string.reason_no_matching_rule)
             // A plural, not a format string: "Called 1 times" is wrong in every shipped locale.
             is BlockReason.AllowedAfterRepeatedAttempts ->

@@ -381,6 +381,9 @@ fun AppNavHost(
                     onSetNotificationsEnabled = { settingsViewModel.onIntent(SettingsIntent.SetNotificationsEnabled(it)) },
                     onSetNotifyUnknownCallers = { settingsViewModel.onIntent(SettingsIntent.SetNotifyUnknownCallers(it)) },
                     onSetRepeatedCallerBypassCount = { settingsViewModel.onIntent(SettingsIntent.SetRepeatedCallerBypassCount(it)) },
+                    onSetEmergencyCallbackExemption = {
+                        settingsViewModel.onIntent(SettingsIntent.SetEmergencyCallbackExemption(it))
+                    },
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onOpenNotificationSettings = onOpenNotificationSettings ?: {},
                     onOpenFullScreenIntentSettings = onOpenFullScreenIntentSettings ?: {},

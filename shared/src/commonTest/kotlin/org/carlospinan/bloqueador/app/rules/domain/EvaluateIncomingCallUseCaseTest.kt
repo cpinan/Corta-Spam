@@ -6,8 +6,10 @@ import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
+import org.carlospinan.bloqueador.app.rules.EmergencyCallPolicy
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RuleDecision
+import org.carlospinan.bloqueador.app.rules.currentTimeMillis
 import org.carlospinan.bloqueador.app.settings.DefaultAction
 import org.carlospinan.bloqueador.app.spam.SpamProviderClient
 import org.carlospinan.bloqueador.app.spam.SpamResult
@@ -55,6 +57,84 @@ class EvaluateIncomingCallUseCaseTest {
             val decision = useCase.evaluate("+34600123456")
 
             assertTrue(decision is RuleDecision.DefaultAllow)
+        }
+
+    /**
+     * The exemption is checked before every rule, including a manual block. A number on the
+     * blocklist ringing minutes after the user dialled 112 is far more likely to be a dispatcher
+     * on a shared line than the spammer they blocked -- and being wrong the other way means an
+     * ambulance rejected, or answered by the auto-responder and hung up on.
+     */
+    @Test
+    fun emergencyWindow_beatsEvenAManualBlock() =
+        runTest {
+            val ruleRepository =
+                FakeRuleRepository().apply {
+                    blockedNumbersFlow.value = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
+                }
+            val useCase =
+                EvaluateIncomingCallUseCase(
+                    ruleRepository,
+                    FakeContactsGateway(),
+                    FakeSettingsRepository(
+                        lastEmergencyCallAtMillis = MutableStateFlow(currentTimeMillis()),
+                    ),
+                    FakeSpamProviderRepository(),
+                    NoOpSpamClient,
+                )
+
+            val decision = useCase.evaluate("+34600123456")
+
+            assertTrue(decision is RuleDecision.EmergencyExempt)
+            assertEquals(false, decision.isBlocked)
+        }
+
+    /** Switched off, the blocklist wins again -- the exemption is the user's choice to make. */
+    @Test
+    fun emergencyWindow_withTheExemptionOff_blocksAsBefore() =
+        runTest {
+            val ruleRepository =
+                FakeRuleRepository().apply {
+                    blockedNumbersFlow.value = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
+                }
+            val useCase =
+                EvaluateIncomingCallUseCase(
+                    ruleRepository,
+                    FakeContactsGateway(),
+                    FakeSettingsRepository(
+                        emergencyCallbackExemption = MutableStateFlow(false),
+                        lastEmergencyCallAtMillis = MutableStateFlow(currentTimeMillis()),
+                    ),
+                    FakeSpamProviderRepository(),
+                    NoOpSpamClient,
+                )
+
+            val decision = useCase.evaluate("+34600123456")
+
+            assertTrue(decision is RuleDecision.ManualBlock)
+        }
+
+    /** Long after the emergency call, ordinary screening resumes. */
+    @Test
+    fun anOldEmergencyCall_doesNotExemptForever() =
+        runTest {
+            val ruleRepository =
+                FakeRuleRepository().apply {
+                    blockedNumbersFlow.value = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
+                }
+            val stale = currentTimeMillis() - EmergencyCallPolicy.CALLBACK_WINDOW_MILLIS - 1
+            val useCase =
+                EvaluateIncomingCallUseCase(
+                    ruleRepository,
+                    FakeContactsGateway(),
+                    FakeSettingsRepository(lastEmergencyCallAtMillis = MutableStateFlow(stale)),
+                    FakeSpamProviderRepository(),
+                    NoOpSpamClient,
+                )
+
+            val decision = useCase.evaluate("+34600123456")
+
+            assertTrue(decision is RuleDecision.ManualBlock)
         }
 
     @Test

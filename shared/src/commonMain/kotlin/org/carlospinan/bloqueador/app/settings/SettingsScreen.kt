@@ -60,6 +60,8 @@ import cortaspam.shared.generated.resources.settings_default_action_allow
 import cortaspam.shared.generated.resources.settings_default_action_ask
 import cortaspam.shared.generated.resources.settings_default_action_block
 import cortaspam.shared.generated.resources.settings_default_action_desc
+import cortaspam.shared.generated.resources.settings_emergency_exemption
+import cortaspam.shared.generated.resources.settings_emergency_exemption_desc
 import cortaspam.shared.generated.resources.settings_grant_contacts
 import cortaspam.shared.generated.resources.settings_notify_unknown_callers
 import cortaspam.shared.generated.resources.settings_notify_unknown_callers_desc
@@ -120,6 +122,7 @@ fun SettingsScreen(
     onSetNotificationsEnabled: (Boolean) -> Unit = {},
     onSetNotifyUnknownCallers: (Boolean) -> Unit = {},
     onSetRepeatedCallerBypassCount: (Int) -> Unit = {},
+    onSetEmergencyCallbackExemption: (Boolean) -> Unit = {},
     onRequestContactsPermission: () -> Unit,
     onOpenNotificationSettings: () -> Unit = {},
     onOpenFullScreenIntentSettings: () -> Unit = {},
@@ -179,6 +182,8 @@ fun SettingsScreen(
                                 RepeatedCallerBypassItem(state.repeatedCallerBypassCount, onSetRepeatedCallerBypassCount)
                                 Spacer(modifier = Modifier.height(12.dp))
                                 DefaultActionItem(state.defaultAction) { showDefaultActionDialog = true }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                EmergencyExemptionItem(state.emergencyCallbackExemption, onSetEmergencyCallbackExemption)
                             }
 
                             SettingsSection.Contacts ->
@@ -263,6 +268,10 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     DefaultActionItem(state.defaultAction) { showDefaultActionDialog = true }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    EmergencyExemptionItem(state.emergencyCallbackExemption, onSetEmergencyCallbackExemption)
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -503,6 +512,25 @@ private fun RepeatedCallerBypassItem(
             ) { Text("+") }
         }
     }
+}
+
+/**
+ * Sits directly under the default action, which is the setting it exists to override: with the
+ * default set to BLOCK, an ambulance ringing back from a number that is not in the address book
+ * was blocked -- and with the auto-responder on, answered and hung up on.
+ */
+@Composable
+private fun EmergencyExemptionItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_emergency_exemption),
+        description = stringResource(Res.string.settings_emergency_exemption_desc),
+        icon = Res.drawable.ic_unknown_call,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
 }
 
 @Composable

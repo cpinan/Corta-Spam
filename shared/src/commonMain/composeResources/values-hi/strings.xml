@@ -155,6 +155,8 @@
     <string name="settings_show_notifications_desc">बंद होने पर, ऐप कोई सूचना नहीं भेजेगा, आने वाली कॉल का अलर्ट भी नहीं।</string>
     <string name="settings_repeated_caller_bypass">बार-बार कॉल करने वाले अज्ञात नंबरों का जवाब दें</string>
     <string name="settings_repeated_caller_bypass_desc">अगर कोई अज्ञात नंबर पर्याप्त बार कोशिश करे, तो उसे ब्लॉक करने के बजाय रिंग होने दें। यह तभी लागू होता है जब डिफ़ॉल्ट कार्रवाई ब्लॉक पर सेट हो।</string>
+    <string name="settings_emergency_exemption">आपातकालीन कॉलबैक छूट</string>
+    <string name="settings_emergency_exemption_desc">आपातकालीन सेवाओं को कॉल करने के बाद 30 मिनट तक हर कॉल आने दें, आपके नियम चाहे जो कहें</string>
 
     <!-- Settings section headers, used by the Expanded (tablet) list-detail layout -->
     <string name="settings_section_blocking">ब्लॉकिंग</string>
@@ -328,6 +330,7 @@
     <string name="reason_spam">स्पैम (%1$s, %2$d%%)</string>
     <string name="reason_repeated_calls">बार-बार कॉल (%2$d मिनट में %1$d)</string>
     <string name="reason_quiet_hours">शांत घंटे</string>
+    <string name="reason_emergency_callback">आपातकालीन कॉलबैक</string>
     <string name="reason_no_matching_rule">कोई नियम मेल नहीं खाया (डिफ़ॉल्ट: ब्लॉक)</string>
     <string name="backup_export_success">सफलतापूर्वक निर्यात किया गया।</string>
     <string name="backup_export_failed">निर्यात विफल: %1$s</string>

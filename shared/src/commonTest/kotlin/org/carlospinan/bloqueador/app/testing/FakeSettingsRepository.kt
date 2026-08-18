@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.testing
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.carlospinan.bloqueador.app.rules.EmergencyCallPolicy
 import org.carlospinan.bloqueador.app.settings.DefaultAction
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 
@@ -22,6 +23,9 @@ internal class FakeSettingsRepository(
     override val notificationsEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val notifyUnknownCallers: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val repeatedCallerBypassCount: MutableStateFlow<Int> = MutableStateFlow(0),
+    override val emergencyCallbackExemption: MutableStateFlow<Boolean> = MutableStateFlow(true),
+    override val lastEmergencyCallAtMillis: MutableStateFlow<Long> =
+        MutableStateFlow(EmergencyCallPolicy.NEVER),
     override val welcomeShown: Boolean = false,
     override val permissionsPromptShown: Boolean = false,
 ) : SettingsRepository {
@@ -47,6 +51,14 @@ internal class FakeSettingsRepository(
 
     override suspend fun setRepeatedCallerBypassCount(count: Int) {
         repeatedCallerBypassCount.value = count
+    }
+
+    override suspend fun setEmergencyCallbackExemption(enabled: Boolean) {
+        emergencyCallbackExemption.value = enabled
+    }
+
+    override suspend fun recordEmergencyCall(timestampMillis: Long) {
+        lastEmergencyCallAtMillis.value = timestampMillis
     }
 
     override suspend fun setWelcomeShown() {}

@@ -78,13 +78,42 @@ sealed class RuleDecision {
         val attempts: Int,
     ) : RuleDecision()
 
-    /** Whether this decision results in the call being blocked. */
+    /**
+     * No rule was consulted at all: the user had just called the emergency services, so this call
+     * is let through whatever the rules say.
+     *
+     * Checked before everything, including a manual block. A number on the blocklist that rings
+     * inside the callback window is far more likely to be a dispatcher on a shared line than the
+     * spammer the user blocked. See [EmergencyCallPolicy].
+     */
+    data object EmergencyExempt : RuleDecision()
+
+    /**
+     * Whether this decision results in the call being blocked.
+     *
+     * An exhaustive `when` rather than a chain of `!is`. The chain compiled fine when a new
+     * variant was added and silently classified it as *blocked*, which is the dangerous default
+     * for a phone app; this way the compiler stops the build until the new case says which it is.
+     */
     val isBlocked: Boolean
         get() =
-            this !is Allowlist &&
-                this !is DefaultAllow &&
-                this !is PendingReview &&
-                this !is AllowedAfterRepeatedAttempts
+            when (this) {
+                is Allowlist,
+                is DefaultAllow,
+                is PendingReview,
+                is AllowedAfterRepeatedAttempts,
+                is EmergencyExempt,
+                -> false
+
+                is ManualBlock,
+                is PatternBlock,
+                is CountryBlock,
+                is SpamHit,
+                is ActionBlock,
+                is ScheduleBlock,
+                is DefaultBlock,
+                -> true
+            }
 
     /**
      * Why this decision was reached, or null when there's nothing worth saying.
@@ -110,6 +139,7 @@ sealed class RuleDecision {
                 is DefaultBlock -> BlockReason.NoMatchingRule
                 is PendingReview -> null
                 is AllowedAfterRepeatedAttempts -> BlockReason.AllowedAfterRepeatedAttempts(attempts)
+                is EmergencyExempt -> BlockReason.EmergencyCallback
             }
 
     /** [reason] in the form the call log persists, or null when there's nothing to record. */
@@ -126,7 +156,13 @@ sealed class RuleDecision {
                 is CountryBlock -> ruleId
                 is ActionBlock -> ruleId
                 is ScheduleBlock -> ruleId
-                is SpamHit, is DefaultAllow, is DefaultBlock, is PendingReview, is AllowedAfterRepeatedAttempts -> null
+                is SpamHit,
+                is DefaultAllow,
+                is DefaultBlock,
+                is PendingReview,
+                is AllowedAfterRepeatedAttempts,
+                is EmergencyExempt,
+                -> null
             }
 
     /** Rule type tag for persistence in the call log. */
@@ -144,5 +180,10 @@ sealed class RuleDecision {
                 is DefaultBlock -> null
                 is PendingReview -> "REVIEW"
                 is AllowedAfterRepeatedAttempts -> "REPEATED_ALLOWED"
+                // Null rather than a new tag. The tag column carries a CHECK constraint, and
+                // adding a value to it means a rebuild-table migration of the whole call log --
+                // real risk to users' history for a label. The *reason* is still recorded, in
+                // rule_detail, which is free text and is what the UI renders anyway.
+                is EmergencyExempt -> null
             }
 }

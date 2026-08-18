@@ -32,6 +32,18 @@ class KeyValueSettingsStore(
         return raw.toIntOrNull() ?: default
     }
 
+    /**
+     * Epoch milliseconds outgrow [readInt] -- a timestamp does not fit in 32 bits and
+     * `toIntOrNull` returns null for one, which would silently read as the default forever.
+     */
+    fun readLong(
+        key: String,
+        default: Long,
+    ): Long {
+        val raw = db.appDatabaseQueries.selectSetting(key).executeAsOneOrNull() ?: return default
+        return raw.toLongOrNull() ?: default
+    }
+
     suspend fun write(
         key: String,
         value: String,
@@ -49,5 +61,10 @@ class KeyValueSettingsStore(
     suspend fun writeInt(
         key: String,
         value: Int,
+    ) = write(key, value.toString())
+
+    suspend fun writeLong(
+        key: String,
+        value: Long,
     ) = write(key, value.toString())
 }

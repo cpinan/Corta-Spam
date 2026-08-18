@@ -17,6 +17,7 @@ data class SettingsUiState(
     val notificationsEnabled: Boolean = true,
     val notifyUnknownCallers: Boolean = true,
     val repeatedCallerBypassCount: Int = 0,
+    val emergencyCallbackExemption: Boolean = true,
 )
 
 sealed interface SettingsIntent {
@@ -47,6 +48,10 @@ sealed interface SettingsIntent {
     data class SetRepeatedCallerBypassCount(
         val count: Int,
     ) : SettingsIntent
+
+    data class SetEmergencyCallbackExemption(
+        val enabled: Boolean,
+    ) : SettingsIntent
 }
 
 class SettingsViewModel(
@@ -74,6 +79,8 @@ class SettingsViewModel(
             partial.copy(repeatedCallerBypassCount = repeatedCallerBypassCount)
         }.combine(settingsRepository.notifyUnknownCallers) { partial, notifyUnknownCallers ->
             partial.copy(notifyUnknownCallers = notifyUnknownCallers)
+        }.combine(settingsRepository.emergencyCallbackExemption) { partial, emergencyCallbackExemption ->
+            partial.copy(emergencyCallbackExemption = emergencyCallbackExemption)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun onIntent(intent: SettingsIntent) {
@@ -85,6 +92,7 @@ class SettingsViewModel(
             is SettingsIntent.SetNotificationsEnabled -> setNotificationsEnabled(intent.enabled)
             is SettingsIntent.SetNotifyUnknownCallers -> setNotifyUnknownCallers(intent.enabled)
             is SettingsIntent.SetRepeatedCallerBypassCount -> setRepeatedCallerBypassCount(intent.count)
+            is SettingsIntent.SetEmergencyCallbackExemption -> setEmergencyCallbackExemption(intent.enabled)
         }
     }
 
@@ -127,6 +135,12 @@ class SettingsViewModel(
     private fun setRepeatedCallerBypassCount(count: Int) {
         viewModelScope.launch {
             settingsRepository.setRepeatedCallerBypassCount(count)
+        }
+    }
+
+    private fun setEmergencyCallbackExemption(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setEmergencyCallbackExemption(enabled)
         }
     }
 }

@@ -155,6 +155,8 @@
     <string name="settings_show_notifications_desc">Quando desativado, o app não publica nenhuma notificação, incluindo o alerta de chamada recebida.</string>
     <string name="settings_repeated_caller_bypass">Atender chamadores desconhecidos repetidos</string>
     <string name="settings_repeated_caller_bypass_desc">Se um número desconhecido insistir o suficiente, deixe tocar em vez de bloquear. Só se aplica quando a ação padrão está definida como Bloquear.</string>
+    <string name="settings_emergency_exemption">Exceção para retorno de emergência</string>
+    <string name="settings_emergency_exemption_desc">Deixa passar todas as chamadas por 30 minutos depois de você ligar para a emergência, independentemente das suas regras</string>
 
     <!-- Settings section headers, used by the Expanded (tablet) list-detail layout -->
     <string name="settings_section_blocking">Bloqueio</string>
@@ -328,6 +330,7 @@
     <string name="reason_spam">Spam (%1$s, %2$d%%)</string>
     <string name="reason_repeated_calls">Chamadas repetidas (%1$d em %2$d min)</string>
     <string name="reason_quiet_hours">Horas de silêncio</string>
+    <string name="reason_emergency_callback">Retorno de chamada de emergência</string>
     <string name="reason_no_matching_rule">Nenhuma regra corresponde (padrão: bloquear)</string>
     <string name="backup_export_success">Exportado com sucesso.</string>
     <string name="backup_export_failed">Falha ao exportar: %1$s</string>

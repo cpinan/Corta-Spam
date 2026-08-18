@@ -5,6 +5,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.rules.EmergencyCallPolicy
 import org.carlospinan.bloqueador.app.rules.ResolveContext
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
@@ -27,11 +28,33 @@ class EvaluateIncomingCallUseCase(
     private val spamProviderRepository: SpamProviderRepository,
     private val spamProvider: SpamProviderClient,
 ) {
-    suspend fun evaluate(number: String): RuleDecision {
+    /**
+     * [inEmergencyCallbackMode] is the platform's own `PROPERTY_EMERGENCY_CALLBACK_MODE` on the
+     * incoming call. Defaulted so every existing caller and test is unaffected; only the Telecom
+     * entry point has one to pass.
+     */
+    suspend fun evaluate(
+        number: String,
+        inEmergencyCallbackMode: Boolean = false,
+    ): RuleDecision {
         if (!settingsRepository.blockingEnabled.first()) {
             return RuleDecision.DefaultAllow
         }
         val now = currentTimeMillis()
+
+        // Before every rule, including a manual block. A number on the blocklist ringing inside
+        // the callback window is far more likely to be a dispatcher on a shared line than the
+        // spammer the user blocked -- and the cost of being wrong the other way is an ambulance
+        // rejected, or answered by the auto-responder and hung up on. See EmergencyCallPolicy.
+        if (EmergencyCallPolicy.isExempt(
+                exemptionEnabled = settingsRepository.emergencyCallbackExemption.value,
+                inEmergencyCallbackMode = inEmergencyCallbackMode,
+                nowMillis = now,
+                lastEmergencyCallAtMillis = settingsRepository.lastEmergencyCallAtMillis.value,
+            )
+        ) {
+            return RuleDecision.EmergencyExempt
+        }
         val contactNumbers =
             if (settingsRepository.autoAllowContacts.first() && contactsGateway.hasPermission()) {
                 contactsGateway.contactNumbers()

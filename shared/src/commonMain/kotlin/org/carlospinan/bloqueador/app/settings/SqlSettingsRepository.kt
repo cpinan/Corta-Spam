@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.carlospinan.bloqueador.app.db.AppDatabase
 import org.carlospinan.bloqueador.app.db.KeyValueSettingsStore
+import org.carlospinan.bloqueador.app.rules.EmergencyCallPolicy
 
 class SqlSettingsRepository(
     db: AppDatabase,
@@ -32,6 +33,12 @@ class SqlSettingsRepository(
     private val _repeatedCallerBypassCount = MutableStateFlow(0)
     override val repeatedCallerBypassCount: Flow<Int> = _repeatedCallerBypassCount.asStateFlow()
 
+    private val _emergencyCallbackExemption = MutableStateFlow(true)
+    override val emergencyCallbackExemption: StateFlow<Boolean> = _emergencyCallbackExemption.asStateFlow()
+
+    private val _lastEmergencyCallAtMillis = MutableStateFlow(EmergencyCallPolicy.NEVER)
+    override val lastEmergencyCallAtMillis: StateFlow<Long> = _lastEmergencyCallAtMillis.asStateFlow()
+
     init {
         _blockingEnabled.value = store.readBool("blocking_enabled", true)
         _autoAllowContacts.value = store.readBool("auto_allow_contacts", true)
@@ -42,6 +49,11 @@ class SqlSettingsRepository(
         _notificationsEnabled.value = store.readBool("notifications_enabled", true)
         _notifyUnknownCallers.value = store.readBool("notify_unknown_callers", true)
         _repeatedCallerBypassCount.value = store.readInt("repeated_caller_bypass_count", 0)
+        // Defaults to on. A user who has never opened this setting is the one most likely to be
+        // relying on it.
+        _emergencyCallbackExemption.value = store.readBool("emergency_callback_exemption", true)
+        _lastEmergencyCallAtMillis.value =
+            store.readLong("last_emergency_call_at", EmergencyCallPolicy.NEVER)
     }
 
     override suspend fun setBlockingEnabled(enabled: Boolean) {
@@ -72,6 +84,16 @@ class SqlSettingsRepository(
     override suspend fun setRepeatedCallerBypassCount(count: Int) {
         store.writeInt("repeated_caller_bypass_count", count)
         _repeatedCallerBypassCount.value = count
+    }
+
+    override suspend fun setEmergencyCallbackExemption(enabled: Boolean) {
+        store.writeBool("emergency_callback_exemption", enabled)
+        _emergencyCallbackExemption.value = enabled
+    }
+
+    override suspend fun recordEmergencyCall(timestampMillis: Long) {
+        store.writeLong("last_emergency_call_at", timestampMillis)
+        _lastEmergencyCallAtMillis.value = timestampMillis
     }
 
     private var _welcomeShown: Boolean = false
