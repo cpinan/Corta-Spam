@@ -233,6 +233,7 @@
     <string name="keypad_hint">Name or number</string>
     <string name="keypad_call">Call</string>
     <string name="keypad_delete">Delete last digit</string>
+    <string name="keypad_add_contact">Create new contact</string>
     <string name="keypad_no_matches">No contact matches what you typed.</string>
     <string name="keypad_more_matches">More contacts match. Keep typing to narrow the list.</string>
     <string name="keypad_contacts_denied">Allow access to your contacts to search them from the keypad.</string>

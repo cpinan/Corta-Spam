@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.keypad_add_contact
 import cortaspam.shared.generated.resources.keypad_call
 import cortaspam.shared.generated.resources.keypad_contact_row
 import cortaspam.shared.generated.resources.keypad_contacts_denied
@@ -71,6 +72,12 @@ fun KeypadScreen(
     contacts: List<Contact> = emptyList(),
     contactsPermissionGranted: Boolean = true,
     onRequestContactsPermission: () -> Unit = {},
+    /**
+     * Hands the typed number to the platform's own new-contact editor. Taking `ROLE_DIALER` took
+     * away the phone app the user used to save a number from, and this screen had no replacement:
+     * a number typed or read off a missed call could be dialled and never kept.
+     */
+    onAddContact: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var typed by rememberSaveable { mutableStateOf("") }
@@ -165,6 +172,19 @@ fun KeypadScreen(
                         colors = ButtonDefaults.buttonColors(),
                     ) {
                         Text(text = stringResource(Res.string.keypad_call))
+                    }
+                }
+
+                // Below the Call button, not among the search results, and that placement is the
+                // whole point: anything added above the pad pushes Call towards the bottom of the
+                // screen, which is the bug that put picking a contact and then hunting for the
+                // call button in this file's history. Nothing above this line moves.
+                if (typed.isNotBlank()) {
+                    TextButton(
+                        onClick = { onAddContact(typed) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text = stringResource(Res.string.keypad_add_contact))
                     }
                 }
             }

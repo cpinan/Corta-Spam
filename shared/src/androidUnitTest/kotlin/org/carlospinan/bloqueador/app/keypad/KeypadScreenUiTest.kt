@@ -219,6 +219,55 @@ class KeypadScreenUiTest {
     }
 
     /**
+     * Taking `ROLE_DIALER` took away the app the user used to save a number from, and this screen
+     * shipped without a replacement: a number typed here, or read off a missed call, could be
+     * dialled and never kept.
+     */
+    @Test
+    fun `a number with no contact behind it can be saved as one`() {
+        var added: String? = null
+        composeTestRule.setContent { KeypadScreen(onAddContact = { added = it }) }
+
+        composeTestRule.onNodeWithText("6").performClick()
+        composeTestRule.onNodeWithText("0").performClick()
+        composeTestRule.onNodeWithText("0").performClick()
+
+        composeTestRule.onNodeWithText("Create new contact").performScrollTo().performClick()
+
+        assertEquals("600", added)
+    }
+
+    /**
+     * Offered below the matches as well as instead of them: a typed number can look like a
+     * contact's without being it, and the user still has to be able to save the one they typed.
+     */
+    @Test
+    fun `saving is still offered when contacts already match`() {
+        var added: String? = null
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts = listOf(Contact(name = "Ana Torres", number = "+34600123456")),
+                onAddContact = { added = it },
+            )
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Ana")
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+
+        composeTestRule.onNodeWithText("Create new contact").performScrollTo().performClick()
+
+        assertEquals("Ana", added)
+    }
+
+    /** Nothing typed is nothing to save, and the empty screen is the pad, not a list of actions. */
+    @Test
+    fun `an empty keypad offers nothing to save`() {
+        composeTestRule.setContent { KeypadScreen() }
+
+        composeTestRule.onNodeWithText("Create new contact").assertDoesNotExist()
+    }
+
+    /**
      * The same request recomposing is not a new one. Without the applied-id guard, returning to
      * the keypad tab would retype a number the user had deliberately deleted.
      */

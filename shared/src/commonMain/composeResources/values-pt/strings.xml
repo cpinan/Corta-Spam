@@ -251,6 +251,7 @@
     <string name="keypad_hint">Nome ou número</string>
     <string name="keypad_call">Ligar</string>
     <string name="keypad_delete">Apagar o último dígito</string>
+    <string name="keypad_add_contact">Criar novo contato</string>
     <string name="keypad_no_matches">Nenhum contato corresponde ao que você digitou.</string>
     <string name="keypad_more_matches">Há mais contatos correspondentes. Continue digitando para reduzir a lista.</string>
     <string name="keypad_contacts_denied">Permita o acesso aos seus contatos para pesquisá-los pelo teclado.</string>

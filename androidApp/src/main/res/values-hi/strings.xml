@@ -36,4 +36,5 @@
         <item quantity="other">%1$d प्रयास</item>
     </plurals>
     <string name="autoresponder_audio_unreadable">इस ऑडियो फ़ाइल का उपयोग नहीं किया जा सकता: ऐप को इसे पढ़ने की स्थायी अनुमति नहीं मिली। डिवाइस स्टोरेज से कोई फ़ाइल चुनें।</string>
+    <string name="keypad_add_contact_unavailable">इस फ़ोन का कोई ऐप संपर्क सहेज नहीं सकता।</string>
 </resources>

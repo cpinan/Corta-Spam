@@ -100,6 +100,7 @@ fun AppNavHost(
     onPickImportFile: (((String) -> Unit) -> Unit)? = null,
     onCallBack: ((String) -> Unit)? = null,
     onCopyNumber: ((String) -> Unit)? = null,
+    onAddContact: ((String) -> Unit)? = null,
     contactsPermissionGranted: Boolean = false,
     dialerRoleHeld: Boolean = true,
     notificationsPermissionGranted: Boolean = true,
@@ -203,6 +204,7 @@ fun AppNavHost(
                     contacts = keypadState.contacts,
                     contactsPermissionGranted = keypadState.contactsPermissionGranted,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
+                    onAddContact = onAddContact ?: {},
                 )
             }
 

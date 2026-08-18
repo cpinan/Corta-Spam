@@ -36,4 +36,5 @@
         <item quantity="other">%1$d tentativas</item>
     </plurals>
     <string name="autoresponder_audio_unreadable">Este arquivo de áudio não pode ser usado: o app não recebeu permissão permanente para lê-lo. Escolha um arquivo do armazenamento do dispositivo.</string>
+    <string name="keypad_add_contact_unavailable">Nenhum app deste telefone pode salvar contatos.</string>
 </resources>

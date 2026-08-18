@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.provider.Settings
 import android.telecom.TelecomManager
 import android.util.Log
@@ -326,6 +327,7 @@ class MainActivity : ComponentActivity() {
                                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                     clipboard.setPrimaryClip(ClipData.newPlainText("phone_number", number))
                                 },
+                                onAddContact = ::addContact,
                                 callInProgress = inCallState != null,
                                 onReturnToCall = {
                                     startActivity(
@@ -382,6 +384,33 @@ class MainActivity : ComponentActivity() {
         }
         if (recordingPlayerLazy.isInitialized()) {
             recordingPlayer.stop()
+        }
+    }
+
+    /**
+     * Opens the platform's new-contact editor with [number] already filled in.
+     *
+     * `ACTION_INSERT` against `RawContacts.CONTENT_TYPE`, not a form of this app's own: writing a
+     * contact needs `WRITE_CONTACTS`, and a call blocker that asks to write your address book has
+     * to justify that to Play and to the user for a feature the platform already provides. This
+     * way the app supplies the number and the user's own contacts app — with their accounts, their
+     * fields and their sync — does the saving.
+     *
+     * The catch is that the editor is another app, and a device can have none: a phone with the
+     * contacts app disabled would throw `ActivityNotFoundException` out of a keypad tap.
+     */
+    private fun addContact(number: String) {
+        if (number.isBlank()) return
+        val intent =
+            Intent(ContactsContract.Intents.Insert.ACTION).apply {
+                type = ContactsContract.RawContacts.CONTENT_TYPE
+                putExtra(ContactsContract.Intents.Insert.PHONE, number.trim())
+            }
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "No contacts app to save a number with", e)
+            Toast.makeText(this, R.string.keypad_add_contact_unavailable, Toast.LENGTH_LONG).show()
         }
     }
 
