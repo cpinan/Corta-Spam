@@ -268,6 +268,67 @@ class CallScreenUiTest {
         composeTestRule.onNodeWithText("Close").assertDoesNotExist()
     }
 
+    /** A connected call and one that is silently still trying looked identical without this. */
+    @Test
+    fun `a connected call shows how long it has been running`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.ACTIVE,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                callDurationSeconds = 74,
+            )
+        }
+
+        composeTestRule.onNodeWithText("01:14").assertExists()
+    }
+
+    /**
+     * The two controls a phone app cannot ship without: this one had neither, so a call could not
+     * be put on speaker or muted from the screen that had replaced the platform dialer.
+     */
+    @Test
+    fun `an active call can be muted and put on speaker`() {
+        var mutePresses = 0
+        var speakerPresses = 0
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.ACTIVE,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onToggleMute = { mutePresses += 1 },
+                onToggleSpeaker = { speakerPresses += 1 },
+            )
+        }
+
+        composeTestRule.onNodeWithText("Mute").performClick()
+        composeTestRule.onNodeWithText("Speaker").performClick()
+
+        assertEquals(1, mutePresses)
+        assertEquals(1, speakerPresses)
+    }
+
+    /** A ringing call has no audio session yet, so controls for one would do nothing. */
+    @Test
+    fun `a ringing call offers no audio controls`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.RINGING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Mute").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Speaker").assertDoesNotExist()
+    }
+
     /** Hanging up must never be the button that scrolled away behind the pad. */
     @Test
     fun `the keypad can be closed again`() {

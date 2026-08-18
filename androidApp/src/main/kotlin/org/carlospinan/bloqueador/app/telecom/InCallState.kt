@@ -3,6 +3,8 @@ package org.carlospinan.bloqueador.app.telecom
 import android.os.Handler
 import android.os.Looper
 import android.telecom.Call
+import android.telecom.CallAudioState
+import android.telecom.InCallService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +54,16 @@ object InCallState {
          * one of two calls as though it were the only one.
          */
         val otherCallCount: Int = 0,
+        /**
+         * Seconds since Telecom reported the call connected, or null while it has not. Ticked
+         * once a second by [syncTicker] rather than derived in the composable, so the value the
+         * screen renders is the same one a test can set.
+         */
+        val callDurationSeconds: Int? = null,
+        /** Whether the microphone is muted, as reported by Telecom — never as last requested. */
+        val muted: Boolean = false,
+        /** Whether the audio route is the loudspeaker. Same reasoning as [muted]. */
+        val speakerOn: Boolean = false,
     )
 
     /** Per-call, so promoting a call back to the screen restores what was known about it. */
@@ -87,6 +99,32 @@ object InCallState {
     private val _state = MutableStateFlow<UiState?>(null)
     val state: StateFlow<UiState?> = _state.asStateFlow()
 
+    /**
+     * The live `InCallService`, for the two controls that are not on the [Call] — muting and the
+     * audio route are properties of the whole call session, so Telecom puts them on the service.
+     *
+     * Held as a nullable field and cleared by [clear] because this is an `object` and the service
+     * is not: a reference kept past `onDestroy` is both a leak and a handle on a dead binding.
+     */
+    private var service: InCallService? = null
+
+    /**
+     * Ticks the call timer. Separate from [dtmfHandler] so that stopping one cannot cancel the
+     * other, and lazy for the same reason: a unit test that never reaches an active call must not
+     * need a main looper.
+     */
+    private val tickHandler by lazy { Handler(Looper.getMainLooper()) }
+
+    private val tick =
+        object : Runnable {
+            override fun run() {
+                val current = _state.value ?: return
+                val call = primary ?: return
+                _state.value = current.copy(callDurationSeconds = call.durationSeconds())
+                tickHandler.postDelayed(this, TICK_INTERVAL_MILLIS)
+            }
+        }
+
     private val callback =
         object : Call.Callback() {
             override fun onStateChanged(
@@ -108,8 +146,76 @@ object InCallState {
                 // user is looking at.
                 if (call !== primary) return
                 _state.value = _state.value?.copy(phase = newState.toPhase())
+                syncTicker()
             }
         }
+
+    /**
+     * Runs the call timer exactly while there is a connected call to time.
+     *
+     * Driven off the phase rather than started once at connect: a call that goes on hold and comes
+     * back is the same call, and a timer left running through the hold would have counted time the
+     * user was not on it.
+     */
+    private fun syncTicker() {
+        if (_state.value?.phase == CallUiPhase.ACTIVE) {
+            tickHandler.removeCallbacks(tick)
+            ticking = true
+            tick.run()
+        } else {
+            stopTicking()
+        }
+    }
+
+    /** Guarded on [ticking] so a call that never connected does not build the handler at all. */
+    private fun stopTicking() {
+        if (!ticking) return
+        tickHandler.removeCallbacks(tick)
+        ticking = false
+    }
+
+    private var ticking = false
+
+    /** Remembers the service the [Call]s came from, so mute and the audio route are reachable. */
+    fun attachService(service: InCallService) {
+        this.service = service
+    }
+
+    /**
+     * Records what Telecom says the audio session is doing.
+     *
+     * The screen renders this rather than what the last tap asked for, because the two are not the
+     * same: the auto-responder moves the route to the loudspeaker by itself, a headset being
+     * plugged in moves it back, and a button drawn from a local guess would show the opposite of
+     * the truth in both cases.
+     */
+    fun onAudioStateChanged(audioState: CallAudioState) {
+        _state.value =
+            _state.value?.copy(
+                muted = audioState.isMuted,
+                speakerOn = audioState.route == CallAudioState.ROUTE_SPEAKER,
+            )
+    }
+
+    /** Flips the microphone. A no-op with no service bound, like every other action here. */
+    fun toggleMute() {
+        val current = _state.value ?: return
+        service?.setMuted(!current.muted)
+    }
+
+    /**
+     * Moves the audio between the loudspeaker and the earpiece.
+     *
+     * `ROUTE_WIRED_OR_EARPIECE` rather than `ROUTE_EARPIECE` on the way back: with a headset
+     * plugged in, asking for the earpiece specifically sends the call to the handset the user is
+     * not holding to their ear.
+     */
+    fun toggleSpeaker() {
+        val current = _state.value ?: return
+        service?.setAudioRoute(
+            if (current.speakerOn) CallAudioState.ROUTE_WIRED_OR_EARPIECE else CallAudioState.ROUTE_SPEAKER,
+        )
+    }
 
     fun attach(call: Call) {
         stack.add(call)
@@ -135,7 +241,10 @@ object InCallState {
             CallStack.Removal.Unchanged ->
                 _state.value = _state.value?.copy(otherCallCount = stack.otherCount())
 
-            CallStack.Removal.Empty -> _state.value = null
+            CallStack.Removal.Empty -> {
+                _state.value = null
+                stopTicking()
+            }
 
             CallStack.Removal.Promoted -> stack.primary?.let { show(it) }
         }
@@ -159,13 +268,19 @@ object InCallState {
             dtmfHandler.removeCallbacks(stopDtmfTone)
             dtmfCall = null
         }
+        stopTicking()
         stack.clear()
+        service = null
         _state.value = null
     }
 
     /** Puts [call] on screen, restoring whatever was already known about it. */
     private fun show(call: Call) {
         val callInfo = info.getOrPut(call) { CallInfo() }
+        // Carried across rather than reset: mute and the route belong to the audio session, not to
+        // whichever call is on screen, so promoting the other call must not draw an un-muted
+        // microphone over a muted one.
+        val audio = _state.value
         _state.value =
             UiState(
                 number = call.handleNumber(),
@@ -174,7 +289,24 @@ object InCallState {
                 displayName = callInfo.displayName,
                 dtmfDigits = callInfo.dtmfDigits,
                 otherCallCount = stack.otherCount(),
+                callDurationSeconds = call.durationSeconds(),
+                muted = audio?.muted ?: false,
+                speakerOn = audio?.speakerOn ?: false,
             )
+        syncTicker()
+    }
+
+    /**
+     * How long this call has been connected, or null if it has not been.
+     *
+     * `connectTimeMillis` is wall clock, which is what Telecom exposes publicly — the monotonic
+     * `connectElapsedTimeMillis` is `@hide`. A clock change mid-call would therefore skew the
+     * timer; that is a worse trade for a two-minute call than having no timer at all.
+     */
+    private fun Call.durationSeconds(): Int? {
+        val connectedAt = details?.connectTimeMillis ?: 0L
+        if (connectedAt <= 0L) return null
+        return ((System.currentTimeMillis() - connectedAt) / 1000L).coerceAtLeast(0L).toInt()
     }
 
     /**
@@ -251,6 +383,9 @@ object InCallState {
 
     /** Comfortably above the ~40 ms an ITU Q.24 receiver has to accept, short enough to tap fast. */
     private const val DTMF_TONE_MILLIS = 250L
+
+    /** One second, because the timer shows seconds. */
+    private const val TICK_INTERVAL_MILLIS = 1_000L
 
     private fun Call.handleNumber(): String =
         details

@@ -177,6 +177,30 @@ class PassthroughInCallService :
             }
         }
 
+    override fun onCreate() {
+        super.onCreate()
+        // Mute and the audio route hang off the service, not off a Call, so InCallState needs a
+        // handle on it to offer them at all.
+        InCallState.attachService(this)
+    }
+
+    /**
+     * Telecom's report of what the audio session is doing, forwarded straight to the screen.
+     *
+     * This is the only honest source for the mute and speaker buttons: the route also changes
+     * without a tap — the auto-responder forces the loudspeaker, and plugging in a headset moves
+     * it back — and a button drawn from what was last requested would show the opposite.
+     *
+     * `CallAudioState` is deprecated in favour of `CallEndpoint`, which arrived in API 34. minSdk
+     * here is 26, so this is the callback that fires on the devices this app actually ships to;
+     * the replacement would need both paths carried side by side to gain nothing on any of them.
+     */
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+    override fun onCallAudioStateChanged(audioState: CallAudioState) {
+        super.onCallAudioStateChanged(audioState)
+        InCallState.onAudioStateChanged(audioState)
+    }
+
     override fun onCallAdded(call: Call) {
         super.onCallAdded(call)
         val state = CallState()

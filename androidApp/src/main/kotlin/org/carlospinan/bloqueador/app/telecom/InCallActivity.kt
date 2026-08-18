@@ -59,6 +59,11 @@ class InCallActivity : ComponentActivity() {
                     dtmfDigits = current.dtmfDigits,
                     onDtmf = InCallState::playDtmf,
                     otherCallCount = current.otherCallCount,
+                    callDurationSeconds = current.callDurationSeconds,
+                    muted = current.muted,
+                    onToggleMute = InCallState::toggleMute,
+                    speakerOn = current.speakerOn,
+                    onToggleSpeaker = InCallState::toggleSpeaker,
                     onDismiss = ::finish,
                 )
             } else {

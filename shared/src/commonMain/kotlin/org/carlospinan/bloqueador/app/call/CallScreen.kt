@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,6 +35,8 @@ import cortaspam.shared.generated.resources.action_close
 import cortaspam.shared.generated.resources.action_decline
 import cortaspam.shared.generated.resources.action_hang_up
 import cortaspam.shared.generated.resources.action_resume
+import cortaspam.shared.generated.resources.call_action_mute
+import cortaspam.shared.generated.resources.call_action_speaker
 import cortaspam.shared.generated.resources.call_keypad_hide
 import cortaspam.shared.generated.resources.call_keypad_show
 import cortaspam.shared.generated.resources.call_other_call_active
@@ -108,6 +111,17 @@ fun CallScreen(
      */
     otherCallCount: Int = 0,
     /**
+     * Seconds since the call connected, or null before it has. Counted here rather than formatted
+     * upstream so the screen owns the words, and so the same state can be asserted without a clock.
+     */
+    callDurationSeconds: Int? = null,
+    /** Microphone state, as Telecom reports it — not as this screen last asked for it. */
+    muted: Boolean = false,
+    onToggleMute: () -> Unit = {},
+    /** True when the audio route is the loudspeaker. Same reasoning as [muted]. */
+    speakerOn: Boolean = false,
+    onToggleSpeaker: () -> Unit = {},
+    /**
      * Leaves the call screen without touching the call. Only reachable from
      * [CallUiPhase.DISCONNECTING], where there is no call left to act on and the screen would
      * otherwise be a dead end — Back deliberately backgrounds the task rather than leaving.
@@ -155,6 +169,17 @@ fun CallScreen(
                         Text(
                             text = number,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    // The one thing every phone app has shown since they had screens, and this one
+                    // did not: how long you have been on the call. Without it there is no way to
+                    // tell a connected call from one that is silently still trying.
+                    if (callDurationSeconds != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = formatCallDuration(callDurationSeconds),
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -208,12 +233,38 @@ fun CallScreen(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    // Mute and speaker are on the same row as the keypad toggle because they are
+                    // the same kind of thing, and because a dialer without them is one the user
+                    // cannot take a call on while driving or write anything down during. They
+                    // reflect what Telecom reports, not what was last tapped: the auto-responder
+                    // moves the route to the loudspeaker on its own, and a button showing the
+                    // opposite of the live state is worse than no button.
                     if (phase == CallUiPhase.ACTIVE) {
-                        TextButton(onClick = { keypadRequested = !keypadRequested }) {
-                            Text(
-                                stringResource(
-                                    if (keypadVisible) Res.string.call_keypad_hide else Res.string.call_keypad_show,
-                                ),
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            FilterChip(
+                                selected = muted,
+                                onClick = onToggleMute,
+                                label = { Text(stringResource(Res.string.call_action_mute)) },
+                            )
+                            FilterChip(
+                                selected = speakerOn,
+                                onClick = onToggleSpeaker,
+                                label = { Text(stringResource(Res.string.call_action_speaker)) },
+                            )
+                            FilterChip(
+                                selected = keypadVisible,
+                                onClick = { keypadRequested = !keypadRequested },
+                                label = {
+                                    Text(
+                                        stringResource(
+                                            if (keypadVisible) Res.string.call_keypad_hide else Res.string.call_keypad_show,
+                                        ),
+                                    )
+                                },
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -259,6 +310,23 @@ fun CallScreen(
             }
         }
     }
+}
+
+/**
+ * `mm:ss`, and `h:mm:ss` once there is an hour to show.
+ *
+ * Not localized, and deliberately: a call timer is digits and colons in every locale this app
+ * ships, and every phone the user has held has drawn it this way. Hours only appear once they
+ * exist, so a two-minute call is not padded out to `0:02:14`.
+ */
+internal fun formatCallDuration(totalSeconds: Int): String {
+    val seconds = totalSeconds.coerceAtLeast(0)
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val remainder = seconds % 60
+    val mm = minutes.toString().padStart(2, '0')
+    val ss = remainder.toString().padStart(2, '0')
+    return if (hours > 0) "$hours:$mm:$ss" else "$mm:$ss"
 }
 
 /**

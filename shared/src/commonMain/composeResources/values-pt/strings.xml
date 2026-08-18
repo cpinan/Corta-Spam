@@ -78,6 +78,8 @@
     <string name="call_status_other">Chamada em andamento</string>
     <string name="action_resume">Retomar</string>
     <string name="action_close">Fechar</string>
+    <string name="call_action_mute">Mudo</string>
+    <string name="call_action_speaker">Viva-voz</string>
 
     <!-- Início -->
     <string name="home_title">Corta Spam</string>

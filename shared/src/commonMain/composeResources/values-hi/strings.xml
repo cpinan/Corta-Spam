@@ -78,6 +78,8 @@
     <string name="call_status_other">कॉल जारी है</string>
     <string name="action_resume">फिर से शुरू करें</string>
     <string name="action_close">बंद करें</string>
+    <string name="call_action_mute">म्यूट</string>
+    <string name="call_action_speaker">स्पीकर</string>
 
     <!-- होम -->
     <string name="home_title">Corta Spam</string>
