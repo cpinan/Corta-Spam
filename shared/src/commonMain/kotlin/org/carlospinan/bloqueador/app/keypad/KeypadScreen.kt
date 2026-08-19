@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.keypad
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -193,15 +196,26 @@ fun KeypadScreen(
 }
 
 /**
- * The search results, between the field and the pad.
+ * The search results, in a region of **constant height** between the field and the pad.
  *
- * Nothing at all is shown for an empty query: the pad is what this screen is for, and pushing it
- * below a full address book to reach it would be a regression for the user who came here to type
- * a number. Results appear as soon as there is something to match on.
+ * The height is reserved whether or not there is anything to show, and that is the fix rather
+ * than an oversight. This block used to size itself to its contents, so every keystroke that
+ * changed the number of matches moved the dial pad below it. Measured on a Pixel 8 Pro API 36
+ * emulator against the release build: typing a single `1` matched five seeded contacts and pushed
+ * the `1` key from y=702 to y=1584 — 882 px, about a third of the screen — so the second digit of
+ * a number landed wherever the first keystroke had just moved the pad to. A tap that missed the
+ * pad landed in this very list, and a row here replaces the entire typed number with that
+ * contact's; the Call button sits in the same reflowing column, so a mis-tap could dial the wrong
+ * person outright. A dialer whose keys move while it is being typed on is the defect. A constant
+ * gap above the pad is the price, and this screen has the room — everything below the pad was
+ * empty space already.
  *
- * A row's number fills the field rather than dialling, so the number is on screen before the call
- * is placed; the call button on the row is the one that dials. A single tap that both picks a
- * contact and rings them gives a mis-tap no recovery.
+ * [ContactRow]'s own note that the list "reshuffles under the finger on every keystroke" was
+ * written about this: picking a contact was made to fill the field rather than dial, which
+ * softened the consequence. The pad no longer moving removes the cause.
+ *
+ * Results scroll *inside* the region rather than extending it, so a long list cannot grow the
+ * block back. Nothing is drawn for an empty query — the space is held, not filled.
  */
 @Composable
 private fun ContactMatches(
@@ -211,49 +225,50 @@ private fun ContactMatches(
     onRequestContactsPermission: () -> Unit,
     onPick: (Contact) -> Unit,
 ) {
-    if (query.isBlank()) return
+    Box(modifier = Modifier.fillMaxWidth().height(MATCHES_REGION_HEIGHT)) {
+        Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            if (query.isBlank()) return@Column
 
-    if (!contactsPermissionGranted) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(Res.string.keypad_contacts_denied),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        TextButton(onClick = onRequestContactsPermission) {
-            Text(stringResource(Res.string.settings_grant_contacts))
+            if (!contactsPermissionGranted) {
+                Text(
+                    text = stringResource(Res.string.keypad_contacts_denied),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                TextButton(onClick = onRequestContactsPermission) {
+                    Text(stringResource(Res.string.settings_grant_contacts))
+                }
+                return@Column
+            }
+
+            if (matches.isEmpty()) {
+                Text(
+                    text = stringResource(Res.string.keypad_no_matches),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                return@Column
+            }
+
+            // Still capped, and not a lazy list: rendering 500 matching contacts would build 500
+            // rows for a query one more character would have narrowed. The overflow is stated
+            // rather than silently dropped, so a missing contact reads as "keep typing" instead
+            // of "not in your phone".
+            matches.take(MAX_VISIBLE_MATCHES).forEach { contact ->
+                ContactRow(contact = contact, onPick = { onPick(contact) })
+                HorizontalDivider()
+            }
+            if (matches.size > MAX_VISIBLE_MATCHES) {
+                Text(
+                    text = stringResource(Res.string.keypad_more_matches),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                )
+            }
         }
-        return
-    }
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    if (matches.isEmpty()) {
-        Text(
-            text = stringResource(Res.string.keypad_no_matches),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        return
-    }
-
-    // This screen is one scrolling Column, not a lazy list -- rendering 500 matching contacts
-    // would build 500 rows for a query one more character would have narrowed. The overflow is
-    // stated rather than silently dropped, so a missing contact reads as "keep typing" instead
-    // of "not in your phone".
-    matches.take(MAX_VISIBLE_MATCHES).forEach { contact ->
-        ContactRow(contact = contact, onPick = { onPick(contact) })
-        HorizontalDivider()
-    }
-    if (matches.size > MAX_VISIBLE_MATCHES) {
-        Text(
-            text = stringResource(Res.string.keypad_more_matches),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-        )
     }
 }
 
@@ -293,5 +308,15 @@ private fun ContactRow(
 
 private const val NO_REQUEST_APPLIED = -1L
 
-/** Enough to recognise the right contact without burying the pad below the fold. */
+/**
+ * Room for about two result rows. Constant, and reserved even when the query is empty, so the dial
+ * pad below sits in the same place on every frame -- see [ContactMatches].
+ */
+private val MATCHES_REGION_HEIGHT = 132.dp
+
+/**
+ * How many results are built at all. No longer about burying the pad, which [MATCHES_REGION_HEIGHT]
+ * now settles whatever this is: it is a cap on work, so a one-character query does not build a row
+ * per contact in the address book. Anything past it scrolls inside the region.
+ */
 private const val MAX_VISIBLE_MATCHES = 5

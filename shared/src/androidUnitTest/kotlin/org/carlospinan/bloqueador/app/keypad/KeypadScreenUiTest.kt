@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -24,7 +25,11 @@ import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [34])
+// A realistic phone viewport rather than Robolectric's small default. These tests drive a
+// scrolling screen by tapping keys, and on the default window the dial pad sat close enough to
+// the fold that 132 dp of layout change pushed it out of reach -- which says nothing about the
+// screen and everything about the window it was measured in.
+@Config(sdk = [34], qualifiers = "w411dp-h891dp")
 class KeypadScreenUiTest {
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -286,5 +291,39 @@ class KeypadScreenUiTest {
 
         composeTestRule.onNodeWithText("Call").performClick()
         assertEquals("+3460012345", called)
+    }
+
+    /**
+     * The dial pad must not move while the pad is being typed on.
+     *
+     * The regression this pins: the contact-match block sat between the field and the pad and
+     * sized itself to its contents, so every keystroke that changed the number of matches moved
+     * every key below it. Measured on a Pixel 8 Pro API 36 emulator against the release build,
+     * typing a single `1` matched five contacts and pushed the `1` key 882 px down -- about a
+     * third of the screen. The next digit landed wherever the pad had just moved to, and a tap
+     * that missed the pad landed in the match list, whose rows replace the whole typed number.
+     *
+     * `7` is the probe because nothing here types it, so `onNodeWithText` cannot match the
+     * number in the field instead of the key. The assertion is on the pad's own position rather
+     * than on the match block's height: it is the pad moving that hurts, and a future layout that
+     * keeps the pad still by some other means should be free to pass.
+     */
+    @Test
+    fun `the dial pad stays put as contact matches come and go`() {
+        val contacts =
+            List(5) { index -> Contact(name = "Contact $index", number = "+3490012345$index") }
+        composeTestRule.setContent { KeypadScreen(contacts = contacts) }
+
+        val atRest = composeTestRule.onNodeWithText("7").getBoundsInRoot().top
+
+        // Matches all five seeded contacts.
+        composeTestRule.onNodeWithText("9").performClick()
+        composeTestRule.waitForIdle()
+        assertEquals(atRest, composeTestRule.onNodeWithText("7").getBoundsInRoot().top)
+
+        // And back down to none, which used to move the pad the other way.
+        composeTestRule.onNodeWithText("8").performClick()
+        composeTestRule.waitForIdle()
+        assertEquals(atRest, composeTestRule.onNodeWithText("7").getBoundsInRoot().top)
     }
 }
