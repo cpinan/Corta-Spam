@@ -414,16 +414,54 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Places a call, via Telecom rather than `ACTION_CALL`.
+     *
+     * `startActivity(ACTION_CALL)` cannot dial an emergency number from this app, and the reason
+     * is not the permission. Telecom routes the intent through its own `UserCallActivity`
+     * trampoline and decides whether the caller may dial 112 by asking who started it — but
+     * `getCallingPackage()` is null for a plain `startActivity`, so holding `ROLE_DIALER` is
+     * invisible at exactly the moment it is being checked. Measured on a Pixel 8 Pro API 36
+     * emulator with the role held:
+     *
+     *     W Telecom: NewOutgoingCallIntentBroadcaster: Cannot call potential emergency number 112
+     *     with CALL Intent ... unless caller is system or default dialer.
+     *
+     * Telecom then cancelled the call and launched the *stock* dialer with 112 pre-filled, so the
+     * app that had replaced the phone app answered a tap on Call by handing the user to another
+     * app and asking them to press Call a second time.
+     *
+     * [TelecomManager.placeCall] is a direct binder call, so the caller's package is authenticated
+     * rather than guessed, and the default dialer is allowed to dial an emergency number through
+     * it. It is the documented route for a default dialer for every other number too.
+     *
+     * `ACTION_CALL` stays as the fallback for a device with no Telecom service at all.
+     */
     private fun placeCall(number: String) {
         if (number.isBlank()) return
-        val callIntent = Intent(Intent.ACTION_CALL)
         // '#' has to be escaped or the tel: URI treats everything after it as a fragment and the
         // number is truncated -- the keypad has a '#' key, so this is reachable by typing. '+' is
         // left alone deliberately: encoding it to %2B breaks every international call. Same
         // reasoning as CallActionReceiver.callBack.
-        callIntent.data = "tel:${Uri.encode(number.trim(), "+")}".toUri()
+        val callUri = "tel:${Uri.encode(number.trim(), "+")}".toUri()
+
+        val telecomManager = getSystemService(TelecomManager::class.java)
+        if (telecomManager != null) {
+            try {
+                telecomManager.placeCall(callUri, Bundle())
+                return
+            } catch (e: SecurityException) {
+                Log.e(TAG, "CALL_PHONE permission denied at call time", e)
+                return
+            } catch (e: IllegalStateException) {
+                // No calling account on this device -- fall through to the intent, which at least
+                // surfaces something the user can see.
+                Log.e(TAG, "Telecom refused to place the call", e)
+            }
+        }
+
         try {
-            startActivity(callIntent)
+            startActivity(Intent(Intent.ACTION_CALL, callUri))
         } catch (e: ActivityNotFoundException) {
             Log.e(TAG, "No activity to handle call intent for number", e)
         } catch (e: SecurityException) {

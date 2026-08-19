@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.telecom.TelecomManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.carlospinan.bloqueador.app.R
@@ -15,16 +16,15 @@ import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 /**
  * The call-back button on a finished call's notification — the one path in this app that places a
  * call from outside a Composable.
  *
- * Only the outgoing-intent decision is exercised here. Whether the call connects is Telecom's
- * business and a real handset's; what this can prove is that the button fires the right intent,
- * that a denied permission does not turn it into a no-op, and that it never hands the user back
- * to the dialer this app replaced.
+ * Only the outgoing-call decision is exercised here. Whether the call connects is Telecom's
+ * business and a real handset's; what this can prove is that the button routes the call the way
+ * a default dialer has to, that a denied permission does not turn it into a no-op, and that it
+ * never hands the user back to the dialer this app replaced.
  *
  * `application = Application::class` keeps `CortaSpamApp.onCreate()`'s `startKoin()` out of the
  * JVM, as `ContactNameLookupTest` records. The receiver's `ruleRepository` is a lazy `inject()`
@@ -54,21 +54,45 @@ class CallActionReceiverCallBackTest {
         while (Shadows.shadowOf(app).nextStartedActivity != null) Unit
     }
 
+    private val telecom get() = Shadows.shadowOf(context.getSystemService(TelecomManager::class.java))
+
     @Test
-    fun `with CALL_PHONE granted the button places the call`() {
+    fun `with CALL_PHONE granted the button places the call through Telecom`() {
         Shadows.shadowOf(app).grantPermissions(Manifest.permission.CALL_PHONE)
 
         receive(callBackIntent("+34600123456"))
 
-        val started = Shadows.shadowOf(app).nextStartedActivity!!
-        assertEquals(Intent.ACTION_CALL, started.action)
-        assertEquals("tel:+34600123456", started.data.toString())
-        assertTrue(started.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0)
+        assertEquals("tel:+34600123456", telecom.lastOutgoingCall.address.toString())
     }
 
     /**
-     * A BroadcastReceiver cannot show a permission dialog, and firing ACTION_CALL without the
-     * grant throws a SecurityException the user would read as a dead button. The fallback is this
+     * The whole reason this path does not use `ACTION_CALL`.
+     *
+     * Telecom decides whether an emergency number may be dialled by asking which package started
+     * the intent, and `getCallingPackage()` is null for a plain `startActivity` — so holding
+     * `ROLE_DIALER` is invisible exactly when it is checked, and Telecom cancels the call and
+     * launches the stock dialer instead. Measured on a Pixel 8 Pro API 36 emulator with the role
+     * held:
+     *
+     *     W Telecom: NewOutgoingCallIntentBroadcaster: Cannot call potential emergency number 112
+     *     with CALL Intent ... unless caller is system or default dialer.
+     *
+     * The assertion is positive — the call reached Telecom — rather than merely "no intent was
+     * fired", so a future rewrite that places no call at all cannot pass it.
+     */
+    @Test
+    fun `an emergency number reaches Telecom rather than another dialer`() {
+        Shadows.shadowOf(app).grantPermissions(Manifest.permission.CALL_PHONE)
+
+        receive(callBackIntent("112"))
+
+        assertEquals("tel:112", telecom.lastOutgoingCall.address.toString())
+        assertNull(Shadows.shadowOf(app).nextStartedActivity)
+    }
+
+    /**
+     * A BroadcastReceiver cannot show a permission dialog, and placing a call without the grant
+     * throws a SecurityException the user would read as a dead button. The fallback is this
      * app's own keypad, pre-filled.
      */
     @Test
@@ -98,14 +122,7 @@ class CallActionReceiverCallBackTest {
 
         receive(callBackIntent("  *21#  "))
 
-        assertEquals(
-            "tel:*21%23",
-            Shadows
-                .shadowOf(app)
-                .nextStartedActivity!!
-                .data
-                .toString(),
-        )
+        assertEquals("tel:*21%23", telecom.lastOutgoingCall.address.toString())
     }
 
     @Test

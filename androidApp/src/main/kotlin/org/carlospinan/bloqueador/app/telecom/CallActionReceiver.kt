@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Bundle
+import android.telecom.TelecomManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -52,8 +54,15 @@ class CallActionReceiver :
      *
      * Places it directly only when `CALL_PHONE` is already granted. Without the permission the
      * fallback is the app's own keypad, pre-filled with the number: a `BroadcastReceiver` cannot
-     * show a permission dialog, and firing `ACTION_CALL` without the grant throws a
-     * `SecurityException` that would look to the user like the button doing nothing at all.
+     * show a permission dialog, and firing a call without the grant throws a `SecurityException`
+     * that would look to the user like the button doing nothing at all.
+     *
+     * With the permission, the call goes through [TelecomManager.placeCall] rather than
+     * `ACTION_CALL`, for the reason spelled out on `MainActivity.placeCall`: Telecom decides
+     * whether an emergency number may be dialled by asking which package started the intent, and
+     * a plain `startActivity` reports no caller at all, so `ROLE_DIALER` goes unseen and the call
+     * is bounced to the stock dialer. A returned call is the likelier emergency case of the two —
+     * this is the button under a missed call.
      */
     private fun callBack(
         context: Context,
@@ -66,18 +75,32 @@ class CallActionReceiver :
         val granted =
             ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) ==
                 PackageManager.PERMISSION_GRANTED
-        val action = if (granted) Intent.ACTION_CALL else Intent.ACTION_DIAL
         // '+' is left unescaped deliberately: it is meaningful in a tel: number and encoding it
         // to %2B breaks every international call. '#' still has to be escaped, or everything
         // after it reads as a fragment.
-        val callIntent =
-            Intent(action, "tel:${Uri.encode(number.trim(), "+")}".toUri())
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (!granted) {
-            // ACTION_DIAL would otherwise be offered to every dialer on the device, including the
-            // one this app replaced -- which is exactly the trip to another app being fixed here.
-            callIntent.setPackage(context.packageName)
+        val callUri = "tel:${Uri.encode(number.trim(), "+")}".toUri()
+
+        if (granted) {
+            val telecomManager = context.getSystemService(TelecomManager::class.java)
+            if (telecomManager != null) {
+                try {
+                    telecomManager.placeCall(callUri, Bundle())
+                    return
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "CALL_PHONE was revoked between the permission check and the call", e)
+                    return
+                } catch (e: IllegalStateException) {
+                    Log.e(TAG, "Telecom refused to place the returned call", e)
+                }
+            }
         }
+
+        // ACTION_DIAL would otherwise be offered to every dialer on the device, including the
+        // one this app replaced -- which is exactly the trip to another app being fixed here.
+        val callIntent =
+            Intent(Intent.ACTION_DIAL, callUri)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setPackage(context.packageName)
         try {
             context.startActivity(callIntent)
         } catch (e: ActivityNotFoundException) {
