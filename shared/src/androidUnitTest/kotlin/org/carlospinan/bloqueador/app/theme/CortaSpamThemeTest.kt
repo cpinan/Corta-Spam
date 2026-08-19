@@ -6,6 +6,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
+import org.carlospinan.bloqueador.app.adaptive.WindowSizeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -91,8 +93,12 @@ class CortaSpamThemeTest {
                 .filter { it.isFile && it.extension == "kt" }
                 .flatMap { file ->
                     file.readLines().withIndex().mapNotNull { (index, line) ->
-                        // Skip the theme's own KDoc, which names the thing it replaced.
-                        if (line.trimStart().startsWith("*")) return@mapNotNull null
+                        // Comments are prose about the rule, not breaches of it: the theme's own
+                        // KDoc names the thing it replaced, and AdaptiveScaffold explains why
+                        // being absent from this list did not make it correct. Both are skipped,
+                        // or the check reports the sentence describing the bug as the bug.
+                        val trimmed = line.trimStart()
+                        if (trimmed.startsWith("*") || trimmed.startsWith("//")) return@mapNotNull null
                         if (line.contains("MaterialTheme {")) "${file.name}:${index + 1}" else null
                     }
                 }.toList()
@@ -114,4 +120,35 @@ class CortaSpamThemeTest {
     }
 
     private fun Color.luminance(): Float = 0.2126f * red + 0.7152f * green + 0.0722f * blue
+
+    /**
+     * The chrome around the screens has to be themed too, and the source scan above cannot say so.
+     *
+     * [AdaptiveScaffold] draws the navigation bar and rail. It opened *no* theme at all, so it was
+     * never a `MaterialTheme { }` offender and the scan passed it — while it inherited Material 3's
+     * baseline light palette from the composition root. On a Pixel 8 Pro API 36 emulator with the
+     * system in dark mode, the release build drew dark content above a white navigation bar.
+     *
+     * This is a runtime assertion rather than another source scan, and it works because the
+     * scaffold composes `content()` *inside* whatever theme it opened: probing the colour scheme
+     * from the content slot reports what the bar beside it is drawn with. A scaffold that opens no
+     * theme reports the light background here.
+     */
+    @Test
+    @Config(sdk = [34], qualifiers = "night")
+    fun `the scaffold themes the navigation chrome it draws`() {
+        var background = Color.Unspecified
+        composeTestRule.setContent {
+            AdaptiveScaffold(
+                windowSizeClass = WindowSizeClass.Compact,
+                selectedIndex = 0,
+                onNavigate = {},
+            ) {
+                background = MaterialTheme.colorScheme.background
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals(Color(0xFF121312), background)
+    }
 }
