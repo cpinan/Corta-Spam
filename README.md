@@ -8,7 +8,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 612 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 635 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -96,8 +96,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 528 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 84 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 543 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 92 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -154,6 +154,17 @@ A complete 30-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 147 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-19:** the phone app that could not dial 112, a dial pad that moved while it was typed on, and a navigation bar with no dark mode. All three found by installing the release build and using it.
+
+- **Tapping Call on `112` did not ring anyone.** This app holds `ROLE_DIALER`, so it *is* the phone app — and Telecom cancelled the call and launched the stock dialer with the number pre-filled, asking the user to press Call a second time. The permission was never the problem: `CALL_PHONE` is `GRANTED_BY_ROLE`, which `dumpsys package` states outright. `startActivity(ACTION_CALL)` is routed through Telecom's own `UserCallActivity` trampoline, and Telecom decides whether an emergency number may be dialled by asking *which package started the intent* — and `getCallingPackage()` is null for a plain `startActivity`, so holding the dialer role is invisible at exactly the moment it is checked. Read off the device: `W Telecom: NewOutgoingCallIntentBroadcaster: Cannot call potential emergency number 112 with CALL Intent ... unless caller is system or default dialer.` Both call sites now use `TelecomManager.placeCall`, a direct binder call where the caller's package is authenticated rather than guessed — the keypad, and the call-back button on a missed-call notification, which is the likelier emergency of the two. `ACTION_CALL` survives only as a fallback for a device with no Telecom service.
+- **The dial pad moved 882 px — about a third of the screen — from one keystroke.** The contact-match list sat between the number field and the pad and sized itself to its contents. With six contacts seeded, typing a single `1` matched five of them and moved the `1` key from `y=702` to `y=1584`, so the second digit of a number landed wherever the first keystroke had just moved the pad to — and what occupies the old position is the match list, whose rows replace the *entire* typed number with that contact's. The Call button sits in the same reflowing column, so a mis-tap could place a call to the wrong person. The results now live in a region of constant height, reserved whether or not there is anything to show, and scroll inside it. Reserving it only once something is typed would not do: the move would then happen on the first keystroke, which is the one that misplaces the second digit. This was half-known — `ContactRow`'s own note says the list "reshuffles under the finger on every keystroke", and the file's history already contains one fix for the results pushing Call off the bottom of the screen. Both treated the consequence; the pad kept moving.
+- **In dark mode the content went dark and the navigation bar stayed white.** `AdaptiveScaffold` draws the navigation bar and the rail and opened *no* theme at all, so it inherited Material 3's baseline light palette from the composition root. In light mode it was wrong too, just less visibly: the bar was Material's default purple rather than the app's own palette. `CortaSpamThemeTest` enforces dark mode by hunting for `MaterialTheme { }` — a rule that can catch chrome using the *wrong* theme and never chrome using *none*, so this file was never an offender and was never themed either. The replacement is a runtime assertion: the scaffold composes `content()` inside whatever theme it opened, so probing the colour scheme from the content slot reports what the bar beside it is drawn with.
+- **The theme check reported the sentence describing the bug as the bug.** Its source scan skipped KDoc but not `//` comments, and the comment added to `AdaptiveScaffold` explaining the gap names `MaterialTheme { }`. It now skips both.
+- **Seven existing keypad tests broke, and the cause was the test window rather than the layout.** Setting the reserved region to `0.dp` and re-running passed five of the seven, which is what tells a viewport-shaped failure from a code-shaped one. They had been passing only because everything happened to fit Robolectric's small default window; they now run at `w411dp-h891dp`. Shrinking the region until the suite went green would have fitted the product to a window nobody owns.
+- 632 → 635 tests (`:shared` 541 → 543, `:androidApp` 91 → 92). All four new or changed assertions were watched failing against the unfixed code — the theme one re-proved *after* the viewport change, because a harness edit can quietly make an assertion vacuous. `./scripts/verify.sh` green, including the iOS compile.
+- **Verified on the Pixel_8_Pro_API_36 emulator, release build, dialer role held.** `112` connects on one tap and the refusal line is gone from logcat; the connected call is drawn by the *platform's* emergency screen, which carries the caller's location and is Android's behaviour rather than a symptom of the fix overreaching. An ordinary number (`5550000`) still lands on this app's own `InCallActivity` with the timer running and Mute/Speaker/Keypad present, which is the check that it did not overreach. The pad's `1` key reads `[246,1057][283,1141]` both before and after a digit is typed, and the same blind tap sequence that previously produced `+34900123999` now types `112`. Dark mode was set with `cmd uimode night yes` and the navigation bar is dark, with the app's green on the selected item. **Unverified on hardware:** none of this has been on a real handset, and no real emergency number has been dialled on a live network.
+
 
 **2026-08-18 (fourth):** a cheek on the hang-up button, and the wake lock that came back without the screen.
 

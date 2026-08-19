@@ -16,12 +16,28 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ## [Unreleased]
 
-Not in any uploaded bundle. `corta-spam-1.3.0-5-release.aab` was built before these landed, so
-shipping them needs a new version code — see [`docs/store/`](docs/store/) for the release-notes
-format.
+Not in any uploaded bundle. `corta-spam-1.4.0-6-release.aab` was built on 2026-08-14, before any
+of these landed, so shipping them needs a new version code — see [`docs/store/`](docs/store/)
+for the release-notes format. (This line named 1.3.0 (5) until 2026-08-19; 1.4.0 (6) had
+superseded it four days earlier and was never uploaded either.)
 
 ### Fixed
 
+- **The default dialer could not dial an emergency number.** Tapping Call on `112` from the app's
+  own keypad placed no call: Telecom cancelled it and launched the stock dialer with the number
+  pre-filled. `CALL_PHONE` was granted by the role — the problem was identity, not permission.
+  `startActivity(ACTION_CALL)` travels through Telecom's `UserCallActivity` trampoline, where
+  `getCallingPackage()` is null, so `ROLE_DIALER` is invisible exactly when the emergency check
+  reads it. Both call sites moved to `TelecomManager.placeCall`. ([`2b34dd5`](../../commit/2b34dd5))
+- **The dial pad moved under the finger while a number was being typed.** The contact-match list
+  sized itself to its contents, so one keystroke that matched five contacts pushed the `1` key
+  882 px down — and the match list, whose rows replace the whole typed number, took the position
+  the key had just left. The results now sit in a region of constant height.
+  ([`6c90b8e`](../../commit/6c90b8e))
+- **The navigation bar had no dark mode.** `AdaptiveScaffold` opened no theme at all and inherited
+  Material 3's light baseline, so dark content sat above a white bar. The dark-mode check hunts for
+  `MaterialTheme { }` and so could only catch chrome using the wrong theme, never chrome using
+  none. ([`5ca7127`](../../commit/5ca7127))
 - **Call waiting stranded the surviving call.** `InCallState` held one `Call` in one field, so a
   second call overwrote the first — and when that second call ended, the state was cleared while
   the first was still connected. `InCallActivity` finished, and the ongoing-call notification's
