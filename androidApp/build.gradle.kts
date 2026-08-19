@@ -37,15 +37,24 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // is not a patch on 1.2.0: it adds contact search, call-log filters, outgoing calls in the log and
 // caller identity on the call screen, and it fixes a crash that killed the app on every answered
 // call, which made Telecom hand the live call to the preloaded dialer mid-conversation.
-// 6, because 5 was uploaded to the internal track and is therefore spent. 1.4.0 rather than 1.3.1
-// because the headline change is not a patch: a number in the user's address book could still be
-// blocked. sameNumber was fixed on 2026-08-11, and AndroidContactsGateway went on handing it
-// digit-normalised numbers for three more days, which stripped the "+" the comparison reads --
-// so a contact saved internationally stopped matching a call delivered nationally. Also: the call
-// log now shows whether a number is on a list and toggles it, the auto-responder's custom greeting
-// survives to the call that needs it, and the recorder is owned per call rather than per service.
-val appVersionName = "1.4.0"
-val appVersionCode = 6
+// 7, and 1.5.0 rather than 1.4.1, because the 1.4.0 (6) artifact is being retired rather than
+// shipped. It was built on 2026-08-14 and never uploaded, and twenty-one commits landed after it --
+// so the binary carrying that version string no longer describes what is in the tree.
+//
+// A minor bump rather than a patch because the batch is not bug fixes: dark mode, mute, speaker and
+// a call timer on the in-call screen, a DTMF keypad, saving a typed number as a contact, the
+// emergency-callback exemption, and the proximity blank-screen all arrived after 1.4.0 was cut.
+//
+// The reason 6 is not simply reused: it can only ever be uploaded once, and the build that would
+// carry it is not the build that was tested as 1.4.0. Two different binaries answering to one
+// version is the thing this naming scheme exists to prevent -- and it had already happened locally,
+// with a rebuilt corta-spam-1.4.0-6-release.apk sitting next to the .aab of the same name from four
+// days earlier.
+//
+// 1.5.0 also carries the fix that makes the previous artifact unshippable: holding ROLE_DIALER, it
+// could not dial an emergency number. See docs/store/RELEASE_NOTES_1.5.0.md.
+val appVersionName = "1.5.0"
+val appVersionCode = 7
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.

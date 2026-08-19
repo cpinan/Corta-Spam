@@ -16,9 +16,18 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ## [Unreleased]
 
-Not in any uploaded bundle. `corta-spam-1.4.0-6-release.aab` was built on 2026-08-14, before any
-of these landed, so shipping them needs a new version code — see [`docs/store/`](docs/store/)
-for the release-notes format. (This line named 1.3.0 (5) until 2026-08-19; 1.4.0 (6) had
+Nothing yet.
+
+## [1.5.0] (7) — 2026-08-19, internal testing
+
+Release notes: [`docs/store/RELEASE_NOTES_1.5.0.md`](docs/store/RELEASE_NOTES_1.5.0.md).
+Version set in [`HEAD`](../../commits/main). Not yet built for upload, so version code 7 is not
+spent.
+
+**1.4.0 (6) is retired, not shipped.** Its `.aab` was built on 2026-08-14 and never uploaded, and
+twenty-one commits landed after it — so the binary carrying that version string stopped describing
+the tree. It also predates the emergency-dialling fix below, which is what makes it unshippable
+rather than merely stale. (The Unreleased preamble named 1.3.0 (5) until today; 1.4.0 (6) had
 superseded it four days earlier and was never uploaded either.)
 
 ### Fixed
