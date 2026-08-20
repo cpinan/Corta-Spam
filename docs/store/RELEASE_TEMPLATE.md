@@ -72,7 +72,7 @@ its source and is the one that goes over:
 python3 - <<'PY'
 import re
 t = open('docs/store/RELEASE_NOTES_PROD_X.Y.Z.md', encoding='utf-8').read()
-for lang in ('es-419', 'en-US'):
+for lang in ('es-419', 'en-US', 'pt-BR', 'hi-IN'):   # every language the APP ships
     b = re.search(rf'<{lang}>\n(.*?)\n</{lang}>', t, re.S).group(1)
     print(f"{lang}: {len(b)} / 500  {'OK' if len(b) <= 500 else 'OVER'}")
 PY
@@ -88,6 +88,20 @@ PY
 
 [Si algo requiere una acción suya, dilo aquí. Es la parte que más se olvida.]
 </es-419>
+<pt-BR>
+[O que mudou, em uma linha.]
+
+[Por que isso importa para quem usa o app — não o detalhe técnico.]
+
+[Se algo exigir uma ação da pessoa, diga aqui. É a parte mais esquecida.]
+</pt-BR>
+<hi-IN>
+[क्या बदला, एक पंक्ति में।]
+
+[यह ऐप इस्तेमाल करने वाले के लिए क्यों मायने रखता है — तकनीकी विवरण नहीं।]
+
+[अगर कुछ करना ज़रूरी हो, वह यहाँ लिखें। यही हिस्सा सबसे ज़्यादा छूटता है।]
+</hi-IN>
 <en-US>
 [What changed, in one line.]
 
@@ -97,9 +111,25 @@ PY
 </en-US>
 ```
 
-Both languages, always. This project maintains Spanish/English parity everywhere else and the store
-listing default is `es-419` — an English-only note is read by the *majority* of this app's users as
-a missing translation.
+**All four languages, always — one per locale the app ships.**
+
+The app has full string parity in `en`, `es`, `pt` and `hi`: 333 strings across three resource
+trees, and `TranslationCompletenessTest` fails the build if any of them drifts. Release notes were
+the one user-facing surface that did not follow, and they carried only `es-419` and `en-US` for the
+first five releases — matching the *listing* rather than the app. Every Portuguese and Hindi user
+read the `es-419` default on every note this app has published.
+
+| App resources | Play locale | Note |
+|---|---|---|
+| `values` (default) | `en-US` | |
+| `values-es` | `es-419` | **listing default** — Play falls back here for any locale the listing lacks |
+| `values-pt` | `pt-BR` | Brazilian, not `pt-PT`: the app's own strings are `tela`, `Seus dados` |
+| `values-hi` | `hi-IN` | |
+
+**Writing them is not the same as shipping them.** Play only shows a note in a language the
+*listing* has, and as of 1.5.0 the listing has `es-419` and `en-US` only. Adding `pt-BR` and
+`hi-IN` is a Console change. Write all four regardless — the alternative is finding out at upload
+time that the text does not exist, which is exactly how it stayed at two.
 
 ### Rules
 
