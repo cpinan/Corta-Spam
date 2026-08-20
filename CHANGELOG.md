@@ -47,6 +47,12 @@ superseded it four days earlier and was never uploaded either.)
   Material 3's light baseline, so dark content sat above a white bar. The dark-mode check hunts for
   `MaterialTheme { }` and so could only catch chrome using the wrong theme, never chrome using
   none. ([`5ca7127`](../../commit/5ca7127))
+
+### Added
+
+- **Long-press the keypad's delete key to clear the whole number.** It removed one digit however
+  long it was held — the gesture was not missing from the handler, it was missing from the widget:
+  Material's `TextButton` exposes no `onLongClick`. ([`6ffca9f`](../../commit/6ffca9f))
 - **Call waiting stranded the surviving call.** `InCallState` held one `Call` in one field, so a
   second call overwrote the first — and when that second call ended, the state was cleared while
   the first was still connected. `InCallActivity` finished, and the ongoing-call notification's
