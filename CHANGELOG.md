@@ -53,6 +53,11 @@ superseded it four days earlier and was never uploaded either.)
 - **Long-press the keypad's delete key to clear the whole number.** It removed one digit however
   long it was held — the gesture was not missing from the handler, it was missing from the widget:
   Material's `TextButton` exposes no `onLongClick`. ([`6ffca9f`](../../commit/6ffca9f))
+- **The Credits screen names its testers** — Sig Mandel, Faride Altamirano, Jose Arellano and
+  Augusto Piñán. ([`8302583`](../../commit/8302583))
+- **Translations are asserted to take the same format arguments, not just the same keys.** Plurals
+  are compared as distinct sets across quantity forms, because which form carries the count is a
+  property of the language. ([`9ab2b6d`](../../commit/9ab2b6d))
 - **Call waiting stranded the surviving call.** `InCallState` held one `Call` in one field, so a
   second call overwrote the first — and when that second call ended, the state was cleared while
   the first was still connected. `InCallActivity` finished, and the ongoing-call notification's
