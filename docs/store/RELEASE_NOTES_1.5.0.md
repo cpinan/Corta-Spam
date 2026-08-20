@@ -9,7 +9,18 @@ Release name (Console, internal only, 50-char cap — this one is 44):
 Tester track. **Do not paste these into production** — they ask the reader to try things, which on
 a public listing reads as an admission the build is unverified. Production notes get their own file.
 
-Counted, not estimated: **es-419 451 characters, en-US 419 characters**, both under Play's 500 cap.
+Counted, not estimated: **es-419 451, en-US 419, pt-BR 456, hi-IN 419 characters** — all four under
+Play's 500 cap.
+
+**Four languages here, because the app ships four.** Every release before this one carried only
+es-419 and en-US, which matched the listing rather than the app: `values-pt` and `values-hi` have
+had full parity since 0.1.0 and their users were reading the es-419 default. Play falls back to the
+listing's default language for any locale the listing does not have, so **these two only reach
+anyone once pt-BR and hi-IN are added to the store listing itself** — that is a Console change, not
+a file. Until then they cost nothing and are ready.
+
+The Portuguese is pt-BR, not pt-PT: the app's own strings are Brazilian ("tela", "Seus dados"),
+so the notes match what the user will see when they open it.
 
 <es-419>
 Corregido: con Corta Spam como tu app de teléfono, marcar un número de emergencia te llevaba a otro marcador en vez de llamar. Ahora llama de una sola vez. Por favor, no pruebes esto en una línea de emergencia real.
@@ -29,6 +40,24 @@ Dark mode now covers the navigation bar too.
 
 What to test: type a long number quickly and check every digit is right.
 </en-US>
+<pt-BR>
+Corrigido: com o Corta Spam como seu app de telefone, discar um número de emergência abria outro discador em vez de completar a chamada. Agora disca de uma vez só. Por favor, não teste isso em uma linha de emergência real.
+
+O teclado não se move mais enquanto você digita: cada dígito cai na tecla que você apertou.
+
+O modo escuro agora cobre também a barra de navegação.
+
+O que testar: digite um número longo rápido e confira se todos os dígitos aparecem.
+</pt-BR>
+<hi-IN>
+ठीक किया गया: Corta Spam आपके फ़ोन ऐप के रूप में सेट होने पर, आपातकालीन नंबर डायल करने पर कॉल लगने के बजाय दूसरा डायलर खुल जाता था। अब एक ही टैप में कॉल लगती है। कृपया इसे किसी वास्तविक आपातकालीन लाइन पर न आज़माएँ।
+
+टाइप करते समय कीपैड अब हिलता नहीं है: हर अंक उसी बटन पर पड़ता है जिसे आपने दबाया।
+
+डार्क मोड अब नेविगेशन बार को भी कवर करता है।
+
+क्या जाँचें: कोई लंबा नंबर तेज़ी से टाइप करें और देखें कि सभी अंक सही आएँ।
+</hi-IN>
 
 ## Why the notes do not ask anyone to dial 112
 
