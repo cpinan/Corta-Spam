@@ -46,6 +46,25 @@ val CONTRIBUTORS: List<Contributor> =
             name = "Claude (Anthropic)",
             contribution = "AI pair programmer — code, tests and documentation, reviewed and merged by the maintainer",
         ),
+        // The people who used the app before it was good. Listed after the maintainer and in the
+        // order the maintainer named them, not alphabetically -- this is an acknowledgement, and
+        // re-sorting someone's thanks is not an improvement.
+        Contributor(
+            name = "Sig Mandel",
+            contribution = "Early feedback, bug reporting and testing",
+        ),
+        Contributor(
+            name = "Faride Altamirano",
+            contribution = "Early feedback, bug reporting and testing",
+        ),
+        Contributor(
+            name = "Jose Arellano",
+            contribution = "Early feedback, bug reporting and testing",
+        ),
+        Contributor(
+            name = "Augusto Piñán",
+            contribution = "Early feedback, bug reporting and testing",
+        ),
     )
 
 /**
