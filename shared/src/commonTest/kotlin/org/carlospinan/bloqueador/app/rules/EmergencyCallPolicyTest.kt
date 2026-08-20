@@ -37,7 +37,7 @@ class EmergencyCallPolicyTest {
         )
     }
 
-    /** The platform's own signal outranks the timestamp and needs no emergency call on record. */
+    /** The platform's own signal needs no emergency call on record — only a start time. */
     @Test
     fun `emergency callback mode is exempt on its own`() {
         assertTrue(
@@ -46,6 +46,62 @@ class EmergencyCallPolicyTest {
                 inEmergencyCallbackMode = true,
                 nowMillis = now,
                 lastEmergencyCallAtMillis = EmergencyCallPolicy.NEVER,
+                callbackModeSinceMillis = now,
+            ),
+        )
+    }
+
+    /**
+     * A platform that never clears callback mode must not disable blocking forever.
+     *
+     * This is the case that made the bound necessary rather than tidy. An emulator that dialled
+     * 112 once reported `PROPERTY_EMERGENCY_CALLBACK_MODE` on every incoming call for at least a
+     * day afterwards, and every rule — manual blocks included — was short-circuited for as long as
+     * it did. Android's own callback mode is about five minutes, so a flag still set after thirty
+     * is stuck, not a long emergency.
+     */
+    @Test
+    fun `callback mode stops exempting once its own window has passed`() {
+        assertFalse(
+            EmergencyCallPolicy.isExempt(
+                exemptionEnabled = true,
+                inEmergencyCallbackMode = true,
+                nowMillis = now,
+                lastEmergencyCallAtMillis = EmergencyCallPolicy.NEVER,
+                callbackModeSinceMillis = now - EmergencyCallPolicy.CALLBACK_WINDOW_MILLIS - 1,
+            ),
+        )
+    }
+
+    /** Inside its window it still exempts, which is the whole point of keeping the signal. */
+    @Test
+    fun `callback mode still exempts inside its window`() {
+        assertTrue(
+            EmergencyCallPolicy.isExempt(
+                exemptionEnabled = true,
+                inEmergencyCallbackMode = true,
+                nowMillis = now,
+                lastEmergencyCallAtMillis = EmergencyCallPolicy.NEVER,
+                callbackModeSinceMillis = now - EmergencyCallPolicy.CALLBACK_WINDOW_MILLIS + 1,
+            ),
+        )
+    }
+
+    /**
+     * A stuck flag must not suppress the other signal.
+     *
+     * With callback mode long expired but a real emergency call dialled a minute ago, the call is
+     * still exempt — on the timestamp this app recorded itself.
+     */
+    @Test
+    fun `an expired callback mode does not hide a recent emergency call`() {
+        assertTrue(
+            EmergencyCallPolicy.isExempt(
+                exemptionEnabled = true,
+                inEmergencyCallbackMode = true,
+                nowMillis = now,
+                lastEmergencyCallAtMillis = now - 60_000L,
+                callbackModeSinceMillis = now - EmergencyCallPolicy.CALLBACK_WINDOW_MILLIS - 1,
             ),
         )
     }

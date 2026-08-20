@@ -318,4 +318,74 @@ class EvaluateIncomingCallUseCaseTest {
             assertTrue(decision is RuleDecision.AllowedAfterRepeatedAttempts)
             assertEquals(3, (decision as RuleDecision.AllowedAfterRepeatedAttempts).attempts)
         }
+
+    /**
+     * A platform stuck in emergency callback mode stops exempting once the window has passed.
+     *
+     * The end-to-end half of `EmergencyCallPolicyTest`: this asserts the use case actually
+     * *maintains* the marker the policy reads. First call arrives with callback mode set and
+     * nothing recorded, so it starts the window and is exempt; a call thirty minutes later, with
+     * the platform still claiming callback mode, is blocked again.
+     *
+     * Reproduced on a Pixel 8 Pro API 36 emulator that had dialled 112 the previous day and never
+     * stopped reporting `PROPERTY_EMERGENCY_CALLBACK_MODE`. Every rule was short-circuited for as
+     * long as it did, which is call blocking silently switched off.
+     */
+    @Test
+    fun stuckCallbackMode_stopsExemptingAfterTheWindow() =
+        runTest {
+            val ruleRepository =
+                FakeRuleRepository().apply {
+                    blockedNumbersFlow.value = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
+                }
+            val settings = FakeSettingsRepository()
+            val useCase =
+                EvaluateIncomingCallUseCase(
+                    ruleRepository,
+                    FakeContactsGateway(),
+                    settings,
+                    FakeSpamProviderRepository(),
+                    NoOpSpamClient,
+                )
+
+            // First call in callback mode: the window opens here, so this one is exempt.
+            val first = useCase.evaluate("+34600123456", inEmergencyCallbackMode = true)
+            assertTrue(first is RuleDecision.EmergencyExempt)
+
+            // Wind the recorded start back past the window, as a stuck flag would look later on.
+            settings.emergencyCallbackModeSinceMillis.value =
+                currentTimeMillis() - EmergencyCallPolicy.CALLBACK_WINDOW_MILLIS - 1
+
+            val later = useCase.evaluate("+34600123456", inEmergencyCallbackMode = true)
+            assertTrue(later is RuleDecision.ManualBlock, "a stuck flag must not exempt forever")
+        }
+
+    /** Callback mode clearing resets the window, so a second emergency is protected too. */
+    @Test
+    fun callbackModeClearing_restartsTheWindow() =
+        runTest {
+            val settings =
+                FakeSettingsRepository(
+                    emergencyCallbackModeSinceMillis =
+                        MutableStateFlow(currentTimeMillis() - EmergencyCallPolicy.CALLBACK_WINDOW_MILLIS - 1),
+                )
+            val useCase =
+                EvaluateIncomingCallUseCase(
+                    FakeRuleRepository().apply {
+                        blockedNumbersFlow.value = listOf(BlockedNumberEntry(1, "+34600123456", null, 0))
+                    },
+                    FakeContactsGateway(),
+                    settings,
+                    FakeSpamProviderRepository(),
+                    NoOpSpamClient,
+                )
+
+            // A call with the platform no longer claiming callback mode clears the marker...
+            useCase.evaluate("+34600123456", inEmergencyCallbackMode = false)
+            assertEquals(EmergencyCallPolicy.NEVER, settings.emergencyCallbackModeSinceMillis.value)
+
+            // ...so when it returns, the window starts again rather than reading as long expired.
+            val decision = useCase.evaluate("+34600123456", inEmergencyCallbackMode = true)
+            assertTrue(decision is RuleDecision.EmergencyExempt)
+        }
 }

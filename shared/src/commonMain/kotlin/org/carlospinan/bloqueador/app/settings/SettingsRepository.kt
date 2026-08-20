@@ -55,6 +55,17 @@ interface SettingsRepository {
      */
     val lastEmergencyCallAtMillis: StateFlow<Long>
 
+    /**
+     * When this app first saw the platform report emergency callback mode on the current stretch
+     * of it, or [EmergencyCallPolicy.NEVER] when it is not currently reporting it.
+     *
+     * Persisted, and separate from [lastEmergencyCallAtMillis], because the two answer different
+     * questions: that one is "did the user dial an emergency number", this one is "how long has
+     * the platform been claiming an emergency". A platform that never clears the claim would
+     * otherwise disable blocking forever — see [EmergencyCallPolicy.isExempt].
+     */
+    val emergencyCallbackModeSinceMillis: StateFlow<Long>
+
     suspend fun setBlockingEnabled(enabled: Boolean)
 
     suspend fun setAutoAllowContacts(enabled: Boolean)
@@ -71,6 +82,12 @@ interface SettingsRepository {
 
     /** Records that an emergency call has just been placed. See [lastEmergencyCallAtMillis]. */
     suspend fun recordEmergencyCall(timestampMillis: Long)
+
+    /**
+     * Records when emergency callback mode started, or [EmergencyCallPolicy.NEVER] to clear it
+     * once the platform stops reporting it. See [emergencyCallbackModeSinceMillis].
+     */
+    suspend fun setEmergencyCallbackModeSince(timestampMillis: Long)
 
     val welcomeShown: Boolean
 

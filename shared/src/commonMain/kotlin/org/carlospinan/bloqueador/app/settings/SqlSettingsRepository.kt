@@ -39,6 +39,10 @@ class SqlSettingsRepository(
     private val _lastEmergencyCallAtMillis = MutableStateFlow(EmergencyCallPolicy.NEVER)
     override val lastEmergencyCallAtMillis: StateFlow<Long> = _lastEmergencyCallAtMillis.asStateFlow()
 
+    private val _emergencyCallbackModeSinceMillis = MutableStateFlow(EmergencyCallPolicy.NEVER)
+    override val emergencyCallbackModeSinceMillis: StateFlow<Long> =
+        _emergencyCallbackModeSinceMillis.asStateFlow()
+
     init {
         _blockingEnabled.value = store.readBool("blocking_enabled", true)
         _autoAllowContacts.value = store.readBool("auto_allow_contacts", true)
@@ -54,6 +58,8 @@ class SqlSettingsRepository(
         _emergencyCallbackExemption.value = store.readBool("emergency_callback_exemption", true)
         _lastEmergencyCallAtMillis.value =
             store.readLong("last_emergency_call_at", EmergencyCallPolicy.NEVER)
+        _emergencyCallbackModeSinceMillis.value =
+            store.readLong("emergency_callback_mode_since", EmergencyCallPolicy.NEVER)
     }
 
     override suspend fun setBlockingEnabled(enabled: Boolean) {
@@ -94,6 +100,11 @@ class SqlSettingsRepository(
     override suspend fun recordEmergencyCall(timestampMillis: Long) {
         store.writeLong("last_emergency_call_at", timestampMillis)
         _lastEmergencyCallAtMillis.value = timestampMillis
+    }
+
+    override suspend fun setEmergencyCallbackModeSince(timestampMillis: Long) {
+        store.writeLong("emergency_callback_mode_since", timestampMillis)
+        _emergencyCallbackModeSinceMillis.value = timestampMillis
     }
 
     private var _welcomeShown: Boolean = false

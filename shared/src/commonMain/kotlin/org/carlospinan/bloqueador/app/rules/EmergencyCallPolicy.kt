@@ -13,7 +13,9 @@ package org.carlospinan.bloqueador.app.rules
  * Two signals, in order of trust:
  *
  * 1. [inEmergencyCallbackMode] — the platform's own `Call.Details.PROPERTY_EMERGENCY_CALLBACK_MODE`.
- *    Authoritative, needs no permission, and covers exactly the window this exists for.
+ *    Needs no permission, and covers exactly the window this exists for — for as long as the
+ *    platform is honest about it, which is why it is time-boxed like the other one rather than
+ *    trusted outright.
  * 2. [lastEmergencyCallAtMillis] — when this app last saw the user dial a number
  *    [EmergencyNumbers] recognises. The fallback for networks that never enter callback mode.
  *
@@ -35,18 +37,43 @@ object EmergencyCallPolicy {
     /** Nothing recorded. Distinct from "recorded at epoch zero", which no real clock produces. */
     const val NEVER: Long = 0L
 
+    /**
+     * [callbackModeSinceMillis] is when this app *first* saw [inEmergencyCallbackMode] set on the
+     * current stretch of it, or [NEVER] if it is not currently set. The caller maintains it; see
+     * `EvaluateIncomingCallUseCase`.
+     *
+     * It exists because the platform signal used to be trusted without a time bound, and a
+     * platform that never clears it therefore switched call blocking off permanently — the whole
+     * purpose of the app, disabled silently, with the only trace a `rule_detail` in the call log.
+     * That is not hypothetical: an emulator that dialled 112 once reported callback mode on every
+     * incoming call for at least a day afterwards, while `dumpsys telephony.registry` reported
+     * `mECBMReason=0`. Android's own callback mode is typically five minutes, so a signal still
+     * set after thirty is a stuck flag rather than a long emergency.
+     *
+     * Both paths are now bounded by the same [CALLBACK_WINDOW_MILLIS], measured from the first
+     * moment this app had reason to believe an emergency was in progress. The window restarts if
+     * callback mode clears and returns, which is what a second emergency looks like.
+     */
     fun isExempt(
         exemptionEnabled: Boolean,
         inEmergencyCallbackMode: Boolean,
         nowMillis: Long,
         lastEmergencyCallAtMillis: Long,
+        callbackModeSinceMillis: Long = NEVER,
     ): Boolean {
         if (!exemptionEnabled) return false
-        if (inEmergencyCallbackMode) return true
-        if (lastEmergencyCallAtMillis <= NEVER) return false
         // Not `elapsed in 0 until WINDOW`. A clock that has moved backwards since the emergency
         // call gives a negative elapsed, and the two ways to be wrong here are not the same size:
         // a spam call let through is a nuisance, an ambulance silently rejected is not.
-        return nowMillis - lastEmergencyCallAtMillis < CALLBACK_WINDOW_MILLIS
+        if (inEmergencyCallbackMode && withinWindow(nowMillis, callbackModeSinceMillis)) return true
+        return withinWindow(nowMillis, lastEmergencyCallAtMillis)
+    }
+
+    private fun withinWindow(
+        nowMillis: Long,
+        sinceMillis: Long,
+    ): Boolean {
+        if (sinceMillis <= NEVER) return false
+        return nowMillis - sinceMillis < CALLBACK_WINDOW_MILLIS
     }
 }

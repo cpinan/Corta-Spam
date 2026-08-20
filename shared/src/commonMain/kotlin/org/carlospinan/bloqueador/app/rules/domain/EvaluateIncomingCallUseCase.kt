@@ -42,6 +42,25 @@ class EvaluateIncomingCallUseCase(
         }
         val now = currentTimeMillis()
 
+        // Track how long the platform has been claiming callback mode, so the exemption below can
+        // be time-boxed on that signal the same way it already is on our own timestamp. Recorded
+        // on the first call that reports it and cleared on the first that does not, so a genuine
+        // second emergency restarts the window while a platform that never clears the flag cannot
+        // hold the exemption open forever. See EmergencyCallPolicy.isExempt.
+        val callbackModeSince = settingsRepository.emergencyCallbackModeSinceMillis.value
+        val effectiveCallbackModeSince =
+            when {
+                inEmergencyCallbackMode && callbackModeSince <= EmergencyCallPolicy.NEVER -> {
+                    settingsRepository.setEmergencyCallbackModeSince(now)
+                    now
+                }
+                !inEmergencyCallbackMode && callbackModeSince > EmergencyCallPolicy.NEVER -> {
+                    settingsRepository.setEmergencyCallbackModeSince(EmergencyCallPolicy.NEVER)
+                    EmergencyCallPolicy.NEVER
+                }
+                else -> callbackModeSince
+            }
+
         // Before every rule, including a manual block. A number on the blocklist ringing inside
         // the callback window is far more likely to be a dispatcher on a shared line than the
         // spammer the user blocked -- and the cost of being wrong the other way is an ambulance
@@ -51,6 +70,7 @@ class EvaluateIncomingCallUseCase(
                 inEmergencyCallbackMode = inEmergencyCallbackMode,
                 nowMillis = now,
                 lastEmergencyCallAtMillis = settingsRepository.lastEmergencyCallAtMillis.value,
+                callbackModeSinceMillis = effectiveCallbackModeSince,
             )
         ) {
             return RuleDecision.EmergencyExempt

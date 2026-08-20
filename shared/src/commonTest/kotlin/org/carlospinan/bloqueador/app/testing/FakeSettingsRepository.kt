@@ -26,6 +26,8 @@ internal class FakeSettingsRepository(
     override val emergencyCallbackExemption: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val lastEmergencyCallAtMillis: MutableStateFlow<Long> =
         MutableStateFlow(EmergencyCallPolicy.NEVER),
+    override val emergencyCallbackModeSinceMillis: MutableStateFlow<Long> =
+        MutableStateFlow(EmergencyCallPolicy.NEVER),
     override val welcomeShown: Boolean = false,
     override val permissionsPromptShown: Boolean = false,
 ) : SettingsRepository {
@@ -59,6 +61,10 @@ internal class FakeSettingsRepository(
 
     override suspend fun recordEmergencyCall(timestampMillis: Long) {
         lastEmergencyCallAtMillis.value = timestampMillis
+    }
+
+    override suspend fun setEmergencyCallbackModeSince(timestampMillis: Long) {
+        emergencyCallbackModeSinceMillis.value = timestampMillis
     }
 
     override suspend fun setWelcomeShown() {}
