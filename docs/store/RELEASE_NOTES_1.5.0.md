@@ -70,6 +70,7 @@ Also new since 1.4.0 was cut, and none of it has ever been in an uploaded build:
 - Saving a typed number as a new contact, from the keypad.
 - The installed version is shown in Settings; the credits screen is filled.
 - The dial pad no longer moves while a number is being typed on it.
+- Long-pressing the keypad's delete key clears the whole number, instead of removing one digit.
 
 ## Before uploading
 
