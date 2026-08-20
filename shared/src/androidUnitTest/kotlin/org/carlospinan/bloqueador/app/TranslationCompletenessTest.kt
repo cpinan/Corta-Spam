@@ -73,4 +73,89 @@ class TranslationCompletenessTest {
     fun theSharedModulesAndroidResourcesAreCompleteInEveryLocale() {
         assertComplete(File(repoRoot(), "shared/src/androidMain/res"))
     }
+
+    /**
+     * Format specifiers in a translation, in the order a formatter would consume them.
+     *
+     * Positional (`%1$s`) and implicit (`%s`) are both collected because both appear in this
+     * repo, and `%%` is deliberately excluded — it is a literal percent sign, not an argument.
+     */
+    private fun specifiersIn(value: String): List<String> = Regex("""%(?:\d+\$)?[sdf]""").findAll(value).map { it.value }.toList()
+
+    private fun bodiesOf(
+        file: File,
+        tag: String,
+    ): Map<String, String> {
+        if (!file.exists()) return emptyMap()
+        return Regex("""<$tag name="([^"]+)"[^>]*>(.*?)</$tag>""", RegexOption.DOT_MATCHES_ALL)
+            .findAll(file.readText())
+            .associate { it.groupValues[1] to it.groupValues[2] }
+    }
+
+    private fun stringsIn(file: File) = bodiesOf(file, "string")
+
+    /** All quantity forms of a plural, concatenated — see [assertSpecifiersMatch] for why. */
+    private fun pluralsIn(file: File) = bodiesOf(file, "plurals")
+
+    /**
+     * A translation must take the same arguments as the string it translates.
+     *
+     * Key parity above says a translator answered; this says they answered the same question.
+     * A specifier the source does not have throws `MissingFormatArgumentException` at format time,
+     * and one the translation drops loses the value silently. Neither is visible in anything else
+     * this project runs: the build succeeds, the key is present, and Lint's own check is disabled
+     * here for the reason in the class doc.
+     *
+     * **Plain strings are compared strictly**, as sorted multisets — a legitimate reordering like
+     * `%1$s (%2$s)` to `%2$s de %1$s` still passes, a dropped or invented argument does not.
+     *
+     * **Plurals are compared as distinct sets across all their quantity forms**, and that
+     * looseness is deliberate rather than a weaker test. Which forms carry the count is a property
+     * of the language, not of the message: English says "Called once" for `one` and uses `%1$d`
+     * only in `other`, while Portuguese ("Ligou %1$d vez") and Hindi both use it in every form.
+     * Comparing per-form, or as multisets, fails all three of those correct translations — the
+     * first version of this test did exactly that. What must still hold is that no locale
+     * introduces an argument the source never had, and none loses the only one it did.
+     */
+    private fun assertSpecifiersMatch(resourceRoot: File) {
+        val defaultStrings = stringsIn(File(resourceRoot, "values/strings.xml"))
+        val defaultPlurals = pluralsIn(File(resourceRoot, "values/strings.xml"))
+        val mismatches = mutableListOf<String>()
+
+        for (locale in locales) {
+            val localeFile = File(resourceRoot, "$locale/strings.xml")
+            val translatedStrings = stringsIn(localeFile)
+            val translatedPlurals = pluralsIn(localeFile)
+
+            for ((key, english) in defaultStrings) {
+                val other = translatedStrings[key] ?: continue // key parity is asserted above
+                val expected = specifiersIn(english).sorted()
+                val actual = specifiersIn(other).sorted()
+                if (expected != actual) {
+                    mismatches += "$locale/$key: expected $expected, found $actual"
+                }
+            }
+
+            for ((key, english) in defaultPlurals) {
+                val other = translatedPlurals[key] ?: continue
+                val expected = specifiersIn(english).toSortedSet()
+                val actual = specifiersIn(other).toSortedSet()
+                if (expected != actual) {
+                    mismatches += "$locale/$key (plural): expected $expected, found $actual"
+                }
+            }
+        }
+
+        assertEquals(emptyList(), mismatches.sorted(), "format specifiers differ from the default locale")
+    }
+
+    @Test
+    fun composeResourcesTakeTheSameFormatArgumentsInEveryLocale() {
+        assertSpecifiersMatch(File(repoRoot(), "shared/src/commonMain/composeResources"))
+    }
+
+    @Test
+    fun androidAppResourcesTakeTheSameFormatArgumentsInEveryLocale() {
+        assertSpecifiersMatch(File(repoRoot(), "androidApp/src/main/res"))
+    }
 }
