@@ -36,6 +36,8 @@ fi
 ADB="adb -s $DEVICE"
 echo "==> device: $DEVICE"
 
+WAIT_DB=$(mktemp -t cortaspam-wait); trap 'rm -f "$WAIT_DB"' EXIT
+
 if [ "$CLEAR" = true ]; then
   echo "==> clearing app data"
   $ADB shell pm clear "$PKG" >/dev/null
@@ -49,8 +51,33 @@ $ADB logcat -c 2>/dev/null || true
 
 ./install_android.sh --device "$DEVICE"
 
-# Give the app a moment to open the database; the settings warm-up runs off the main thread.
-sleep 3
+# Wait for the schema, do not guess at it. This was `sleep 3`, which is enough on a warm install
+# and not enough on a cold first run: on 2026-08-20 a fresh install reported `user_version 0` with
+# one table, and the identical re-run on the same build reported 4 and ten tables. A check that
+# fails for a reason that is not the thing it checks trains you to re-run it, which is the same as
+# not having it.
+#
+# The app creates the schema without any user interaction -- it was still on the Welcome screen
+# when the poll below succeeded -- so this waits on the database rather than on the UI.
+echo "==> waiting for the schema"
+SCHEMA_READY=false
+for _ in $(seq 1 30); do
+  if $ADB shell "run-as $PKG cat databases/$DB" 2>/dev/null > "$WAIT_DB" &&
+     [ -s "$WAIT_DB" ] &&
+     [ "$(python3 -c "
+import sqlite3,sys
+try: print(sqlite3.connect(sys.argv[1]).execute('PRAGMA user_version').fetchone()[0])
+except Exception: print(0)
+" "$WAIT_DB")" != "0" ]; then
+    SCHEMA_READY=true
+    break
+  fi
+  sleep 1
+done
+if [ "$SCHEMA_READY" = false ]; then
+  echo "FAIL: the database still reports user_version 0 after 30s -- the schema never created." >&2
+  exit 1
+fi
 
 echo "==> crash check"
 # Scoped to this app's own process. A fatal in some unrelated package is not this app's failure,

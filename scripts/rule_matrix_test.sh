@@ -156,6 +156,15 @@ settings = {
     "auto_responder_enabled": "false",
     "repeated_caller_bypass_count": "0",
     "default_action": "ALLOW" if phase in ("A", "C") else "BLOCK",
+    # Off for the whole suite, and this is load-bearing. The emergency-callback exemption
+    # short-circuits EVERY rule by design, so a device that reports
+    # Call.Details.PROPERTY_EMERGENCY_CALLBACK_MODE makes all fourteen scenarios return
+    # ALLOWED with no rule -- which reads exactly like a dead rule engine. An emulator that has
+    # ever dialled 112 can report it indefinitely: on 2026-08-20 this cost an hour, on a build
+    # whose engine was fine (14/14 the moment this was set). The exemption has its own unit
+    # tests; this suite is about rule precedence, so it pins the variable rather than inheriting
+    # whatever telephony state the device is in.
+    "emergency_callback_exemption": "false",
 }
 if phase == "C":
     # A window that certainly contains "now": the whole day.
@@ -236,29 +245,57 @@ import sqlite3, sys
 db, baseline = sys.argv[1], int(sys.argv[2])
 try:
     r = sqlite3.connect(db).execute(
-        "SELECT action, rule_type, number FROM CallLogEntry WHERE id > ? ORDER BY id DESC LIMIT 1",
+        "SELECT action, rule_type, rule_detail FROM CallLogEntry WHERE id > ? ORDER BY id DESC LIMIT 1",
         (baseline,)).fetchone()
 except Exception:
     r = None
-print(f"{r[0]}|{r[1] or '-'}" if r else "")
+# rule_detail rides along because rule_type alone cannot explain every outcome: an
+# emergency-callback exemption logs ALLOWED with a NULL rule_type and puts its reason here, so
+# without it a failure reads "expected BLOCKED/MANUAL, got ALLOWED/-" while the row it was read
+# from said {"type":"emergency_callback"}.
+print(f"{r[0]}|{r[1] or '-'}|{(r[2] or '-')}" if r else "")
 PY
 )
     [ -n "$got" ] && { echo "$got"; return; }
   done
   # No new row in 15s. Reported as its own outcome rather than silently inheriting an old row:
   # "this call was never logged" is a real finding and must not look like a wrong rule_type.
-  echo "NO_NEW_ROW|-"
+  echo "NO_NEW_ROW|-|-"
+}
+
+# place_call returns "ACTION|RULE|DETAIL". The detail was added so a failure can explain itself;
+# these two keep every comparison reading the first two fields, which is what a scenario asserts.
+# Split with `read` rather than trimmed with `${got%|*}` -- rule_detail is JSON and is not
+# guaranteed free of the delimiter.
+outcome_of() { local a r d; IFS='|' read -r a r d <<< "$1"; printf '%s|%s' "$a" "$r"; }
+detail_of() { local a r d; IFS='|' read -r a r d <<< "$1"; printf '%s' "$d"; }
+
+# Prints the row's own reason, and names the one that silently invalidates the whole suite.
+explain_detail() {
+  local d="$1"
+  # `case` rather than `[ -z ] || [ = - ] && return`: that reads as (A || B) && C in shell, which
+  # is not what it looks like and is one edit away from being wrong.
+  case "$d" in "" | "-") return 0 ;; esac
+  printf "         reason recorded on the row: %s\n" "$d"
+  if [[ "$d" == *emergency_callback* ]]; then
+    printf "         ${YELLOW}This device is reporting emergency callback mode.${NC} Every rule is\n"
+    printf "         short-circuited while it does, so every scenario here will read as a dead\n"
+    printf "         rule engine. An emulator that has dialled an emergency number can report it\n"
+    printf "         indefinitely — wipe it, or use another one.\n"
+  fi
 }
 
 check() {   # number, expected_action, expected_rule, description
   local number="$1" want_a="$2" want_r="$3" desc="$4"
   local got; got=$(place_call "$number")
-  local got_a="${got%%|*}" got_r="${got##*|}"
+  local got_a got_r got_d
+  IFS='|' read -r got_a got_r got_d <<< "$got"
   if [ "$got_a" = "$want_a" ] && [ "$got_r" = "$want_r" ]; then
     printf "    ${GREEN}PASS${NC} %-38s %s/%s\n" "$desc" "$got_a" "$got_r"
     PASSED=$((PASSED + 1))
   else
     printf "    ${RED}FAIL${NC} %-38s expected %s/%s, got %s/%s\n" "$desc" "$want_a" "$want_r" "$got_a" "$got_r"
+    explain_detail "$got_d"
     FAILED=$((FAILED + 1))
   fi
 }
@@ -289,12 +326,13 @@ OUT=$(mktemp); trap 'rm -rf "$WORK" "$OUT"' EXIT
   for i in 1 2 3; do
     got=$(place_call "$N")
     if [ "$i" -lt 3 ]; then
-      printf "    attempt %s: %s\n" "$i" "$got"
+      printf "    attempt %s: %s\n" "$i" "$(outcome_of "$got")"
     else
-      if [ "$got" = "BLOCKED|ACTION" ]; then
-        printf "    ${GREEN}PASS${NC} %-38s %s\n" "the 3rd attempt trips the action rule" "$got"
+      if [ "$(outcome_of "$got")" = "BLOCKED|ACTION" ]; then
+        printf "    ${GREEN}PASS${NC} %-38s %s\n" "the 3rd attempt trips the action rule" "$(outcome_of "$got")"
       else
-        printf "    ${RED}FAIL${NC} %-38s expected BLOCKED/ACTION, got %s\n" "the 3rd attempt trips the action rule" "$got"
+        printf "    ${RED}FAIL${NC} %-38s expected BLOCKED/ACTION, got %s\n" "the 3rd attempt trips the action rule" "$(outcome_of "$got")"
+        explain_detail "$(detail_of "$got")"
       fi
     fi
   done
@@ -319,10 +357,11 @@ OUT=$(mktemp); trap 'rm -rf "$WORK" "$OUT"' EXIT
         | sed -n 's/.*data1=//p' | tr -d '\r' | grep -v '^+' | head -1 | tr -cd '0-9' || true)
   if [ -n "$NAT" ]; then
     got=$(place_call "+34${NAT}")
-    if [ "$got" = "ALLOWED|CONTACTS" ]; then
-      printf "    ${GREEN}PASS${NC} %-38s %s\n" "contact '$NAT' matched +34$NAT" "$got"
+    if [ "$(outcome_of "$got")" = "ALLOWED|CONTACTS" ]; then
+      printf "    ${GREEN}PASS${NC} %-38s %s\n" "contact '$NAT' matched +34$NAT" "$(outcome_of "$got")"
     else
-      printf "    ${RED}FAIL${NC} %-38s expected ALLOWED/CONTACTS, got %s\n" "contact '$NAT' vs +34$NAT" "$got"
+      printf "    ${RED}FAIL${NC} %-38s expected ALLOWED/CONTACTS, got %s\n" "contact '$NAT' vs +34$NAT" "$(outcome_of "$got")"
+      explain_detail "$(detail_of "$got")"
     fi
   else
     printf "    ${YELLOW}SKIP${NC} no national-format contact in the address book\n"
@@ -347,10 +386,11 @@ OUT=$(mktemp); trap 'rm -rf "$WORK" "$OUT"' EXIT
   if [ -n "$INTL" ]; then
     NSN=${INTL#+34}
     got=$(place_call "$NSN")
-    if [ "$got" = "ALLOWED|CONTACTS" ]; then
-      printf "    ${GREEN}PASS${NC} %-38s %s\n" "contact '$INTL' matched $NSN" "$got"
+    if [ "$(outcome_of "$got")" = "ALLOWED|CONTACTS" ]; then
+      printf "    ${GREEN}PASS${NC} %-38s %s\n" "contact '$INTL' matched $NSN" "$(outcome_of "$got")"
     else
-      printf "    ${RED}FAIL${NC} %-38s expected ALLOWED/CONTACTS, got %s\n" "contact '$INTL' vs $NSN" "$got"
+      printf "    ${RED}FAIL${NC} %-38s expected ALLOWED/CONTACTS, got %s\n" "contact '$INTL' vs $NSN" "$(outcome_of "$got")"
+      explain_detail "$(detail_of "$got")"
     fi
   else
     printf "    ${YELLOW}SKIP${NC} no +34 contact in the address book\n"
