@@ -55,7 +55,7 @@ val CONTRIBUTORS: List<Contributor> =
         ),
         Contributor(
             name = "Faride Altamirano",
-            contribution = "Early feedback, bug reporting and testing",
+            contribution = "My wife — early feedback, bug reporting and testing",
         ),
         Contributor(
             name = "Jose Arellano",
