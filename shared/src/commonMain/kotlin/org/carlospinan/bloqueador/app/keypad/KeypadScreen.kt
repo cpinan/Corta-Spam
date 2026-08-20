@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.keypad
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -31,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -41,6 +44,7 @@ import cortaspam.shared.generated.resources.keypad_call
 import cortaspam.shared.generated.resources.keypad_contact_row
 import cortaspam.shared.generated.resources.keypad_contacts_denied
 import cortaspam.shared.generated.resources.keypad_delete
+import cortaspam.shared.generated.resources.keypad_delete_all
 import cortaspam.shared.generated.resources.keypad_hint
 import cortaspam.shared.generated.resources.keypad_more_matches
 import cortaspam.shared.generated.resources.keypad_no_matches
@@ -159,13 +163,40 @@ fun KeypadScreen(
                         Text(text = "+", style = MaterialTheme.typography.titleLarge)
                     }
 
+                    // A Box with combinedClickable rather than a TextButton, because a TextButton
+                    // takes no onLongClick and long-press-to-clear is what every phone's dialer
+                    // does. Without it, correcting a mistyped international number means tapping
+                    // this thirteen times -- confirmed on a razr 50 ultra, where a long press
+                    // deleted exactly one digit.
                     val deleteLabel = stringResource(Res.string.keypad_delete)
-                    TextButton(
-                        onClick = { typed = typed.dropLast(1) },
-                        enabled = typed.isNotEmpty(),
-                        modifier = Modifier.semantics { contentDescription = deleteLabel },
+                    val deleteAllLabel = stringResource(Res.string.keypad_delete_all)
+                    val canDelete = typed.isNotEmpty()
+                    Box(
+                        modifier =
+                            Modifier
+                                .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .combinedClickable(
+                                    enabled = canDelete,
+                                    onClick = { typed = typed.dropLast(1) },
+                                    onClickLabel = deleteLabel,
+                                    onLongClick = { typed = "" },
+                                    onLongClickLabel = deleteAllLabel,
+                                )
+                                // Merged, so the glyph inside does not become a second node and
+                                // the whole control answers to the description a test looks up.
+                                .semantics(mergeDescendants = true) { contentDescription = deleteLabel },
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Text(text = "⌫")
+                        Text(
+                            text = "⌫",
+                            color =
+                                if (canDelete) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
+                                },
+                        )
                     }
 
                     Button(
@@ -307,6 +338,9 @@ private fun ContactRow(
 }
 
 private const val NO_REQUEST_APPLIED = -1L
+
+/** Material's disabled-content alpha, for the delete glyph when there is nothing to delete. */
+private const val DISABLED_ALPHA = 0.38f
 
 /**
  * Room for about two result rows. Constant, and reserved even when the query is empty, so the dial

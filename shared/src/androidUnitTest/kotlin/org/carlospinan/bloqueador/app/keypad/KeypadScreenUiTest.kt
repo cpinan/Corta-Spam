@@ -8,11 +8,13 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.junit.Rule
@@ -325,5 +327,33 @@ class KeypadScreenUiTest {
         composeTestRule.onNodeWithText("8").performClick()
         composeTestRule.waitForIdle()
         assertEquals(atRest, composeTestRule.onNodeWithText("7").getBoundsInRoot().top)
+    }
+
+    /**
+     * Long-pressing delete clears the whole number, the way every phone's dialer does.
+     *
+     * Confirmed missing on a razr 50 ultra: a long press deleted exactly one digit, because the
+     * control was a `TextButton`, which takes no `onLongClick`. Correcting a mistyped
+     * international number therefore meant tapping delete once per digit.
+     *
+     * The assertion is on the resulting state -- the field is empty, so Call is disabled again --
+     * rather than only on "600 is gone", which would also hold if the screen had cleared itself
+     * for some entirely different reason.
+     */
+    @Test
+    fun `long-pressing delete clears the whole number`() {
+        composeTestRule.setContent { KeypadScreen() }
+
+        composeTestRule.onNodeWithText("6").performClick()
+        composeTestRule.onNodeWithText("0").performClick()
+        composeTestRule.onNodeWithText("0").performClick()
+        composeTestRule.onNodeWithText("600").assertExists()
+
+        composeTestRule
+            .onNodeWithContentDescription("Delete last digit")
+            .performTouchInput { longClick() }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Call").assertIsNotEnabled()
     }
 }
