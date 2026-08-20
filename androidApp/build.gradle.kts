@@ -38,8 +38,10 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // caller identity on the call screen, and it fixes a crash that killed the app on every answered
 // call, which made Telecom hand the live call to the preloaded dialer mid-conversation.
 // 7, and 1.5.0 rather than 1.4.1, because the 1.4.0 (6) artifact is being retired rather than
-// shipped. It was built on 2026-08-14 and never uploaded, and twenty-one commits landed after it --
-// so the binary carrying that version string no longer describes what is in the tree.
+// shipped. It was built on 2026-08-14 and uploaded -- Play attaches its quality advisories to
+// "Release name: 6 (1.4.0)", which is how we know -- so code 6 is spent and could not be reused
+// even if we wanted to. Twenty-one commits landed after that upload, so the binary carrying that
+// version string no longer describes what is in the tree.
 //
 // A minor bump rather than a patch because the batch is not bug fixes: dark mode, mute, speaker and
 // a call timer on the in-call screen, a DTMF keypad, saving a typed number as a contact, the

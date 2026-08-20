@@ -46,10 +46,10 @@ carrier or a lab SIM — not the public one.
 
 ## What 1.5.0 is
 
-**1.4.0 (6) is being retired, not shipped.** Its `.aab` was built on 2026-08-14 and never uploaded.
-Twenty-one commits landed after it, so the version string on that binary stopped describing the
-tree — and it predates the emergency-dialling fix, which is what moves it from stale to
-unshippable.
+**1.4.0 (6) is being retired.** Its `.aab` was built on 2026-08-14 and uploaded — Play's quality
+advisories are attached to "Release name: 6 (1.4.0)" — so code 6 is spent. Twenty-one commits
+landed after it, so the version string on that binary stopped describing the tree, and it predates
+the emergency-dialling fix, which is what moves it from stale to unshippable.
 
 Headline, and the reason this release exists:
 
@@ -71,6 +71,29 @@ Also new since 1.4.0 was cut, and none of it has ever been in an uploaded build:
 - The installed version is shown in Settings; the credits screen is filled.
 - The dial pad no longer moves while a number is being typed on it.
 - Long-pressing the keypad's delete key clears the whole number, instead of removing one digit.
+
+## Play's four recommended actions on release 6, checked
+
+Three were pasted from the Console against **6 (1.4.0)**. Checked against the 1.5.0 (7) artifact,
+not against the source.
+
+- **"Improve your app's memory and performance with R8 optimisation."** Already done, and was done
+  in 6 as well — minification landed 2026-08-05 (`b37a710`), nine days before 6 was built. The
+  marker in the shipped dex says so outright:
+  `~~R8{"compilation-mode":"release", ... ,"r8-mode":"full","version":"8.13.19"}`. Full mode is
+  AGP 8.13.2's default and is not disabled anywhere. If Play still shows this against 7, it is not
+  describing this bundle.
+- **"Edge-to-edge may not display for all users / uses deprecated APIs or parameters."** Not ours
+  and not fixable by a bump. No source file in this repo calls `setStatusBarColor`,
+  `setNavigationBarColor` or `setDecorFitsSystemWindows`; all three appear in the dex because
+  androidx.activity's `EdgeToEdge` helpers contain them for the API 21–29 paths. Checked the cached
+  AARs: 1.13.0 still contains them, so upgrading from 1.9.3 would not clear the advisory. The
+  behaviour it is warning about is correct here — `targetSdk 36`, `enableEdgeToEdge()`, and insets
+  consumed with `safeDrawingPadding()` / `WindowInsets.safeDrawing` on every screen and in the
+  scaffold.
+- **"Implement picture-in-picture."** Declined, as before. It is a recommendation, not a
+  requirement, and a dialer has nothing to show in a floating window that the ongoing-call
+  notification does not already show better.
 
 ## Before uploading
 

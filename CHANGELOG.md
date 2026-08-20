@@ -24,11 +24,16 @@ Release notes: [`docs/store/RELEASE_NOTES_1.5.0.md`](docs/store/RELEASE_NOTES_1.
 Version set in [`HEAD`](../../commits/main). Not yet built for upload, so version code 7 is not
 spent.
 
-**1.4.0 (6) is retired, not shipped.** Its `.aab` was built on 2026-08-14 and never uploaded, and
-twenty-one commits landed after it — so the binary carrying that version string stopped describing
-the tree. It also predates the emergency-dialling fix below, which is what makes it unshippable
-rather than merely stale. (The Unreleased preamble named 1.3.0 (5) until today; 1.4.0 (6) had
-superseded it four days earlier and was never uploaded either.)
+**1.4.0 (6) is retired.** Its `.aab` was built on 2026-08-14 and uploaded — Play attaches its
+quality advisories to "Release name: 6 (1.4.0)" — so **version code 6 is spent** and could not be
+reused regardless. Twenty-one commits landed after it, so that binary stopped describing the tree,
+and it predates the emergency-dialling fix below, which is what makes it unshippable rather than
+merely stale.
+
+This corrects a claim this file and the release notes both carried until 2026-08-20: that 6 was
+never uploaded. It was. Nothing depended on the mistake — 1.5.0 took code 7 — but "spent on upload,
+not on publication" is the rule this project keeps getting caught by, and the record now says which
+happened.
 
 ### Fixed
 
