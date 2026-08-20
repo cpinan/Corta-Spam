@@ -64,6 +64,13 @@ superseded it four days earlier and was never uploaded either.)
 - **`device_check.sh` polls for the schema instead of sleeping three seconds**, and
   `rule_matrix_test.sh` now prints the `rule_detail` that explains a failure it previously
   mis-attributed to the rule engine. ([`7b29c71`](../../commit/7b29c71))
+- **Country names are translated.** They were 223 hardcoded English strings, written into the rule
+  row when it was created, so a Spanish call log read "País: Morocco / Western Sahara" and no
+  language change could fix it. `Countries.kt` now carries ISO regions and the name is resolved at
+  render time, so existing rows localize with no migration. ([`44463ac`](../../commit/44463ac))
+- **All ten store screenshots retaken** — the shipped set predated the theme and showed a purple
+  app — with `scripts/seed_screenshots.sh` to reproduce the state.
+  ([`d6ec64a`](../../commit/d6ec64a), [`c4406ac`](../../commit/c4406ac))
 - **Call waiting stranded the surviving call.** `InCallState` held one `Call` in one field, so a
   second call overwrote the first — and when that second call ended, the state was cleared while
   the first was still connected. `InCallActivity` finished, and the ongoing-call notification's
