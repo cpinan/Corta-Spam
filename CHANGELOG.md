@@ -58,6 +58,12 @@ superseded it four days earlier and was never uploaded either.)
 - **Translations are asserted to take the same format arguments, not just the same keys.** Plurals
   are compared as distinct sets across quantity forms, because which form carries the count is a
   property of the language. ([`9ab2b6d`](../../commit/9ab2b6d))
+- **The emergency-callback exemption is time-boxed on the platform's signal too.** It trusted
+  `PROPERTY_EMERGENCY_CALLBACK_MODE` outright, so a platform that never clears the flag disabled
+  every blocking rule permanently. ([`3f4281a`](../../commit/3f4281a))
+- **`device_check.sh` polls for the schema instead of sleeping three seconds**, and
+  `rule_matrix_test.sh` now prints the `rule_detail` that explains a failure it previously
+  mis-attributed to the rule engine. ([`7b29c71`](../../commit/7b29c71))
 - **Call waiting stranded the surviving call.** `InCallState` held one `Call` in one field, so a
   second call overwrote the first — and when that second call ended, the state was cleared while
   the first was still connected. `InCallActivity` finished, and the ongoing-call notification's
