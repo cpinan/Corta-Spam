@@ -27,7 +27,15 @@ fun blockReasonText(reason: BlockReason): String =
         is BlockReason.Custom -> reason.label
         is BlockReason.ManuallyBlocked -> stringResource(Res.string.reason_manually_blocked)
         is BlockReason.PatternMatch -> stringResource(Res.string.reason_pattern_match, reason.pattern)
-        is BlockReason.Country -> stringResource(Res.string.reason_country, reason.countryName, reason.countryCode)
+        // The name recorded on the row is the fallback, not the source: it was captured in
+        // whatever language the rule was created in, which is why a Spanish call log used to read
+        // "País: Morocco / Western Sahara". See CountryNames.
+        is BlockReason.Country ->
+            stringResource(
+                Res.string.reason_country,
+                CountryNames.forDiallingCode(reason.countryCode, reason.countryName),
+                reason.countryCode,
+            )
         is BlockReason.Spam -> stringResource(Res.string.reason_spam, reason.source, reason.confidencePercent)
         is BlockReason.RepeatedCalls -> stringResource(Res.string.reason_repeated_calls, reason.attempts, reason.windowMinutes)
         is BlockReason.QuietHours -> stringResource(Res.string.reason_quiet_hours)

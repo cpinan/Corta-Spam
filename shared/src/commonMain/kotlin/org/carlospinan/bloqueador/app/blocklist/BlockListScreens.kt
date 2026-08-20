@@ -114,6 +114,7 @@ import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.contacts.contactDisplayName
 import org.carlospinan.bloqueador.app.rules.ActionRuleEntry
 import org.carlospinan.bloqueador.app.rules.COUNTRIES
+import org.carlospinan.bloqueador.app.rules.CountryNames
 import org.carlospinan.bloqueador.app.rules.CountryRuleEntry
 import org.carlospinan.bloqueador.app.rules.PatternRuleEntry
 import org.carlospinan.bloqueador.app.rules.RulePrecedenceResolver
@@ -516,7 +517,14 @@ fun CountryRuleScreen(
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "${entry.countryName} (+${entry.countryCode})",
+                                            // Resolved from the code, not read from the row: the
+                                            // stored name is whatever language the rule was made
+                                            // in. See CountryNames.
+                                            text =
+                                                CountryNames.forDiallingCode(
+                                                    entry.countryCode,
+                                                    entry.countryName,
+                                                ) + " (+${entry.countryCode})",
                                             style = MaterialTheme.typography.bodyLarge,
                                         )
                                     }
@@ -830,10 +838,7 @@ private fun AddCountryDialog(
             if (query.isBlank()) {
                 COUNTRIES
             } else {
-                COUNTRIES.filter {
-                    it.name.contains(query, ignoreCase = true) ||
-                        it.code.contains(query)
-                }
+                COUNTRIES.filter { CountryNames.matches(it, query) }
             }
         }
 
@@ -862,7 +867,7 @@ private fun AddCountryDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = country.name,
+                                text = CountryNames.forDiallingCode(country.code, country.name),
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f),
                             )
