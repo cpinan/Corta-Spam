@@ -11,10 +11,12 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.junit.Rule
@@ -355,5 +357,77 @@ class KeypadScreenUiTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Call").assertIsNotEnabled()
+    }
+
+    /**
+     * The results are a window of their own, so picking from them has to close them: a popup is
+     * not in the screen's layout and nothing about the column changing will make it go away.
+     *
+     * The name has to be gone rather than merely the list: filling the field with the contact's
+     * number re-matches that very contact, so a naive "show whenever the query matches" would
+     * leave the results standing over the pad with the search already finished.
+     */
+    @Test
+    fun `the floating results close once a contact is picked`() {
+        composeTestRule.setContent {
+            KeypadScreen(contacts = listOf(Contact(name = "Ana Torres", number = "+34 611 99 88 77")))
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Ana")
+        composeTestRule.onNodeWithText("Ana Torres").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Ana Torres").assertDoesNotExist()
+        composeTestRule.onNodeWithText("+34 611 99 88 77").assertExists()
+    }
+
+    /**
+     * And come straight back when the query changes again. Dismissal is remembered against the
+     * query it was dismissed for, not as a flag, so there is no state left set that a later
+     * keystroke has to remember to clear.
+     */
+    @Test
+    fun `the floating results return on the next keystroke`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts =
+                    listOf(
+                        Contact(name = "Ana Torres", number = "+34611998877"),
+                        Contact(name = "Bea Ruiz", number = "+34600111222"),
+                    ),
+            )
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Ana")
+        composeTestRule.onNodeWithText("Ana Torres").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Ana Torres").assertDoesNotExist()
+
+        composeTestRule.onNodeWithContentDescription("Delete last digit").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+    }
+
+    /**
+     * The pad is pinned to the bottom of the window, which is what replaced the 132 dp of blank
+     * space that used to be reserved between the field and the pad to keep the keys still. The
+     * user read that band as a rendering fault, and on an empty query nothing is ever drawn in it.
+     *
+     * Asserting the Call button reaches the bottom of the window is the shape of the layout, not
+     * its pixel values: a top-packed column leaves the button wherever the content above it ends,
+     * which on this viewport is roughly the middle of the screen.
+     */
+    @Test
+    fun `the pad and call button are anchored to the bottom of the window`() {
+        composeTestRule.setContent { KeypadScreen() }
+
+        val root = composeTestRule.onRoot().getBoundsInRoot()
+        val callBottom = composeTestRule.onNodeWithText("Call").getBoundsInRoot().bottom
+
+        assertTrue(
+            callBottom > root.bottom - 80.dp,
+            "Call ends at $callBottom, which is not near the bottom of $root",
+        )
     }
 }
