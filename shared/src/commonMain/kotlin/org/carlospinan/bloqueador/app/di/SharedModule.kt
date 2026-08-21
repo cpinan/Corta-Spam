@@ -51,7 +51,7 @@ val sharedModule =
         factory { SettingsViewModel(get(), get()) }
         factory { AutoResponderViewModel(get()) }
         factory { StatsViewModel(get()) }
-        factory { KeypadViewModel(get(), get()) }
+        factory { KeypadViewModel(get(), get(), get()) }
         factory { AgendaViewModel(get(), get()) }
         factory { BackupViewModel(get()) }
     }

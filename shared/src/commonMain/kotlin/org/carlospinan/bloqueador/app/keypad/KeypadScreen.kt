@@ -68,6 +68,7 @@ import cortaspam.shared.generated.resources.keypad_more_matches
 import cortaspam.shared.generated.resources.keypad_no_matches
 import cortaspam.shared.generated.resources.keypad_recent
 import cortaspam.shared.generated.resources.keypad_strip_empty
+import cortaspam.shared.generated.resources.keypad_strip_empty_starred
 import cortaspam.shared.generated.resources.keypad_title
 import cortaspam.shared.generated.resources.settings_grant_contacts
 import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
@@ -100,6 +101,11 @@ fun KeypadScreen(
     contacts: List<Contact> = emptyList(),
     /** Recent callers, shown in place of the favourites when nothing on the phone is starred. */
     recent: List<Contact> = emptyList(),
+    /**
+     * Whether recent callers may be shown at all. Only the empty band reads it: with the setting
+     * off, promising "and recent calls" in the hint would describe something that cannot happen.
+     */
+    showRecentCallers: Boolean = true,
     contactsPermissionGranted: Boolean = true,
     onRequestContactsPermission: () -> Unit = {},
     /**
@@ -137,6 +143,9 @@ fun KeypadScreen(
     var topInsetPx by remember { mutableStateOf(0f) }
     var fieldBottomPx by remember { mutableStateOf(0f) }
     var padTopPx by remember { mutableStateOf(0f) }
+    var padBottomPx by remember { mutableStateOf(0f) }
+    var bottomGroupTopPx by remember { mutableStateOf(0f) }
+    var bottomGroupBottomPx by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
 
     // Which side of the field the results open on, and how tall they may be -- see
@@ -167,14 +176,28 @@ fun KeypadScreen(
                 // whatever happens to remain. Leftovers were the bug both ways round: too much
                 // and the screen has a blank third in it, too little and the popup is pinned to
                 // the top of the window with a row sliced through its text.
-                val padSpace = usableHeight - KEYPAD_FIXED_HEIGHT - MATCHES_MIN_HEIGHT
+                // Measured, not estimated. This was a 280 dp constant standing for the title, the
+                // field, the action row and the spacers between them; measurement on a razr said
+                // it was about 90 dp out, which is a pad a whole key-row smaller than the window
+                // allows. The pieces report their own bounds instead, and nothing here depends on
+                // the key height being computed, so it settles in one extra frame rather than
+                // oscillating.
+                val measuredNonPad =
+                    (padTopPx - bottomGroupTopPx) + (bottomGroupBottomPx - padBottomPx)
+                val nonPadHeight =
+                    if (measuredNonPad > 0f) {
+                        with(density) { measuredNonPad.toDp() } + KEYPAD_CONTENT_PADDING * 2
+                    } else {
+                        KEYPAD_FIXED_HEIGHT
+                    }
+                val padSpace = usableHeight - nonPadHeight - MATCHES_MIN_HEIGHT
                 val keyHeight = (padSpace / DIAL_PAD_ROW_COUNT - MIN_ROW_SPACING).coerceIn(MIN_KEY_HEIGHT, MAX_KEY_HEIGHT)
                 val rowSpacing =
                     ((padSpace - keyHeight * DIAL_PAD_ROW_COUNT) / DIAL_PAD_ROW_COUNT)
                         .coerceIn(MIN_ROW_SPACING, MAX_ROW_SPACING)
 
                 ScrollableScreenColumn(
-                    contentPadding = PaddingValues(24.dp),
+                    contentPadding = PaddingValues(KEYPAD_CONTENT_PADDING),
                     // The pad is pinned to the bottom of the window and the field to the top, which is
                     // what keeps the keys still now that nothing reserves a fixed gap between them:
                     // whatever space is left over lands in the middle, where the results float, and no
@@ -208,7 +231,14 @@ fun KeypadScreen(
                                 // is for beats leaving it blank, which is the report this whole
                                 // band exists to answer.
                                 Text(
-                                    text = stringResource(Res.string.keypad_strip_empty),
+                                    text =
+                                        stringResource(
+                                            if (showRecentCallers) {
+                                                Res.string.keypad_strip_empty
+                                            } else {
+                                                Res.string.keypad_strip_empty_starred
+                                            },
+                                        ),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.fillMaxWidth(),
@@ -246,7 +276,8 @@ fun KeypadScreen(
                     Column(
                         modifier =
                             Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-                                padTopPx = coordinates.boundsInWindow().top
+                                bottomGroupTopPx = coordinates.boundsInWindow().top
+                                bottomGroupBottomPx = coordinates.boundsInWindow().bottom
                             },
                     ) {
                         // The title travels with the field rather than heading the screen from the
@@ -314,6 +345,11 @@ fun KeypadScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
                         DialPad(
+                            modifier =
+                                Modifier.onGloballyPositioned { coordinates ->
+                                    padTopPx = coordinates.boundsInWindow().top
+                                    padBottomPx = coordinates.boundsInWindow().bottom
+                                },
                             onKey = { key -> typed += key },
                             keyHeight = keyHeight,
                             rowSpacing = rowSpacing,
@@ -604,8 +640,12 @@ private const val NO_REQUEST_APPLIED = -1L
 /** Material's disabled-content alpha, for the delete glyph when there is nothing to delete. */
 private const val DISABLED_ALPHA = 0.38f
 
+/** The screen's own padding, counted into the space the pad may not have. */
+private val KEYPAD_CONTENT_PADDING = 24.dp
+
 /**
- * Everything on this screen that is not the dial pad: the 24 dp content padding top and bottom,
+ * The fallback for the first frame, before anything has reported its bounds: everything on this
+ * screen that is not the dial pad: the 24 dp content padding top and bottom,
  * the title, the field, the actions row, and the spacers between them. Subtracting it from the
  * window leaves what the pad may grow into.
  *

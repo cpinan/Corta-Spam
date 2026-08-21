@@ -12,6 +12,7 @@ import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
+import org.carlospinan.bloqueador.app.testing.FakeSettingsRepository
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,7 +45,7 @@ class KeypadViewModelTest {
         runTest {
             val gateway = FakeContactsGateway(granted = false, book = listOf(Contact("Ana", "600111222")))
 
-            val state = KeypadViewModel(gateway, FakeCallLogRepository()).state.first()
+            val state = KeypadViewModel(gateway, FakeCallLogRepository(), FakeSettingsRepository()).state.first()
 
             assertTrue(state.contacts.isEmpty())
             assertFalse(state.contactsPermissionGranted)
@@ -59,7 +60,7 @@ class KeypadViewModelTest {
     fun `RefreshContacts picks up a grant that landed after construction`() =
         runTest {
             val gateway = FakeContactsGateway(granted = false)
-            val viewModel = KeypadViewModel(gateway, FakeCallLogRepository())
+            val viewModel = KeypadViewModel(gateway, FakeCallLogRepository(), FakeSettingsRepository())
             assertTrue(
                 viewModel.state
                     .first()
@@ -81,7 +82,7 @@ class KeypadViewModelTest {
     fun `a revoked permission clears the contacts already loaded`() =
         runTest {
             val gateway = FakeContactsGateway(granted = true, book = listOf(Contact("Ana", "600111222")))
-            val viewModel = KeypadViewModel(gateway, FakeCallLogRepository())
+            val viewModel = KeypadViewModel(gateway, FakeCallLogRepository(), FakeSettingsRepository())
             val loaded = viewModel.state.first { it.contacts.isNotEmpty() }
             assertEquals("Ana", loaded.contacts.single().name)
 
@@ -117,7 +118,7 @@ class KeypadViewModelTest {
                     ),
                 )
             val gateway = FakeContactsGateway(granted = false)
-            val viewModel = KeypadViewModel(gateway, log)
+            val viewModel = KeypadViewModel(gateway, log, FakeSettingsRepository())
             advanceUntilIdle()
             assertEquals(
                 "+34611998877",
@@ -137,5 +138,41 @@ class KeypadViewModelTest {
                     .single()
                     .name,
             )
+        }
+
+    /**
+     * Dropped from the state rather than hidden by the screen: state the UI is told to ignore is
+     * state that leaks the next time something else reads it.
+     */
+    @Test
+    fun `switching the setting off empties the recent callers`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val log = FakeCallLogRepository()
+            log.entriesFlow.value =
+                listOf(
+                    CallLogEntryData(
+                        id = 1,
+                        number = "600111222",
+                        timestamp = 1,
+                        action = "ALLOWED",
+                        ruleType = null,
+                        ruleId = null,
+                        ruleDetail = null,
+                    ),
+                )
+            val settings = FakeSettingsRepository()
+            val viewModel = KeypadViewModel(FakeContactsGateway(granted = true), log, settings)
+            advanceUntilIdle()
+            assertEquals(1, viewModel.state.value.recent.size)
+
+            settings.showRecentCallersOnKeypad.value = false
+            advanceUntilIdle()
+
+            assertTrue(
+                viewModel.state.value.recent
+                    .isEmpty(),
+            )
+            assertFalse(viewModel.state.value.showRecentCallers)
         }
 }

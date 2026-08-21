@@ -11,6 +11,7 @@ import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
+import org.carlospinan.bloqueador.app.settings.SettingsRepository
 
 data class KeypadUiState(
     val contacts: List<Contact> = emptyList(),
@@ -21,6 +22,11 @@ data class KeypadUiState(
      * user can already see on the Log tab.
      */
     val recent: List<Contact> = emptyList(),
+    /**
+     * Whether recent callers may be shown at all. The screen needs it separately from an empty
+     * [recent]: "nobody has rung yet" and "you turned this off" want different words in the band.
+     */
+    val showRecentCallers: Boolean = true,
     /**
      * Whether the address book could be read at all. The screen needs this separately from an
      * empty [contacts] list: "you have no contacts" and "this app cannot see your contacts" look
@@ -42,6 +48,7 @@ sealed interface KeypadIntent {
 class KeypadViewModel(
     private val contactsGateway: ContactsGateway,
     private val callLogRepository: CallLogRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(KeypadUiState())
     val state: StateFlow<KeypadUiState> = _state.asStateFlow()
@@ -52,6 +59,22 @@ class KeypadViewModel(
     init {
         loadContacts()
         observeRecentCalls()
+        observeRecentCallerSetting()
+    }
+
+    /**
+     * The strip is call history on a screen anyone holding the unlocked phone can open, so it is a
+     * setting. Switched off, the recents are dropped from the state rather than merely hidden by
+     * the screen: state the UI is told to ignore is state that leaks the next time someone reads
+     * it for another purpose.
+     */
+    private fun observeRecentCallerSetting() {
+        viewModelScope.launch {
+            settingsRepository.showRecentCallersOnKeypad.collect { allowed ->
+                _state.update { it.copy(showRecentCallers = allowed) }
+                relabelRecentCalls()
+            }
+        }
     }
 
     /**
@@ -83,6 +106,10 @@ class KeypadViewModel(
      */
     private fun relabelRecentCalls() {
         viewModelScope.launch {
+            if (!_state.value.showRecentCallers) {
+                _state.update { it.copy(recent = emptyList()) }
+                return@launch
+            }
             val names = if (contactsGateway.hasPermission()) contactsGateway.contactNames() else emptyMap()
             val recent = recentContacts(lastEntries, names)
             _state.update { it.copy(recent = recent) }

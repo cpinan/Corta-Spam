@@ -42,6 +42,7 @@ import cortaspam.shared.generated.resources.ic_blocking
 import cortaspam.shared.generated.resources.ic_brand_app
 import cortaspam.shared.generated.resources.ic_contacts
 import cortaspam.shared.generated.resources.ic_default_action
+import cortaspam.shared.generated.resources.ic_keypad
 import cortaspam.shared.generated.resources.ic_privacy
 import cortaspam.shared.generated.resources.ic_settings
 import cortaspam.shared.generated.resources.ic_unknown_call
@@ -67,6 +68,8 @@ import cortaspam.shared.generated.resources.settings_notify_unknown_callers
 import cortaspam.shared.generated.resources.settings_notify_unknown_callers_desc
 import cortaspam.shared.generated.resources.settings_privacy_desc
 import cortaspam.shared.generated.resources.settings_privacy_title
+import cortaspam.shared.generated.resources.settings_recent_on_keypad
+import cortaspam.shared.generated.resources.settings_recent_on_keypad_desc
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass_count_label
 import cortaspam.shared.generated.resources.settings_repeated_caller_bypass_desc
@@ -117,6 +120,7 @@ fun SettingsScreen(
     onRequestDialerRole: () -> Unit = {},
     onSetBlockingEnabled: (Boolean) -> Unit,
     onSetAutoAllowContacts: (Boolean) -> Unit,
+    onSetShowRecentCallersOnKeypad: (Boolean) -> Unit,
     onSetDefaultAction: (DefaultAction) -> Unit,
     onSetSpamEnabled: (Boolean) -> Unit,
     onSetNotificationsEnabled: (Boolean) -> Unit = {},
@@ -186,13 +190,19 @@ fun SettingsScreen(
                                 EmergencyExemptionItem(state.emergencyCallbackExemption, onSetEmergencyCallbackExemption)
                             }
 
-                            SettingsSection.Contacts ->
+                            SettingsSection.Contacts -> {
                                 ContactsToggleItem(
                                     checked = state.autoAllowContacts,
                                     onCheckedChange = onSetAutoAllowContacts,
                                     showGrantContacts = showGrantContacts,
                                     onRequestContactsPermission = onRequestContactsPermission,
                                 )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                RecentCallersToggleItem(
+                                    checked = state.showRecentCallersOnKeypad,
+                                    onCheckedChange = onSetShowRecentCallersOnKeypad,
+                                )
+                            }
 
                             SettingsSection.Notifications -> {
                                 NotificationsToggleItem(state.notificationsEnabled, onSetNotificationsEnabled)
@@ -259,6 +269,13 @@ fun SettingsScreen(
                         onCheckedChange = onSetAutoAllowContacts,
                         showGrantContacts = showGrantContacts,
                         onRequestContactsPermission = onRequestContactsPermission,
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    RecentCallersToggleItem(
+                        checked = state.showRecentCallersOnKeypad,
+                        onCheckedChange = onSetShowRecentCallersOnKeypad,
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -473,6 +490,25 @@ private fun ContactsToggleItem(
             Text(stringResource(Res.string.settings_grant_contacts))
         }
     }
+}
+
+/**
+ * The keypad's strip of who rang recently. Starred contacts are not covered by it: those are a
+ * choice the user made and every dialer shows them, while this is call history appearing on a
+ * screen anyone holding the unlocked phone can open.
+ */
+@Composable
+private fun RecentCallersToggleItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SettingToggle(
+        title = stringResource(Res.string.settings_recent_on_keypad),
+        description = stringResource(Res.string.settings_recent_on_keypad_desc),
+        icon = Res.drawable.ic_keypad,
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
 }
 
 @Composable

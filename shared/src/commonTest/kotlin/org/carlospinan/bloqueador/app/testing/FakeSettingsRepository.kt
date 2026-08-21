@@ -19,6 +19,7 @@ import org.carlospinan.bloqueador.app.settings.SettingsRepository
 internal class FakeSettingsRepository(
     override val blockingEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val autoAllowContacts: MutableStateFlow<Boolean> = MutableStateFlow(false),
+    override val showRecentCallersOnKeypad: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val defaultAction: MutableStateFlow<DefaultAction> = MutableStateFlow(DefaultAction.ALLOW),
     override val notificationsEnabled: MutableStateFlow<Boolean> = MutableStateFlow(true),
     override val notifyUnknownCallers: MutableStateFlow<Boolean> = MutableStateFlow(true),
@@ -33,6 +34,10 @@ internal class FakeSettingsRepository(
 ) : SettingsRepository {
     override suspend fun setBlockingEnabled(enabled: Boolean) {
         blockingEnabled.value = enabled
+    }
+
+    override suspend fun setShowRecentCallersOnKeypad(enabled: Boolean) {
+        showRecentCallersOnKeypad.value = enabled
     }
 
     override suspend fun setAutoAllowContacts(enabled: Boolean) {

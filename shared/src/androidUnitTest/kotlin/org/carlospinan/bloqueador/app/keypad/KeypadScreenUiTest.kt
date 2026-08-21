@@ -591,4 +591,35 @@ class KeypadScreenUiTest {
             .onNodeWithContentDescription("+34902100200, +34902100200")
             .assertTextContains("3")
     }
+
+    /**
+     * The strip is call history on a screen anyone holding the unlocked phone can open, so it is
+     * a setting. Off, the recents are gone -- and the hint stops promising them, since with the
+     * setting off "and recent calls" describes something that cannot happen.
+     */
+    @Test
+    fun `with recent callers switched off the band offers only favourites`() {
+        composeTestRule.setContent {
+            KeypadScreen(recent = emptyList(), showRecentCallers = false)
+        }
+
+        composeTestRule.onNodeWithText("Your starred contacts appear here.").assertExists()
+        composeTestRule
+            .onNodeWithText("Your starred contacts and recent calls appear here.")
+            .assertDoesNotExist()
+    }
+
+    /** And starred contacts are unaffected: those are a choice the user made deliberately. */
+    @Test
+    fun `switching recent callers off leaves the favourites strip alone`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts = listOf(Contact(name = "Ana Torres", number = "+34611998877", starred = true)),
+                showRecentCallers = false,
+            )
+        }
+
+        composeTestRule.onNodeWithText("Favourites").assertExists()
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+    }
 }

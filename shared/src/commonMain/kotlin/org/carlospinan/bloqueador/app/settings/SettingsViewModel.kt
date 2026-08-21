@@ -12,6 +12,7 @@ import org.carlospinan.bloqueador.app.spam.SpamProviderRepository
 data class SettingsUiState(
     val blockingEnabled: Boolean = true,
     val autoAllowContacts: Boolean = true,
+    val showRecentCallersOnKeypad: Boolean = true,
     val defaultAction: DefaultAction = DefaultAction.ALLOW,
     val spamEnabled: Boolean = false,
     val notificationsEnabled: Boolean = true,
@@ -49,6 +50,10 @@ sealed interface SettingsIntent {
         val count: Int,
     ) : SettingsIntent
 
+    data class SetShowRecentCallersOnKeypad(
+        val enabled: Boolean,
+    ) : SettingsIntent
+
     data class SetEmergencyCallbackExemption(
         val enabled: Boolean,
     ) : SettingsIntent
@@ -81,6 +86,8 @@ class SettingsViewModel(
             partial.copy(notifyUnknownCallers = notifyUnknownCallers)
         }.combine(settingsRepository.emergencyCallbackExemption) { partial, emergencyCallbackExemption ->
             partial.copy(emergencyCallbackExemption = emergencyCallbackExemption)
+        }.combine(settingsRepository.showRecentCallersOnKeypad) { partial, showRecentCallersOnKeypad ->
+            partial.copy(showRecentCallersOnKeypad = showRecentCallersOnKeypad)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun onIntent(intent: SettingsIntent) {
@@ -93,6 +100,8 @@ class SettingsViewModel(
             is SettingsIntent.SetNotifyUnknownCallers -> setNotifyUnknownCallers(intent.enabled)
             is SettingsIntent.SetRepeatedCallerBypassCount -> setRepeatedCallerBypassCount(intent.count)
             is SettingsIntent.SetEmergencyCallbackExemption -> setEmergencyCallbackExemption(intent.enabled)
+            is SettingsIntent.SetShowRecentCallersOnKeypad ->
+                viewModelScope.launch { settingsRepository.setShowRecentCallersOnKeypad(intent.enabled) }
         }
     }
 

@@ -366,4 +366,7 @@
     <string name="agenda_action_call">Ligar</string>
     <string name="keypad_recent">Recentes</string>
     <string name="keypad_strip_empty">Aqui aparecerão seus contatos favoritos e as chamadas recentes.</string>
+    <string name="settings_recent_on_keypad">Chamadas recentes no teclado</string>
+    <string name="settings_recent_on_keypad_desc">Mostra quem ligou recentemente acima do campo do número. Seus contatos favoritos aparecem de qualquer forma.</string>
+    <string name="keypad_strip_empty_starred">Aqui aparecerão seus contatos favoritos.</string>
 </resources>

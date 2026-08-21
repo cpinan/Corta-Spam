@@ -21,6 +21,9 @@ class SqlSettingsRepository(
     private val _autoAllowContacts = MutableStateFlow(true)
     override val autoAllowContacts: Flow<Boolean> = _autoAllowContacts.asStateFlow()
 
+    private val _showRecentCallersOnKeypad = MutableStateFlow(true)
+    override val showRecentCallersOnKeypad: Flow<Boolean> = _showRecentCallersOnKeypad.asStateFlow()
+
     private val _defaultAction = MutableStateFlow(DefaultAction.ALLOW)
     override val defaultAction: Flow<DefaultAction> = _defaultAction.asStateFlow()
 
@@ -46,6 +49,7 @@ class SqlSettingsRepository(
     init {
         _blockingEnabled.value = store.readBool("blocking_enabled", true)
         _autoAllowContacts.value = store.readBool("auto_allow_contacts", true)
+        _showRecentCallersOnKeypad.value = store.readBool("show_recent_callers_on_keypad", true)
         _defaultAction.value =
             store.readString("default_action", DefaultAction.ALLOW.key).let { key ->
                 DefaultAction.entries.find { it.key == key } ?: DefaultAction.ALLOW
@@ -72,8 +76,14 @@ class SqlSettingsRepository(
         _autoAllowContacts.value = enabled
     }
 
+    override suspend fun setShowRecentCallersOnKeypad(enabled: Boolean) {
+        store.writeBool("show_recent_callers_on_keypad", enabled)
+        _showRecentCallersOnKeypad.value = enabled
+    }
+
     override suspend fun setDefaultAction(action: DefaultAction) {
         store.write("default_action", action.key)
+        _showRecentCallersOnKeypad.value = store.readBool("show_recent_callers_on_keypad", true)
         _defaultAction.value = action
     }
 

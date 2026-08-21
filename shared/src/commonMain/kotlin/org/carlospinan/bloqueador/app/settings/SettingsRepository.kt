@@ -14,6 +14,17 @@ enum class DefaultAction(
 interface SettingsRepository {
     val blockingEnabled: Flow<Boolean>
     val autoAllowContacts: Flow<Boolean>
+
+    /**
+     * Whether the keypad may show who rang recently in the strip above the number field.
+     *
+     * On by default: the strip exists because that band is otherwise blank, and the rows in it are
+     * already visible on the Log tab. It is a switch because the keypad is reachable by anyone
+     * holding the unlocked phone -- a shop assistant handed it to dial a number sees the last four
+     * callers, which is a different exposure from a tab they would have to go looking for.
+     * Starred contacts are unaffected: those are chosen deliberately and shown by every dialer.
+     */
+    val showRecentCallersOnKeypad: Flow<Boolean>
     val defaultAction: Flow<DefaultAction>
 
     // StateFlow so Android call-handling code (Telecom callbacks, not always inside a
@@ -69,6 +80,8 @@ interface SettingsRepository {
     suspend fun setBlockingEnabled(enabled: Boolean)
 
     suspend fun setAutoAllowContacts(enabled: Boolean)
+
+    suspend fun setShowRecentCallersOnKeypad(enabled: Boolean)
 
     suspend fun setDefaultAction(action: DefaultAction)
 

@@ -366,4 +366,7 @@
     <string name="agenda_action_call">कॉल करें</string>
     <string name="keypad_recent">हाल के</string>
     <string name="keypad_strip_empty">आपके पसंदीदा संपर्क और हाल की कॉल यहाँ दिखेंगी।</string>
+    <string name="settings_recent_on_keypad">कीपैड पर हाल की कॉल</string>
+    <string name="settings_recent_on_keypad_desc">नंबर वाले खाने के ऊपर दिखाएँ कि हाल में किसने कॉल किया। आपके पसंदीदा संपर्क वैसे भी दिखेंगे।</string>
+    <string name="keypad_strip_empty_starred">आपके पसंदीदा संपर्क यहाँ दिखेंगे।</string>
 </resources>

@@ -207,6 +207,7 @@ fun AppNavHost(
                     onCall = onCallBack ?: {},
                     contacts = keypadState.contacts,
                     recent = keypadState.recent,
+                    showRecentCallers = keypadState.showRecentCallers,
                     contactsPermissionGranted = keypadState.contactsPermissionGranted,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onAddContact = onAddContact ?: {},
@@ -415,6 +416,9 @@ fun AppNavHost(
                     onRequestDialerRole = onRequestDialerRole ?: {},
                     onSetBlockingEnabled = { settingsViewModel.onIntent(SettingsIntent.SetBlockingEnabled(it)) },
                     onSetAutoAllowContacts = { settingsViewModel.onIntent(SettingsIntent.SetAutoAllowContacts(it)) },
+                    onSetShowRecentCallersOnKeypad = {
+                        settingsViewModel.onIntent(SettingsIntent.SetShowRecentCallersOnKeypad(it))
+                    },
                     onSetDefaultAction = { settingsViewModel.onIntent(SettingsIntent.SetDefaultAction(it)) },
                     onSetSpamEnabled = { settingsViewModel.onIntent(SettingsIntent.SetSpamEnabled(it)) },
                     onSetNotificationsEnabled = { settingsViewModel.onIntent(SettingsIntent.SetNotificationsEnabled(it)) },
