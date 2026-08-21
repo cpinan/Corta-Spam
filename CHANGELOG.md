@@ -16,7 +16,79 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ## [Unreleased]
 
-Nothing yet.
+The dialer half of the app, rebuilt from user feedback: the keypad looked like it had a rendering
+fault, and there was no screen that simply listed the people in the phone. Verified on a razr 50
+ultra with a real 940-contact address book and on a Pixel 8 Pro API 36 emulator.
+
+### Added
+
+- **An Agenda tab: the address book, read through this app's rules.** Search, a favourites strip
+  from the platform's own `STARRED` flag, pull-to-refresh, and filter chips for All / Starred /
+  Blocked / Allowed. The last two answer the question the block list cannot — it stores numbers, so
+  "which of the people I know have I silenced" had no screen — matched with `sameNumber`, so a rule
+  saved from a national-format call still matches a card saved internationally. Tapping a row opens
+  the same Call / Block / Allow / Copy actions the call log offers, one button per meaning.
+  ([`3a028f5`](../../commit/3a028f5))
+- **Settings left the navigation bar to make room, and gained a way in.** Material's bar tops out
+  at five items. Settings is reached from a gear in Home's header, because Home's existing text
+  link is the last of four below the fold — a destination whose only route is off screen is one the
+  user has to already know about. `routeSection` returns `NO_SECTION` for those routes rather than
+  falling back to Home. ([`3a028f5`](../../commit/3a028f5), [`96fd70f`](../../commit/96fd70f))
+- **Pull to refresh the Agenda and the call log**, past the address book's five-minute cache. On
+  the call log the calls need no refreshing — they arrive as a database flow — but the contact names
+  beside them do. ([`4a3b814`](../../commit/4a3b814))
+- **The keypad's empty band now holds the people most likely to be dialled**: starred contacts, or
+  the four most recent callers when nothing is starred, or one line saying what will appear there.
+  A tap fills the number rather than dialling. ([`e13a3d3`](../../commit/e13a3d3),
+  [`a1f3a30`](../../commit/a1f3a30))
+- **A setting for that strip.** Recent callers are call history on the screen a phone gets handed
+  to someone on, so `showRecentCallersOnKeypad` gates them — on by default, and not covering starred
+  contacts, which are a choice the user made. Off, the recents leave the ViewModel state rather than
+  being hidden by the view. ([`2a7c9ea`](../../commit/2a7c9ea))
+
+### Fixed
+
+- **The keypad reserved 132 dp of blank space under its search box.** It was the fix for the moving
+  dial pad wearing the wrong shape: a constant gap keeps the keys still, and on an empty query
+  nothing is ever drawn in it. The results now float in a `Popup` — a window of its own, outside the
+  layout — the number field sits on the pad where a dialer puts it, and the column packs from the
+  bottom. ([`e49fb8d`](../../commit/e49fb8d), [`bf9e0c6`](../../commit/bf9e0c6),
+  [`e13a3d3`](../../commit/e13a3d3))
+- **The dial pad left a third of a tall screen blank.** Twelve keys cannot fill 1000 dp at any size
+  that still reads as a dial key, so the pad is sized to the window and the rest of the band is
+  used rather than stretched. The space it may take is measured from the screen's own bounds; the
+  estimate it replaced was about 90 dp out — a whole row of key height.
+  ([`baf92f9`](../../commit/baf92f9), [`2a7c9ea`](../../commit/2a7c9ea))
+- **The floating results were clipped through a row of text, twice.** A popup taller than its space
+  is pinned to the edge of the screen and sliced. The arithmetic now lives in `matchesPlacement`,
+  in pixels and free of Compose types, with the rule made explicit: never exceed the space given —
+  the minimum height is a preference, not a floor. Both defects needed a device to notice, because
+  semantics do not change when one window overlaps another. ([`ce80392`](../../commit/ce80392))
+- **Recent callers kept their bare numbers after the contacts permission was granted.** Names were
+  resolved only when the call log emitted, so granting contacts from the keypad's own button
+  relabelled nothing until somebody rang — the third time this project has shipped work done once
+  at construction against a permission that arrives afterwards. ([`ce80392`](../../commit/ce80392))
+- **The whole call log was sorted on the main dispatcher on every logged call.** The strip needs
+  four callers and `allEntries()` is unbounded. It reads `recentEntries(50)` and deduplicates by
+  `comparisonKeys`, so one caller cannot hold two slots by having been dialled in two formats.
+  ([`ce80392`](../../commit/ce80392))
+- **Two ViewModel tests hung for a minute on the iOS simulator while passing on the JVM.**
+  `viewModelScope` dispatches on `Dispatchers.Main`, which on Kotlin/Native needs a run loop no unit
+  test spins. Installing a test dispatcher then exposed a real defect underneath: a test that
+  asserted before the work it was waiting for had started. `verify.sh` compiles `commonTest` for
+  Native but does not run it — `:shared:iosSimulatorArm64Test` is what catches this.
+  ([`3822a1a`](../../commit/3822a1a))
+- **`KeypadViewModel` lost the contacts-permission flag** once it had two coroutines writing its
+  state: `_state.value = _state.value.copy(...)` is a read-modify-write. Every write uses `update()`.
+  ([`ce80392`](../../commit/ce80392))
+
+### Changed
+
+- **The navigation bar is Home, Keypad, Agenda, Log, Lists.** Every index after Keypad shifted.
+  ([`3a028f5`](../../commit/3a028f5))
+- **`FavouritesRow` moved into the contacts package** and is shared by the Agenda and the keypad, so
+  both draw the same strip from the same platform flag. ([`e13a3d3`](../../commit/e13a3d3))
+- 652 → 721 automated tests (`:shared` 629, `:androidApp` 92, plus 369 on the iOS simulator).
 
 ## [1.5.0] (7) — 2026-08-19, internal testing
 
