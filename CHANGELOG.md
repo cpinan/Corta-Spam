@@ -21,8 +21,14 @@ Nothing yet.
 ## [1.6.0] (8) — 2026-08-21, internal testing
 
 Release notes: [`docs/store/RELEASE_NOTES_1.6.0.md`](docs/store/RELEASE_NOTES_1.6.0.md).
-Bundle `corta-spam-1.6.0-8-release.aab` built 2026-08-21, **5,429,105 bytes**,
-`sha256 f378131d5bb279744e8d8b2416f0e8541b1bf494a6d9198512c2c404bf7d1ea7`.
+Bundle `8-1.6.0-release.aab` built 2026-08-21, **5,429,071 bytes**,
+`sha256 5cdfdabbc183701a8ed196a95060d6a57af76a7fb5b6211416e9993a5e01e5c3`.
+
+**Artifacts are named `<versionCode>-<versionName>-<buildType>` from this release on.** The code
+leads because it is the field an upload is accepted or rejected on, and the one that may only ever
+increase — a folder of these sorts into upload order by filename alone, which the old
+`corta-spam-<name>-<code>` form did not. Earlier artifacts keep their old names: renaming them
+would falsify the record of what was built under which filename.
 
 **Code 8, because 7 was refused at upload.** This release was built on code 7 first, on this
 file's own claim that 7 had never been uploaded. Play answered `Version code 7 has already been

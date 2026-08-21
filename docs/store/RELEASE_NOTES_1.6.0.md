@@ -92,8 +92,9 @@ call-related is emulator-only, including emergency dialling.
 
 ## Before uploading
 
-- [ ] Confirm the filename is `corta-spam-1.6.0-8-release.aab`. Gradle's default name is identical
-      for every build ever made; `archivesName` handles it, but check the artifact.
+- [ ] Confirm the filename is `8-1.6.0-release.aab` — `<versionCode>-<versionName>-<buildType>`,
+      the code first so a folder of bundles sorts into upload order. Gradle's default name is
+      identical for every build ever made; `archivesName` handles it, but check the artifact.
 - [ ] Check the artifact's mtime and size before trusting any comparison — this project has seen
       `BUILD SUCCESSFUL in 1s` over an unchanged APK more than once.
 - [x] Audit permissions with `aapt2 dump badging` on the **artifact**, not the source manifest: a

@@ -73,10 +73,15 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 val appVersionName = "1.6.0"
 val appVersionCode = 8
 
-// Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
+// Names the outputs <versionCode>-<versionName>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
+//
+// The version *code* leads, because it is the field an upload is accepted or rejected on and the
+// one that may only ever increase -- a folder of these sorts into upload order by name alone.
+// Earlier artifacts carry the older corta-spam-<name>-<code> form; they are left as they were,
+// since renaming them would falsify the record of what was built under which filename.
 base {
-    archivesName = "corta-spam-$appVersionName-$appVersionCode"
+    archivesName = "$appVersionCode-$appVersionName"
 }
 
 android {
