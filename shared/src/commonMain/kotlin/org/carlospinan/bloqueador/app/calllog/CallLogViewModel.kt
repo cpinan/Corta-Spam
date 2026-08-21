@@ -27,6 +27,8 @@ data class CallLogUiState(
      * user navigated in with, and the selected chip would be wrong from the first tap.
      */
     val filter: String = "all",
+    /** Drives the pull-to-refresh indicator, and nothing else. */
+    val refreshing: Boolean = false,
 )
 
 sealed interface CallLogIntent {
@@ -46,6 +48,16 @@ sealed interface CallLogIntent {
      * process died.
      */
     data object RefreshContactNames : CallLogIntent
+
+    /**
+     * The same reload, asked for by hand, past the contacts gateway's five-minute cache and with
+     * an indicator on screen while it runs.
+     *
+     * The calls themselves arrive as a database flow and need no refreshing -- but the *names*
+     * beside them do not, and a log full of bare numbers after saving a contact in another app is
+     * exactly the moment a user reaches for a pull gesture.
+     */
+    data object Refresh : CallLogIntent
 }
 
 class CallLogViewModel(
@@ -54,14 +66,21 @@ class CallLogViewModel(
 ) : ViewModel() {
     private val filterFlow = MutableStateFlow("all")
     private val contactNamesFlow = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val refreshingFlow = MutableStateFlow(false)
 
     val state: StateFlow<CallLogUiState> =
         combine(
             callLogRepository.allEntries(),
             filterFlow,
             contactNamesFlow,
-        ) { entries, filter, contactNames ->
-            CallLogUiState(entries = applyFilter(entries, filter), contactNames = contactNames, filter = filter)
+            refreshingFlow,
+        ) { entries, filter, contactNames, refreshing ->
+            CallLogUiState(
+                entries = applyFilter(entries, filter),
+                contactNames = contactNames,
+                filter = filter,
+                refreshing = refreshing,
+            )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CallLogUiState())
 
     init {
@@ -74,13 +93,25 @@ class CallLogViewModel(
             is CallLogIntent.DeleteRecording ->
                 viewModelScope.launch { callLogRepository.deleteRecording(intent.entryId) }
             is CallLogIntent.RefreshContactNames -> loadContactNames()
+            is CallLogIntent.Refresh -> loadContactNames(force = true)
         }
     }
 
-    private fun loadContactNames() {
-        if (!contactsGateway.hasPermission()) return
+    private fun loadContactNames(force: Boolean = false) {
+        if (!contactsGateway.hasPermission()) {
+            // Still cleared, so the indicator cannot be left spinning by a refresh asked for on a
+            // screen whose permission was revoked while it was open.
+            refreshingFlow.value = false
+            return
+        }
+        if (force) refreshingFlow.value = true
         viewModelScope.launch {
-            contactNamesFlow.value = contactsGateway.contactNames()
+            try {
+                if (force) contactsGateway.refresh()
+                contactNamesFlow.value = contactsGateway.contactNames()
+            } finally {
+                refreshingFlow.value = false
+            }
         }
     }
 }

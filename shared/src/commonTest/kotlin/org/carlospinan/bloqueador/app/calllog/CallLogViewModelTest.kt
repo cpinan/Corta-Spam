@@ -15,6 +15,7 @@ import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -28,6 +29,12 @@ class CallLogViewModelTest {
         override suspend fun contactNames(): Map<String, String> = names
 
         override suspend fun contacts(): List<Contact> = emptyList()
+
+        var refreshCalls = 0
+
+        override suspend fun refresh() {
+            refreshCalls++
+        }
 
         override fun hasPermission(): Boolean = granted
     }
@@ -164,5 +171,41 @@ class CallLogViewModelTest {
 
             val entries = vm.state.first { it.entries.size == 2 }.entries
             assertEquals(2, entries.size)
+        }
+
+    /**
+     * The gateway caches the address book for five minutes, because the allowlist reads it while
+     * the phone is ringing. A pull gesture served from that cache answers a deliberate "look
+     * again" with the same stale names -- and stale names is the only reason to pull this screen,
+     * since the calls themselves arrive as a database flow.
+     */
+    @Test
+    fun `Refresh drops the contacts cache and reloads the names`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val contacts = FakeContactsGateway(granted = true)
+            val vm = CallLogViewModel(callLogRepository = FakeCallLogRepository(), contactsGateway = contacts)
+            vm.state.first()
+
+            contacts.names = mapOf("34611998877" to "Ana Torres")
+            vm.onIntent(CallLogIntent.Refresh)
+
+            val state = vm.state.first { it.contactNames.isNotEmpty() }
+            assertEquals("Ana Torres", state.contactNames["34611998877"])
+            assertEquals(1, contacts.refreshCalls)
+        }
+
+    /** The resume reload is not a hand-asked one: it must not spin an indicator nobody pulled. */
+    @Test
+    fun `RefreshContactNames leaves the pull indicator alone`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val contacts = FakeContactsGateway(granted = true)
+            val vm = CallLogViewModel(callLogRepository = FakeCallLogRepository(), contactsGateway = contacts)
+
+            vm.onIntent(CallLogIntent.RefreshContactNames)
+
+            assertFalse(vm.state.first().refreshing)
+            assertEquals(0, contacts.refreshCalls)
         }
 }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -95,6 +97,7 @@ import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CallLogScreen(
     entries: List<CallLogEntryData>,
@@ -122,6 +125,14 @@ fun CallLogScreen(
      * unlike the direction filter and the search box, which only narrow what is already loaded.
      */
     onSelectTimeFilter: (String) -> Unit = {},
+    /** Whether a hand-asked reload is in flight; drives the pull indicator. */
+    refreshing: Boolean = false,
+    /**
+     * Pull-to-refresh. The calls arrive as a database flow and refresh themselves; the contact
+     * names beside them do not, and a log of bare numbers right after saving a contact in another
+     * app is exactly when a user reaches for the gesture.
+     */
+    onRefresh: () -> Unit = {},
 ) {
     var selectedNumber by remember { mutableStateOf<String?>(null) }
     var selectedEntry by remember { mutableStateOf<CallLogEntryData?>(null) }
@@ -252,32 +263,54 @@ fun CallLogScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    if (entries.isEmpty()) {
-                        Text(
-                            text = stringResource(Res.string.call_log_empty_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else if (visibleEntries.isEmpty()) {
-                        // An empty log and an empty *filter result* are different problems, and
-                        // the hint for the first one ("add a number to start blocking") is
-                        // nonsense advice for the second.
-                        Text(
-                            text = stringResource(Res.string.call_log_no_matches),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        LazyColumn {
-                            items(visibleEntries, key = { it.id }) { entry ->
-                                CallLogEntryRow(
-                                    entry = entry,
-                                    contactNames = contactNames,
-                                    onTap = { selectedNumber = entry.number },
-                                    ruleState = ruleStates[entry.number] ?: NumberRuleState.None,
-                                    onPlayRecording = onPlayRecording,
-                                    onDeleteRecording = onDeleteRecording,
-                                )
+                    // The gesture wraps the list rather than the screen, and the list is always
+                    // a LazyColumn -- including when all it holds is one line of text. A message
+                    // rendered outside the scrollable would be a state the user cannot pull to
+                    // leave, and "no calls" with the names still missing is one of the states the
+                    // gesture exists for.
+                    //
+                    // Only on this branch: the two-pane layout on the far right of the size
+                    // classes is driven by a pointer, where a pull gesture is not how anything is
+                    // reloaded.
+                    PullToRefreshBox(
+                        isRefreshing = refreshing,
+                        onRefresh = onRefresh,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            when {
+                                entries.isEmpty() ->
+                                    item(key = EMPTY_KEY) {
+                                        Text(
+                                            text = stringResource(Res.string.call_log_empty_hint),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+
+                                visibleEntries.isEmpty() ->
+                                    // An empty log and an empty *filter result* are different
+                                    // problems, and the hint for the first one ("add a number to
+                                    // start blocking") is nonsense advice for the second.
+                                    item(key = NO_MATCHES_KEY) {
+                                        Text(
+                                            text = stringResource(Res.string.call_log_no_matches),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+
+                                else ->
+                                    items(visibleEntries, key = { it.id }) { entry ->
+                                        CallLogEntryRow(
+                                            entry = entry,
+                                            contactNames = contactNames,
+                                            onTap = { selectedNumber = entry.number },
+                                            ruleState = ruleStates[entry.number] ?: NumberRuleState.None,
+                                            onPlayRecording = onPlayRecording,
+                                            onDeleteRecording = onDeleteRecording,
+                                        )
+                                    }
                             }
                         }
                     }
@@ -852,6 +885,11 @@ private fun RecordingControls(
 }
 
 private const val NO_REQUEST_APPLIED = -1L
+
+// Stable keys for the single-item states, so a list swapping one message for another does not
+// reuse the slot and animate a hint into a call row.
+private const val EMPTY_KEY = "empty"
+private const val NO_MATCHES_KEY = "no_matches"
 
 private val DIRECTION_CHIPS =
     listOf(

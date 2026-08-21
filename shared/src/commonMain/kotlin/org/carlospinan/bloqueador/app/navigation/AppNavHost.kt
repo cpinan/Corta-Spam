@@ -274,6 +274,8 @@ fun AppNavHost(
                     // change it, and the route argument would stay at whatever the user arrived
                     // with, leaving the wrong chip selected from the first tap onwards.
                     filter = state.filter,
+                    refreshing = state.refreshing,
+                    onRefresh = { callLogViewModel.onIntent(CallLogIntent.Refresh) },
                     onSelectTimeFilter = { callLogViewModel.onIntent(CallLogIntent.SetFilter(it)) },
                     contactNames = state.contactNames,
                     onBlockNumber = { number -> blockListViewModel.onIntent(BlockListIntent.AddBlockedNumber(number)) },
