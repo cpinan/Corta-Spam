@@ -4,14 +4,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -153,155 +158,174 @@ fun KeypadScreen(
 
     CortaSpamTheme {
         Surface(modifier = modifier.fillMaxWidth()) {
-            ScrollableScreenColumn(
-                contentPadding = PaddingValues(24.dp),
-                // The pad is pinned to the bottom of the window and the field to the top, which is
-                // what keeps the keys still now that nothing reserves a fixed gap between them:
-                // whatever space is left over lands in the middle, where the results float, and no
-                // amount of it moves a key. On a window too short for the content the column
-                // scrolls instead and the arrangement stops applying, which is the correct
-                // fallback -- at a large font scale, reaching the pad matters more than where it
-                // sits.
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(Res.string.keypad_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier =
-                        Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-                            titleBottomPx = coordinates.boundsInWindow().bottom
-                        },
-                )
+            // The pad is sized to the window rather than to a constant, because bottom-anchoring
+            // alone left a void: on a 1080x2640 razr the content is about 500 dp of a roughly
+            // 820 dp screen, so a third of the dialer was blank. Growing the keys is what a phone
+            // dialer does with that space -- and a bigger key is a better key.
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val insets = WindowInsets.safeDrawing.asPaddingValues()
+                val usableHeight =
+                    maxHeight - insets.calculateTopPadding() - insets.calculateBottomPadding()
+                val padSpace = usableHeight - KEYPAD_FIXED_HEIGHT
+                val keyHeight = (padSpace / DIAL_PAD_ROW_COUNT - MIN_ROW_SPACING).coerceIn(MIN_KEY_HEIGHT, MAX_KEY_HEIGHT)
+                val rowSpacing =
+                    ((padSpace - keyHeight * DIAL_PAD_ROW_COUNT) / DIAL_PAD_ROW_COUNT)
+                        .coerceIn(MIN_ROW_SPACING, MAX_ROW_SPACING)
 
-                // The field travels with the pad rather than staying under the title, because a
-                // dialer shows the number it is dialling next to the keys that type it. It also
-                // decides where the empty space goes: a gap *under* the search box, between it and
-                // the pad, is what was reported as looking like a rendering fault, while the same
-                // space above a field that sits on top of the pad is the ordinary shape of every
-                // phone dialer -- and it is where the results open.
-                Column(
-                    modifier =
-                        Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-                            padTopPx = coordinates.boundsInWindow().top
-                        },
+                ScrollableScreenColumn(
+                    contentPadding = PaddingValues(24.dp),
+                    // The pad is pinned to the bottom of the window and the field to the top, which is
+                    // what keeps the keys still now that nothing reserves a fixed gap between them:
+                    // whatever space is left over lands in the middle, where the results float, and no
+                    // amount of it moves a key. On a window too short for the content the column
+                    // scrolls instead and the arrangement stops applying, which is the correct
+                    // fallback -- at a large font scale, reaching the pad matters more than where it
+                    // sits.
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    // The field is the popup's anchor, so it gets a Box of its own: [Popup]
-                    // positions itself against the bounds of the layout node it is declared in,
-                    // and declaring it straight into the screen's column would anchor it to the
-                    // whole column.
-                    Box(
+                    Text(
+                        text = stringResource(Res.string.keypad_title),
+                        style = MaterialTheme.typography.titleLarge,
                         modifier =
                             Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-                                fieldWidthPx = coordinates.size.width
-                                fieldTopPx = coordinates.boundsInWindow().top
-                                fieldBottomPx = coordinates.boundsInWindow().bottom
+                                titleBottomPx = coordinates.boundsInWindow().bottom
+                            },
+                    )
+
+                    // The field travels with the pad rather than staying under the title, because a
+                    // dialer shows the number it is dialling next to the keys that type it. It also
+                    // decides where the empty space goes: a gap *under* the search box, between it and
+                    // the pad, is what was reported as looking like a rendering fault, while the same
+                    // space above a field that sits on top of the pad is the ordinary shape of every
+                    // phone dialer -- and it is where the results open.
+                    Column(
+                        modifier =
+                            Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+                                padTopPx = coordinates.boundsInWindow().top
                             },
                     ) {
-                        OutlinedTextField(
-                            value = typed,
-                            onValueChange = { typed = it },
-                            label = { Text(stringResource(Res.string.keypad_hint)) },
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-
-                        if (typed.isNotBlank() && typed != dismissedFor) {
-                            ContactMatchesPopup(
-                                width = with(density) { fieldWidthPx.toDp() },
-                                maxHeight = matchesMaxHeight,
-                                openUpwards = matchesOpenUpwards,
-                                gapPx = matchesGapPx.toInt(),
-                                matches = matches,
-                                contactsPermissionGranted = contactsPermissionGranted,
-                                onRequestContactsPermission = onRequestContactsPermission,
-                                onPick = { contact ->
-                                    typed = contact.number
-                                    dismissedFor = contact.number
-                                    // Dismisses the soft keyboard with the focus. Measured on a
-                                    // razr 50 ultra: with the keyboard up, the results list pushes
-                                    // the Call button off the bottom of the screen, so picking a
-                                    // contact left the user searching for the button that places
-                                    // the call.
-                                    focusManager.clearFocus()
-                                },
-                                onAddContact = {
-                                    dismissedFor = typed
-                                    focusManager.clearFocus()
-                                    onAddContact(typed)
-                                },
-                                onDismiss = { dismissedFor = typed },
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    DialPad(onKey = { key -> typed += key })
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // '+' sits here rather than behind a long-press on 0: a long-press is
-                        // undiscoverable, and without any way to type it no international number
-                        // could be dialled from this screen at all.
-                        OutlinedButton(
-                            onClick = { typed += "+" },
-                            modifier = Modifier.heightIn(min = 56.dp),
-                        ) {
-                            Text(text = "+", style = MaterialTheme.typography.titleLarge)
-                        }
-
-                        // A Box with combinedClickable rather than a TextButton, because a
-                        // TextButton takes no onLongClick and long-press-to-clear is what every
-                        // phone's dialer does. Without it, correcting a mistyped international
-                        // number means tapping this thirteen times -- confirmed on a razr 50
-                        // ultra, where a long press deleted exactly one digit.
-                        val deleteLabel = stringResource(Res.string.keypad_delete)
-                        val deleteAllLabel = stringResource(Res.string.keypad_delete_all)
-                        val canDelete = typed.isNotEmpty()
+                        // The field is the popup's anchor, so it gets a Box of its own: [Popup]
+                        // positions itself against the bounds of the layout node it is declared in,
+                        // and declaring it straight into the screen's column would anchor it to the
+                        // whole column.
                         Box(
                             modifier =
-                                Modifier
-                                    .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
-                                    .clip(MaterialTheme.shapes.small)
-                                    .combinedClickable(
-                                        enabled = canDelete,
-                                        onClick = { typed = typed.dropLast(1) },
-                                        onClickLabel = deleteLabel,
-                                        onLongClick = { typed = "" },
-                                        onLongClickLabel = deleteAllLabel,
-                                    )
-                                    // Merged, so the glyph inside does not become a second node
-                                    // and the whole control answers to the description a test
-                                    // looks up.
-                                    .semantics(mergeDescendants = true) {
-                                        contentDescription = deleteLabel
-                                    },
-                            contentAlignment = Alignment.Center,
+                                Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+                                    fieldWidthPx = coordinates.size.width
+                                    fieldTopPx = coordinates.boundsInWindow().top
+                                    fieldBottomPx = coordinates.boundsInWindow().bottom
+                                },
                         ) {
-                            Text(
-                                text = "⌫",
-                                color =
-                                    if (canDelete) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
-                                    },
+                            OutlinedTextField(
+                                value = typed,
+                                onValueChange = { typed = it },
+                                label = { Text(stringResource(Res.string.keypad_hint)) },
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.fillMaxWidth(),
                             )
+
+                            if (typed.isNotBlank() && typed != dismissedFor) {
+                                ContactMatchesPopup(
+                                    width = with(density) { fieldWidthPx.toDp() },
+                                    maxHeight = matchesMaxHeight,
+                                    openUpwards = matchesOpenUpwards,
+                                    gapPx = matchesGapPx.toInt(),
+                                    matches = matches,
+                                    contactsPermissionGranted = contactsPermissionGranted,
+                                    onRequestContactsPermission = onRequestContactsPermission,
+                                    onPick = { contact ->
+                                        typed = contact.number
+                                        dismissedFor = contact.number
+                                        // Dismisses the soft keyboard with the focus. Measured on a
+                                        // razr 50 ultra: with the keyboard up, the results list pushes
+                                        // the Call button off the bottom of the screen, so picking a
+                                        // contact left the user searching for the button that places
+                                        // the call.
+                                        focusManager.clearFocus()
+                                    },
+                                    onAddContact = {
+                                        dismissedFor = typed
+                                        focusManager.clearFocus()
+                                        onAddContact(typed)
+                                    },
+                                    onDismiss = { dismissedFor = typed },
+                                )
+                            }
                         }
 
-                        Button(
-                            onClick = { onCall(typed) },
-                            enabled = typed.isNotBlank(),
-                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                            colors = ButtonDefaults.buttonColors(),
+                        Spacer(modifier = Modifier.height(16.dp))
+                        DialPad(
+                            onKey = { key -> typed += key },
+                            keyHeight = keyHeight,
+                            rowSpacing = rowSpacing,
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(text = stringResource(Res.string.keypad_call))
+                            // '+' sits here rather than behind a long-press on 0: a long-press is
+                            // undiscoverable, and without any way to type it no international number
+                            // could be dialled from this screen at all.
+                            OutlinedButton(
+                                onClick = { typed += "+" },
+                                modifier = Modifier.heightIn(min = 56.dp),
+                            ) {
+                                Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                            }
+
+                            // A Box with combinedClickable rather than a TextButton, because a
+                            // TextButton takes no onLongClick and long-press-to-clear is what every
+                            // phone's dialer does. Without it, correcting a mistyped international
+                            // number means tapping this thirteen times -- confirmed on a razr 50
+                            // ultra, where a long press deleted exactly one digit.
+                            val deleteLabel = stringResource(Res.string.keypad_delete)
+                            val deleteAllLabel = stringResource(Res.string.keypad_delete_all)
+                            val canDelete = typed.isNotEmpty()
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
+                                        .clip(MaterialTheme.shapes.small)
+                                        .combinedClickable(
+                                            enabled = canDelete,
+                                            onClick = { typed = typed.dropLast(1) },
+                                            onClickLabel = deleteLabel,
+                                            onLongClick = { typed = "" },
+                                            onLongClickLabel = deleteAllLabel,
+                                        )
+                                        // Merged, so the glyph inside does not become a second node
+                                        // and the whole control answers to the description a test
+                                        // looks up.
+                                        .semantics(mergeDescendants = true) {
+                                            contentDescription = deleteLabel
+                                        },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "⌫",
+                                    color =
+                                        if (canDelete) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
+                                        },
+                                )
+                            }
+
+                            Button(
+                                onClick = { onCall(typed) },
+                                enabled = typed.isNotBlank(),
+                                modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                                colors = ButtonDefaults.buttonColors(),
+                            ) {
+                                Text(text = stringResource(Res.string.keypad_call))
+                            }
                         }
                     }
                 }
@@ -524,6 +548,31 @@ private const val NO_REQUEST_APPLIED = -1L
 private const val DISABLED_ALPHA = 0.38f
 
 /**
+ * Everything on this screen that is not the dial pad: the 24 dp content padding top and bottom,
+ * the title, the field, the actions row, and the spacers between them. Subtracting it from the
+ * window leaves what the pad may grow into.
+ *
+ * An estimate, and deliberately a slight over-estimate -- the clamps below are what make it safe,
+ * and a pad one row too tall would be the one thing worse than a blank gap.
+ */
+private val KEYPAD_FIXED_HEIGHT = 280.dp
+
+private const val DIAL_PAD_ROW_COUNT = 4
+
+/** Material's minimum comfortable touch target, and this pad's floor. */
+private val MIN_KEY_HEIGHT = 56.dp
+
+/**
+ * The ceiling. Past this the keys stop reading as a dial pad and start reading as a list of
+ * buttons -- measured against the stock dialers on the two phones this is tested on, whose keys
+ * sit around 72-80 dp.
+ */
+private val MAX_KEY_HEIGHT = 80.dp
+
+private val MIN_ROW_SPACING = 8.dp
+private val MAX_ROW_SPACING = 20.dp
+
+/**
  * How tall the floating results may grow before they scroll. A ceiling rather than a fixed height:
  * the popup is out of the screen's layout, so a shorter list simply draws shorter and covers less
  * of the pad -- see [ContactMatchesPopup].
@@ -531,11 +580,15 @@ private const val DISABLED_ALPHA = 0.38f
 private val MATCHES_MAX_HEIGHT = 340.dp
 
 /**
- * The floor under that cap. A window short enough to leave less room than this between the field
- * and the pad gets results that overlap the pad's first row, on the grounds that a 40 dp sliver
- * showing half a name is not a search result at all.
+ * The floor under that cap, and a low one on purpose.
+ *
+ * It used to be 140 dp, which is more room than the pad leaves above the field on a 1080x2640
+ * phone once the keys are grown to fill the screen -- so the popup was taller than the space it
+ * had, pinned to the top of the window, and clipped a result row through the middle of its text
+ * while covering the screen's title. Seen on a razr 50 ultra. A popup is allowed to be short; it
+ * is not allowed to be cut in half.
  */
-private val MATCHES_MIN_HEIGHT = 140.dp
+private val MATCHES_MIN_HEIGHT = 88.dp
 
 /**
  * How far off the field the results sit. Not decoration: flush against the anchor, the popup
