@@ -70,6 +70,7 @@ import cortaspam.shared.generated.resources.settings_grant_contacts
 import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactSearch
+import org.carlospinan.bloqueador.app.contacts.FavouritesRow
 import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -128,8 +129,8 @@ fun KeypadScreen(
     var dismissedFor by remember { mutableStateOf<String?>(null) }
     var fieldWidthPx by remember { mutableStateOf(0) }
     var fieldTopPx by remember { mutableStateOf(0f) }
+    var topInsetPx by remember { mutableStateOf(0f) }
     var fieldBottomPx by remember { mutableStateOf(0f) }
-    var titleBottomPx by remember { mutableStateOf(0f) }
     var padTopPx by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
 
@@ -142,7 +143,13 @@ fun KeypadScreen(
     //
     // Measured rather than assumed, because the answer changes: the same screen in landscape, or
     // at a font scale that makes the column scroll, has the space somewhere else.
-    val spaceAbovePx = fieldTopPx - titleBottomPx
+    // Measured from the top of the window, not from anything inside the column. An anchor placed
+    // in the column moves with it -- once the content was packed to the bottom, that anchor sat
+    // directly above the field and reported a few dozen pixels of room, so the popup fell back to
+    // its floor, was pinned to the top of the screen and clipped its last row again. What the
+    // results actually have is everything between the status bar and the field, including the
+    // space the favourites vacate the moment anything is typed.
+    val spaceAbovePx = fieldTopPx - topInsetPx
     val spaceBelowPx = padTopPx - fieldBottomPx
     val matchesOpenUpwards = spaceAbovePx > spaceBelowPx
     // Minus the gap the popup is offset by, so the space it is capped at is the space it can
@@ -164,9 +171,14 @@ fun KeypadScreen(
             // dialer does with that space -- and a bigger key is a better key.
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val insets = WindowInsets.safeDrawing.asPaddingValues()
+                topInsetPx = with(density) { insets.calculateTopPadding().toPx() }
                 val usableHeight =
                     maxHeight - insets.calculateTopPadding() - insets.calculateBottomPadding()
-                val padSpace = usableHeight - KEYPAD_FIXED_HEIGHT
+                // The results' room is subtracted before the pad is sized, rather than left as
+                // whatever happens to remain. Leftovers were the bug both ways round: too much
+                // and the screen has a blank third in it, too little and the popup is pinned to
+                // the top of the window with a row sliced through its text.
+                val padSpace = usableHeight - KEYPAD_FIXED_HEIGHT - MATCHES_MIN_HEIGHT
                 val keyHeight = (padSpace / DIAL_PAD_ROW_COUNT - MIN_ROW_SPACING).coerceIn(MIN_KEY_HEIGHT, MAX_KEY_HEIGHT)
                 val rowSpacing =
                     ((padSpace - keyHeight * DIAL_PAD_ROW_COUNT) / DIAL_PAD_ROW_COUNT)
@@ -181,17 +193,36 @@ fun KeypadScreen(
                     // scrolls instead and the arrangement stops applying, which is the correct
                     // fallback -- at a large font scale, reaching the pad matters more than where it
                     // sits.
-                    verticalArrangement = Arrangement.SpaceBetween,
+                    // Bottom, not SpaceBetween. SpaceBetween pushed the favourites to the top of
+                    // the window and left the difference in the middle -- which is the gap that got
+                    // reported twice, first under the title and then under the strip. Packed from
+                    // the bottom, the screen is one block and the leftover space is a margin above
+                    // it, where the results open.
+                    verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(
-                        text = stringResource(Res.string.keypad_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier =
-                            Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-                                titleBottomPx = coordinates.boundsInWindow().bottom
-                            },
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // The band between the top of the screen and the field is where the results
+                        // open, and
+                        // on a phone about 1000 dp tall it is large -- twelve keys cannot fill that
+                        // at any size that still reads as a dial key, so growing the pad only
+                        // shrinks it so far. Rather than leave it blank it holds the people most
+                        // likely to be dialled from this screen. It sits in the *top* group, so
+                        // appearing and disappearing cannot move a key: the leftover space absorbs
+                        // it.
+                        if (typed.isBlank()) {
+                            FavouritesRow(
+                                favourites = remember(contacts) { contacts.filter { it.starred } },
+                                // Fills the number in rather than dialling, exactly like a search
+                                // result: this strip sits under a thumb on its way to the keys.
+                                onPick = { contact ->
+                                    typed = contact.number
+                                    dismissedFor = contact.number
+                                },
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
 
                     // The field travels with the pad rather than staying under the title, because a
                     // dialer shows the number it is dialling next to the keys that type it. It also
@@ -205,6 +236,19 @@ fun KeypadScreen(
                                 padTopPx = coordinates.boundsInWindow().top
                             },
                     ) {
+                        // The title travels with the field rather than heading the screen from the
+                        // top. Left up there it had the whole leftover band under it, and a heading
+                        // with a hand's width of nothing beneath it reads as a layout fault -- the
+                        // second report of exactly that. Beside the field the same space becomes
+                        // ordinary room at the top of the screen, which is where the results open.
+                        Text(
+                            text = stringResource(Res.string.keypad_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         // The field is the popup's anchor, so it gets a Box of its own: [Popup]
                         // positions itself against the bounds of the layout node it is declared in,
                         // and declaring it straight into the screen's column would anchor it to the
@@ -563,11 +607,11 @@ private const val DIAL_PAD_ROW_COUNT = 4
 private val MIN_KEY_HEIGHT = 56.dp
 
 /**
- * The ceiling. Past this the keys stop reading as a dial pad and start reading as a list of
- * buttons -- measured against the stock dialers on the two phones this is tested on, whose keys
- * sit around 72-80 dp.
+ * The ceiling. High enough that a tall phone's pad reaches the results' reserve and stops there,
+ * which is what leaves no blank band beyond the one the results need; the clamp exists so a very
+ * tall or very short window cannot produce a key that reads as something other than a dial key.
  */
-private val MAX_KEY_HEIGHT = 80.dp
+private val MAX_KEY_HEIGHT = 96.dp
 
 private val MIN_ROW_SPACING = 8.dp
 private val MAX_ROW_SPACING = 20.dp

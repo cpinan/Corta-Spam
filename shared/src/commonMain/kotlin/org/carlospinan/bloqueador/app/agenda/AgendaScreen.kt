@@ -1,10 +1,8 @@
 package org.carlospinan.bloqueador.app.agenda
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,12 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -35,18 +31,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_cancel
 import cortaspam.shared.generated.resources.agenda_action_call
 import cortaspam.shared.generated.resources.agenda_contacts_denied
 import cortaspam.shared.generated.resources.agenda_empty
-import cortaspam.shared.generated.resources.agenda_favourites
 import cortaspam.shared.generated.resources.agenda_filter_all
 import cortaspam.shared.generated.resources.agenda_filter_allowed
 import cortaspam.shared.generated.resources.agenda_filter_blocked
@@ -68,6 +60,8 @@ import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.calllog.NumberRuleState
 import org.carlospinan.bloqueador.app.calllog.numberRuleStates
 import org.carlospinan.bloqueador.app.contacts.Contact
+import org.carlospinan.bloqueador.app.contacts.ContactAvatar
+import org.carlospinan.bloqueador.app.contacts.FavouritesRow
 import org.carlospinan.bloqueador.app.rules.AllowlistedNumberEntry
 import org.carlospinan.bloqueador.app.rules.BlockedNumberEntry
 import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
@@ -179,9 +173,10 @@ fun AgendaScreen(
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         if (favourites.isNotEmpty()) {
                             item(key = FAVOURITES_KEY) {
-                                FavouritesStrip(
+                                FavouritesRow(
                                     favourites = favourites,
                                     onPick = { selected = it },
+                                    modifier = Modifier.padding(bottom = 12.dp),
                                 )
                             }
                         }
@@ -234,54 +229,6 @@ fun AgendaScreen(
     }
 }
 
-/**
- * The starred contacts, across the top, the way every phone shows favourites.
- *
- * Tapping one opens the same actions a row does rather than dialling: this strip sits at the top
- * of a list that is scrolled past, and a control that places a call on contact is the wrong thing
- * to put under a thumb that is on its way somewhere else.
- */
-@Composable
-private fun FavouritesStrip(
-    favourites: List<Contact>,
-    onPick: (Contact) -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-        Text(
-            text = stringResource(Res.string.agenda_favourites),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            favourites.forEach { contact ->
-                val label = stringResource(Res.string.keypad_contact_row, contact.name, contact.number)
-                Column(
-                    modifier =
-                        Modifier
-                            .width(72.dp)
-                            .clickable(onClick = { onPick(contact) })
-                            .semantics(mergeDescendants = true) { contentDescription = label },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Avatar(contact.name)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = contact.name,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun ContactListRow(
     contact: Contact,
@@ -298,7 +245,7 @@ private fun ContactListRow(
                 .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Avatar(contact.name)
+        ContactAvatar(contact.name)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = contact.name, style = MaterialTheme.typography.bodyLarge)
@@ -332,29 +279,6 @@ private fun RuleStateLine(ruleState: NumberRuleState) {
                 MaterialTheme.colorScheme.primary
             },
     )
-}
-
-/**
- * The contact's initial in a circle. A placeholder rather than the contact's photo, deliberately:
- * reading photo blobs for every row means a second query per contact against the provider, on a
- * screen the user scrolls, to decorate a list that is already identified by name and number.
- */
-@Composable
-private fun Avatar(name: String) {
-    Box(
-        modifier =
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = name.trim().take(1).uppercase(),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
-    }
 }
 
 @Composable

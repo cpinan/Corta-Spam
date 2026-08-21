@@ -430,4 +430,74 @@ class KeypadScreenUiTest {
             "Call ends at $callBottom, which is not near the bottom of $root",
         )
     }
+
+    /**
+     * The band between the title and the field is where the results open, and on a phone about
+     * 1000 dp tall it is large -- twelve keys cannot fill it at any size that still reads as a
+     * dial key. It holds the people most likely to be dialled from this screen rather than
+     * nothing at all.
+     */
+    @Test
+    fun `starred contacts are offered when nothing is typed`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts =
+                    listOf(
+                        Contact(name = "Ana Torres", number = "+34611998877", starred = true),
+                        Contact(name = "Bea Ruiz", number = "600111222"),
+                    ),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Favourites").assertExists()
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+        composeTestRule.onNodeWithText("Bea Ruiz").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a phone with no starred contacts is offered no favourites`() {
+        composeTestRule.setContent {
+            KeypadScreen(contacts = listOf(Contact(name = "Bea Ruiz", number = "600111222")))
+        }
+
+        composeTestRule.onNodeWithText("Favourites").assertDoesNotExist()
+    }
+
+    /** Filling the field, not dialling: this strip sits under a thumb on its way to the keys. */
+    @Test
+    fun `picking a favourite fills the number instead of calling it`() {
+        var called: String? = null
+        composeTestRule.setContent {
+            KeypadScreen(
+                onCall = { called = it },
+                contacts = listOf(Contact(name = "Ana Torres", number = "+34611998877", starred = true)),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Ana Torres").performClick()
+
+        assertEquals(null, called)
+        composeTestRule.onNodeWithText("Call").performClick()
+        assertEquals("+34611998877", called)
+    }
+
+    /**
+     * And they make way for the results, which occupy the same band. Both on screen at once would
+     * be two lists of contacts stacked on top of each other.
+     */
+    @Test
+    fun `favourites give up the band once something is typed`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts = listOf(Contact(name = "Ana Torres", number = "+34611998877", starred = true)),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Favourites").assertExists()
+
+        composeTestRule.onNodeWithText("6").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Favourites").assertDoesNotExist()
+    }
 }
