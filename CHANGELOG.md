@@ -16,6 +16,21 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [1.6.0] (7) — 2026-08-21, internal testing
+
+Release notes: [`docs/store/RELEASE_NOTES_1.6.0.md`](docs/store/RELEASE_NOTES_1.6.0.md).
+Bundle `corta-spam-1.6.0-7-release.aab` built 2026-08-21, **5,429,088 bytes**,
+`sha256 2df22b7be6fef5a953fb451d0110b963591df2725739792a6901f401caebd3f8`. Not uploaded, so
+version code 7 is still unspent.
+
+**Still code 7, and that is deliberate.** A code is spent on upload; the 1.5.0 (7) bundle of
+2026-08-20 never went anywhere, exactly as code 4 once carried 0.1.0, 1.1.4 and 1.2.0 in turn. The
+name moved because the app gained a screen it did not have, and because nineteen commits landed
+after that bundle was built — so it stopped describing the tree, and it now sits in `superseded/`
+rather than beside its replacement.
+
 The dialer half of the app, rebuilt from user feedback: the keypad looked like it had a rendering
 fault, and there was no screen that simply listed the people in the phone. Verified on a razr 50
 ultra with a real 940-contact address book and on a Pixel 8 Pro API 36 emulator.
@@ -89,12 +104,17 @@ ultra with a real 940-contact address book and on a Pixel 8 Pro API 36 emulator.
 - **`FavouritesRow` moved into the contacts package** and is shared by the Agenda and the keypad, so
   both draw the same strip from the same platform flag. ([`e13a3d3`](../../commit/e13a3d3))
 - 652 → 721 automated tests (`:shared` 629, `:androidApp` 92, plus 369 on the iOS simulator).
+- Version 1.5.0 → 1.6.0 on the same version code 7. ([`HEAD`](../../commits/main))
 
 ## [1.5.0] (7) — 2026-08-19, internal testing
 
 Release notes: [`docs/store/RELEASE_NOTES_1.5.0.md`](docs/store/RELEASE_NOTES_1.5.0.md).
-Version set in [`HEAD`](../../commits/main). Not yet built for upload, so version code 7 is not
-spent.
+
+**Never shipped.** Its bundle was built on 2026-08-20 and never uploaded, so code 7 stayed unspent
+— and by the time anything could be uploaded, nineteen commits had landed and the binary no longer
+described the tree. It moved to `superseded/` and the code carried on to 1.6.0 above. The changes
+listed here are in that release; they are kept under their own heading because this is where they
+were written and reviewed.
 
 **1.4.0 (6) is retired.** Its `.aab` was built on 2026-08-14 and uploaded — Play attaches its
 quality advisories to "Release name: 6 (1.4.0)" — so **version code 6 is spent** and could not be

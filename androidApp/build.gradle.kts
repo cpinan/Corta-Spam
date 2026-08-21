@@ -55,7 +55,17 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 //
 // 1.5.0 also carries the fix that makes the previous artifact unshippable: holding ROLE_DIALER, it
 // could not dial an emergency number. See docs/store/RELEASE_NOTES_1.5.0.md.
-val appVersionName = "1.5.0"
+//
+// 1.6.0, still on code 7, because 7 was never uploaded: a code is spent on upload, and the 1.5.0
+// (7) bundle built on 2026-08-20 went nowhere. The same thing happened around code 4, which
+// carried 0.1.0, 1.1.4 and 1.2.0 in turn while it stayed unspent. What did change is the app: the
+// Agenda tab is a whole screen the app did not have, so this is a minor bump rather than a patch,
+// and the 1.5.0 (7) binary no longer describes the tree -- nineteen commits landed after it. It is
+// moved into superseded/ for the same reason 1.4.0 (6) was: two different binaries answering to
+// one version is what this naming scheme exists to prevent.
+//
+// See docs/store/RELEASE_NOTES_1.6.0.md.
+val appVersionName = "1.6.0"
 val appVersionCode = 7
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
