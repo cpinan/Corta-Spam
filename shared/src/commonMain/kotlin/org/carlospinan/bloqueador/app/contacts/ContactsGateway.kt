@@ -28,6 +28,17 @@ interface ContactsGateway {
      */
     suspend fun contacts(): List<Contact>
 
+    /**
+     * Drop whatever this gateway has cached, so the next read reaches the address book itself.
+     *
+     * Has a body rather than being abstract because a gateway with no cache has nothing to do
+     * here, and every fake in the test suite is one of those. The Android implementation caches
+     * for five minutes -- it is asked for the allowlist while the phone is ringing -- and that is
+     * invisible everywhere except a screen with a refresh gesture on it, where it would answer a
+     * deliberate "look again" with a list it decided was recent enough.
+     */
+    suspend fun refresh() {}
+
     /** Whether the platform has the required permission granted. */
     fun hasPermission(): Boolean
 }

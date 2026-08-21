@@ -3,6 +3,7 @@ package org.carlospinan.bloqueador.app.adaptive
 object AdaptiveRoutes {
     const val HOME = "home"
     const val KEYPAD = "keypad"
+    const val AGENDA = "agenda"
     const val CALL_LOG = "call_log/{filter}"
     const val STATS = "stats"
     const val BLOCK_LIST = "block_list"
@@ -26,6 +27,8 @@ val homeSectionRoutes =
     setOf(AdaptiveRoutes.HOME, AdaptiveRoutes.STATS)
 val keypadSectionRoutes =
     setOf(AdaptiveRoutes.KEYPAD)
+val agendaSectionRoutes =
+    setOf(AdaptiveRoutes.AGENDA)
 val callLogSectionRoutes =
     setOf(AdaptiveRoutes.CALL_LOG)
 val blockListSectionRoutes =
@@ -47,22 +50,39 @@ val settingsSectionRoutes =
         AdaptiveRoutes.TERMS_CONDITIONS,
         AdaptiveRoutes.CREDITS,
     )
+
+/**
+ * The five destinations the navigation bar offers, in order.
+ *
+ * Settings is deliberately not among them. Material's bar tops out at five, the Agenda tab is the
+ * address book of an app that replaced the phone's dialer -- something reached constantly -- and
+ * Settings is reached once, from the card Home already has for it. Five items that are used beats
+ * six that are cramped, and on a 360 dp phone six labels truncate to initials.
+ */
 val sectionRoutes =
     listOf(
         AdaptiveRoutes.HOME,
         AdaptiveRoutes.KEYPAD,
+        AdaptiveRoutes.AGENDA,
         AdaptiveRoutes.callLogRoute(),
         AdaptiveRoutes.BLOCK_LIST,
-        AdaptiveRoutes.SETTINGS,
     )
+
+/**
+ * No tab is highlighted. Settings and its sub-screens are reached from Home rather than from the
+ * bar, and lighting up Home while the user is reading the privacy policy would claim they are
+ * somewhere they are not.
+ */
+const val NO_SECTION = -1
 
 fun routeSection(route: String?): Int =
     when {
         route == null -> 0
         route in homeSectionRoutes -> 0
         route in keypadSectionRoutes -> 1
-        route.startsWith("call_log") -> 2
-        route in blockListSectionRoutes -> 3
-        route in settingsSectionRoutes -> 4
+        route in agendaSectionRoutes -> 2
+        route.startsWith("call_log") -> 3
+        route in blockListSectionRoutes -> 4
+        route in settingsSectionRoutes -> NO_SECTION
         else -> 0
     }

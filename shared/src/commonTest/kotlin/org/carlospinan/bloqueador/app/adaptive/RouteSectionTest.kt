@@ -16,31 +16,42 @@ class RouteSectionTest {
     }
 
     @Test
-    fun `call log route maps to index 2`() {
-        assertEquals(2, routeSection(AdaptiveRoutes.CALL_LOG))
-        assertEquals(2, routeSection("call_log/all"))
-        assertEquals(2, routeSection("call_log/today"))
-        assertEquals(2, routeSection("call_log/week"))
+    fun `agenda route maps to index 2`() {
+        assertEquals(2, routeSection(AdaptiveRoutes.AGENDA))
     }
 
     @Test
-    fun `block list hub and detail routes map to index 3`() {
-        assertEquals(3, routeSection(AdaptiveRoutes.BLOCK_LIST))
-        assertEquals(3, routeSection(AdaptiveRoutes.MANUAL_BLOCK_LIST))
-        assertEquals(3, routeSection(AdaptiveRoutes.ALLOWLIST))
-        assertEquals(3, routeSection(AdaptiveRoutes.PATTERNS))
-        assertEquals(3, routeSection(AdaptiveRoutes.COUNTRIES))
-        assertEquals(3, routeSection(AdaptiveRoutes.SCHEDULES))
-        assertEquals(3, routeSection(AdaptiveRoutes.ACTION_RULES))
+    fun `call log route maps to index 3`() {
+        assertEquals(3, routeSection(AdaptiveRoutes.CALL_LOG))
+        assertEquals(3, routeSection("call_log/all"))
+        assertEquals(3, routeSection("call_log/today"))
+        assertEquals(3, routeSection("call_log/week"))
     }
 
     @Test
-    fun `settings and sub-screen routes map to index 4`() {
-        assertEquals(4, routeSection(AdaptiveRoutes.SETTINGS))
-        assertEquals(4, routeSection(AdaptiveRoutes.AUTO_RESPONDER))
-        assertEquals(4, routeSection(AdaptiveRoutes.BACKUP))
-        assertEquals(4, routeSection(AdaptiveRoutes.PRIVACY_POLICY))
-        assertEquals(4, routeSection(AdaptiveRoutes.TERMS_CONDITIONS))
+    fun `block list hub and detail routes map to index 4`() {
+        assertEquals(4, routeSection(AdaptiveRoutes.BLOCK_LIST))
+        assertEquals(4, routeSection(AdaptiveRoutes.MANUAL_BLOCK_LIST))
+        assertEquals(4, routeSection(AdaptiveRoutes.ALLOWLIST))
+        assertEquals(4, routeSection(AdaptiveRoutes.PATTERNS))
+        assertEquals(4, routeSection(AdaptiveRoutes.COUNTRIES))
+        assertEquals(4, routeSection(AdaptiveRoutes.SCHEDULES))
+        assertEquals(4, routeSection(AdaptiveRoutes.ACTION_RULES))
+    }
+
+    /**
+     * Settings left the navigation bar when the Agenda tab took its slot, so no tab may light up
+     * while one of its screens is open. Falling back to 0 would highlight Home instead, which
+     * claims the user is somewhere they are not -- and 4 would now highlight Lists.
+     */
+    @Test
+    fun `settings and sub-screen routes select no tab at all`() {
+        assertEquals(NO_SECTION, routeSection(AdaptiveRoutes.SETTINGS))
+        assertEquals(NO_SECTION, routeSection(AdaptiveRoutes.AUTO_RESPONDER))
+        assertEquals(NO_SECTION, routeSection(AdaptiveRoutes.BACKUP))
+        assertEquals(NO_SECTION, routeSection(AdaptiveRoutes.PRIVACY_POLICY))
+        assertEquals(NO_SECTION, routeSection(AdaptiveRoutes.TERMS_CONDITIONS))
+        assertEquals(NO_SECTION, routeSection(AdaptiveRoutes.CREDITS))
     }
 
     @Test
@@ -59,8 +70,9 @@ class RouteSectionTest {
         assertEquals(5, sectionRoutes.size)
         assertEquals(AdaptiveRoutes.HOME, sectionRoutes[0])
         assertEquals(AdaptiveRoutes.KEYPAD, sectionRoutes[1])
-        assertEquals(AdaptiveRoutes.BLOCK_LIST, sectionRoutes[3])
-        assertEquals(AdaptiveRoutes.SETTINGS, sectionRoutes[4])
+        assertEquals(AdaptiveRoutes.AGENDA, sectionRoutes[2])
+        assertEquals(AdaptiveRoutes.callLogRoute(), sectionRoutes[3])
+        assertEquals(AdaptiveRoutes.BLOCK_LIST, sectionRoutes[4])
     }
 
     /**

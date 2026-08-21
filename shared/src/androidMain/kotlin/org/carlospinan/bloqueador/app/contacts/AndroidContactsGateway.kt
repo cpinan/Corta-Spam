@@ -23,6 +23,13 @@ class AndroidContactsGateway(
 
     override suspend fun contacts(): List<Contact> = snapshot().contacts
 
+    override suspend fun refresh() {
+        cacheMutex.withLock {
+            cached = null
+            cachedAtMillis = 0L
+        }
+    }
+
     /**
      * Cached for [CACHE_TTL_MILLIS], because this runs on the ringing-call path.
      *
@@ -54,6 +61,7 @@ class AndroidContactsGateway(
                 arrayOf(
                     ContactsContract.CommonDataKinds.Phone.NUMBER,
                     ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.STARRED,
                 )
 
             var cursor: Cursor? = null
@@ -76,12 +84,17 @@ class AndroidContactsGateway(
     private fun readRows(cursor: Cursor): List<ContactRow> {
         val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
         val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+        val starredIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.STARRED)
         val rows = mutableListOf<ContactRow>()
         while (cursor.moveToNext()) {
             rows.add(
                 ContactRow(
                     number = cursor.getString(numberIndex),
                     displayName = cursor.getString(nameIndex),
+                    // A missing column reads as -1 rather than throwing, and the provider has
+                    // never been asked for this one before -- treat "not there" as not starred
+                    // rather than crashing the address-book scan on the ringing-call path.
+                    starred = starredIndex >= 0 && cursor.getInt(starredIndex) != 0,
                 ),
             )
         }

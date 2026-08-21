@@ -348,4 +348,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         <item quantity="one">Called once — allowed</item>
         <item quantity="other">Called %1$d times — allowed</item>
     </plurals>
+
+    <!-- Agenda tab -->
+    <string name="nav_agenda">Contacts</string>
+    <string name="agenda_title">Contacts</string>
+    <string name="agenda_favourites">Favourites</string>
+    <string name="agenda_filter_all">All</string>
+    <string name="agenda_filter_starred">Starred</string>
+    <string name="agenda_filter_blocked">Blocked</string>
+    <string name="agenda_filter_allowed">Allowed</string>
+    <string name="agenda_empty">There are no contacts on this phone yet.</string>
+    <string name="agenda_no_matches">No contact matches this filter.</string>
+    <string name="agenda_contacts_denied">Allow access to your contacts to list them here.</string>
+    <string name="agenda_action_call">Call</string>
 </resources>

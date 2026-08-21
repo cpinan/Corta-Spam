@@ -16,6 +16,8 @@ class ContactsSnapshotTest {
             rows.asSequence().map { (number, name) -> ContactRow(number, name) },
         )
 
+    private fun snapshotOfRows(vararg rows: ContactRow) = buildContactsSnapshot(rows.asSequence())
+
     /**
      * The regression. A contact saved internationally, called from a domestic line that delivers
      * the national form — the caller the resolver has to recognise as allowlisted before it ever
@@ -105,5 +107,38 @@ class ContactsSnapshotTest {
         val snapshot = snapshotOf("+34611998877" to "Ana Torres", "611998877" to "Somebody else")
 
         assertEquals("Ana Torres", contactDisplayName("+34611998877", snapshot.names))
+    }
+
+    /**
+     * The favourites strip on the Agenda tab is the platform's own starred set, so the flag has to
+     * survive the scan. Nothing read it before this, and a `Contact` that always reported false
+     * would leave the strip permanently empty with no error anywhere.
+     */
+    @Test
+    fun starredContactsKeepTheirFlag() {
+        val snapshot =
+            snapshotOfRows(
+                ContactRow("+34611998877", "Ana Torres", starred = true),
+                ContactRow("+34600111222", "Bea Ruiz", starred = false),
+            )
+
+        assertEquals(listOf(true, false), snapshot.contacts.map { it.starred })
+    }
+
+    /**
+     * One card synced from two accounts arrives as two rows and only one of them may carry the
+     * star. Keeping whichever row the provider returned first would drop the favourite on the
+     * accounts whose copy is unstarred.
+     */
+    @Test
+    fun aStarOnAnyDuplicateRowStarsTheContact() {
+        val snapshot =
+            snapshotOfRows(
+                ContactRow("+34611998877", "Ana Torres", starred = false),
+                ContactRow("+34611998877", "Ana Torres", starred = true),
+            )
+
+        assertEquals(1, snapshot.contacts.size)
+        assertTrue(snapshot.contacts.single().starred, "the starred duplicate should win")
     }
 }

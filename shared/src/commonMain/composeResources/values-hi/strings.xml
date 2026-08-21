@@ -351,4 +351,17 @@
     </plurals>
     <string name="privacy_policy_body">Corta Spam कोई भी व्यक्तिगत डेटा एकत्र, प्रेषित या साझा नहीं करता। न कोई एनालिटिक्स, न टेलीमेट्री, न विज्ञापन, और न ही कोई नेटवर्क एक्सेस।\n\nसभी नियम, सेटिंग्स और कॉल लॉग आपके डिवाइस पर एक स्थानीय SQLite डेटाबेस में संग्रहीत होते हैं। आप ऐप डेटा साफ़ करके या ऐप अनइंस्टॉल करके उन्हें कभी भी हटा सकते हैं।\n\nवैकल्पिक स्पैम प्रदाता ऐप के भीतर ही शामिल ज्ञात धोखाधड़ी डायलिंग कोड की एक सूची है। इसे चालू करने पर किसी सर्वर से संपर्क नहीं होता: जाँच पूरी तरह आपके डिवाइस पर होती है, और कोई नंबर, संपर्क, डिवाइस पहचानकर्ता या कॉल ऑडियो कभी प्रेषित नहीं किया जाता।\n\nऐप पूरी तरह ओपन सोर्स है। कोड की हर पंक्ति इसके सार्वजनिक रिपॉज़िटरी में स्वतंत्र रूप से जाँची जा सकती है।</string>
     <string name="terms_conditions_body">Corta Spam, MIT लाइसेंस के अंतर्गत वितरित ओपन सोर्स सॉफ़्टवेयर है। लाइसेंस का कानूनी पाठ नीचे अंग्रेज़ी में दिया गया है — यही उसका मूल और कानूनी रूप से मान्य एकमात्र संस्करण है।\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
+
+    <!-- संपर्क टैब -->
+    <string name="nav_agenda">संपर्क</string>
+    <string name="agenda_title">संपर्क</string>
+    <string name="agenda_favourites">पसंदीदा</string>
+    <string name="agenda_filter_all">सभी</string>
+    <string name="agenda_filter_starred">पसंदीदा</string>
+    <string name="agenda_filter_blocked">अवरुद्ध</string>
+    <string name="agenda_filter_allowed">अनुमत</string>
+    <string name="agenda_empty">इस फ़ोन में अभी कोई संपर्क नहीं है।</string>
+    <string name="agenda_no_matches">इस फ़िल्टर से कोई संपर्क मेल नहीं खाता।</string>
+    <string name="agenda_contacts_denied">यहाँ संपर्क देखने के लिए उन तक पहुँच की अनुमति दें।</string>
+    <string name="agenda_action_call">कॉल करें</string>
 </resources>

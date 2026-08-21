@@ -1,5 +1,6 @@
 package org.carlospinan.bloqueador.app.di
 
+import org.carlospinan.bloqueador.app.agenda.AgendaViewModel
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
 import org.carlospinan.bloqueador.app.autoresponder.SqlAutoResponderRepository
@@ -51,5 +52,6 @@ val sharedModule =
         factory { AutoResponderViewModel(get()) }
         factory { StatsViewModel(get()) }
         factory { KeypadViewModel(get()) }
+        factory { AgendaViewModel(get(), get()) }
         factory { BackupViewModel(get()) }
     }

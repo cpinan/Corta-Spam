@@ -7,6 +7,7 @@ import java.text.Collator
 internal data class ContactRow(
     val number: String?,
     val displayName: String?,
+    val starred: Boolean = false,
 )
 
 /**
@@ -37,6 +38,9 @@ internal fun buildContactsSnapshot(rows: Sequence<ContactRow>): ContactsSnapshot
     val numbers = mutableSetOf<String>()
     val names = mutableMapOf<String, String>()
     val contacts = mutableListOf<Contact>()
+    // Where each deduplicated contact ended up, so a later row for the same person can still
+    // raise its star -- see below.
+    val positions = mutableMapOf<Pair<String, String>, Int>()
     // One row per phone entry, and the same number arrives twice whenever a card is synced from
     // two accounts. Deduplicated on (name, digits) rather than on the number alone: a household
     // landline saved under two people is two search results, and dropping one of them hides a
@@ -56,8 +60,17 @@ internal fun buildContactsSnapshot(rows: Sequence<ContactRow>): ContactsSnapshot
             // putIfAbsent semantics: the first contact to claim a key keeps it, so a later card
             // sharing a national number cannot rename an exact match.
             keys.forEach { key -> names.getOrPut(key) { name } }
-            if (seen.add(name to PhoneNumberParser.normalizeForComparison(raw))) {
-                contacts.add(Contact(name = name, number = raw.trim()))
+            val key = name to PhoneNumberParser.normalizeForComparison(raw)
+            if (seen.add(key)) {
+                positions[key] = contacts.size
+                contacts.add(Contact(name = name, number = raw.trim(), starred = row.starred))
+            } else if (row.starred) {
+                // The same card synced from two accounts arrives as two rows, and only one of
+                // them may carry the star -- Google's copy is starred, the SIM's copy is not.
+                // Taking the first row's flag would drop a favourite depending on which account
+                // the provider happened to return first.
+                val index = positions.getValue(key)
+                contacts[index] = contacts[index].copy(starred = true)
             }
         }
     }

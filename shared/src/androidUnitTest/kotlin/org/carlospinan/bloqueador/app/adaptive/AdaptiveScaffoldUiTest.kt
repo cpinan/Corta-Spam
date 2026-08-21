@@ -18,7 +18,7 @@ class AdaptiveScaffoldUiTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `compact shows navigation bar with 4 items`() {
+    fun `compact shows navigation bar with every section`() {
         composeTestRule.setContent {
             AdaptiveScaffold(
                 windowSizeClass = WindowSizeClass.Compact,
@@ -31,12 +31,15 @@ class AdaptiveScaffoldUiTest {
         composeTestRule.onNodeWithText("Home").assertExists()
         composeTestRule.onNodeWithText("Log").assertExists()
         composeTestRule.onNodeWithText("Lists").assertExists()
-        composeTestRule.onNodeWithText("Settings").assertExists()
+        composeTestRule.onNodeWithText("Contacts").assertExists()
+        // Settings is reached from Home's own card, not from the bar: Material's bar tops out at
+        // five items and the address book of a dialer replacement earns the slot.
+        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
         composeTestRule.onNodeWithText("Content").assertExists()
     }
 
     @Test
-    fun `medium shows navigation rail with 4 items`() {
+    fun `medium shows navigation rail with every section`() {
         composeTestRule.setContent {
             AdaptiveScaffold(
                 windowSizeClass = WindowSizeClass.Medium,
@@ -49,7 +52,10 @@ class AdaptiveScaffoldUiTest {
         composeTestRule.onNodeWithText("Home").assertExists()
         composeTestRule.onNodeWithText("Log").assertExists()
         composeTestRule.onNodeWithText("Lists").assertExists()
-        composeTestRule.onNodeWithText("Settings").assertExists()
+        composeTestRule.onNodeWithText("Contacts").assertExists()
+        // Settings is reached from Home's own card, not from the bar: Material's bar tops out at
+        // five items and the address book of a dialer replacement earns the slot.
+        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
     }
 
     @Test

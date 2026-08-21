@@ -23,6 +23,9 @@ import org.carlospinan.bloqueador.app.adaptive.AdaptiveScaffold
 import org.carlospinan.bloqueador.app.adaptive.rememberWindowSizeClass
 import org.carlospinan.bloqueador.app.adaptive.routeSection
 import org.carlospinan.bloqueador.app.adaptive.sectionRoutes
+import org.carlospinan.bloqueador.app.agenda.AgendaIntent
+import org.carlospinan.bloqueador.app.agenda.AgendaScreen
+import org.carlospinan.bloqueador.app.agenda.AgendaViewModel
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderIntent
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderScreen
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderViewModel
@@ -71,6 +74,7 @@ import org.koin.compose.viewmodel.koinViewModel
 object Routes {
     const val HOME = AdaptiveRoutes.HOME
     const val KEYPAD = AdaptiveRoutes.KEYPAD
+    const val AGENDA = AdaptiveRoutes.AGENDA
     const val CALL_LOG = AdaptiveRoutes.CALL_LOG
     const val STATS = AdaptiveRoutes.STATS
     const val BLOCK_LIST = AdaptiveRoutes.BLOCK_LIST
@@ -205,6 +209,32 @@ fun AppNavHost(
                     contactsPermissionGranted = keypadState.contactsPermissionGranted,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onAddContact = onAddContact ?: {},
+                )
+            }
+
+            composable(Routes.AGENDA) {
+                val agendaViewModel = koinViewModel<AgendaViewModel>()
+                val agendaState by agendaViewModel.state.collectAsState()
+                // The contacts permission can be granted while this screen is already on top --
+                // from its own button, from Settings, or from the onboarding checklist -- and a
+                // list loaded only in `init` would stay empty until the process was restarted.
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    agendaViewModel.onIntent(AgendaIntent.Refresh)
+                }
+                AgendaScreen(
+                    contacts = agendaState.contacts,
+                    contactsPermissionGranted = agendaState.contactsPermissionGranted,
+                    blockedNumbers = agendaState.blockedNumbers,
+                    allowlistedNumbers = agendaState.allowlistedNumbers,
+                    refreshing = agendaState.refreshing,
+                    onRefresh = { agendaViewModel.onIntent(AgendaIntent.Refresh) },
+                    onRequestContactsPermission = onRequestContactsPermission ?: {},
+                    onCallNumber = onCallBack ?: {},
+                    onCopyNumber = onCopyNumber ?: {},
+                    onBlockNumber = { agendaViewModel.onIntent(AgendaIntent.BlockNumber(it)) },
+                    onAllowlistNumber = { agendaViewModel.onIntent(AgendaIntent.AllowlistNumber(it)) },
+                    onUnblockNumber = { agendaViewModel.onIntent(AgendaIntent.UnblockNumber(it)) },
+                    onRemoveFromAllowlist = { agendaViewModel.onIntent(AgendaIntent.RemoveFromAllowlist(it)) },
                 )
             }
 
