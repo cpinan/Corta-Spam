@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.rules.CallLogRepository
 
 data class KeypadUiState(
@@ -45,6 +46,9 @@ class KeypadViewModel(
     private val _state = MutableStateFlow(KeypadUiState())
     val state: StateFlow<KeypadUiState> = _state.asStateFlow()
 
+    /** The log as it was last seen, so a permission grant can relabel it without a new call. */
+    private var lastEntries: List<CallLogEntryData> = emptyList()
+
     init {
         loadContacts()
         observeRecentCalls()
@@ -57,16 +61,40 @@ class KeypadViewModel(
      */
     private fun observeRecentCalls() {
         viewModelScope.launch {
-            callLogRepository.allEntries().collect { entries ->
-                val names = if (contactsGateway.hasPermission()) contactsGateway.contactNames() else emptyMap()
-                _state.update { it.copy(recent = recentContacts(entries, names)) }
+            // recentEntries, not allEntries: the strip needs four callers and the log is unbounded.
+            // Collecting every row meant sorting the whole call log -- and computing comparison
+            // keys for each of its numbers -- on the main dispatcher every time a call was logged.
+            // The limit is well above four because the same caller occupies several rows and they
+            // collapse into one entry here.
+            callLogRepository.recentEntries(RECENT_SCAN_LIMIT).collect { entries ->
+                lastEntries = entries
+                relabelRecentCalls()
             }
+        }
+    }
+
+    /**
+     * Rebuilds the strip from the log already seen.
+     *
+     * Called on a permission change as well as on a new call, because names are resolved here:
+     * without it, granting contacts from this screen's own button left the strip showing bare
+     * numbers until someone rang. That is the same shape of bug this project has now fixed three
+     * times -- work done once at construction, and a permission that arrives afterwards.
+     */
+    private fun relabelRecentCalls() {
+        viewModelScope.launch {
+            val names = if (contactsGateway.hasPermission()) contactsGateway.contactNames() else emptyMap()
+            val recent = recentContacts(lastEntries, names)
+            _state.update { it.copy(recent = recent) }
         }
     }
 
     fun onIntent(intent: KeypadIntent) {
         when (intent) {
-            is KeypadIntent.RefreshContacts -> loadContacts()
+            is KeypadIntent.RefreshContacts -> {
+                loadContacts()
+                relabelRecentCalls()
+            }
         }
     }
 
@@ -92,3 +120,10 @@ class KeypadViewModel(
         }
     }
 }
+
+/**
+ * How many log rows are scanned for the strip. Four callers are shown; the same caller holds
+ * several rows -- a blocked number that tried five times is five of them -- so the scan has to be
+ * wider than the strip or a persistent caller fills it alone.
+ */
+private const val RECENT_SCAN_LIMIT = 50

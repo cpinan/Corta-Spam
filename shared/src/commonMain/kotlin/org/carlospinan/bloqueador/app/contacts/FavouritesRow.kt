@@ -44,7 +44,7 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun FavouritesRow(
-    favourites: List<Contact>,
+    contacts: List<Contact>,
     onPick: (Contact) -> Unit,
     modifier: Modifier = Modifier,
     // Passed in rather than fixed, because the keypad draws this same strip of recent callers
@@ -52,7 +52,7 @@ fun FavouritesRow(
     // where those people came from.
     title: String = stringResource(Res.string.agenda_favourites),
 ) {
-    if (favourites.isEmpty()) return
+    if (contacts.isEmpty()) return
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = title,
@@ -64,7 +64,7 @@ fun FavouritesRow(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            favourites.forEach { contact ->
+            contacts.forEach { contact ->
                 val label = stringResource(Res.string.keypad_contact_row, contact.name, contact.number)
                 Column(
                     modifier =

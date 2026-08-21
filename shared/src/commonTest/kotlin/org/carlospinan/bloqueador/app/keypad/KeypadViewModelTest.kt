@@ -1,11 +1,18 @@
 package org.carlospinan.bloqueador.app.keypad
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.rules.CallLogEntryData
 import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,14 +23,20 @@ class KeypadViewModelTest {
     private class FakeContactsGateway(
         var granted: Boolean = false,
         var book: List<Contact> = emptyList(),
+        var names: Map<String, String> = emptyMap(),
     ) : ContactsGateway {
         override suspend fun contactNumbers(): Set<String> = emptySet()
 
-        override suspend fun contactNames(): Map<String, String> = emptyMap()
+        override suspend fun contactNames(): Map<String, String> = names
 
         override suspend fun contacts(): List<Contact> = book
 
         override fun hasPermission(): Boolean = granted
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test
@@ -78,5 +91,51 @@ class KeypadViewModelTest {
             val state = viewModel.state.first()
             assertTrue(state.contacts.isEmpty())
             assertFalse(state.contactsPermissionGranted)
+        }
+
+    /**
+     * The strip's labels come from the address book, and the address book needs a permission the
+     * user may grant from this very screen. Resolving them only when the call log emits left the
+     * strip showing bare numbers until somebody rang -- the third time this project has shipped
+     * work done once at construction and a permission that arrives afterwards.
+     */
+    @Test
+    fun `RefreshContacts relabels the recent callers with names`() =
+        runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+            val log = FakeCallLogRepository()
+            log.entriesFlow.value =
+                listOf(
+                    CallLogEntryData(
+                        id = 1,
+                        number = "+34611998877",
+                        timestamp = 1,
+                        action = "ALLOWED",
+                        ruleType = null,
+                        ruleId = null,
+                        ruleDetail = null,
+                    ),
+                )
+            val gateway = FakeContactsGateway(granted = false)
+            val viewModel = KeypadViewModel(gateway, log)
+            advanceUntilIdle()
+            assertEquals(
+                "+34611998877",
+                viewModel.state.value.recent
+                    .single()
+                    .name,
+            )
+
+            gateway.granted = true
+            gateway.names = mapOf("34611998877" to "Ana Torres")
+            viewModel.onIntent(KeypadIntent.RefreshContacts)
+            advanceUntilIdle()
+
+            assertEquals(
+                "Ana Torres",
+                viewModel.state.value.recent
+                    .single()
+                    .name,
+            )
         }
 }

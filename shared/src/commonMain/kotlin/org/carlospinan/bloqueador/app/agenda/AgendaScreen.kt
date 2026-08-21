@@ -174,7 +174,7 @@ fun AgendaScreen(
                         if (favourites.isNotEmpty()) {
                             item(key = FAVOURITES_KEY) {
                                 FavouritesRow(
-                                    favourites = favourites,
+                                    contacts = favourites,
                                     onPick = { selected = it },
                                     modifier = Modifier.padding(bottom = 12.dp),
                                 )

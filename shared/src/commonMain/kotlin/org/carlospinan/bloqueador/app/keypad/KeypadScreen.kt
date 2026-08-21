@@ -139,34 +139,18 @@ fun KeypadScreen(
     var padTopPx by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
 
-    // Which side of the field the results open on, and how tall they may be.
-    //
-    // A popup is its own window: a touch inside it never reaches what is underneath, so results
-    // drawn across the pad would not merely hide the next key, they would swallow the tap on it.
-    // The field sits directly above the pad -- where a dialer puts the number it is dialling --
-    // so the room is above it, and that is where they open.
-    //
-    // Measured rather than assumed, because the answer changes: the same screen in landscape, or
-    // at a font scale that makes the column scroll, has the space somewhere else.
-    // Measured from the top of the window, not from anything inside the column. An anchor placed
-    // in the column moves with it -- once the content was packed to the bottom, that anchor sat
-    // directly above the field and reported a few dozen pixels of room, so the popup fell back to
-    // its floor, was pinned to the top of the screen and clipped its last row again. What the
-    // results actually have is everything between the status bar and the field, including the
-    // space the favourites vacate the moment anything is typed.
-    val spaceAbovePx = fieldTopPx - topInsetPx
-    val spaceBelowPx = padTopPx - fieldBottomPx
-    val matchesOpenUpwards = spaceAbovePx > spaceBelowPx
-    // Minus the gap the popup is offset by, so the space it is capped at is the space it can
-    // actually occupy.
+    // Which side of the field the results open on, and how tall they may be -- see
+    // [matchesPlacement], which is where the arithmetic lives and where it is tested.
     val matchesGapPx = with(density) { MATCHES_ANCHOR_GAP.toPx() }
-    val matchesSpacePx = (if (matchesOpenUpwards) spaceAbovePx else spaceBelowPx) - matchesGapPx
-    val matchesMaxHeight =
-        if (matchesSpacePx > 0f) {
-            with(density) { matchesSpacePx.toDp() }.coerceIn(MATCHES_MIN_HEIGHT, MATCHES_MAX_HEIGHT)
-        } else {
-            MATCHES_MAX_HEIGHT
-        }
+    val placement =
+        matchesPlacement(
+            spaceAbovePx = fieldTopPx - topInsetPx,
+            spaceBelowPx = padTopPx - fieldBottomPx,
+            gapPx = matchesGapPx,
+            minPx = with(density) { MATCHES_MIN_HEIGHT.toPx() },
+            maxPx = with(density) { MATCHES_MAX_HEIGHT.toPx() },
+        )
+    val matchesMaxHeight = with(density) { placement.maxHeightPx.toDp() }
 
     CortaSpamTheme {
         Surface(modifier = modifier.fillMaxWidth()) {
@@ -231,7 +215,7 @@ fun KeypadScreen(
                                 )
                             } else {
                                 FavouritesRow(
-                                    favourites = strip,
+                                    contacts = strip,
                                     // Fills the number in rather than dialling, exactly like a
                                     // search result: this strip sits under a thumb on its way to
                                     // the keys.
@@ -303,7 +287,7 @@ fun KeypadScreen(
                                 ContactMatchesPopup(
                                     width = with(density) { fieldWidthPx.toDp() },
                                     maxHeight = matchesMaxHeight,
-                                    openUpwards = matchesOpenUpwards,
+                                    openUpwards = placement.openUpwards,
                                     gapPx = matchesGapPx.toInt(),
                                     matches = matches,
                                     contactsPermissionGranted = contactsPermissionGranted,
