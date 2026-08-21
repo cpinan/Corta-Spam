@@ -97,7 +97,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 600 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 602 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 92 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
@@ -155,6 +155,14 @@ A complete 30-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 147 quiz questions included.
 
 ## Recent Fixes
+
+**2026-08-20 (later):** driven on an emulator, which found that the first fix had moved the blank space rather than removed it.
+
+- **Pinning the pad to the bottom left a third of the screen empty between the field and the pad** — bigger than the 132 dp band it replaced, and in the same place: under the search box. The field now travels with the pad, where a dialer shows the number it is dialling, and the empty space ends up above it under the title, which is the ordinary shape of a phone dialer and is where the results open. That flipped the popup's side, so the screen decides it rather than the position provider: it measures both gaps — title to field, field to pad — opens on the larger, and caps the popup at it. A provider cannot make that call, because below the field is the dial pad and a popup only knows that it fits.
+- **Two defects only the device showed.** Flush against the anchor, the popup covered the `OutlinedTextField`'s floating label, which is drawn on the field's own top border — the results hid what the field was for; there is now an 8 dp gap, subtracted from the height cap. And at 280 dp the popup clipped its last row and pushed "Create new contact" below a scroll in exactly the state that needs it; 340 dp shows five matches and the footer.
+- **Settings needed a way in.** It left the navigation bar when Agenda took the fifth slot, and Home's link to it is the last of four text buttons at the bottom of a scrolling screen — the suite says as much: "last quick link is off screen but reachable by scrolling". Home's header now carries a gear beside the blocking switch; the text link stays, because the other three quick links live in that group.
+- **Verified on a Pixel 8 Pro API 36 emulator, debug build.** The `1` key reads `[246,1618][283,1702]` before and after a digit is typed, so the pad does not move. Picking a row fills the field and closes the results. With the field focused the soft keyboard stays up while typing (`mInputShown=true` before and after) — the point of the non-focusable popup. On the Agenda: the favourites strip picked up a contact starred through `ContactsContract`; blocking from a row wrote the rule and the Blocked chip then listed that contact with its badge; unblocking from the same row offered *Unblock* rather than Block and left `BlockedNumber` empty. Pull-to-refresh: a contact inserted into the provider **while the app was open** was absent before the pull and present after it, which is the five-minute cache being dropped rather than waited out. The call log's indicator appears on the same gesture. 704 tests, `./scripts/verify.sh` green.
+- **Still unverified on hardware.** The razr has not seen any of this.
 
 **2026-08-20:** the blank band under the keypad's search box, and the address book the app never had. Both from a user reading the dialer next to the phone app it replaced.
 

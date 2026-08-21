@@ -97,7 +97,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 600 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 602 pruebas, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 92 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
@@ -157,6 +157,14 @@ Un curso completo de 30 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 147 preguntas de evaluación.
 
 ## Cambios recientes
+
+**2026-08-20 (después):** probado en un emulador, que reveló que el primer arreglo había movido el espacio en blanco en vez de quitarlo.
+
+- **Anclar el teclado abajo dejaba un tercio de la pantalla vacío entre el campo y las teclas** — más que la franja de 132 dp a la que sustituía, y en el mismo sitio: debajo del buscador. El campo viaja ahora con el teclado, que es donde un marcador muestra el número que está marcando, y el espacio vacío queda encima, bajo el título: la forma de siempre de un marcador de teléfono, y donde se abren los resultados. Eso invierte el lado del popup, así que ahora lo decide la pantalla y no el proveedor de posición: mide los dos huecos — título a campo y campo a teclado —, abre por el mayor y limita ahí la altura. Un proveedor no puede decidirlo, porque debajo del campo está el teclado de marcación y un popup solo sabe que cabe.
+- **Dos defectos que solo mostró el dispositivo.** Pegado al ancla, el popup tapaba la etiqueta flotante del `OutlinedTextField`, que se dibuja sobre el borde superior del propio campo — los resultados ocultaban para qué servía el campo; ahora hay una separación de 8 dp, descontada del límite de altura. Y con 280 dp el popup cortaba su última fila y dejaba "Crear contacto nuevo" bajo un scroll justo en el estado que más lo necesita; con 340 dp caben cinco coincidencias y el pie.
+- **Ajustes necesitaba una entrada.** Salió de la barra de navegación cuando Agenda ocupó el quinto hueco, y el enlace de Inicio es el último de cuatro botones de texto al final de una pantalla que se desplaza — lo dice la propia suite: "last quick link is off screen but reachable by scrolling". La cabecera de Inicio lleva ahora un engranaje junto al interruptor de bloqueo; el enlace de texto se queda, porque los otros tres accesos viven en ese grupo.
+- **Verificado en un emulador Pixel 8 Pro API 36, compilación debug.** La tecla `1` mide `[246,1618][283,1702]` antes y después de escribir un dígito, así que el teclado no se mueve. Elegir una fila rellena el campo y cierra los resultados. Con el campo enfocado, el teclado del sistema sigue abierto mientras se escribe (`mInputShown=true` antes y después) — el motivo de que el popup no tome el foco. En la Agenda: la fila de favoritos recogió un contacto marcado vía `ContactsContract`; bloquear desde una fila escribió la regla y el chip Bloqueados listó ese contacto con su insignia; desbloquear desde esa misma fila ofrecía *Desbloquear* y no Bloquear, y dejó `BlockedNumber` vacío. Recarga tirando hacia abajo: un contacto insertado en el proveedor **con la app abierta** no estaba antes del gesto y sí después, que es la caché de cinco minutos siendo descartada en vez de esperada. El indicador del registro aparece con el mismo gesto. 704 pruebas, `./scripts/verify.sh` en verde.
+- **Sigue sin verificarse en hardware.** El razr no ha visto nada de esto.
 
 **2026-08-20:** la franja en blanco bajo el buscador del teclado, y la agenda que la app nunca tuvo. Ambas cosas salieron de un usuario leyendo el marcador junto a la app de teléfono a la que sustituye.
 
