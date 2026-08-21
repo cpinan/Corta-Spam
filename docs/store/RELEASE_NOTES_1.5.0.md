@@ -1,5 +1,9 @@
 # Release notes — 1.5.0 (versionCode 7), internal testing
 
+> **Superseded, and its code is gone.** Play refused an upload on version code 7 on 2026-08-21
+> (`Version code 7 has already been used`), so this artifact can never be uploaded whatever this
+> file says below. The same changes ship as 1.6.0 (8) — see `RELEASE_NOTES_1.6.0.md`.
+
 Release name (Console, internal only, 50-char cap — this one is 44):
 
 ```

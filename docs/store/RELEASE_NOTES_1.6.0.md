@@ -1,9 +1,9 @@
-# Release notes — 1.6.0 (versionCode 7), internal testing
+# Release notes — 1.6.0 (versionCode 8), internal testing
 
 Release name (Console, internal only, 50-char cap — this one is 45):
 
 ```
-1.6.0 (7) internal — contacts tab, new keypad
+1.6.0 (8) internal — contacts tab, new keypad
 ```
 
 Tester track. **Do not paste these into production** — they ask the reader to try things, which on
@@ -12,11 +12,15 @@ a public listing reads as an admission the build is unverified. Production notes
 Counted, not estimated: **es-419 484, en-US 456, pt-BR 464, hi-IN 388 characters** — all four under Play's
 500 cap. The first draft of all four was over it, which is why they are counted rather than eyed.
 
-**Still on version code 7.** A code is spent on upload, and the 1.5.0 (7) bundle built on
-2026-08-20 was never uploaded — the same happened around code 4, which carried 0.1.0, 1.1.4 and
-1.2.0 in turn. The *name* moved to 1.6.0 because the app gained a screen it did not have, and
-because nineteen commits landed after that bundle was built, so it no longer described the tree. It
-now sits in `superseded/`.
+**Version code 8, after 7 was refused.** This release was first built on code 7, on the repo's own
+claim that 7 had never been uploaded. Play answered `Version code 7 has already been used` — so it
+had been, and no local record could have known: a code is spent on upload, and an upload leaves no
+trace on this machine. That is the second time in four days the same belief was wrong, the first
+being code 6.
+
+Both code-7 bundles — 1.5.0 (7) and 1.6.0 (7) — are in `superseded/`. Neither can ever be
+uploaded. The name stayed at 1.6.0 because nothing about the app changed between the two builds,
+only the number it answers to.
 
 **Four languages, because the app ships four.** pt-BR and hi-IN only reach anyone once those
 languages are added to the store listing itself — a Console change, not a file. Until then they
@@ -88,14 +92,16 @@ call-related is emulator-only, including emergency dialling.
 
 ## Before uploading
 
-- [ ] Confirm the filename is `corta-spam-1.6.0-7-release.aab`. Gradle's default name is identical
+- [ ] Confirm the filename is `corta-spam-1.6.0-8-release.aab`. Gradle's default name is identical
       for every build ever made; `archivesName` handles it, but check the artifact.
 - [ ] Check the artifact's mtime and size before trusting any comparison — this project has seen
       `BUILD SUCCESSFUL in 1s` over an unchanged APK more than once.
 - [x] Audit permissions with `aapt2 dump badging` on the **artifact**, not the source manifest: a
       `uses-permission` silently implies its hardware `uses-feature` as required, and that cost six
-      device models once already. Done for this build: `versionCode='7' versionName='1.6.0'`,
+      device models once already. Done for this build: `versionCode='8' versionName='1.6.0'`,
       targetSdk 36, 7 permissions, `uses-feature-not-required: android.hardware.microphone`.
+- [ ] **Check the Console for the next free code before building, not after.** Twice now a build
+      has been made against a code the Console had already taken.
 - [ ] **Do not re-open the full-screen-intent declaration form.** Its *No* to the pre-grant
       question is what cleared the code-3 rejection — see `SUBMISSION_0.1.0.md` §5b.
 - [ ] Screenshots predate the Agenda tab and the new keypad. Retake with

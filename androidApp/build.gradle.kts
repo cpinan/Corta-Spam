@@ -56,17 +56,22 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // 1.5.0 also carries the fix that makes the previous artifact unshippable: holding ROLE_DIALER, it
 // could not dial an emergency number. See docs/store/RELEASE_NOTES_1.5.0.md.
 //
-// 1.6.0, still on code 7, because 7 was never uploaded: a code is spent on upload, and the 1.5.0
-// (7) bundle built on 2026-08-20 went nowhere. The same thing happened around code 4, which
-// carried 0.1.0, 1.1.4 and 1.2.0 in turn while it stayed unspent. What did change is the app: the
-// Agenda tab is a whole screen the app did not have, so this is a minor bump rather than a patch,
-// and the 1.5.0 (7) binary no longer describes the tree -- nineteen commits landed after it. It is
-// moved into superseded/ for the same reason 1.4.0 (6) was: two different binaries answering to
-// one version is what this naming scheme exists to prevent.
+// 1.6.0 was first built on code 7, on this file's own claim that 7 had never been uploaded. Play
+// rejected it: "Version code 7 has already been used." So 7 is spent, and the record here was
+// wrong in exactly the way it was wrong about 6 four days earlier -- a code is spent on UPLOAD,
+// and nothing local can see an upload. The only reliable evidence is the Console.
+//
+// 8, therefore, with the name left at 1.6.0: the app did not change between the two builds, only
+// the number it answers to. The 1.6.0 (7) bundle is in superseded/ beside 1.5.0 (7), because it
+// can never be uploaded and two binaries answering to one version string is what this naming
+// scheme exists to prevent.
+//
+// The lesson this file keeps re-learning, now written where the number lives: do not record a
+// code as unspent. Record it as unknown until the Console says otherwise.
 //
 // See docs/store/RELEASE_NOTES_1.6.0.md.
 val appVersionName = "1.6.0"
-val appVersionCode = 7
+val appVersionCode = 8
 
 // Names the outputs corta-spam-<versionName>-<versionCode>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
