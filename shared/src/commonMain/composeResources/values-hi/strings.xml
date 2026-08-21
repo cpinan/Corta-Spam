@@ -364,4 +364,6 @@
     <string name="agenda_no_matches">इस फ़िल्टर से कोई संपर्क मेल नहीं खाता।</string>
     <string name="agenda_contacts_denied">यहाँ संपर्क देखने के लिए उन तक पहुँच की अनुमति दें।</string>
     <string name="agenda_action_call">कॉल करें</string>
+    <string name="keypad_recent">हाल के</string>
+    <string name="keypad_strip_empty">आपके पसंदीदा संपर्क और हाल की कॉल यहाँ दिखेंगी।</string>
 </resources>

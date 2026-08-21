@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.carlospinan.bloqueador.app.contacts.Contact
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
+import org.carlospinan.bloqueador.app.testing.FakeCallLogRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,7 +31,7 @@ class KeypadViewModelTest {
         runTest {
             val gateway = FakeContactsGateway(granted = false, book = listOf(Contact("Ana", "600111222")))
 
-            val state = KeypadViewModel(gateway).state.first()
+            val state = KeypadViewModel(gateway, FakeCallLogRepository()).state.first()
 
             assertTrue(state.contacts.isEmpty())
             assertFalse(state.contactsPermissionGranted)
@@ -45,7 +46,7 @@ class KeypadViewModelTest {
     fun `RefreshContacts picks up a grant that landed after construction`() =
         runTest {
             val gateway = FakeContactsGateway(granted = false)
-            val viewModel = KeypadViewModel(gateway)
+            val viewModel = KeypadViewModel(gateway, FakeCallLogRepository())
             assertTrue(
                 viewModel.state
                     .first()
@@ -67,7 +68,7 @@ class KeypadViewModelTest {
     fun `a revoked permission clears the contacts already loaded`() =
         runTest {
             val gateway = FakeContactsGateway(granted = true, book = listOf(Contact("Ana", "600111222")))
-            val viewModel = KeypadViewModel(gateway)
+            val viewModel = KeypadViewModel(gateway, FakeCallLogRepository())
             val loaded = viewModel.state.first { it.contacts.isNotEmpty() }
             assertEquals("Ana", loaded.contacts.single().name)
 

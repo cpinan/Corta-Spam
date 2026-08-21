@@ -206,6 +206,7 @@ fun AppNavHost(
                     dialRequest = dialRequest,
                     onCall = onCallBack ?: {},
                     contacts = keypadState.contacts,
+                    recent = keypadState.recent,
                     contactsPermissionGranted = keypadState.contactsPermissionGranted,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onAddContact = onAddContact ?: {},

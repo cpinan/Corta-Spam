@@ -364,4 +364,6 @@
     <string name="agenda_no_matches">Nenhum contato corresponde a este filtro.</string>
     <string name="agenda_contacts_denied">Permita o acesso aos seus contatos para vê-los aqui.</string>
     <string name="agenda_action_call">Ligar</string>
+    <string name="keypad_recent">Recentes</string>
+    <string name="keypad_strip_empty">Aqui aparecerão seus contatos favoritos e as chamadas recentes.</string>
 </resources>

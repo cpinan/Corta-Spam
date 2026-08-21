@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -499,5 +500,95 @@ class KeypadScreenUiTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Favourites").assertDoesNotExist()
+    }
+
+    /**
+     * Starring is a thing few people ever do, so the strip falls back to who rang recently rather
+     * than leaving the band blank for them.
+     */
+    @Test
+    fun `recent callers fill the strip when nothing is starred`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts = listOf(Contact(name = "Bea Ruiz", number = "600111222")),
+                recent = listOf(Contact(name = "Ana Torres", number = "+34611998877")),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Recent").assertExists()
+        composeTestRule.onNodeWithText("Ana Torres").assertExists()
+    }
+
+    /** Favourites outrank recents: they are a choice the user made, not one the phone made. */
+    @Test
+    fun `starred contacts win the strip over recent callers`() {
+        composeTestRule.setContent {
+            KeypadScreen(
+                contacts = listOf(Contact(name = "Ana Torres", number = "+34611998877", starred = true)),
+                recent = listOf(Contact(name = "Bea Ruiz", number = "600111222")),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Favourites").assertExists()
+        composeTestRule.onNodeWithText("Recent").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Bea Ruiz").assertDoesNotExist()
+    }
+
+    @Test
+    fun `picking a recent caller fills the number`() {
+        var called: String? = null
+        composeTestRule.setContent {
+            KeypadScreen(
+                onCall = { called = it },
+                recent = listOf(Contact(name = "Ana Torres", number = "+34611998877")),
+            )
+        }
+
+        composeTestRule.onNodeWithText("Ana Torres").performClick()
+        composeTestRule.onNodeWithText("Call").performClick()
+
+        assertEquals("+34611998877", called)
+    }
+
+    /**
+     * A new install has neither, and a band with nothing in it is the report this whole strip
+     * exists to answer -- so it says what will appear there instead of saying nothing.
+     */
+    @Test
+    fun `an empty strip says what it is for`() {
+        composeTestRule.setContent { KeypadScreen() }
+
+        composeTestRule
+            .onNodeWithText("Your starred contacts and recent calls appear here.")
+            .assertExists()
+    }
+
+    @Test
+    fun `the strip hint gives way to the results once something is typed`() {
+        composeTestRule.setContent { KeypadScreen() }
+
+        composeTestRule.onNodeWithText("6").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("Your starred contacts and recent calls appear here.")
+            .assertDoesNotExist()
+    }
+
+    /**
+     * A recent caller who is not in the address book is labelled with their number, and the first
+     * character of "+34902100200" is a plus sign. Every international number would then wear the
+     * same badge.
+     */
+    @Test
+    fun `a number badge shows its first digit rather than the plus`() {
+        composeTestRule.setContent {
+            KeypadScreen(recent = listOf(Contact(name = "+34902100200", number = "+34902100200")))
+        }
+
+        // Asserted on the badge itself rather than on "a 3 exists": the dial pad has one too.
+        composeTestRule
+            .onNodeWithContentDescription("+34902100200, +34902100200")
+            .assertTextContains("3")
     }
 }

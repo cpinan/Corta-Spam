@@ -56,6 +56,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.agenda_favourites
 import cortaspam.shared.generated.resources.keypad_add_contact
 import cortaspam.shared.generated.resources.keypad_call
 import cortaspam.shared.generated.resources.keypad_contact_row
@@ -65,6 +66,8 @@ import cortaspam.shared.generated.resources.keypad_delete_all
 import cortaspam.shared.generated.resources.keypad_hint
 import cortaspam.shared.generated.resources.keypad_more_matches
 import cortaspam.shared.generated.resources.keypad_no_matches
+import cortaspam.shared.generated.resources.keypad_recent
+import cortaspam.shared.generated.resources.keypad_strip_empty
 import cortaspam.shared.generated.resources.keypad_title
 import cortaspam.shared.generated.resources.settings_grant_contacts
 import org.carlospinan.bloqueador.app.adaptive.ScrollableScreenColumn
@@ -95,6 +98,8 @@ fun KeypadScreen(
     dialRequest: DialRequest? = null,
     onCall: (String) -> Unit = {},
     contacts: List<Contact> = emptyList(),
+    /** Recent callers, shown in place of the favourites when nothing on the phone is starred. */
+    recent: List<Contact> = emptyList(),
     contactsPermissionGranted: Boolean = true,
     onRequestContactsPermission: () -> Unit = {},
     /**
@@ -211,15 +216,39 @@ fun KeypadScreen(
                         // appearing and disappearing cannot move a key: the leftover space absorbs
                         // it.
                         if (typed.isBlank()) {
-                            FavouritesRow(
-                                favourites = remember(contacts) { contacts.filter { it.starred } },
-                                // Fills the number in rather than dialling, exactly like a search
-                                // result: this strip sits under a thumb on its way to the keys.
-                                onPick = { contact ->
-                                    typed = contact.number
-                                    dismissedFor = contact.number
-                                },
-                            )
+                            val starred = remember(contacts) { contacts.filter { it.starred } }
+                            val strip = if (starred.isNotEmpty()) starred else recent
+                            if (strip.isEmpty()) {
+                                // Neither a starred contact nor a call yet -- a new install, or a
+                                // phone whose owner has never starred anyone. Saying what the space
+                                // is for beats leaving it blank, which is the report this whole
+                                // band exists to answer.
+                                Text(
+                                    text = stringResource(Res.string.keypad_strip_empty),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            } else {
+                                FavouritesRow(
+                                    favourites = strip,
+                                    // Fills the number in rather than dialling, exactly like a
+                                    // search result: this strip sits under a thumb on its way to
+                                    // the keys.
+                                    onPick = { contact ->
+                                        typed = contact.number
+                                        dismissedFor = contact.number
+                                    },
+                                    title =
+                                        stringResource(
+                                            if (starred.isNotEmpty()) {
+                                                Res.string.agenda_favourites
+                                            } else {
+                                                Res.string.keypad_recent
+                                            },
+                                        ),
+                                )
+                            }
                             Spacer(modifier = Modifier.height(24.dp))
                         }
                     }

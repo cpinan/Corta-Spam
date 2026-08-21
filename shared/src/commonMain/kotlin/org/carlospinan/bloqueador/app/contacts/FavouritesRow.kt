@@ -47,11 +47,15 @@ fun FavouritesRow(
     favourites: List<Contact>,
     onPick: (Contact) -> Unit,
     modifier: Modifier = Modifier,
+    // Passed in rather than fixed, because the keypad draws this same strip of recent callers
+    // when nothing is starred, and a row of recents headed "Favourites" would be a lie about
+    // where those people came from.
+    title: String = stringResource(Res.string.agenda_favourites),
 ) {
     if (favourites.isEmpty()) return
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(Res.string.agenda_favourites),
+            text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -101,7 +105,11 @@ fun ContactAvatar(name: String) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = name.trim().take(1).uppercase(),
+            // The first letter *or digit*, not the first character: on the keypad this strip also
+            // shows recent callers who are not in the address book, whose "name" is their number
+            // -- and the first character of "+34902100200" is a plus sign, which identifies
+            // nobody. Every international number would wear the same badge.
+            text = name.trim().firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "?",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
         )

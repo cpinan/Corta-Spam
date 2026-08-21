@@ -361,4 +361,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     <string name="agenda_no_matches">No contact matches this filter.</string>
     <string name="agenda_contacts_denied">Allow access to your contacts to list them here.</string>
     <string name="agenda_action_call">Call</string>
+    <string name="keypad_recent">Recent</string>
+    <string name="keypad_strip_empty">Your starred contacts and recent calls appear here.</string>
 </resources>
