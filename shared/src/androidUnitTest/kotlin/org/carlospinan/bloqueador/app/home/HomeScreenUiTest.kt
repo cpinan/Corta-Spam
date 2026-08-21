@@ -6,6 +6,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -195,5 +196,58 @@ class HomeScreenUiTest {
 
         settingsQuickLink.assertIsNotDisplayed()
         settingsQuickLink.performScrollTo().assertIsDisplayed()
+    }
+
+    /**
+     * Settings left the navigation bar when the Agenda tab took the fifth slot, so this icon is
+     * how it is reached. It has to be on screen without scrolling: the test above states that the
+     * text link at the bottom of this screen is *not* displayed until the user scrolls to it, and
+     * a destination whose only route is below the fold is one the user has to already know about.
+     */
+    @Test
+    fun `settings is reachable from the header without scrolling`() {
+        var opened = false
+        composeTestRule.setContent {
+            HomeScreen(
+                state = HomeUiState(blockingEnabled = true),
+                onNavigateToCallLog = {},
+                onNavigateToCallLogToday = {},
+                onNavigateToCallLogThisWeek = {},
+                onNavigateToCallLogThisMonth = {},
+                onNavigateToCallLogReview = {},
+                onNavigateToBlockList = {},
+                onNavigateToSettings = { opened = true },
+                onNavigateToStats = {},
+                onToggleBlocking = {},
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("Settings").assertIsDisplayed().performClick()
+
+        assertTrue(opened, "the header icon should open Settings")
+    }
+
+    /** And it must not be the blocking switch: they sit next to each other in that header. */
+    @Test
+    fun `the settings icon does not toggle blocking`() {
+        var toggled: Boolean? = null
+        composeTestRule.setContent {
+            HomeScreen(
+                state = HomeUiState(blockingEnabled = true),
+                onNavigateToCallLog = {},
+                onNavigateToCallLogToday = {},
+                onNavigateToCallLogThisWeek = {},
+                onNavigateToCallLogThisMonth = {},
+                onNavigateToCallLogReview = {},
+                onNavigateToBlockList = {},
+                onNavigateToSettings = {},
+                onNavigateToStats = {},
+                onToggleBlocking = { toggled = it },
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("Settings").performClick()
+
+        assertTrue(toggled == null, "blocking was toggled to $toggled by the settings icon")
     }
 }

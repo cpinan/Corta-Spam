@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -124,6 +125,7 @@ fun HomeScreen(
                             HomeStatsSection(
                                 state = state,
                                 dialerRoleHeld = dialerRoleHeld,
+                                onNavigateToSettings = onNavigateToSettings,
                                 onToggleBlocking = onToggleBlocking,
                                 onNavigateToCallLogToday = onNavigateToCallLogToday,
                                 onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
@@ -142,6 +144,7 @@ fun HomeScreen(
                     HomeStatsSection(
                         state = state,
                         dialerRoleHeld = dialerRoleHeld,
+                        onNavigateToSettings = onNavigateToSettings,
                         onToggleBlocking = onToggleBlocking,
                         onNavigateToCallLogToday = onNavigateToCallLogToday,
                         onNavigateToCallLogThisWeek = onNavigateToCallLogThisWeek,
@@ -206,6 +209,7 @@ private fun ReturnToCallCard(onClick: () -> Unit) {
 private fun HomeStatsSection(
     state: HomeUiState,
     dialerRoleHeld: Boolean,
+    onNavigateToSettings: () -> Unit,
     onToggleBlocking: (Boolean) -> Unit,
     onNavigateToCallLogToday: () -> Unit,
     onNavigateToCallLogThisWeek: () -> Unit,
@@ -221,10 +225,27 @@ private fun HomeStatsSection(
             text = stringResource(Res.string.home_title),
             style = MaterialTheme.typography.headlineMedium,
         )
-        Switch(
-            checked = state.blockingEnabled,
-            onCheckedChange = onToggleBlocking,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Settings is not on the navigation bar -- Material's five slots went to Home,
+            // Keypad, Agenda, Log and Lists -- so this is its entry point. It has to be *here*
+            // rather than only in the text links at the bottom of this screen: those sit below
+            // the fold on a phone, which the suite states outright ("last quick link is off
+            // screen but reachable by scrolling"). A destination whose only route is off screen
+            // is a destination the user has to already know about.
+            IconButton(onClick = onNavigateToSettings) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_settings),
+                    contentDescription = stringResource(Res.string.home_settings),
+                )
+            }
+            Switch(
+                checked = state.blockingEnabled,
+                onCheckedChange = onToggleBlocking,
+            )
+        }
     }
 
     // The switch reports the *setting*; without the dialer role no call ever reaches the app to
