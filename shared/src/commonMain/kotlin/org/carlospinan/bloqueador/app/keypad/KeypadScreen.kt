@@ -122,18 +122,31 @@ fun KeypadScreen(
     // no reset path to forget.
     var dismissedFor by remember { mutableStateOf<String?>(null) }
     var fieldWidthPx by remember { mutableStateOf(0) }
+    var fieldTopPx by remember { mutableStateOf(0f) }
     var fieldBottomPx by remember { mutableStateOf(0f) }
+    var titleBottomPx by remember { mutableStateOf(0f) }
     var padTopPx by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
 
-    // The floating results are capped at the free space between the field and the pad, so they
-    // land in the gap the bottom-anchored layout leaves rather than over the keys. A popup is its
-    // own window: a touch inside it never reaches what is underneath, so results drawn across the
-    // pad would not merely hide the next key, they would swallow the tap on it.
-    val gapPx = padTopPx - fieldBottomPx
+    // Which side of the field the results open on, and how tall they may be.
+    //
+    // A popup is its own window: a touch inside it never reaches what is underneath, so results
+    // drawn across the pad would not merely hide the next key, they would swallow the tap on it.
+    // The field sits directly above the pad -- where a dialer puts the number it is dialling --
+    // so the room is above it, and that is where they open.
+    //
+    // Measured rather than assumed, because the answer changes: the same screen in landscape, or
+    // at a font scale that makes the column scroll, has the space somewhere else.
+    val spaceAbovePx = fieldTopPx - titleBottomPx
+    val spaceBelowPx = padTopPx - fieldBottomPx
+    val matchesOpenUpwards = spaceAbovePx > spaceBelowPx
+    // Minus the gap the popup is offset by, so the space it is capped at is the space it can
+    // actually occupy.
+    val matchesGapPx = with(density) { MATCHES_ANCHOR_GAP.toPx() }
+    val matchesSpacePx = (if (matchesOpenUpwards) spaceAbovePx else spaceBelowPx) - matchesGapPx
     val matchesMaxHeight =
-        if (gapPx > 0f) {
-            with(density) { gapPx.toDp() }.coerceIn(MATCHES_MIN_HEIGHT, MATCHES_MAX_HEIGHT)
+        if (matchesSpacePx > 0f) {
+            with(density) { matchesSpacePx.toDp() }.coerceIn(MATCHES_MIN_HEIGHT, MATCHES_MAX_HEIGHT)
         } else {
             MATCHES_MAX_HEIGHT
         }
@@ -152,15 +165,27 @@ fun KeypadScreen(
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(Res.string.keypad_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                Text(
+                    text = stringResource(Res.string.keypad_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier =
+                        Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+                            titleBottomPx = coordinates.boundsInWindow().bottom
+                        },
+                )
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
+                // The field travels with the pad rather than staying under the title, because a
+                // dialer shows the number it is dialling next to the keys that type it. It also
+                // decides where the empty space goes: a gap *under* the search box, between it and
+                // the pad, is what was reported as looking like a rendering fault, while the same
+                // space above a field that sits on top of the pad is the ordinary shape of every
+                // phone dialer -- and it is where the results open.
+                Column(
+                    modifier =
+                        Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+                            padTopPx = coordinates.boundsInWindow().top
+                        },
+                ) {
                     // The field is the popup's anchor, so it gets a Box of its own: [Popup]
                     // positions itself against the bounds of the layout node it is declared in,
                     // and declaring it straight into the screen's column would anchor it to the
@@ -169,6 +194,7 @@ fun KeypadScreen(
                         modifier =
                             Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
                                 fieldWidthPx = coordinates.size.width
+                                fieldTopPx = coordinates.boundsInWindow().top
                                 fieldBottomPx = coordinates.boundsInWindow().bottom
                             },
                     ) {
@@ -185,6 +211,8 @@ fun KeypadScreen(
                             ContactMatchesPopup(
                                 width = with(density) { fieldWidthPx.toDp() },
                                 maxHeight = matchesMaxHeight,
+                                openUpwards = matchesOpenUpwards,
+                                gapPx = matchesGapPx.toInt(),
                                 matches = matches,
                                 contactsPermissionGranted = contactsPermissionGranted,
                                 onRequestContactsPermission = onRequestContactsPermission,
@@ -207,14 +235,8 @@ fun KeypadScreen(
                             )
                         }
                     }
-                }
 
-                Column(
-                    modifier =
-                        Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-                            padTopPx = coordinates.boundsInWindow().top
-                        },
-                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
                     DialPad(onKey = { key -> typed += key })
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -319,6 +341,8 @@ fun KeypadScreen(
 private fun ContactMatchesPopup(
     width: Dp,
     maxHeight: Dp,
+    openUpwards: Boolean,
+    gapPx: Int,
     matches: List<Contact>,
     contactsPermissionGranted: Boolean,
     onRequestContactsPermission: () -> Unit,
@@ -327,7 +351,8 @@ private fun ContactMatchesPopup(
     onDismiss: () -> Unit,
 ) {
     Popup(
-        popupPositionProvider = remember { BelowAnchorPositionProvider() },
+        popupPositionProvider =
+            remember(openUpwards, gapPx) { AnchoredPositionProvider(openUpwards, gapPx) },
         properties = PopupProperties(focusable = false),
         onDismissRequest = onDismiss,
     ) {
@@ -350,25 +375,32 @@ private fun ContactMatchesPopup(
 }
 
 /**
- * Directly under the anchor, or above it when the window has no room below — which is the normal
- * case once the soft keyboard is up and the field has been pushed towards the middle of the
- * screen. Without the flip the results would render off-screen behind the keyboard exactly when
- * the user is typing into them.
+ * Immediately above or below the anchor, on the side the caller measured room on.
+ *
+ * The side is decided by the screen rather than here, because the thing to avoid is not the edge
+ * of the window — it is the dial pad, which this provider cannot see. A popup only knows that it
+ * fits; it does not know that what it would be covering is the control being typed on.
+ *
+ * The window edge is still respected as a floor and a ceiling, so a popup taller than the space it
+ * was given cannot end up half off-screen.
  */
-private class BelowAnchorPositionProvider : PopupPositionProvider {
+private class AnchoredPositionProvider(
+    private val openUpwards: Boolean,
+    private val gapPx: Int,
+) : PopupPositionProvider {
     override fun calculatePosition(
         anchorBounds: IntRect,
         windowSize: IntSize,
         layoutDirection: LayoutDirection,
         popupContentSize: IntSize,
     ): IntOffset {
-        val below = anchorBounds.bottom
-        val fitsBelow = below + popupContentSize.height <= windowSize.height
         val y =
-            if (fitsBelow) {
-                below
+            if (openUpwards) {
+                (anchorBounds.top - gapPx - popupContentSize.height).coerceAtLeast(0)
             } else {
-                (anchorBounds.top - popupContentSize.height).coerceAtLeast(0)
+                (anchorBounds.bottom + gapPx).coerceAtMost(
+                    (windowSize.height - popupContentSize.height).coerceAtLeast(0),
+                )
             }
         val x = anchorBounds.left.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
         return IntOffset(x, y)
@@ -496,7 +528,7 @@ private const val DISABLED_ALPHA = 0.38f
  * the popup is out of the screen's layout, so a shorter list simply draws shorter and covers less
  * of the pad -- see [ContactMatchesPopup].
  */
-private val MATCHES_MAX_HEIGHT = 280.dp
+private val MATCHES_MAX_HEIGHT = 340.dp
 
 /**
  * The floor under that cap. A window short enough to leave less room than this between the field
@@ -504,6 +536,13 @@ private val MATCHES_MAX_HEIGHT = 280.dp
  * showing half a name is not a search result at all.
  */
 private val MATCHES_MIN_HEIGHT = 140.dp
+
+/**
+ * How far off the field the results sit. Not decoration: flush against the anchor, the popup
+ * covered an `OutlinedTextField`'s floating label, which is drawn on the field's own top border --
+ * so the results hid what the field was for. Seen on a Pixel 8 Pro API 36 emulator.
+ */
+private val MATCHES_ANCHOR_GAP = 8.dp
 
 /**
  * How many results are built at all. Not about burying the pad, which the popup settles whatever
