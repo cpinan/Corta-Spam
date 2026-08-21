@@ -18,6 +18,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+/**
+ * Every test installs a main dispatcher, including the ones that only read state.
+ *
+ * `viewModelScope` dispatches on `Dispatchers.Main`, and on Kotlin/Native the real one needs the
+ * platform run loop that no unit test spins -- so the coroutine that loads the address book never
+ * runs, the collector below waits forever, and `runTest` fails after a minute with
+ * `UncompletedCoroutinesError`. Two of these tests did exactly that on the iOS simulator while
+ * passing on the JVM, whose fallback happens to run them. `./scripts/verify.sh` compiles this
+ * source set for Native but does not execute it, so only the CI iOS job saw it.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgendaViewModelTest {
     private class FakeContactsGateway(
@@ -47,6 +57,7 @@ class AgendaViewModelTest {
     @Test
     fun `contacts are not read without the permission`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val gateway = FakeContactsGateway(granted = false, book = listOf(Contact("Ana", "600111222")))
 
             val state = AgendaViewModel(gateway, FakeRuleRepository()).state.first()
@@ -58,6 +69,7 @@ class AgendaViewModelTest {
     @Test
     fun `the address book is loaded when the permission is held`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val gateway = FakeContactsGateway(book = listOf(Contact("Ana", "600111222")))
 
             val state = AgendaViewModel(gateway, FakeRuleRepository()).state.first { it.contacts.isNotEmpty() }
@@ -74,12 +86,16 @@ class AgendaViewModelTest {
     @Test
     fun `Refresh drops the gateway cache before reading`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val gateway = FakeContactsGateway()
             val viewModel = AgendaViewModel(gateway, FakeRuleRepository())
-            viewModel.state.first()
+            // Waited on with the scheduler rather than with `state.first { !it.refreshing }`:
+            // that predicate is already true of the flow's *initial* value, so it returns before
+            // the refresh has started and reads a call count of zero.
+            advanceUntilIdle()
 
             viewModel.onIntent(AgendaIntent.Refresh)
-            viewModel.state.first { !it.refreshing }
+            advanceUntilIdle()
 
             assertEquals(1, gateway.refreshCalls)
         }
@@ -88,9 +104,11 @@ class AgendaViewModelTest {
     @Test
     fun `the initial load does not drop the cache`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val gateway = FakeContactsGateway()
 
-            AgendaViewModel(gateway, FakeRuleRepository()).state.first()
+            AgendaViewModel(gateway, FakeRuleRepository())
+            advanceUntilIdle()
 
             assertEquals(0, gateway.refreshCalls)
         }
@@ -98,6 +116,7 @@ class AgendaViewModelTest {
     @Test
     fun `the permission granted after construction is picked up by Refresh`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val gateway = FakeContactsGateway(granted = false)
             val viewModel = AgendaViewModel(gateway, FakeRuleRepository())
             assertTrue(
@@ -126,6 +145,7 @@ class AgendaViewModelTest {
     @Test
     fun `a revoked permission clears the contacts already loaded`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val gateway = FakeContactsGateway(book = listOf(Contact("Ana", "600111222")))
             val viewModel = AgendaViewModel(gateway, FakeRuleRepository())
             viewModel.state.first { it.contacts.isNotEmpty() }
@@ -140,6 +160,7 @@ class AgendaViewModelTest {
     @Test
     fun `the rule lists reach the state so a row can show what applies to it`() =
         runTest {
+            Dispatchers.setMain(StandardTestDispatcher(testScheduler))
             val rules = FakeRuleRepository()
             rules.blockedNumbersFlow.value =
                 listOf(BlockedNumberEntry(id = 7, number = "600111222", label = null, createdAt = 0))
