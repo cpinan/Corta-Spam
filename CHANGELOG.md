@@ -52,7 +52,15 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
   description behind *Read more* and does not hyperlink URLs inside it — and why donation links stay
   out of the listing and out of the app.
 
-## [1.6.0] (8) — 2026-08-21, internal testing
+## [1.6.0] (8) — 2026-08-21, **live in production**
+
+**Published, and this file said otherwise until 2026-08-26.** The header read "internal testing"
+because that is what was true when the entry was written; nothing local can see an upload, let
+alone a promotion to production, so the record simply stopped being updated. Verified from the
+public listing itself: `play.google.com/store/apps/details?id=org.carlospinan.cortaspam` returns
+200 and its data carries version `1.6.0`, targetSdk 36, minimum Android 8.0, with this release's
+own notes attached. Same lesson as version codes 6 and 7 — **a release's track is unknown until
+the Console or the public listing says otherwise, never assumed from what was last written here.**
 
 Release notes: [`docs/store/RELEASE_NOTES_1.6.0.md`](docs/store/RELEASE_NOTES_1.6.0.md).
 Bundle `8-1.6.0-release.aab` built 2026-08-21, **5,429,071 bytes**,
