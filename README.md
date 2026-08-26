@@ -16,6 +16,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - [`docs/ADAPTIVE_PLAN.md`](docs/ADAPTIVE_PLAN.md) — landscape/tablet layout plan
 - [`docs/STORE_COMPLIANCE.md`](docs/STORE_COMPLIANCE.md) — Google Play declaration + privacy policy
 - [`LICENSE`](LICENSE) — MIT License
+- [`DONATE.md`](DONATE.md) — ways to support the project; nothing is asked for inside the app
 
 ## Features
 
@@ -516,6 +517,16 @@ Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any bro
 - Stats screen de-hardcoded (Loading, blocked count)
 - Copy number now wired to clipboard (`ClipboardManager`)
 - Phone number normalization for cross-format contact matching (`normalizeForComparison`)
+
+## Support this project
+
+Corta Spam is free, MIT-licensed, ad-free, tracker-free and has no network code at all — it earns
+nothing and never will. Nothing is asked for inside the app: there is no donation prompt, no nag
+screen and no billing code, and the entire ask lives here in the repository.
+
+If it has been useful, [`DONATE.md`](DONATE.md) lists the ways to support it — Ko-fi, PayPal, and
+Yape/Plin for donors in Peru, where a domestic transfer costs neither side a fee. Starring the repo, rating the app on Play, translating a locale or filing a well-described
+bug costs nothing and helps at least as much.
 
 ## License
 

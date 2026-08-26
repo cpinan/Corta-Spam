@@ -16,6 +16,7 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - [`docs/ADAPTIVE_PLAN.md`](docs/ADAPTIVE_PLAN.md) — plan de diseño adaptativo horizontal/tablet
 - [`docs/STORE_COMPLIANCE.md`](docs/STORE_COMPLIANCE.md) — declaración para Google Play + política de privacidad
 - [`LICENSE`](LICENSE) — Licencia MIT
+- [`DONATE_ES.md`](DONATE_ES.md) — formas de apoyar el proyecto; dentro de la app no se pide nada
 
 ## Funcionalidades
 
@@ -518,6 +519,18 @@ Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualqui
 - La pantalla de estadísticas se de-hardcodeó (Cargando, conteo de bloqueadas)
 - "Copiar número" ahora está conectado al portapapeles (`ClipboardManager`)
 - Normalización de números telefónicos para comparar contactos entre formatos (`normalizeForComparison`)
+
+## Apoya el proyecto
+
+Corta Spam es gratis, con licencia MIT, sin anuncios, sin rastreo y sin una sola línea de código
+de red — no genera dinero y nunca lo hará. Dentro de la app no se pide nada: no hay aviso de
+donación, ni pantalla que insista, ni código de cobros, y toda la petición vive aquí, en el
+repositorio.
+
+Si te ha servido, [`DONATE_ES.md`](DONATE_ES.md) lista las formas de apoyarlo — Ko-fi, PayPal y
+Yape/Plin para quien dona desde Perú, donde una transferencia nacional no le cuesta
+comisión a ninguna de las dos partes. Darle una estrella al repo, calificar la app en
+Play, traducir un idioma o reportar bien un bug no cuesta nada y ayuda igual o más.
 
 ## Licencia
 

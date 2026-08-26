@@ -16,7 +16,27 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Donation options, in the repository only — [`DONATE.md`](DONATE.md) / [`DONATE_ES.md`](DONATE_ES.md)
+  list Ko-fi, PayPal and Yape/Plin, plus the free ways to help that are worth more than
+  any of them. `.github/FUNDING.yml` drives the repo's Sponsor button, with every platform but
+  `custom` commented out until the corresponding account exists — a donate button that 404s is worse
+  than no button.
+- **Neither GitHub Sponsors nor Liberapay is offered**, and both rejections come down to the same
+  missing piece. Sponsors wants a Stripe Connect account whose country matches the bank account's;
+  its bank-free alternative is a fiscal host (Open Source Collective, 10%) that can only be chosen
+  at signup. Liberapay on PayPal makes the donor confirm every single payment, so its recurrence is
+  nominal, and it exposes donor and recipient names and emails to each other. Reasoning is recorded
+  in both DONATE files and in `.github/FUNDING.yml`.
+- Yape and Plin QR images in [`docs/donate/`](docs/donate/), trimmed, downscaled to 760 px and
+  palette-quantised — 340 KB of phone screenshots down to 69 KB. Both were **decoded before being
+  committed**, not trusted: each is an EMVCo payload carrying an opaque account token, and neither
+  encodes a phone number (checked against the Peruvian mobile pattern with and without the country
+  code). Each re-decoded to an identical byte count after processing, so no step broke scannability.
+  [`docs/donate/README.md`](docs/donate/README.md) carries the decoder script for re-checking a
+  replacement.
+- A "Support this project" / "Apoya el proyecto" section in both READMEs, linking to the above.
 
 ## [1.6.0] (8) — 2026-08-21, internal testing
 
