@@ -38,6 +38,20 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
   replacement.
 - A "Support this project" / "Apoya el proyecto" section in both READMEs, linking to the above.
 
+### Changed
+
+- The repo URL in both Play full descriptions is now written `https://github.com/cpinan/Corta-Spam`
+  rather than bare, and each `OPEN SOURCE` paragraph says what else the repository holds. Character
+  counts recomputed: es-419 3,609, en-US 3,323, both under the 4,000 limit.
+- A GitHub social preview card, [`docs/store/social_preview_1280x640.png`](docs/store/), rebuilt from
+  the English feature graphic at GitHub's exact 1280×640 and padded with the graphic's own background
+  so the seam is invisible (Spanish variant kept as `_es`). Without one, every share of the repo
+  renders a grey Octocat tile instead of the app's name.
+- [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md) records where the repo link actually appears in
+  the Console — the **Website** field is the only always-visible one, since Play truncates the full
+  description behind *Read more* and does not hyperlink URLs inside it — and why donation links stay
+  out of the listing and out of the app.
+
 ## [1.6.0] (8) — 2026-08-21, internal testing
 
 Release notes: [`docs/store/RELEASE_NOTES_1.6.0.md`](docs/store/RELEASE_NOTES_1.6.0.md).

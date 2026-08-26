@@ -74,7 +74,9 @@ No incluye ningún SDK de analítica ni de informes de fallos. La política de p
 
 CÓDIGO ABIERTO
 
-Cada línea es pública y auditable en github.com/cpinan/Corta-Spam, con licencia MIT.
+Cada línea es pública y auditable en https://github.com/cpinan/Corta-Spam, con licencia MIT.
+
+Ahí está también la política de privacidad completa, el historial de cambios y las instrucciones para compilar la app tú mismo.
 
 IDIOMAS
 
@@ -88,7 +90,7 @@ Por la misma razón muestra la llamada entrante a pantalla completa sobre la pan
 
 El auto-respondedor es experimental. Contesta una llamada bloqueada y reproduce un saludo, pero en versiones recientes de Android puede que quien llama no lo escuche bien; tómalo como un extra, no como una función en la que confiar. Si quieres, puede grabar el mensaje que deje quien llama: para activarlo, tu saludo debe incluir una frase que avise de la grabación.
 ```
-*3.472 caracteres.*
+*3.609 caracteres.*
 
 ## Notas de la versión
 
@@ -149,7 +151,9 @@ There is no analytics SDK and no crash-reporting SDK. The full privacy policy is
 
 OPEN SOURCE
 
-Every line is public and auditable at github.com/cpinan/Corta-Spam, under the MIT licence.
+Every line is public and auditable at https://github.com/cpinan/Corta-Spam, under the MIT licence.
+
+The same repository holds the full privacy policy, the changelog, and the instructions for building the app yourself.
 
 LANGUAGES
 
@@ -163,7 +167,7 @@ For the same reason it shows the incoming call full-screen over the lock screen,
 
 The auto-responder is experimental. It answers a blocked call and plays a greeting, but on modern Android the caller may not hear it clearly; treat it as a bonus, not a feature to rely on. It can optionally record the message a caller leaves — to turn that on, your own greeting must contain a line telling the caller they are being recorded.
 ```
-*3,196 characters.*
+*3,323 characters.*
 
 ---
 
@@ -178,6 +182,40 @@ The auto-responder is experimental. It answers a blocked call and plays a greeti
 | Website | `https://github.com/cpinan/Corta-Spam` |
 | Privacy policy | `https://cpinan.github.io/corta-spam/privacy.html` |
 | Support / marketing site | `https://cpinan.github.io/corta-spam/` |
+
+## Repository link — where it actually appears
+
+The repo is linked from the listing in two independent places, and they are not interchangeable.
+
+| Console location | Value | Why it matters |
+|---|---|---|
+| **Store settings → Store listing contact details → Website** | `https://github.com/cpinan/Corta-Spam` | The **only** always-visible link. It renders as a tappable *Website* entry in the app's "App support" section, with no expansion needed |
+| **Main store listing → Full description**, `CÓDIGO ABIERTO` / `OPEN SOURCE` paragraph | `https://github.com/cpinan/Corta-Spam` as plain text | Play does **not** hyperlink URLs inside a description — it is text a reader copies or types. Kept anyway because it explains *what* the link is, which the Website field cannot |
+
+Two consequences worth stating, because both are easy to get wrong:
+
+- **The full description is truncated.** Play shows roughly the first few lines and hides the rest
+  behind *Read more*, so the `OPEN SOURCE` paragraph is below the fold for most readers. A URL in
+  the description is not a substitute for the Website field — set the field.
+- **The full description is per-language.** Every translation needs the paragraph, or the repo
+  link silently disappears for that locale. It is present in es-419 (default) and en-US; when the
+  pt-BR and hi-IN listings are added, the `OPEN SOURCE` paragraph goes in both.
+
+### Donation links stay out of the listing
+
+The repository carries the donation options ([`DONATE.md`](../DONATE.md)); the Play listing and
+the app itself carry none, and that is deliberate rather than an omission:
+
+- The **short description may not contain promotional or price information** — the same
+  [guideline](https://support.google.com/googleplay/android-developer/answer/9866151) that already
+  cost this listing its `no ads, no tracking` line. A donation ask is squarely inside it.
+- The app ships **no billing code and no donation prompt**, so Play's
+  [Payments policy](https://support.google.com/googleplay/android-developer/answer/10281818) has
+  nothing to apply to. The ask lives one deliberate hop away, on a repository page the user has to
+  choose to visit.
+
+Anyone who wants to donate reaches `DONATE.md` through the Website field. That is the whole
+funnel, and it is enough.
 
 ## Assets
 
