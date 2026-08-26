@@ -47,6 +47,10 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
   the English feature graphic at GitHub's exact 1280×640 and padded with the graphic's own background
   so the seam is invisible (Spanish variant kept as `_es`). Without one, every share of the repo
   renders a grey Octocat tile instead of the app's name.
+- The privacy policy gained a **Donations** section in both languages: the app asks for nothing, has
+  no billing library and no donation prompt; donations happen on third-party services linked from
+  the repository, each under its own privacy policy; and the app cannot know whether anyone donated,
+  because it has no network access to ask with. Nothing is unlocked by donating.
 - [`docs/STORE_LISTING.md`](docs/STORE_LISTING.md) records where the repo link actually appears in
   the Console — the **Website** field is the only always-visible one, since Play truncates the full
   description behind *Read more* and does not hyperlink URLs inside it — and why donation links stay
