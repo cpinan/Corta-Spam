@@ -3,6 +3,9 @@
 # Only platforms with a live account go in here: an entry whose account does not exist renders a
 # button that 404s, which is worse than no button at all.
 #
+# This file alone does NOT produce the button. Sponsorships must also be ticked in
+# Settings -> General -> Features; with it off, GitHub ignores this file entirely.
+#
 # `github:` is intentionally absent. GitHub Sponsors wants a Stripe Connect account whose country
 # matches the bank account's, which is not workable here today. The bank-free route is a fiscal
 # host (Open Source Collective, 10% fee) and it can ONLY be chosen at signup — see DONATE.md.
