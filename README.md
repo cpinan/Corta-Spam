@@ -6,6 +6,8 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 **i18n**: English, Spanish (LATAM), Portuguese (Brazil), Hindi.
 
+**Free, and staying free — nothing is asked for inside the app.** If it has been useful: [☕ Ko-fi](https://ko-fi.com/carlospinan) · [PayPal](https://paypal.me/carlospinan) · [Yape / Plin](DONATE.md) · or just star the repo, which helps more. Everything, and why these and not others: [`DONATE.md`](DONATE.md).
+
 ## Status
 
 M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 652 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.

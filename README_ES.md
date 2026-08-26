@@ -6,6 +6,8 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 **i18n**: Inglés, Español (LATAM), Portugués (Brasil), Hindi.
 
+**Gratis, y va a seguir siéndolo — dentro de la app no se pide nada.** Si te ha servido: [☕ Ko-fi](https://ko-fi.com/carlospinan) · [PayPal](https://paypal.me/carlospinan) · [Yape / Plin](DONATE_ES.md) · o dale una estrella al repo, que ayuda más. Todo, y por qué estos y no otros: [`DONATE_ES.md`](DONATE_ES.md).
+
 ## Estado
 
 M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 652 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
