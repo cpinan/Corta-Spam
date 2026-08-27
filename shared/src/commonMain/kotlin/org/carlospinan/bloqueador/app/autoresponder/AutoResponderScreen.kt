@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -19,14 +20,22 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cortaspam.shared.generated.resources.Res
+import cortaspam.shared.generated.resources.action_cancel
+import cortaspam.shared.generated.resources.action_continue
 import cortaspam.shared.generated.resources.autoresponder_audio_custom
 import cortaspam.shared.generated.resources.autoresponder_audio_tts
 import cortaspam.shared.generated.resources.autoresponder_clear_audio
 import cortaspam.shared.generated.resources.autoresponder_consent_hint
+import cortaspam.shared.generated.resources.autoresponder_enable_warning_body
+import cortaspam.shared.generated.resources.autoresponder_enable_warning_title
 import cortaspam.shared.generated.resources.autoresponder_enabled
 import cortaspam.shared.generated.resources.autoresponder_enabled_desc
 import cortaspam.shared.generated.resources.autoresponder_error_consent
@@ -70,7 +79,22 @@ fun AutoResponderScreen(
 ) {
     val windowSizeClass = rememberWindowSizeClass()
 
+    // Turning the auto-responder on is the one setting in this app that makes it pick up a call,
+    // so it is confirmed rather than toggled. Turning it *off* asks nothing: off is the safe
+    // direction, and a user reaching for it is usually one who has just been surprised by the
+    // feature and wants it to stop now.
+    var confirmingEnable by remember { mutableStateOf(false) }
+
     CortaSpamTheme {
+        if (confirmingEnable) {
+            EnableAutoResponderDialog(
+                onConfirm = {
+                    confirmingEnable = false
+                    onSetEnabled(true)
+                },
+                onDismiss = { confirmingEnable = false },
+            )
+        }
         Surface(modifier = Modifier.fillMaxSize()) {
             AdaptiveContent(windowSizeClass = windowSizeClass) {
                 Column(
@@ -109,7 +133,9 @@ fun AutoResponderScreen(
                             }
                             Switch(
                                 checked = state.config.enabled,
-                                onCheckedChange = onSetEnabled,
+                                onCheckedChange = { checked ->
+                                    if (checked) confirmingEnable = true else onSetEnabled(false)
+                                },
                             )
                         }
                     }
@@ -306,5 +332,36 @@ private fun RecordingBlockedNote(text: String) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.error,
+    )
+}
+
+/**
+ * The confirmation shown before the auto-responder is switched on.
+ *
+ * It exists because of a bug report that was not a bug: *the default action is Block, the phone
+ * says "Blocked call", and the call answers itself — I only notice when I hear it in progress*.
+ * That is exactly what an enabled auto-responder does, and nothing on the way in said so in those
+ * words. The switch's own description says calls are "answered and greeted", which reads as a
+ * feature; what the user experiences is their phone picking up, on the loudspeaker, by itself.
+ *
+ * So the dialog names the three things they will actually see — the call is answered, the
+ * loudspeaker comes on, and with recording it stays connected — and the one thing that limits it:
+ * calls that are not blocked are never touched.
+ */
+@Composable
+private fun EnableAutoResponderDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.autoresponder_enable_warning_title)) },
+        text = { Text(stringResource(Res.string.autoresponder_enable_warning_body)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(Res.string.action_continue)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+        },
     )
 }

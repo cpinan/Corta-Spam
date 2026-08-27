@@ -223,6 +223,8 @@
     <string name="autoresponder_experimental_badge">Experimental — depende do seu telefone permitir o áudio da chamada; muitas versões recentes do Android bloqueiam isso</string>
     <string name="autoresponder_enabled">Ativado</string>
     <string name="autoresponder_enabled_desc">Quando ativo, chamadas bloqueadas são atendidas com saudação em vez de rejeitadas.</string>
+    <string name="autoresponder_enable_warning_title">Atender automaticamente as chamadas bloqueadas?</string>
+    <string name="autoresponder_enable_warning_body">Com isto ativado, o Corta Spam atende as chamadas que bloqueia para que quem liga ouça sua saudação. Enquanto ela toca, seu telefone mostra uma chamada em andamento com o viva-voz ligado e, se a gravação também estiver ativada, a chamada continua conectada por até um minuto a mais. Chamadas que não são bloqueadas nunca são atendidas.</string>
     <string name="autoresponder_script_hint">Roteiro de saudação</string>
     <string name="autoresponder_test">Testar saudação</string>
     <string name="autoresponder_audio_tts">Texto para voz</string>

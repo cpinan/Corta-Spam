@@ -247,6 +247,8 @@
     <string name="autoresponder_experimental_badge">Experimental — depende de que tu teléfono permita el audio de la llamada; muchas versiones nuevas de Android lo bloquean</string>
     <string name="autoresponder_enabled">Activado</string>
     <string name="autoresponder_enabled_desc">Cuando está activo, las llamadas bloqueadas se contestan con un saludo en vez de rechazarse.</string>
+    <string name="autoresponder_enable_warning_title">¿Contestar automáticamente las llamadas bloqueadas?</string>
+    <string name="autoresponder_enable_warning_body">Con esto activado, Corta Spam contesta las llamadas que bloquea para que quien llama escuche tu saludo. Mientras se reproduce, tu teléfono muestra una llamada en curso con el altavoz encendido, y si la grabación también está activada la llamada sigue conectada hasta un minuto más. Las llamadas que no se bloquean nunca se contestan.</string>
     <string name="autoresponder_script_hint">Guion de saludo</string>
     <string name="autoresponder_test">Probar saludo</string>
     <string name="autoresponder_audio_tts">Texto a voz</string>

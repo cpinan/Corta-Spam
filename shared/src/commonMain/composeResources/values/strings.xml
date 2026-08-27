@@ -206,6 +206,8 @@
     <string name="autoresponder_experimental_badge">Experimental — depends on your phone letting call audio through; many newer Android versions block it</string>
     <string name="autoresponder_enabled">Enabled</string>
     <string name="autoresponder_enabled_desc">When on, blocked calls are answered and greeted instead of rejected silently.</string>
+    <string name="autoresponder_enable_warning_title">Answer blocked calls automatically?</string>
+    <string name="autoresponder_enable_warning_body">With this on, Corta Spam answers the calls it blocks so the caller hears your greeting. While it plays, your phone shows a call in progress with the loudspeaker on, and if recording is also on the call stays connected for up to a minute more. Calls that are not blocked are never answered.</string>
     <string name="autoresponder_script_hint">Greeting script</string>
     <string name="autoresponder_test">Test greeting</string>
     <string name="autoresponder_audio_tts">Text-to-speech</string>

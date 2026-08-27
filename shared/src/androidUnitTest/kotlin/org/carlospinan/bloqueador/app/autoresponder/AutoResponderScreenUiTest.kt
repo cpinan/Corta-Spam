@@ -1,6 +1,7 @@
 package org.carlospinan.bloqueador.app.autoresponder
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,6 +13,9 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+
+/** The first switch on the screen; the second is the recording one below it. */
+private const val AUTO_RESPONDER_SWITCH = 0
 
 private const val CONSENTING_SCRIPT = "Hello. This call may be recorded. Please leave a message."
 
@@ -26,11 +30,12 @@ class AutoResponderScreenUiTest {
         config: AutoResponderConfig,
         micPermissionGranted: Boolean = true,
         onRequestMicPermission: () -> Unit = {},
+        onSetEnabled: (Boolean) -> Unit = {},
     ) {
         composeTestRule.setContent {
             AutoResponderScreen(
                 state = AutoResponderUiState(config = config),
-                onSetEnabled = {},
+                onSetEnabled = onSetEnabled,
                 onSetScript = {},
                 onSetRecordingEnabled = {},
                 onPickAudio = {},
@@ -130,5 +135,66 @@ class AutoResponderScreenUiTest {
         )
 
         composeTestRule.onNodeWithText("Grant microphone access").assertDoesNotExist()
+    }
+
+    /**
+     * The reported surprise: the app answering a call by itself. Only an enabled auto-responder
+     * does that, so enabling it is confirmed rather than toggled — and nothing is persisted until
+     * the user says yes, or the switch would have already done the thing it is warning about.
+     */
+    @Test
+    fun `turning the auto-responder on asks before it is switched on`() {
+        val enabledCalls = mutableListOf<Boolean>()
+        setScreen(AutoResponderConfig(enabled = false), onSetEnabled = { enabledCalls += it })
+
+        composeTestRule.onAllNodes(isToggleable())[AUTO_RESPONDER_SWITCH].performClick()
+
+        composeTestRule
+            .onNodeWithText("your phone shows a call in progress", substring = true)
+            .assertExists()
+        assertEquals(emptyList(), enabledCalls)
+    }
+
+    @Test
+    fun `confirming the warning switches the auto-responder on`() {
+        val enabledCalls = mutableListOf<Boolean>()
+        setScreen(AutoResponderConfig(enabled = false), onSetEnabled = { enabledCalls += it })
+
+        composeTestRule.onAllNodes(isToggleable())[AUTO_RESPONDER_SWITCH].performClick()
+        composeTestRule.onNodeWithText("Continue").performClick()
+
+        assertEquals(listOf(true), enabledCalls)
+    }
+
+    /** Cancelling leaves it off, and leaves the screen alone. */
+    @Test
+    fun `dismissing the warning leaves the auto-responder off`() {
+        val enabledCalls = mutableListOf<Boolean>()
+        setScreen(AutoResponderConfig(enabled = false), onSetEnabled = { enabledCalls += it })
+
+        composeTestRule.onAllNodes(isToggleable())[AUTO_RESPONDER_SWITCH].performClick()
+        composeTestRule.onNodeWithText("Cancel").performClick()
+
+        assertEquals(emptyList(), enabledCalls)
+        composeTestRule
+            .onNodeWithText("your phone shows a call in progress", substring = true)
+            .assertDoesNotExist()
+    }
+
+    /**
+     * Off is the safe direction and is never questioned: a user reaching for this switch has
+     * usually just been surprised by the feature and wants it to stop now.
+     */
+    @Test
+    fun `turning the auto-responder off does not ask`() {
+        val enabledCalls = mutableListOf<Boolean>()
+        setScreen(
+            AutoResponderConfig(enabled = true, script = CONSENTING_SCRIPT),
+            onSetEnabled = { enabledCalls += it },
+        )
+
+        composeTestRule.onAllNodes(isToggleable())[AUTO_RESPONDER_SWITCH].performClick()
+
+        assertEquals(listOf(false), enabledCalls)
     }
 }

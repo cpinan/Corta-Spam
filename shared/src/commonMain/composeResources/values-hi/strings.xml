@@ -223,6 +223,8 @@
     <string name="autoresponder_experimental_badge">प्रायोगिक — यह इस पर निर्भर करता है कि आपका फ़ोन कॉल ऑडियो को जाने देता है या नहीं; कई नए Android वर्शन इसे ब्लॉक कर देते हैं</string>
     <string name="autoresponder_enabled">सक्षम</string>
     <string name="autoresponder_enabled_desc">चालू होने पर, ब्लॉक की गई कॉल चुपचाप अस्वीकार करने के बजाय ग्रीटिंग के साथ उत्तर दी जाती हैं।</string>
+    <string name="autoresponder_enable_warning_title">ब्लॉक की गई कॉल अपने आप उठाएँ?</string>
+    <string name="autoresponder_enable_warning_body">यह चालू होने पर Corta Spam उन कॉल को उठाता है जिन्हें वह ब्लॉक करता है, ताकि कॉल करने वाला आपकी ग्रीटिंग सुन सके। ग्रीटिंग चलने के दौरान आपके फ़ोन पर स्पीकर चालू के साथ कॉल जारी दिखती है, और अगर रिकॉर्डिंग भी चालू है तो कॉल एक मिनट तक और जुड़ी रहती है। जो कॉल ब्लॉक नहीं होतीं, उन्हें कभी नहीं उठाया जाता।</string>
     <string name="autoresponder_script_hint">ग्रीटिंग स्क्रिप्ट</string>
     <string name="autoresponder_test">ग्रीटिंग जांचें</string>
     <string name="autoresponder_audio_tts">टेक्स्ट-टू-स्पीच</string>
