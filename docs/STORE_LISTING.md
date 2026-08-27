@@ -1,12 +1,16 @@
 # Play Store listing copy — Corta Spam
 
-**Default language: Español (es-419).** English is added as a translation, not the default.
-The *app's* own fallback locale is unchanged and remains English — this is a Console setting
-about the store page, not about the strings in the APK.
+**Default language: Español (es-419).** English, Portuguese (pt-BR) and Hindi (hi-IN) are added
+as translations, not defaults. The *app's* own fallback locale is unchanged and remains English —
+this is a Console setting about the store page, not about the strings in the APK.
+
+**The store name is per language and is not the launcher label.** All four store names lead with
+the brand and end in that market's search term; `app_name` in the APK stays `Corta Spam`
+everywhere. See "The app name is four names" below for why.
 
 Paste-ready. Assets live in [`store/`](store/).
 
-Three rules applied to both languages: **do not promise detection accuracy** (this app blocks by
+Three rules applied to all four languages: **do not promise detection accuracy** (this app blocks by
 *your* rules plus a small bundled list — it is not a crowd-sourced spam database), **do not
 describe the auto-responder as reliable** (it reaches the caller only by acoustic coupling), and
 **the short description must describe function and nothing else**.
@@ -27,9 +31,11 @@ positioning lives there instead.
 ## Nombre de la app (≤30 caracteres)
 
 ```
-Corta Spam
+Corta Spam: bloquea llamadas
 ```
-*10 caracteres.*
+*28 caracteres.* La marca primero, el término de búsqueda después. Este es el idioma
+predeterminado, así que este nombre es el que Play muestra en cualquier mercado sin traducción
+propia.
 
 ## Descripción corta (≤80 caracteres)
 
@@ -104,9 +110,10 @@ etiquetas que pide la Consola: [`store/RELEASE_NOTES_0.1.0.md`](store/RELEASE_NO
 ## App name (≤30 chars)
 
 ```
-Corta Spam
+Corta Spam: Call Blocker
 ```
-*10 characters.*
+*24 characters.* "Corta Spam" alone is a Spanish phrase; nobody searching an English store types
+it, so the brand keeps the front and the search term follows it.
 
 ## Short description (≤80 chars)
 
@@ -179,9 +186,9 @@ Brazilian user sees a Spanish store page and then an app in Portuguese.
 ## Nome do app (≤30 caracteres)
 
 ```
-Corta Spam
+Corta Spam: bloqueia spam
 ```
-*10 caracteres.* Marca, não traduzida.
+*25 caracteres.* A marca não é traduzida; o que muda é o termo de busca depois dela.
 
 ## Descrição breve (≤80 caracteres)
 
@@ -256,9 +263,10 @@ reason as pt-BR: the strings exist, the store page does not.
 ## ऐप का नाम (≤30 characters)
 
 ```
-Corta Spam
+Corta Spam: कॉल ब्लॉकर
 ```
-*10 characters.* Brand name, left untranslated — it is what the icon and the app itself say.
+*22 characters.* Brand in Latin script, search term in Devanagari — Hindi-speaking users search
+in both, and the brand is what the icon says.
 
 ## संक्षिप्त विवरण (≤80 characters)
 
@@ -357,6 +365,41 @@ The app itself is fully translated, so screenshots in each language cost one emu
 through `run-as`. The feature graphic carries Spanish text in the default file and English in
 `_en`; a pt-BR or hi-IN feature graphic does not exist yet and would have to be drawn. Without
 one, that language falls back to the Spanish graphic rather than showing nothing.
+
+---
+
+## The app name is four names, and one of them is not the launcher label
+
+**Store name (Console, per language, ≤30 characters) and launcher label (`app_name` in the APK)
+are different fields, and only the first one is search.** Play indexes the store name heavily;
+the launcher label is truncated to roughly twelve characters under an icon and read by nobody
+looking for an app they do not have yet.
+
+So the store names carry a keyword and the launcher label does not:
+
+| Locale | Store name | Chars | Launcher label |
+|---|---|---|---|
+| es-419 (default) | `Corta Spam: bloquea llamadas` | 28 | `Corta Spam` |
+| en-US | `Corta Spam: Call Blocker` | 24 | `Corta Spam` |
+| pt-BR | `Corta Spam: bloqueia spam` | 25 | `Corta Spam` |
+| hi-IN | `Corta Spam: कॉल ब्लॉकर` | 22 | `Corta Spam` |
+
+Why it was wrong before: **"Corta Spam" is a Spanish phrase**, and it was the whole name in every
+market. An English, Brazilian or Indian user searching for a call blocker had no reason to type it
+and nothing in the name to match what they did type. The brand still leads — it is what the icon,
+the repository, the database file and the training course all say — but it no longer stands alone
+in a market that cannot read it.
+
+What was deliberately not done: `app_name` stays `Corta Spam` in all four resource trees. A
+keyword under a home-screen icon is truncated away, and changing it would need a new bundle to
+reach anyone who already has the app.
+
+Rules these names are inside, all of which have flagged real listings: no ALL CAPS, no emoji, no
+"best / #1 / free / top", no "Play" or "Android", and no repeated keyword — which is why the
+English name is not `Call Blocker & Spam Blocker`.
+
+**A name change is a listing edit, not a release.** It needs no bundle and can happen before or
+after the 1.6.1 upload; the review is the ordinary listing review.
 
 ## Category and contact
 
