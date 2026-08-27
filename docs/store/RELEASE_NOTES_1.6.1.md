@@ -12,10 +12,13 @@ test" line on a public listing reads as an admission the build is unverified.
 Counted, not estimated: **es-419 494, en-US 467, pt-BR 493, hi-IN 440 characters** — all four under
 Play's 500 cap. Both the English and Spanish first drafts were over it.
 
-**Version code 9 is a guess until the Console says otherwise.** Codes 6, 7 and 8 were each recorded
-in this repo as unspent and each had already been uploaded — a code is spent on upload, and an
-upload leaves no trace on this machine. Read the Console's own list before building the bundle you
-intend to upload.
+**Version code 9 confirmed free.** The Console was read on 2026-08-27: `8 (1.6.0)` was uploaded on
+2026-08-21 and is **live at 100%**, with nothing uploaded since. This is the first release in a
+while whose code was checked before the bundle was built rather than after Play refused it —
+codes 6, 7 and 8 were each recorded in this repo as unspent and each had already been uploaded.
+
+**This is a production update, not a test track.** 1.6.0 is at 100%, so 9 replaces it for everyone
+who has the app; the notes below are written for that audience and ask the reader to do nothing.
 
 **Four languages, because the app ships four.** pt-BR and hi-IN still only reach anyone once those
 languages are added to the store listing itself — a Console change, not a file.
@@ -84,16 +87,22 @@ one most worth confirming on.
 
 ## Before uploading
 
-- [ ] **Check the Console for the next free code first.** 9 is this repo's belief, and this repo has
-      been wrong about the next free code three times.
-- [ ] Confirm the filename is `9-1.6.1-release.aab`, and check its mtime and size — this project
-      has seen `BUILD SUCCESSFUL in 1s` over an unchanged artifact.
-- [ ] Audit permissions with `aapt2 dump badging` on the **artifact**: 7 permissions,
-      `uses-feature-not-required: android.hardware.microphone`, `uses-feature:
-      android.hardware.telephony` (required, deliberately).
-- [ ] Install the **release** build and open the app before uploading. This is the first bundle
-      built with optimised resource shrinking; a resource that only a shrinker change can remove
-      fails at runtime, not at build time.
+- [x] **Check the Console for the next free code first.** Done 2026-08-27: 8 (1.6.0) live at 100%
+      since 2026-08-21, nothing newer, so 9 is free.
+- [x] Confirm the filename is `9-1.6.1-release.aab`, and check its mtime and size — this project
+      has seen `BUILD SUCCESSFUL in 1s` over an unchanged artifact. Built 2026-08-27 12:30,
+      4,950,941 bytes against the 1.6.0 bundle's 5,429,071; signing certificate SHA-256
+      `4CA33D30…46E0`, identical to the 1.6.0 bundle's, so it is the same upload key.
+- [x] Audit permissions with `aapt2 dump badging` on the **artifact**: done, unchanged from 1.6.0
+      despite the androidx bump — 7 permissions, `uses-feature-not-required:
+      android.hardware.microphone`, `uses-feature: android.hardware.telephony` (required,
+      deliberately), `versionCode='9' versionName='1.6.1'`, targetSdk 36.
+- [x] Install the **release** build and open the app before uploading. Done on a Pixel 8 Pro API
+      36 AVD in Spanish: welcome, permission checklist and Home all render with their strings and
+      icons intact, Settings reports `1.6.1 (9)` from the package, the new auto-responder dialog
+      renders in full and Cancel leaves the switch off, and with the default action set to Block
+      through the UI a live call went `SET_RINGING → REQUEST_REJECT 1.1s → SET_DISCONNECTED
+      (REJECTED) 1.3s`. Nothing was stripped by the new shrinker.
 - [ ] **Do not re-open the full-screen-intent declaration form.** Its *No* to the pre-grant
       question is what cleared the code-3 rejection — see `SUBMISSION_0.1.0.md` §5b.
 - [ ] Screenshots are from 2026-08-20 and still show this app's screens accurately; no UI changed
