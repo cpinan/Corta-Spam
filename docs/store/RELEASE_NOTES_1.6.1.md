@@ -1,4 +1,4 @@
-# Release notes — 1.6.1 (versionCode 9), production
+# Release notes — 1.6.1 (versionCode 9), production — uploaded 2026-08-27
 
 Release name (Console, 50-char cap — this one is 38):
 
@@ -12,7 +12,11 @@ test" line on a public listing reads as an admission the build is unverified.
 Counted, not estimated: **es-419 494, en-US 467, pt-BR 493, hi-IN 440 characters** — all four under
 Play's 500 cap. Both the English and Spanish first drafts were over it.
 
-**Version code 9 confirmed free.** The Console was read on 2026-08-27: `8 (1.6.0)` was uploaded on
+**Uploaded 2026-08-27. Code 9 is now spent** — the next build takes 10 or higher, whatever happens
+to this bundle in review. Written down the same day it was uploaded, because that is precisely the
+step that was missed for 6, 7 and 8.
+
+**Version code 9 confirmed free before the build.** The Console was read on 2026-08-27: `8 (1.6.0)` was uploaded on
 2026-08-21 and is **live at 100%**, with nothing uploaded since. This is the first release in a
 while whose code was checked before the bundle was built rather than after Play refused it —
 codes 6, 7 and 8 were each recorded in this repo as unspent and each had already been uploaded.

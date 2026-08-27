@@ -76,12 +76,16 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // exists because the feature surprised the person who turned it on, not because it does anything
 // new.
 //
-// 9 confirmed free against the Console on 2026-08-27: 8 (1.6.0) was uploaded on 2026-08-21 and is
-// live at 100%, and nothing has been uploaded since. That reading is the only kind of evidence
-// worth anything here -- codes 6, 7 and 8 were each recorded in this file as unspent and each
-// turned out to have been uploaded, because a code is spent on upload and an upload leaves no
-// trace on this machine. The comments above are the scar tissue. Read the Console again before
-// the next bump; do not read this line.
+// 9 was confirmed free against the Console on 2026-08-27 -- 8 (1.6.0) had been live at 100% since
+// 2026-08-21 with nothing newer -- and then **uploaded the same day, which spends it**. The next
+// build takes 10 or higher, and 9 can never be uploaded again whatever happens to this bundle in
+// review.
+//
+// That sequence is the one to copy: read the Console, build, upload, and write the upload down in
+// the same breath. Codes 6, 7 and 8 were each recorded in this file as unspent and each turned out
+// to have been uploaded, because a code is spent on upload and an upload leaves no trace on this
+// machine. The comments above are the scar tissue. Read the Console again before the next bump; do
+// not read this line.
 //
 // See docs/store/RELEASE_NOTES_1.6.1.md.
 val appVersionName = "1.6.1"
