@@ -6,7 +6,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 **i18n**: Inglés, Español (LATAM), Portugués (Brasil), Hindi.
 
-**Gratis, y va a seguir siéndolo — dentro de la app no se pide nada.** Si te ha servido: [☕ Ko-fi](https://ko-fi.com/carlospinan) · [PayPal](https://paypal.me/carlospinan) · [Yape / Plin](DONATE_ES.md) · o dale una estrella al repo, que ayuda más. Todo, y por qué estos y no otros: [`DONATE_ES.md`](DONATE_ES.md).
+**Gratis, y va a seguir siéndolo — dentro de la app no se pide nada.** Si te ha servido: [💜 GitHub Sponsors](https://github.com/sponsors/cpinan) · [☕ Ko-fi](https://ko-fi.com/carlospinan) · [PayPal](https://paypal.me/carlospinan) · [Yape / Plin](DONATE_ES.md) · o dale una estrella al repo, que ayuda más. Todo, y por qué estos y no otros: [`DONATE_ES.md`](DONATE_ES.md).
 
 ## Estado
 
@@ -529,8 +529,8 @@ de red — no genera dinero y nunca lo hará. Dentro de la app no se pide nada: 
 donación, ni pantalla que insista, ni código de cobros, y toda la petición vive aquí, en el
 repositorio.
 
-Si te ha servido, [`DONATE_ES.md`](DONATE_ES.md) lista las formas de apoyarlo — Ko-fi, PayPal y
-Yape/Plin para quien dona desde Perú, donde una transferencia nacional no le cuesta
+Si te ha servido, [`DONATE_ES.md`](DONATE_ES.md) lista las formas de apoyarlo — GitHub Sponsors,
+Ko-fi, PayPal y Yape/Plin para quien dona desde Perú, donde una transferencia nacional no le cuesta
 comisión a ninguna de las dos partes. Darle una estrella al repo, calificar la app en
 Play, traducir un idioma o reportar bien un bug no cuesta nada y ayuda igual o más.
 

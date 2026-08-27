@@ -6,9 +6,13 @@
 # This file alone does NOT produce the button. Sponsorships must also be ticked in
 # Settings -> General -> Features; with it off, GitHub ignores this file entirely.
 #
-# `github:` is intentionally absent. GitHub Sponsors wants a Stripe Connect account whose country
-# matches the bank account's, which is not workable here today. The bank-free route is a fiscal
-# host (Open Source Collective, 10% fee) and it can ONLY be chosen at signup — see DONATE.md.
+# `github:` is live as of 2026-08-27. It had been absent for a payout reason, not a preference one:
+# GitHub Sponsors pays out through a Stripe Connect account whose country must match the bank
+# account's, and that account is now approved. It goes first because GitHub takes no cut and it is
+# the only entry that resolves inside GitHub's own sponsor dialog instead of sending the donor to
+# another site. The fiscal-host workaround (Open Source Collective, 10%) is no longer needed.
+
+github: cpinan
 
 ko_fi: carlospinan
 

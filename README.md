@@ -6,7 +6,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 **i18n**: English, Spanish (LATAM), Portuguese (Brazil), Hindi.
 
-**Free, and staying free — nothing is asked for inside the app.** If it has been useful: [☕ Ko-fi](https://ko-fi.com/carlospinan) · [PayPal](https://paypal.me/carlospinan) · [Yape / Plin](DONATE.md) · or just star the repo, which helps more. Everything, and why these and not others: [`DONATE.md`](DONATE.md).
+**Free, and staying free — nothing is asked for inside the app.** If it has been useful: [💜 GitHub Sponsors](https://github.com/sponsors/cpinan) · [☕ Ko-fi](https://ko-fi.com/carlospinan) · [PayPal](https://paypal.me/carlospinan) · [Yape / Plin](DONATE.md) · or just star the repo, which helps more. Everything, and why these and not others: [`DONATE.md`](DONATE.md).
 
 ## Status
 
@@ -526,8 +526,8 @@ Corta Spam is free, MIT-licensed, ad-free, tracker-free and has no network code 
 nothing and never will. Nothing is asked for inside the app: there is no donation prompt, no nag
 screen and no billing code, and the entire ask lives here in the repository.
 
-If it has been useful, [`DONATE.md`](DONATE.md) lists the ways to support it — Ko-fi, PayPal, and
-Yape/Plin for donors in Peru, where a domestic transfer costs neither side a fee. Starring the repo, rating the app on Play, translating a locale or filing a well-described
+If it has been useful, [`DONATE.md`](DONATE.md) lists the ways to support it — GitHub Sponsors,
+Ko-fi, PayPal, and Yape/Plin for donors in Peru, where a domestic transfer costs neither side a fee. Starring the repo, rating the app on Play, translating a locale or filing a well-described
 bug costs nothing and helps at least as much.
 
 ## License

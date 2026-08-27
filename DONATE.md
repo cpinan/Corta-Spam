@@ -32,15 +32,18 @@ These cost nothing and several of them help more than a donation would:
 
 | Method | Link | Platform fee | Notes |
 |---|---|---|---|
-| **Ko-fi** *(easiest)* | **[ko-fi.com/carlospinan](https://ko-fi.com/carlospinan)** | **0%** on tips | Donor needs no account of their own — a card is enough. The lowest-friction "buy me a coffee" |
+| **GitHub Sponsors** | **[github.com/sponsors/cpinan](https://github.com/sponsors/cpinan)** | **0%** — GitHub takes nothing | Same thing as the **Sponsor** button at the top of the repo. Needs a GitHub account; pays out through Stripe |
+| **Ko-fi** *(no account needed)* | **[ko-fi.com/carlospinan](https://ko-fi.com/carlospinan)** | **0%** on tips | Donor needs no account of their own — a card is enough. The lowest-friction "buy me a coffee" |
 | **PayPal** | **[paypal.me/carlospinan](https://paypal.me/carlospinan)** | none, beyond PayPal's own cut | Direct, no third party in between |
 
-Neither is recurring, on purpose — Ko-fi's monthly memberships are switched off, because a
-membership is a promise to deliver something every month and there is nothing here to deliver.
+None of the three is recurring, on purpose — GitHub Sponsors' monthly tiers and Ko-fi's monthly
+memberships are both switched off, because a membership is a promise to deliver something every
+month and there is nothing here to deliver.
 
-Both settle into the **same PayPal account** — they differ only in what the donor is shown, so
-pick whichever you find least annoying rather than whichever you think costs me less. PayPal's
-cross-border and currency-conversion cut applies either way, and on a small tip it is not small.
+Ko-fi and PayPal settle into the **same PayPal account**; GitHub Sponsors settles into Stripe.
+They differ only in what the donor is shown, so pick whichever you find least annoying rather
+than whichever you think costs me less. PayPal's cross-border and currency-conversion cut applies
+to the last two either way, and on a small tip it is not small.
 
 ### Peru 🇵🇪
 
@@ -59,21 +62,24 @@ personal phone number to everyone who reads this file.
 
 ## Why these and not others
 
-- **Ko-fi is first** because the donor needs no account, a card is enough, the platform takes 0% of
-  a one-off tip, and it pays out to PayPal — no separate bank onboarding to get stuck in.
-- **Liberapay was considered and dropped.** It is a non-profit that takes no cut, and on Stripe it
-  would be the right answer for recurring support. On PayPal it is not: PayPal makes the donor
-  confirm *every single payment*, so the recurrence is nominal, and it shows donor and recipient
-  names and email addresses to each other. That is a worse `paypal.me` behind an extra account.
+- **GitHub Sponsors is first** because GitHub takes 0% and it is the only option that does not
+  send the donor to another site — the **Sponsor** button and its dialog are part of the
+  repository. It was absent here until 2026-08-27 for a payout reason, not a preference one: it
+  pays out through a Stripe Connect account whose country must match the bank account's, and that
+  account is now approved. The bank-free workaround — a fiscal host such as Open Source
+  Collective, 10% fee, choosable only at signup — turned out not to be needed.
+- **Ko-fi is second, and still the easiest for anyone who is not a developer**, because the donor
+  needs no account, a card is enough, the platform takes 0% of a one-off tip, and it pays out to
+  PayPal — no separate bank onboarding to get stuck in.
+- **Liberapay was considered and dropped.** It is a non-profit that takes no cut and, on Stripe,
+  would be the right answer for *recurring* support. Stripe is available here now, but the reason
+  to skip it survives that: recurring is declined on purpose, and Liberapay's other rail is
+  PayPal, which makes the donor confirm *every single payment* — so the recurrence is nominal —
+  and shows donor and recipient names and email addresses to each other. That is a worse
+  `paypal.me` behind an extra account.
 - **Yape/Plin are listed separately** because for a Peruvian donor they cost nothing, settle
   instantly, and skip currency conversion entirely — routing a Peruvian through PayPal would
   burn a double-digit percentage of a small tip on fees for no reason.
-- **GitHub Sponsors is deliberately absent.** On paper it is the obvious choice: 0% cut and a
-  native **Sponsor** button on the repository. In practice its payout path wants a Stripe Connect
-  account whose country matches the bank account's, which is not currently workable here. There is
-  a bank-free route — a fiscal host such as Open Source Collective — but it charges 10% and can
-  only be chosen *at signup*, never switched to afterwards without contacting support. So it is a
-  decision to make deliberately later, not a row to leave broken in this table today.
 - **Open Collective** (public, itemised ledger) is skipped for the same reason it usually is: this
   is one maintainer with no expenses to account for publicly, so the transparency it buys has
   nothing to be spent on yet.

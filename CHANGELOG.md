@@ -19,16 +19,20 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 ### Added
 
 - Donation options, in the repository only — [`DONATE.md`](DONATE.md) / [`DONATE_ES.md`](DONATE_ES.md)
-  list Ko-fi, PayPal and Yape/Plin, plus the free ways to help that are worth more than
-  any of them. `.github/FUNDING.yml` drives the repo's Sponsor button, with every platform but
-  `custom` commented out until the corresponding account exists — a donate button that 404s is worse
-  than no button.
-- **Neither GitHub Sponsors nor Liberapay is offered**, and both rejections come down to the same
-  missing piece. Sponsors wants a Stripe Connect account whose country matches the bank account's;
-  its bank-free alternative is a fiscal host (Open Source Collective, 10%) that can only be chosen
-  at signup. Liberapay on PayPal makes the donor confirm every single payment, so its recurrence is
-  nominal, and it exposes donor and recipient names and emails to each other. Reasoning is recorded
-  in both DONATE files and in `.github/FUNDING.yml`.
+  list GitHub Sponsors, Ko-fi, PayPal and Yape/Plin, plus the free ways to help that are worth more
+  than any of them. `.github/FUNDING.yml` drives the repo's Sponsor button, and only carries
+  platforms whose account is live — a donate button that 404s is worse than no button.
+- **GitHub Sponsors is offered as of 2026-08-27**, listed first: GitHub takes 0% and it is the only
+  option that resolves inside the repository instead of sending the donor elsewhere. It was absent
+  in the first pass for a payout reason, not a preference one — Sponsors pays out through a Stripe
+  Connect account whose country must match the bank account's, and that account is now approved, so
+  the bank-free fallback (a fiscal host such as Open Source Collective, 10%, choosable only at
+  signup) was never needed. Monthly tiers stay off, like Ko-fi's memberships: a recurring tier is a
+  promise to deliver something every month, and there is nothing here to deliver.
+- **Liberapay is still not offered.** On Stripe it would be the right answer for recurring support,
+  but recurring is declined on purpose; and its other rail, PayPal, makes the donor confirm every
+  single payment — so the recurrence is nominal — while exposing donor and recipient names and
+  emails to each other. Reasoning is recorded in both DONATE files and in `.github/FUNDING.yml`.
 - Yape and Plin QR images in [`docs/donate/`](docs/donate/), trimmed, downscaled to 760 px and
   palette-quantised — 340 KB of phone screenshots down to 69 KB. Both were **decoded before being
   committed**, not trusted: each is an EMVCo payload carrying an opaque account token, and neither

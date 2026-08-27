@@ -32,16 +32,18 @@ No cuestan nada y varias ayudan más que una donación:
 
 | Método | Enlace | Comisión de plataforma | Notas |
 |---|---|---|---|
-| **Ko-fi** *(el más fácil)* | **[ko-fi.com/carlospinan](https://ko-fi.com/carlospinan)** | **0%** en propinas | Quien dona no necesita cuenta propia — basta una tarjeta. El "invítame un café" de menor fricción |
+| **GitHub Sponsors** | **[github.com/sponsors/cpinan](https://github.com/sponsors/cpinan)** | **0%** — GitHub no se queda con nada | Es lo mismo que el botón **Sponsor** arriba del repo. Hace falta una cuenta de GitHub; paga vía Stripe |
+| **Ko-fi** *(sin cuenta)* | **[ko-fi.com/carlospinan](https://ko-fi.com/carlospinan)** | **0%** en propinas | Quien dona no necesita cuenta propia — basta una tarjeta. El "invítame un café" de menor fricción |
 | **PayPal** | **[paypal.me/carlospinan](https://paypal.me/carlospinan)** | ninguna, aparte de lo que cobra PayPal | Directo, sin intermediarios |
 
-Ninguno es recurrente, a propósito — las membresías mensuales de Ko-fi están desactivadas, porque
-una membresía es la promesa de entregar algo cada mes y aquí no hay nada que entregar.
+Ninguno de los tres es recurrente, a propósito — los niveles mensuales de GitHub Sponsors y las
+membresías mensuales de Ko-fi están desactivados, porque una membresía es la promesa de entregar
+algo cada mes y aquí no hay nada que entregar.
 
-Los dos terminan en la **misma cuenta de PayPal** — solo cambian en lo que ve quien dona, así que
-elige el que te resulte menos molesto, no el que creas que me cuesta menos. La comisión
-internacional y el cambio de moneda de PayPal se aplican igual, y en una propina pequeña no son
-poca cosa.
+Ko-fi y PayPal terminan en la **misma cuenta de PayPal**; GitHub Sponsors termina en Stripe. Solo
+cambian en lo que ve quien dona, así que elige el que te resulte menos molesto, no el que creas
+que me cuesta menos. La comisión internacional y el cambio de moneda de PayPal se aplican igual a
+esos dos, y en una propina pequeña no son poca cosa.
 
 ### Perú 🇵🇪
 
@@ -61,22 +63,24 @@ número personal a todo el que lea este archivo.
 
 ## Por qué estos y no otros
 
-- **Ko-fi va primero** porque quien dona no necesita cuenta, le basta una tarjeta, la plataforma se
-  queda con 0% de una propina única, y paga a PayPal — sin otro proceso bancario en el que atascarse.
-- **Liberapay se evaluó y se descartó.** Es una ONG que no se queda con nada, y con Stripe sería la
-  respuesta correcta para apoyo recurrente. Con PayPal no lo es: PayPal obliga a quien dona a
-  confirmar *cada pago*, así que lo recurrente es solo de nombre, y además muestra los nombres y
-  correos de quien dona y de quien recibe, el uno al otro. Eso es un `paypal.me` peor con una
-  cuenta extra de por medio.
+- **GitHub Sponsors va primero** porque GitHub no se queda con nada y es la única opción que no
+  manda a quien dona a otro sitio — el botón **Sponsor** y su ventana son parte del repositorio.
+  Estuvo fuera hasta el 2026-08-27 por un tema de cobro, no de preferencia: paga a través de una
+  cuenta de Stripe Connect cuyo país tiene que coincidir con el del banco, y esa cuenta ya está
+  aprobada. La ruta sin banco — un *fiscal host* como Open Source Collective, 10% de comisión y
+  solo elegible al registrarse — al final no hizo falta.
+- **Ko-fi va segundo, y sigue siendo lo más fácil para quien no es programador**, porque quien dona
+  no necesita cuenta, le basta una tarjeta, la plataforma se queda con 0% de una propina única, y
+  paga a PayPal — sin otro proceso bancario en el que atascarse.
+- **Liberapay se evaluó y se descartó.** Es una ONG que no se queda con nada y, con Stripe, sería la
+  respuesta correcta para apoyo *recurrente*. Stripe ya está disponible aquí, pero la razón para
+  dejarlo fuera sobrevive: lo recurrente se descarta a propósito, y el otro riel de Liberapay es
+  PayPal, que obliga a quien dona a confirmar *cada pago* — así que lo recurrente es solo de
+  nombre — y además muestra los nombres y correos de quien dona y de quien recibe, el uno al otro.
+  Eso es un `paypal.me` peor con una cuenta extra de por medio.
 - **Yape/Plin van aparte** porque para quien dona desde Perú no cuestan nada, llegan al instante
   y se saltan el cambio de moneda — mandar a un peruano por PayPal quemaría un porcentaje de dos
   dígitos de una propina pequeña en comisiones, sin ninguna razón.
-- **GitHub Sponsors está fuera a propósito.** Sobre el papel es la opción obvia: 0% de comisión y
-  un botón **Sponsor** nativo en el repositorio. En la práctica su vía de pago pide una cuenta de
-  Stripe Connect cuyo país coincida con el del banco, y hoy eso no es viable aquí. Existe una ruta
-  sin banco — un *fiscal host* como Open Source Collective — pero cobra 10% y solo se puede elegir
-  *al registrarse*, nunca cambiar después sin escribir a soporte. Así que es una decisión para
-  tomar con calma más adelante, no una fila rota en esta tabla hoy.
 - **Open Collective** (libro de cuentas público y detallado) queda fuera por lo de siempre: esto es
   un solo mantenedor sin gastos que rendir en público, así que la transparencia que ofrece todavía
   no tiene nada en qué gastarse.

@@ -63,6 +63,7 @@ Web: https://cpinan.github.io/corta-spam/
 Es gratis y va a seguir siéndolo. Lo que más ayuda no cuesta nada: calificarla en Play, una estrella en el repo, o traducirla. Y si quieres invitarme un café:
 
 🇵🇪 Yape y Plin: los QR están en las imágenes de este post. Ábrelos y escanéalos desde tu app; no hay comisión para ninguno de los dos.
+💜 GitHub Sponsors: https://github.com/sponsors/cpinan
 ☕ Ko-fi: https://ko-fi.com/carlospinan
 💳 PayPal: https://paypal.me/carlospinan
 
@@ -82,5 +83,5 @@ Es gratis y va a seguir siéndolo. Lo que más ayuda no cuesta nada: calificarla
 - **Los enlaces de donación van aquí, no en la app ni en la ficha de Play.** La app no tiene código
   de cobros ni aviso de donación, y la descripción corta de Play no admite información promocional.
   El razonamiento completo está en `DONATE_ES.md`.
-- Antes de publicar: abre `ko-fi.com/carlospinan` y `paypal.me/carlospinan` una vez, y comprueba que
-  la ficha de Play sigue en 200.
+- Antes de publicar: abre `github.com/sponsors/cpinan`, `ko-fi.com/carlospinan` y
+  `paypal.me/carlospinan` una vez, y comprueba que la ficha de Play sigue en 200.
