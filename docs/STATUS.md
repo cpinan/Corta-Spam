@@ -1,24 +1,45 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-08-27 · branch `main` · 2 uncommitted files (a LinkedIn draft + its .docx)_
+_Last updated: 2026-08-27 (later) · branch `main` · 2 uncommitted files (a LinkedIn draft + its .docx)_
 
 ## Next action
 
-Fill the two `[NOMBRE]` / `[QUÉ HIZO]` placeholders at the end of `docs/LINKEDIN_POST_ES.md` and decide whether that post should carry donation links, then commit it.
+Watch the Play Console for the 1.6.1 (9) review result — it was uploaded to production on
+2026-08-27 and nothing here proceeds until it lands.
 
 ## State
 
-- **1.6.0 (versionCode 8) is live in production**, published 2026-08-21. No app code changed since; this session was documentation only.
-- **GitHub Sponsors is live and listed everywhere.** Its Stripe Connect payout was approved 2026-08-27, which removes the only thing that had been blocking it. `github: cpinan` is first in `.github/FUNDING.yml`, and the Sponsor row appears in both DONATE files, both READMEs, the CHANGELOG, both privacy copies and the live pages site.
-- **Monthly tiers are off on purpose**, matching Ko-fi's memberships — a recurring tier is a promise to deliver something every month and there is nothing here to deliver.
-- **Nothing is asked for inside the app.** No billing code, no donation prompt, no nag screen; the entire ask lives in the repo and on the pages site. Do not add one.
-- Liberapay and Open Collective remain deliberately out — see "Do not redo".
-- The Sponsorships checkbox in repo **Settings → General → Features is ticked** (2026-08-27). Without it GitHub ignores `FUNDING.yml` silently — no button, no error.
+- **1.6.1 (versionCode 9) was uploaded to production on 2026-08-27.** 1.6.0 (8) had been live at
+  100% since 2026-08-21. **Codes 6, 7, 8 and 9 are all spent** — the next build takes 10 or higher.
+- **The release answers one bug report**: with the default action set to Block, the app showed
+  "Blocked call" and then the call answered itself. `Call.reject()` only applies to a ringing call,
+  so anything that answered first turned it into a silent no-op. `BlockedCallPolicy` now picks the
+  action from the call state and a watchdog verifies it happened; an unknown state hangs up.
+- **The auto-responder can no longer hold a call open.** Three text-to-speech paths reported nothing
+  at all (failed init left non-null, missing voice for the device language, `speak()` returning
+  ERROR); all three now report completion, backed by a 10s no-sound and 60s never-finished deadline.
+- **Switching the auto-responder on is confirmed through a dialog** in all four locales. The default
+  was already off and still is.
+- **The store listing is four languages now** — pt-BR and hi-IN listings were created 2026-08-27,
+  and every locale has its own name (`Corta Spam: Call Blocker` and so on). The launcher label stays
+  `Corta Spam` everywhere, deliberately.
+- **`scripts/blocked_call_test.sh` is new** and is the only thing in this repo that can reach a
+  blocked call which something else answered. It asserts from Telecom's Historical Events, never by
+  polling.
+- 731 tests, 34 course chapters, 183 quiz questions. `android.r8.optimizedResourceShrinking=true`
+  took the bundle from 5.43 MB to 4.95 MB.
 
 ## In flight
 
-- `docs/LINKEDIN_POST_ES.md` (86 lines, untracked) + `docs/LINKEDIN_POST_ES.docx` — launch post in Spanish. Two `[NOMBRE]` / `[QUÉ HIZO]` placeholders near the end are unfilled, flagged in its own header. Unlike `docs/LINKEDIN_POST_1_6_0_ES.md` it carries **no donation links at all**; not touched this session because that may be deliberate for a launch post.
-- `~/Projects/cpinan.github.io` — unrelated uncommitted work, left exactly as found: `README.md`, `bendiciones-buenos-dias/index.html`, root `index.html`, plus untracked `huellitas-al-dia/index.html`, `assets/covers/bendiciones.jpg`, `assets/icons/huellitas-al-dia.png`. Belongs to other apps on that site, not to Corta Spam.
+- `docs/LINKEDIN_POST_ES.md` (untracked) + `docs/LINKEDIN_POST_ES.docx` — two `[NOMBRE]` /
+  `[QUÉ HIZO]` placeholders near the end, and the donation-links question below. Untouched this
+  session.
+- Reporter follow-up unsent. A drafted Spanish reply asks the one open question — whether they had
+  *Respuesta automática* switched on — which decides whether they hit the bug or the feature.
+- `docs/STORE_LISTING.md:395` — pt-BR and hi-IN listings inherit the **default language's**
+  graphics, so both currently show Spanish screenshots. Fix is one emulator run per locale:
+  `./scripts/seed_screenshots.sh --locale pt-BR` then `./scripts/play_assets.sh`, needing the debug
+  build reinstalled. No pt/hi feature graphic exists at all.
 
 ## Verify
 
@@ -26,18 +47,40 @@ Fill the two `[NOMBRE]` / `[QUÉ HIZO]` placeholders at the end of `docs/LINKEDI
 bash tools/verify.sh
 ```
 
-Not run this session — no code changed, only Markdown, HTML and YAML.
+Green this session, including `--release`. `./scripts/blocked_call_test.sh --device <emulator> auto`
+is the device half; it needs an emulator and reboots it when the virtual modem wedges.
 
 ## Open questions
 
-- **The Sponsor button was never visually confirmed** (2026-08-27). GitHub definitely parsed the file — all four funding URLs appear in the repo page HTML, and Ko-fi/PayPal can only have come from `FUNDING.yml` — but the rendered button and its dropdown were not seen. One glance at https://github.com/cpinan/Corta-Spam settles it; expect four rows with **cpinan** first.
-- Should the launch post (`LINKEDIN_POST_ES.md`) carry donation links, or stay clean? The 1.6.0 post carries all three.
-- Version codes 6 and 7 are both spent. Treat the next code as unknown until the Play Console states it — 8 is published, so 9 is the expectation, not a fact.
+- **Play review of 1.6.1 (9), submitted 2026-08-27.** No result yet.
+- **Nothing in 1.6.1 has run on physical hardware.** The report came from a Redmi Note 13 Pro on
+  Android 16 (HyperOS) — the one platform whose Telecom behaviour actually prompted the fix. A
+  Pixel 10 Pro XL is attached to this machine; a real inbound call needs a second phone.
+- **Did the reporter have the auto-responder on?** Unanswered, and it decides whether they saw the
+  bug or the feature working as designed.
+- Should `LINKEDIN_POST_ES.md` carry donation links? The 1.6.0 post carries all three.
+- **AGP 9 / Gradle 9 is blocked**, not abandoned — see "Do not redo".
+- Whether to generate pt-BR and hi-IN screenshots before the next release.
 
 ## Do not redo
 
-- **Do not re-litigate GitHub Sponsors' absence.** Resolved 2026-08-27; the "deliberately absent" rationale was deleted from both DONATE files and the CHANGELOG, not left standing. The old blocker was that Sponsors pays out through a Stripe Connect account whose country must match the bank account's. The bank-free workaround — a fiscal host such as Open Source Collective, 10% fee, choosable only at signup — was never needed and should not be revisited.
-- **Liberapay stays out.** On Stripe it would suit recurring support, but recurring is declined on purpose, and its other rail is PayPal, which makes the donor confirm every single payment and shows donor and recipient names and emails to each other. Stripe now existing does not revive it.
-- **Do not `git commit -am` in `cpinan.github.io`.** It carries unrelated dirty files from other apps; stage by explicit path or they get swallowed.
-- **`FUNDING.yml` alone does not render the button** — the Settings → Features checkbox is the other half, and its absence fails silently.
-- Adding an entry for an account that does not exist renders a button that 404s, which is worse than no button. Only live accounts go in that file.
+- **Do not try to clear the Play "deprecated window APIs" advisory.** `setStatusBarColor`,
+  `setNavigationBarColor` and `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` are called unconditionally
+  by `androidx.activity`'s own `EdgeToEdgeApi35.setUp` — disassembled at 1.13.0 on 2026-08-27 to
+  confirm — which is the API Google's own advisory recommends calling. Upgrading the library does
+  not help. Nothing this app writes removes them short of dropping edge-to-edge below API 35.
+- **Edge-to-edge itself is already done**: both activities call `enableEdgeToEdge()` and every
+  screen pads with `safeDrawing`. Verified on an API 36 emulator.
+- **Picture-in-picture is declined.** No video, and the one full-screen surface is a call screen
+  that must not shrink into a corner.
+- **AGP 9 needs Gradle 9 first, and Gradle 9.3 fails to configure with either AGP**: it pins
+  `org.jetbrains:annotations` to `strictly 13.0` for its embedded Kotlin while the Android plugin
+  classpath wants 23.0.0. Trialled and reverted 2026-08-27. A `resolutionStrategy` force on the
+  buildscript classpath is the likely fix — as its own change, with its own verification.
+- **Do not assert emulator call behaviour by polling `dumpsys telecom`.** One dump costs most of a
+  second against calls decided in one; it reported a call rejected at 0.9s as ringing for fifteen.
+  Read the Historical Events block instead, filtered by a `TC@id` taken before the call.
+- **Do not answer a test call with `KEYCODE_CALL`** — it redials when there is nothing to answer,
+  and that outgoing call looks exactly like the bug. Use `KEYCODE_HEADSETHOOK`.
+- **Do not record a version code as unspent.** Three times running the belief was wrong. A code is
+  spent on upload, and an upload leaves no local trace.
