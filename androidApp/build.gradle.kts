@@ -69,9 +69,20 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // The lesson this file keeps re-learning, now written where the number lives: do not record a
 // code as unspent. Record it as unknown until the Console says otherwise.
 //
-// See docs/store/RELEASE_NOTES_1.6.0.md.
-val appVersionName = "1.6.0"
-val appVersionCode = 8
+// 9, and 1.6.1 rather than 1.7.0, because this release is one bug report answered: a blocked call
+// that something else answered first stayed connected while the notification said it had been
+// blocked, and an auto-responder greeting that never played held the call open until the caller
+// gave up. No feature was added -- the confirmation dialog in front of the auto-responder switch
+// exists because the feature surprised the person who turned it on, not because it does anything
+// new.
+//
+// 9 is the next code only if the Console agrees. Codes 6, 7 and 8 were each recorded here as
+// unspent and each turned out to have been uploaded; the file above is the scar tissue. Check the
+// Console before uploading and raise this number rather than assume it.
+//
+// See docs/store/RELEASE_NOTES_1.6.1.md.
+val appVersionName = "1.6.1"
+val appVersionCode = 9
 
 // Names the outputs <versionCode>-<versionName>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
