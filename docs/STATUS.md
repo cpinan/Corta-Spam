@@ -1,43 +1,42 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-08-27 (later) · branch `main` · 2 uncommitted files (a LinkedIn draft + its .docx)_
+_Last updated: 2026-08-27 (evening) · branch `main` · 2 uncommitted files (a LinkedIn draft + its .docx)_
 
 ## Next action
 
-Watch the Play Console for the 1.6.1 (9) review result — it was uploaded to production on
-2026-08-27 and nothing here proceeds until it lands.
+Watch the Play Console for the 1.6.1 (9) review result — uploaded to production on 2026-08-27.
+The keypad caret fix (`e274f7e`) is on `main` and unreleased; it needs version code **10** whenever
+the next release goes out.
 
 ## State
 
-- **1.6.1 (versionCode 9) was uploaded to production on 2026-08-27.** 1.6.0 (8) had been live at
-  100% since 2026-08-21. **Codes 6, 7, 8 and 9 are all spent** — the next build takes 10 or higher.
-- **The release answers one bug report**: with the default action set to Block, the app showed
-  "Blocked call" and then the call answered itself. `Call.reject()` only applies to a ringing call,
-  so anything that answered first turned it into a silent no-op. `BlockedCallPolicy` now picks the
-  action from the call state and a watchdog verifies it happened; an unknown state hangs up.
-- **The auto-responder can no longer hold a call open.** Three text-to-speech paths reported nothing
-  at all (failed init left non-null, missing voice for the device language, `speak()` returning
-  ERROR); all three now report completion, backed by a 10s no-sound and 60s never-finished deadline.
-- **Switching the auto-responder on is confirmed through a dialog** in all four locales. The default
-  was already off and still is.
-- **The store listing is four languages now** — pt-BR and hi-IN listings were created 2026-08-27,
-  and every locale has its own name (`Corta Spam: Call Blocker` and so on). The launcher label stays
+- **Codes 6, 7, 8 and 9 are all spent.** 1.6.1 (9) is in review; 1.6.0 (8) has been live at 100%
+  since 2026-08-21. The next build takes 10 or higher.
+- **1.6.1 answers the blocked-call report**: `Call.reject()` only applies to a ringing call, so
+  anything that answered first turned blocking into a silent no-op. `BlockedCallPolicy` picks the
+  action from the call state, a watchdog verifies it, and an unknown state hangs up. The
+  auto-responder can no longer hold a call open (three silent TTS exits closed, 10s/60s deadlines).
+- **The dial pad types at the caret now** (`e274f7e`, unreleased). The field was a `String`, which
+  carries no caret, so the pad, `+` and delete could only append or drop the last character —
+  a country code could not be inserted in front of a number already typed. Arithmetic lives in
+  `shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/NumberEntry.kt`, tested by
+  nine assertions; the composable keeps three adapters. A/B'd on an API 36 AVD against both binaries.
+- **The four shipped locales are audited and clean** (2026-08-27). Key parity holds across all three
+  resource trees, and no user-facing string is hardcoded: every suspicious Kotlin literal is a log
+  line, a JSON field name, a brand name, a symbol, or country data that resolves through
+  `platformCountryName`. Credits contributions and the backup example JSON are English on purpose.
+- **The store listing is four languages**, each with its own name; the launcher label stays
   `Corta Spam` everywhere, deliberately.
-- **`scripts/blocked_call_test.sh` is new** and is the only thing in this repo that can reach a
-  blocked call which something else answered. It asserts from Telecom's Historical Events, never by
-  polling.
-- 731 tests, 34 course chapters, 183 quiz questions. `android.r8.optimizedResourceShrinking=true`
-  took the bundle from 5.43 MB to 4.95 MB.
+- 740 tests, 35 course chapters, 188 quiz questions.
 
 ## In flight
 
-- `docs/LINKEDIN_POST_ES.md` (untracked) + `docs/LINKEDIN_POST_ES.docx` — two `[NOMBRE]` /
-  `[QUÉ HIZO]` placeholders near the end, and the donation-links question below. Untouched this
-  session.
+- `docs/LINKEDIN_POST_ES.md` (untracked) + `.docx` — two `[NOMBRE]` / `[QUÉ HIZO]` placeholders near
+  the end, plus the donation-links question below. Untouched for two sessions.
 - Reporter follow-up unsent. A drafted Spanish reply asks the one open question — whether they had
   *Respuesta automática* switched on — which decides whether they hit the bug or the feature.
-- `docs/STORE_LISTING.md:395` — pt-BR and hi-IN listings inherit the **default language's**
-  graphics, so both currently show Spanish screenshots. Fix is one emulator run per locale:
+- `docs/STORE_LISTING.md:395` — pt-BR and hi-IN listings inherit the default language's graphics, so
+  both show Spanish screenshots. Fix is one emulator run per locale:
   `./scripts/seed_screenshots.sh --locale pt-BR` then `./scripts/play_assets.sh`, needing the debug
   build reinstalled. No pt/hi feature graphic exists at all.
 
@@ -47,32 +46,43 @@ Watch the Play Console for the 1.6.1 (9) review result — it was uploaded to pr
 bash tools/verify.sh
 ```
 
-Green this session, including `--release`. `./scripts/blocked_call_test.sh --device <emulator> auto`
-is the device half; it needs an emulator and reboots it when the virtual modem wedges.
+Green this session. `./scripts/blocked_call_test.sh --device <emulator> auto` is the device half;
+it needs an emulator and reboots it when the virtual modem wedges.
 
 ## Open questions
 
+Three findings from this session, each needing a decision before anyone acts on it:
+
+- **Rotation discards every screen's state.** `AdaptiveScaffold.kt:73` calls `content()` from three
+  branches of one `when (windowSizeClass)` (lines 86, 132, 164), so a size-class change moves every
+  screen to a different composition slot and drops its `remember`/`rememberSaveable`. Pre-existing —
+  the pre-fix binary loses the keypad number identically. Fix is `movableContentOf` plus a pass over
+  every screen: its own change, its own verification.
+- **The spam-provider toggle is inert.** `SettingsScreen.kt:125` declares `onSetSpamEnabled` and the
+  body never calls it, so no user can switch it on. `AppNavHost.kt:423`, the intent, the repository
+  and `EvaluateIncomingCallUseCase` are all wired and tested. Wire the row, or delete the feature.
+- **Eight dead string keys × 4 locales**: `action_back`, `call_log_just_now`, `nav_settings`,
+  `schedule_hour_hint`, `schedule_minute_hint`, `schedule_invalid_time`, `stats_blocked_count`, and
+  `call_log_time_format` (dead by design — `formatCallTimestamp` replaced it). The
+  `settings_spam_provider` pair is left in place deliberately: it is the evidence for the finding above.
 - **Play review of 1.6.1 (9), submitted 2026-08-27.** No result yet.
 - **Nothing in 1.6.1 has run on physical hardware.** The report came from a Redmi Note 13 Pro on
-  Android 16 (HyperOS) — the one platform whose Telecom behaviour actually prompted the fix. A
-  Pixel 10 Pro XL is attached to this machine; a real inbound call needs a second phone.
-- **Did the reporter have the auto-responder on?** Unanswered, and it decides whether they saw the
-  bug or the feature working as designed.
+  Android 16 (HyperOS). A Pixel 10 Pro XL is attached to this machine; a real inbound call needs a
+  second phone.
 - Should `LINKEDIN_POST_ES.md` carry donation links? The 1.6.0 post carries all three.
-- **AGP 9 / Gradle 9 is blocked**, not abandoned — see "Do not redo".
 - Whether to generate pt-BR and hi-IN screenshots before the next release.
+- **AGP 9 / Gradle 9 is blocked**, not abandoned — see "Do not redo".
 
 ## Do not redo
 
 - **Do not try to clear the Play "deprecated window APIs" advisory.** `setStatusBarColor`,
   `setNavigationBarColor` and `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` are called unconditionally
-  by `androidx.activity`'s own `EdgeToEdgeApi35.setUp` — disassembled at 1.13.0 on 2026-08-27 to
-  confirm — which is the API Google's own advisory recommends calling. Upgrading the library does
-  not help. Nothing this app writes removes them short of dropping edge-to-edge below API 35.
-- **Edge-to-edge itself is already done**: both activities call `enableEdgeToEdge()` and every
-  screen pads with `safeDrawing`. Verified on an API 36 emulator.
-- **Picture-in-picture is declined.** No video, and the one full-screen surface is a call screen
-  that must not shrink into a corner.
+  by `androidx.activity`'s own `EdgeToEdgeApi35.setUp` — disassembled at 1.13.0 on 2026-08-27 —
+  which is the API Google's own advisory recommends calling. Upgrading the library does not help.
+- **Edge-to-edge itself is already done**: both activities call `enableEdgeToEdge()` and every screen
+  pads with `safeDrawing`. Verified on an API 36 emulator.
+- **Picture-in-picture is declined.** No video, and the one full-screen surface is a call screen that
+  must not shrink into a corner.
 - **AGP 9 needs Gradle 9 first, and Gradle 9.3 fails to configure with either AGP**: it pins
   `org.jetbrains:annotations` to `strictly 13.0` for its embedded Kotlin while the Android plugin
   classpath wants 23.0.0. Trialled and reverted 2026-08-27. A `resolutionStrategy` force on the
@@ -84,3 +94,8 @@ is the device half; it needs an emulator and reboots it when the virtual modem w
   and that outgoing call looks exactly like the bug. Use `KEYCODE_HEADSETHOOK`.
 - **Do not record a version code as unspent.** Three times running the belief was wrong. A code is
   spent on upload, and an upload leaves no local trace.
+- **Do not launch the emulator as bare `emulator -avd …`** from a project directory — it resolves
+  `../emulator/lib64/qt` relative to the cwd and dies. Use
+  `/Users/carlospinan/Library/Android/sdk/emulator/emulator`.
+- **Do not conclude a UI defect seen next to a fresh fix is a regression.** Stash the fix, rebuild,
+  install, and look again — that is what showed the rotation state loss is pre-existing.
