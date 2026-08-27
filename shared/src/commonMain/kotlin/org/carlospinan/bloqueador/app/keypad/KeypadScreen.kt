@@ -46,6 +46,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
@@ -116,7 +118,16 @@ fun KeypadScreen(
     onAddContact: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var typed by rememberSaveable { mutableStateOf("") }
+    // A [TextFieldValue] rather than a String, because everything that types into this field --
+    // the pad, the '+' key, delete -- has to act where the caret is. A String carries no caret, so
+    // those controls could only append: with the caret parked in front of the number, a tapped key
+    // still landed at the back, and a missing country code could not be inserted at all. Reported
+    // from the app. The arithmetic is in [typeInto] and [deleteBackwards], where it is tested.
+    var entry by
+        rememberSaveable(stateSaver = TextFieldValue.Saver) {
+            mutableStateOf(TextFieldValue(""))
+        }
+    val typed = entry.text
 
     // Applied at most once per request. Keying the effect on the request alone is not enough:
     // navigating away and back builds a fresh effect, which would retype a number the user had
@@ -126,7 +137,7 @@ fun KeypadScreen(
     LaunchedEffect(dialRequest) {
         val request = dialRequest ?: return@LaunchedEffect
         if (request.id == appliedRequestId) return@LaunchedEffect
-        typed = request.number
+        entry = wholeNumber(request.number)
         appliedRequestId = request.id
     }
 
@@ -250,7 +261,7 @@ fun KeypadScreen(
                                     // search result: this strip sits under a thumb on its way to
                                     // the keys.
                                     onPick = { contact ->
-                                        typed = contact.number
+                                        entry = wholeNumber(contact.number)
                                         dismissedFor = contact.number
                                     },
                                     title =
@@ -306,8 +317,8 @@ fun KeypadScreen(
                                 },
                         ) {
                             OutlinedTextField(
-                                value = typed,
-                                onValueChange = { typed = it },
+                                value = entry,
+                                onValueChange = { entry = it },
                                 label = { Text(stringResource(Res.string.keypad_hint)) },
                                 singleLine = true,
                                 textStyle = MaterialTheme.typography.headlineSmall,
@@ -324,7 +335,7 @@ fun KeypadScreen(
                                     contactsPermissionGranted = contactsPermissionGranted,
                                     onRequestContactsPermission = onRequestContactsPermission,
                                     onPick = { contact ->
-                                        typed = contact.number
+                                        entry = wholeNumber(contact.number)
                                         dismissedFor = contact.number
                                         // Dismisses the soft keyboard with the focus. Measured on a
                                         // razr 50 ultra: with the keyboard up, the results list pushes
@@ -350,7 +361,7 @@ fun KeypadScreen(
                                     padTopPx = coordinates.boundsInWindow().top
                                     padBottomPx = coordinates.boundsInWindow().bottom
                                 },
-                            onKey = { key -> typed += key },
+                            onKey = { key -> entry = entry.typeIn(key.toString()) },
                             keyHeight = keyHeight,
                             rowSpacing = rowSpacing,
                         )
@@ -366,7 +377,7 @@ fun KeypadScreen(
                             // undiscoverable, and without any way to type it no international number
                             // could be dialled from this screen at all.
                             OutlinedButton(
-                                onClick = { typed += "+" },
+                                onClick = { entry = entry.typeIn("+") },
                                 modifier = Modifier.heightIn(min = 56.dp),
                             ) {
                                 Text(text = "+", style = MaterialTheme.typography.titleLarge)
@@ -387,9 +398,9 @@ fun KeypadScreen(
                                         .clip(MaterialTheme.shapes.small)
                                         .combinedClickable(
                                             enabled = canDelete,
-                                            onClick = { typed = typed.dropLast(1) },
+                                            onClick = { entry = entry.deleteBackwards() },
                                             onClickLabel = deleteLabel,
-                                            onLongClick = { typed = "" },
+                                            onLongClick = { entry = TextFieldValue("") },
                                             onLongClickLabel = deleteAllLabel,
                                         )
                                         // Merged, so the glyph inside does not become a second node
@@ -700,3 +711,17 @@ private val MATCHES_ANCHOR_GAP = 8.dp
  * address book. Anything past it scrolls inside the popup.
  */
 private const val MAX_VISIBLE_MATCHES = 5
+
+/**
+ * A number the user did not type character by character -- picked off a contact row, or handed in
+ * by a dial request -- with the caret left after it, ready to be corrected from the end.
+ */
+private fun wholeNumber(number: String) = TextFieldValue(number, TextRange(number.length))
+
+/** [typeInto], over the field's own value. */
+private fun TextFieldValue.typeIn(typed: String): TextFieldValue = typeInto(text, selection.start, selection.end, typed).asFieldValue()
+
+/** [deleteBackwards], over the field's own value. */
+private fun TextFieldValue.deleteBackwards(): TextFieldValue = deleteBackwards(text, selection.start, selection.end).asFieldValue()
+
+private fun NumberEntry.asFieldValue() = TextFieldValue(text, TextRange(caret))
