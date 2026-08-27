@@ -102,6 +102,16 @@ class PassthroughInCallService :
         var evaluation: Job? = null
 
         /**
+         * Ends a blocked call the app cannot leave connected: the greeting that never started or
+         * never finished, and the rejection Telecom did not act on. Cancelled by whichever of
+         * those actually happened.
+         */
+        var watchdog: Job? = null
+
+        /** Whether the auto-responder greeting has produced sound. See [BlockedCallPolicy]. */
+        var greetingStarted = false
+
+        /**
          * Row id from [CallLogRepository.logCall], so a recording finished after the call ends
          * can still find the entry it belongs to. Null until the evaluation coroutine logs.
          */
@@ -140,8 +150,17 @@ class PassthroughInCallService :
                         // on its own engine thread and MediaPlayer on a playback thread, and the
                         // work below reads and writes `callStates`, which every other path
                         // touches from the main thread only.
+                        // Hops onto serviceScope's main dispatcher for the same reason
+                        // onComplete does: this arrives on the TTS engine's thread.
+                        onStarted = {
+                            serviceScope.launch { callStates[call]?.greetingStarted = true }
+                        },
                         onComplete = {
                             serviceScope.launch {
+                                // The greeting is over, so nothing is left for the watchdog to
+                                // rescue -- and the recording path below deliberately keeps the
+                                // call up for another minute.
+                                callStates[call]?.watchdog?.cancel()
                                 if (config.recordingEnabled) {
                                     startRecordingAfterGreeting(call)
                                 } else {
@@ -291,8 +310,9 @@ class PassthroughInCallService :
                             autoResponderAudio = AutoResponderAudio(this@PassthroughInCallService).also { it.prepare() }
                             call.registerCallback(autoResponderCallback)
                             call.answer(VideoProfile.STATE_AUDIO_ONLY)
+                            armGreetingWatchdog(call, state)
                         } else {
-                            call.reject(false, null)
+                            endBlockedCall(call, state)
                         }
                     } else if (decision is RuleDecision.AllowedAfterRepeatedAttempts) {
                         // Not blocked -- the call keeps ringing normally. The only extra step is
@@ -325,6 +345,71 @@ class PassthroughInCallService :
                     // one is a missed emergency. The call is already ringing and stays ringing.
                     Log.e(TAG, "Call evaluation failed, failing open", e)
                 }
+            }
+    }
+
+    /**
+     * Ends a call the rules blocked, and checks that it actually ended.
+     *
+     * `reject()` alone was the whole of this, and it does nothing to a call that is no longer
+     * ringing: something else can answer between the call arriving and the rules deciding — the
+     * ringing screen's Answer button is reachable by a cheek or a pocket, a headset button reaches
+     * it too — and the app then posted "Blocked call" over a call that was live on the phone. That
+     * is the report this exists for: *it answers itself and I only notice when I hear the call in
+     * progress*. See [BlockedCallPolicy].
+     */
+    private fun endBlockedCall(
+        call: Call,
+        state: CallState,
+    ) {
+        when (BlockedCallPolicy.terminationFor(call.state.toCallUiPhase())) {
+            BlockedCallPolicy.Termination.REJECT -> call.reject(false, null)
+            BlockedCallPolicy.Termination.DISCONNECT -> call.disconnect()
+            // Telecom is already tearing it down; a second request would only race that.
+            BlockedCallPolicy.Termination.ALREADY_ENDING -> return
+        }
+        state.watchdog =
+            serviceScope.launch {
+                delay(BlockedCallPolicy.TERMINATION_TIMEOUT_MILLIS)
+                // Still in the map means onCallRemoved never came, so the call is still there.
+                if (!callStates.containsKey(call)) return@launch
+                if (BlockedCallPolicy.terminationFor(call.state.toCallUiPhase()) ==
+                    BlockedCallPolicy.Termination.ALREADY_ENDING
+                ) {
+                    return@launch
+                }
+                Log.w(TAG, "A blocked call was still up after being ended; disconnecting it")
+                call.disconnect()
+            }
+    }
+
+    /**
+     * Hangs up a call answered for the auto-responder if the greeting does not run.
+     *
+     * The greeting is the only reason that call was answered, and until it reports completion the
+     * caller is connected with the loudspeaker on. Text-to-speech has several ways to report
+     * nothing at all — an engine that fails to bind, a missing voice, a `speak()` that returns an
+     * error — and each of them used to leave the call open until the caller hung up.
+     *
+     * Two deadlines, because the two failures deserve different patience: a greeting that never
+     * makes a sound is a broken engine and ends the call quickly, while one that started and lost
+     * its completion callback is given the full length a greeting can legitimately take.
+     */
+    private fun armGreetingWatchdog(
+        call: Call,
+        state: CallState,
+    ) {
+        state.watchdog =
+            serviceScope.launch {
+                delay(BlockedCallPolicy.GREETING_START_TIMEOUT_MILLIS)
+                if (!state.greetingStarted) {
+                    Log.w(TAG, "The auto-responder greeting never started; hanging up")
+                    call.disconnect()
+                    return@launch
+                }
+                delay(BlockedCallPolicy.GREETING_MAX_MILLIS - BlockedCallPolicy.GREETING_START_TIMEOUT_MILLIS)
+                Log.w(TAG, "The auto-responder greeting never finished; hanging up")
+                call.disconnect()
             }
     }
 
@@ -453,6 +538,7 @@ class PassthroughInCallService :
 
         val state = callStates.remove(call)
         state?.evaluation?.cancel()
+        state?.watchdog?.cancel()
         state?.recordingTimeout?.cancel()
         finishRecording(state)
         call.unregisterCallback(autoResponderCallback)

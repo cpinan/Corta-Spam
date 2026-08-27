@@ -13,6 +13,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Plays a greeting via TTS or pre-recorded audio after a blocked call is answered.
  * Audio goes to the device speaker/earpiece (caller hears via acoustic coupling).
+ *
+ * Every path through this class must end in exactly one `onComplete`, because the caller is
+ * connected until it fires: [PassthroughInCallService] answers the call to play the greeting and
+ * hangs up when it finishes. A path that silently reports nothing leaves a blocked call live on
+ * the loudspeaker, which is what the user hears as the app answering a call by itself.
  */
 class AutoResponderAudio(
     private val context: Context,
@@ -20,14 +25,38 @@ class AutoResponderAudio(
     private var tts: TextToSpeech? = null
     private var mediaPlayer: MediaPlayer? = null
     private val ttsReady = AtomicBoolean(false)
-    private var pendingSpeak: Pair<String, () -> Unit>? = null
+
+    /**
+     * A greeting queued while the engine was still binding.
+     *
+     * Carries both callbacks, not just completion: the caller times out a greeting that never
+     * *starts*, and dropping [onStarted] here would leave a perfectly good greeting -- the common
+     * case, since the call is answered while TTS is still initialising -- looking like one that
+     * never began.
+     */
+    private class PendingGreeting(
+        val text: String,
+        val onStarted: () -> Unit,
+        val onComplete: () -> Unit,
+    )
+
+    private var pendingSpeak: PendingGreeting? = null
 
     fun prepare() {
         if (tts != null) return
         tts =
             TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
-                    tts?.language = Locale.getDefault()
+                    // The result is worth reading: an engine with no voice for the device's
+                    // language still initialises successfully and then says nothing. Spanish,
+                    // Portuguese and Hindi voices are all downloads on devices that ship with
+                    // English only. The greeting is attempted anyway -- most engines fall back to
+                    // their default voice -- but the utterance callbacks are what actually end the
+                    // call, so a failure here must not be the thing that decides it.
+                    val language = tts?.setLanguage(Locale.getDefault())
+                    if (language == TextToSpeech.LANG_MISSING_DATA || language == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.w(TAG, "No installed voice for ${Locale.getDefault()}; using the engine default")
+                    }
                     tts?.setAudioAttributes(
                         AudioAttributes
                             .Builder()
@@ -36,10 +65,22 @@ class AutoResponderAudio(
                             .build(),
                     )
                     ttsReady.set(true)
-                    pendingSpeak?.let { (text, onDone) ->
+                    pendingSpeak?.let { pending ->
                         pendingSpeak = null
-                        speakInternal(text, onDone)
+                        speakInternal(pending.text, pending.onStarted, pending.onComplete)
                     }
+                } else {
+                    // The engine is not coming. It used to be left in place, unusable and
+                    // non-null, so `prepare()` would never rebuild it and the greeting queued in
+                    // `pendingSpeak` was dropped without ever reporting completion -- the call
+                    // stayed answered until the caller gave up.
+                    Log.w(TAG, "Text-to-speech failed to initialise (status $status)")
+                    tts?.shutdown()
+                    tts = null
+                    ttsReady.set(false)
+                    val pending = pendingSpeak
+                    pendingSpeak = null
+                    pending?.onComplete?.invoke()
                 }
             }
     }
@@ -52,33 +93,42 @@ class AutoResponderAudio(
      * is out, the grant was never persistable — and the previous behaviour on any of those was to
      * report completion having said nothing at all, so the caller was answered and hung up on in
      * silence. The script is always available, so there is no reason to greet with nothing.
+     *
+     * [onStarted] fires when sound actually begins. It is separate from [onComplete] because the
+     * two failures are different: a greeting that never starts is a broken engine and the call
+     * should end now, while a greeting that started and never finished is a lost callback that
+     * should be given its full length first. Both callbacks arrive on an engine or playback
+     * thread, never the caller's.
      */
     fun play(
         script: String,
         audioUri: String?,
+        onStarted: () -> Unit = {},
         onComplete: () -> Unit,
     ) {
         if (!audioUri.isNullOrBlank()) {
-            playFile(audioUri, onComplete, onFailure = { speak(script, onComplete) })
+            playFile(audioUri, onStarted, onComplete, onFailure = { speak(script, onStarted, onComplete) })
         } else {
-            speak(script, onComplete)
+            speak(script, onStarted, onComplete)
         }
     }
 
     private fun speak(
         text: String,
+        onStarted: () -> Unit,
         onComplete: () -> Unit,
     ) {
         if (ttsReady.get()) {
-            speakInternal(text, onComplete)
+            speakInternal(text, onStarted, onComplete)
         } else {
-            pendingSpeak = text to onComplete
+            pendingSpeak = PendingGreeting(text, onStarted, onComplete)
             prepare()
         }
     }
 
     private fun speakInternal(
         text: String,
+        onStarted: () -> Unit,
         onComplete: () -> Unit,
     ) {
         val engine =
@@ -88,7 +138,9 @@ class AutoResponderAudio(
             }
         engine.setOnUtteranceProgressListener(
             object : UtteranceProgressListener() {
-                override fun onStart(utteranceId: String?) = Unit
+                override fun onStart(utteranceId: String?) {
+                    onStarted()
+                }
 
                 override fun onDone(utteranceId: String?) {
                     onComplete()
@@ -100,11 +152,17 @@ class AutoResponderAudio(
                 }
             },
         )
-        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "autoresponder")
+        // `speak` refusing the utterance is a silent failure otherwise: it returns ERROR without
+        // calling the listener at all, so nothing would ever report this greeting as finished.
+        if (engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID) != TextToSpeech.SUCCESS) {
+            Log.w(TAG, "Text-to-speech refused the greeting")
+            onComplete()
+        }
     }
 
     private fun playFile(
         uriString: String,
+        onStarted: () -> Unit,
         onComplete: () -> Unit,
         onFailure: () -> Unit,
     ) {
@@ -120,7 +178,10 @@ class AutoResponderAudio(
                             .build(),
                     )
                     setDataSource(context, uriString.toUri())
-                    setOnPreparedListener { start() }
+                    setOnPreparedListener {
+                        start()
+                        onStarted()
+                    }
                     setOnCompletionListener {
                         release()
                         mediaPlayer = null
@@ -157,5 +218,6 @@ class AutoResponderAudio(
 
     private companion object {
         const val TAG = "AutoResponderAudio"
+        const val UTTERANCE_ID = "autoresponder"
     }
 }
