@@ -10,7 +10,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 731 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 740 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — una línea por cambio, del más reciente al más antiguo (en inglés); el porqué está en [Cambios recientes](#cambios-recientes) más abajo
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
@@ -101,8 +101,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 629 pruebas, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 92 pruebas, clases exclusivas de Android (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 642 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 98 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
 ```
@@ -161,6 +161,14 @@ Un curso completo de 34 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 183 preguntas de evaluación.
 
 ## Cambios recientes
+**2026-08-27 (después):** un segundo reporte — *"si escribo XXXX y quiero insertar YY al principio, no me deja"*.
+
+- **El teclado solo podía escribir al final del número.** El campo del teclado guardaba un `String` simple, y un String no lleva cursor: todo lo que escribía en él — una tecla del teclado, el botón `+`, borrar — solo podía añadir al final. Con el cursor delante de un número ya escrito, la tecla pulsada seguía cayendo al final, así que la corrección más común en un marcador, anteponer un código de país o de zona a un número ya en pantalla, era imposible sin borrarlo y volver a empezar. Borrar tenía la misma forma: `dropLast(1)` quitaba el último carácter estuviera donde estuviera el cursor. El campo ahora es un [`TextFieldValue`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/KeypadScreen.kt), de modo que el cursor es estado que la pantalla puede leer, y cada control actúa sobre él — una tecla inserta donde está el cursor y lo adelanta, borrar quita lo que está antes o la selección entera.
+- **La aritmética del cursor es una función pura, no un detalle de pantalla.** [`NumberEntry.kt`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/NumberEntry.kt) contiene `typeInto` y `deleteBackwards` sobre texto y posiciones simples, que es lo que permite nueve aserciones sin composición. Una selección reportada por el campo se acota en vez de darse por buena — una obsoleta que se pase del texto tumbaría la pantalla dentro de una pulsación.
+- **Comparado A/B en un emulador Pixel 8 Pro API 36, con los dos binarios.** Contra la compilación previa el reporte se reproduce exacto: `5551` escrito con el teclado, cursor al principio, se pulsa `9`, el campo dice `55519`. Contra la compilación corregida las mismas pulsaciones dan `9|5551`, luego `91|5551`, borrar quita el `1` anterior al cursor y no el final, y `+` al principio da `+95551`. La pulsación larga para vaciar el campo sigue funcionando.
+- **Sin tocar: girar el teléfono sigue vaciando el campo del teclado**, y eso no es este fallo — la compilación previa lo pierde igual. [`AdaptiveScaffold`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/adaptive/AdaptiveScaffold.kt) llama a `content()` desde tres ramas de un mismo `when (windowSizeClass)`, así que un cambio de clase de ventana mueve cada pantalla a otra ranura de composición y descarta su estado `remember`/`rememberSaveable`. Necesita `movableContentOf` y una pasada por todas las pantallas: es su propio cambio, con su propia verificación.
+- **731 → 740 pruebas** (`:shared` 633 → 642, `:androidApp` 98 sin cambios). Seis de las nueve se vieron fallar contra el comportamiento antiguo de añadir-al-final y borrar-el-último antes de darlas por buenas. `./scripts/verify.sh` en verde, incluida la compilación de iOS — los nombres de las pruebas nuevas no llevan coma, que Kotlin/Native rechaza en un nombre entre acentos graves.
+
 
 **2026-08-27:** un reporte de usuario — *"tengo puesta la acción por defecto Bloquear y, aunque el número aparece como Llamada bloqueada, se contesta sola sin que yo intervenga; solo me doy cuenta cuando oigo la llamada en curso"* (Redmi Note 13 Pro, Android 16, 1.6.0).
 

@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 731 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 740 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -101,8 +101,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 629 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 92 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 642 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 98 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -159,6 +159,14 @@ A complete 34-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 183 quiz questions included.
 
 ## Recent Fixes
+**2026-08-27 (later):** a second report — *"if I type XXXX and want to insert YY at the beginning, it doesn't let me"*.
+
+- **The dial pad could only type at the end of the number.** The keypad's field held a plain `String`, and a String carries no caret: every control that typed into it — a pad key, the `+` button, delete — could only append. Put the caret in front of a number already typed and a tapped key still landed at the back, so the commonest correction a dialer is asked for, adding a country or area code to a number already on screen, was impossible without deleting it and starting again. Delete had the same shape: `dropLast(1)` removed the last character wherever the caret was. The field is now a [`TextFieldValue`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/KeypadScreen.kt), so the caret is state the screen can read, and every control acts on it — a key inserts where the caret is and moves it along, delete removes what is before it or the whole selection.
+- **The caret arithmetic is a pure function, not a screen detail.** [`NumberEntry.kt`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/NumberEntry.kt) holds `typeInto` and `deleteBackwards` over plain text and offsets, which is what makes nine assertions possible without a composition. A selection reported by the field is coerced rather than trusted — a stale one that outran its text would otherwise crash the screen inside a keystroke.
+- **A/B'd on a Pixel 8 Pro API 36 emulator, both binaries.** Against the pre-fix build the report reproduces exactly: `5551` typed on the pad, caret moved to the front, `9` tapped, field reads `55519`. Against the fixed build the same taps read `9|5551`, then `91|5551`, delete takes the `1` before the caret rather than the trailing one, and `+` at the front gives `+95551`. Long-press-to-clear still empties the field.
+- **Left unchanged: rotating the phone still empties the keypad field**, and that is not this bug — the pre-fix build loses it identically. [`AdaptiveScaffold`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/adaptive/AdaptiveScaffold.kt) calls `content()` from three branches of one `when (windowSizeClass)`, so a size-class change moves every screen to a different composition slot and discards its `remember`/`rememberSaveable` state. It needs `movableContentOf` and a pass over every screen, which is its own change with its own verification.
+- **731 → 740 tests** (`:shared` 633 → 642, `:androidApp` 98 unchanged). Six of the nine were watched failing against the old append-and-drop-last behaviour before being trusted. `./scripts/verify.sh` green, including the iOS compile — the new test names carry no comma, which Kotlin/Native rejects in a backticked name.
+
 
 **2026-08-27:** a bug report — *"default action is Block, the phone says Blocked call, and it answers itself; I only notice when I hear the call in progress"* (Redmi Note 13 Pro, Android 16, 1.6.0).
 
