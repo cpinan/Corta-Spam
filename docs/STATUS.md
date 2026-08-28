@@ -1,12 +1,12 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-08-27 (evening) · branch `main` · 2 uncommitted files (a LinkedIn draft + its .docx)_
+_Last updated: 2026-08-28 · branch `main` · working tree clean_
 
 ## Next action
 
-Watch the Play Console for the 1.6.1 (9) review result — uploaded to production on 2026-08-27.
-The keypad caret fix (`e274f7e`) is on `main` and unreleased; it needs version code **10** whenever
-the next release goes out.
+Watch the Play Console for the 1.6.1 (9) review result — uploaded to production on 2026-08-27, no
+verdict as of 2026-08-28. The keypad caret fix (`e274f7e`) is on `main` and unreleased; it needs
+version code **10** whenever the next release goes out.
 
 ## State
 
@@ -21,6 +21,9 @@ the next release goes out.
   a country code could not be inserted in front of a number already typed. Arithmetic lives in
   `shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/NumberEntry.kt`, tested by
   nine assertions; the composable keeps three adapters. A/B'd on an API 36 AVD against both binaries.
+- **The Console's four advisories against 9 (1.6.1) are triaged and need no code**, written up with
+  their evidence in `docs/PLAY_ADVISORIES.md` — including the `mapping.txt` recipe for resolving an
+  obfuscated trace and a re-triage checklist for release 10.
 - **The four shipped locales are audited and clean** (2026-08-27). Key parity holds across all three
   resource trees, and no user-facing string is hardcoded: every suspicious Kotlin literal is a log
   line, a JSON field name, a brand name, a symbol, or country data that resolves through
@@ -31,8 +34,8 @@ the next release goes out.
 
 ## In flight
 
-- `docs/LINKEDIN_POST_ES.md` (untracked) + `.docx` — two `[NOMBRE]` / `[QUÉ HIZO]` placeholders near
-  the end, plus the donation-links question below. Untouched for two sessions.
+- `docs/LINKEDIN_POST_ES.md` + `.docx` — committed at last, still a draft: two `[NOMBRE]` /
+  `[QUÉ HIZO]` placeholders near the end, plus the donation-links question below.
 - Reporter follow-up unsent. A drafted Spanish reply asks the one open question — whether they had
   *Respuesta automática* switched on — which decides whether they hit the bug or the feature.
 - `docs/STORE_LISTING.md:395` — pt-BR and hi-IN listings inherit the default language's graphics, so
@@ -46,13 +49,16 @@ the next release goes out.
 bash tools/verify.sh
 ```
 
-Green this session. `./scripts/blocked_call_test.sh --device <emulator> auto` is the device half;
-it needs an emulator and reboots it when the virtual modem wedges.
+Not run this session — the only changes were documentation. `./scripts/blocked_call_test.sh
+--device <emulator> auto` is the device half; it needs an emulator and reboots it when the virtual
+modem wedges.
 
 ## Open questions
 
-Three findings from this session, each needing a decision before anyone acts on it:
-
+- **Play review of 1.6.1 (9), submitted 2026-08-27.** No result yet.
+- **Nothing in 1.6.1 has run on physical hardware.** The report came from a Redmi Note 13 Pro on
+  Android 16 (HyperOS). A Pixel 10 Pro XL is attached to this machine; a real inbound call needs a
+  second phone.
 - **Rotation discards every screen's state.** `AdaptiveScaffold.kt:73` calls `content()` from three
   branches of one `when (windowSizeClass)` (lines 86, 132, 164), so a size-class change moves every
   screen to a different composition slot and drops its `remember`/`rememberSaveable`. Pre-existing —
@@ -65,22 +71,26 @@ Three findings from this session, each needing a decision before anyone acts on 
   `schedule_hour_hint`, `schedule_minute_hint`, `schedule_invalid_time`, `stats_blocked_count`, and
   `call_log_time_format` (dead by design — `formatCallTimestamp` replaced it). The
   `settings_spam_provider` pair is left in place deliberately: it is the evidence for the finding above.
-- **Play review of 1.6.1 (9), submitted 2026-08-27.** No result yet.
-- **Nothing in 1.6.1 has run on physical hardware.** The report came from a Redmi Note 13 Pro on
-  Android 16 (HyperOS). A Pixel 10 Pro XL is attached to this machine; a real inbound call needs a
-  second phone.
 - Should `LINKEDIN_POST_ES.md` carry donation links? The 1.6.0 post carries all three.
 - Whether to generate pt-BR and hi-IN screenshots before the next release.
 - **AGP 9 / Gradle 9 is blocked**, not abandoned — see "Do not redo".
 
 ## Do not redo
 
-- **Do not try to clear the Play "deprecated window APIs" advisory.** `setStatusBarColor`,
-  `setNavigationBarColor` and `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` are called unconditionally
-  by `androidx.activity`'s own `EdgeToEdgeApi35.setUp` — disassembled at 1.13.0 on 2026-08-27 —
-  which is the API Google's own advisory recommends calling. Upgrading the library does not help.
-- **Edge-to-edge itself is already done**: both activities call `enableEdgeToEdge()` and every screen
-  pads with `safeDrawing`. Verified on an API 36 emulator.
+- **Do not re-triage the four Play advisories on 9 (1.6.1).** Verdicts and evidence are in
+  `docs/PLAY_ADVISORIES.md`, each with the condition that would overturn it. Short version:
+  edge-to-edge is already done, the deprecated-API traces are library-internal, PiP is declined,
+  AGP 9 is deferred.
+- **The "deprecated window APIs" advisory cannot be cleared from this codebase.** Its traces
+  `c.w.b`, `c.y.b` and `a4.b.t` resolve, against the uploaded bundle's `mapping.txt`, to
+  `androidx.activity.EdgeToEdgeApi26.setUp`, `EdgeToEdgeApi29.setUp` and an R8 outline called from
+  `EdgeToEdgeApi28.adjustLayoutInDisplayCutoutMode` — the inside of `enableEdgeToEdge()`, which is
+  the call Google's own advisory recommends. Nothing in `androidApp/` or `shared/` touches those
+  APIs. Upgrading androidx.activity does not help (checked at 1.13.0).
+- **Do not read an obfuscated Play trace as ours without `mapping.txt`.** R8 names are not stable
+  across builds — check the mapping's mtime against the upload date — and a synthetic outline is
+  named after whichever class it was *first* outlined from, which is why `a4.b` says
+  `androidx.emoji2.text.ConcurrencyHelpers$…` while its caller is in `androidx.activity`.
 - **Picture-in-picture is declined.** No video, and the one full-screen surface is a call screen that
   must not shrink into a corner.
 - **AGP 9 needs Gradle 9 first, and Gradle 9.3 fails to configure with either AGP**: it pins
