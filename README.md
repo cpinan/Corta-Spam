@@ -17,6 +17,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - [`docs/MILESTONES.md`](docs/MILESTONES.md) — milestone breakdown with acceptance tests
 - [`docs/ADAPTIVE_PLAN.md`](docs/ADAPTIVE_PLAN.md) — landscape/tablet layout plan
 - [`docs/STORE_COMPLIANCE.md`](docs/STORE_COMPLIANCE.md) — Google Play declaration + privacy policy
+- [`docs/PLAY_ADVISORIES.md`](docs/PLAY_ADVISORIES.md) — Play Console quality advisories, triaged once with the evidence
 - [`LICENSE`](LICENSE) — MIT License
 - [`DONATE.md`](DONATE.md) — ways to support the project; nothing is asked for inside the app
 
@@ -159,6 +160,14 @@ A complete 34-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 183 quiz questions included.
 
 ## Recent Fixes
+**2026-08-28:** the Play Console's Recommended actions panel for release 9 (1.6.1) — four advisories, triaged, **no code changed**. Written up in [`docs/PLAY_ADVISORIES.md`](docs/PLAY_ADVISORIES.md) so release 10 does not re-derive them.
+
+- **The deprecated-API advisory was pointing at the call the other advisory asks for.** Play named `setStatusBarColor`, `setNavigationBarColor` and `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` starting in `c.w.b`, `c.y.b` and `a4.b.t`, which read like three places in this app. Resolved against the uploaded bundle's `mapping.txt`, all three are `androidx.activity.EdgeToEdgeApi26.setUp`, `EdgeToEdgeApi29.setUp` and an outline called from `EdgeToEdgeApi28.adjustLayoutInDisplayCutoutMode` — the inside of `enableEdgeToEdge()`, which is what the *first* advisory recommends calling. Nothing in `androidApp/` or `shared/` touches those APIs, in Kotlin or in either `themes.xml`. Unfixable here without trading a cosmetic advisory for a real one.
+- **An obfuscated trace is worth a minute with `mapping.txt` before it is worth an edit.** Two traps make the lookup lie confidently: R8 names are not stable across builds, so a mapping from a later local rebuild resolves `c.w` to some unrelated class and answers about a different binary — check its timestamp against the upload date — and a synthetic outline carries the name of whichever class it was *first* outlined from, which is why `a4.b` says `androidx.emoji2.text.ConcurrencyHelpers$…` while the call site is in `androidx.activity`. The recipe is in the doc.
+- **Edge-to-edge was already done, and picture-in-picture never will be.** Both activities the manifest declares call `enableEdgeToEdge` (`MainActivity.kt:250`, `InCallActivity.kt:49`) and the insets are consumed rather than assumed — `safeDrawingPadding()` in three screens, `WindowInsets.safeDrawing.only(…)` in `AdaptiveScaffold`, `asPaddingValues()` in the keypad. That advisory fires on `targetSdk` alone. PiP is offered to every app; this one has no video surface to put in a corner.
+- **AGP 9 is the one real item, and it is deferred on purpose.** R8 is already on. The advisory's payoff is memory and startup, and AGP 9 is a migration — built-in Kotlin removed, KMP plugin handling changed — against Kotlin 2.2.20, Compose Multiplatform 1.11.1 and SQLDelight 2.3.2. It gets its own commit, its own `./scripts/verify.sh`, and a release build on hardware, because R8 changes behaviour around reflection, serialization and Telecom callbacks. Not the day before an upload.
+
+
 **2026-08-27 (later):** a second report — *"if I type XXXX and want to insert YY at the beginning, it doesn't let me"*.
 
 - **The dial pad could only type at the end of the number.** The keypad's field held a plain `String`, and a String carries no caret: every control that typed into it — a pad key, the `+` button, delete — could only append. Put the caret in front of a number already typed and a tapped key still landed at the back, so the commonest correction a dialer is asked for, adding a country or area code to a number already on screen, was impossible without deleting it and starting again. Delete had the same shape: `dropLast(1)` removed the last character wherever the caret was. The field is now a [`TextFieldValue`](shared/src/commonMain/kotlin/org/carlospinan/bloqueador/app/keypad/KeypadScreen.kt), so the caret is state the screen can read, and every control acts on it — a key inserts where the caret is and moves it along, delete removes what is before it or the whole selection.

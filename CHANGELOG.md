@@ -41,6 +41,12 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
   [`docs/donate/README.md`](docs/donate/README.md) carries the decoder script for re-checking a
   replacement.
 - A "Support this project" / "Apoya el proyecto" section in both READMEs, linking to the above.
+- [`docs/PLAY_ADVISORIES.md`](docs/PLAY_ADVISORIES.md) — the Play Console's Recommended-action
+  advisories, triaged once with their evidence, so each release does not re-derive them. Covers the
+  four raised against 9 (1.6.1) — three need no work and one (AGP 9) is deferred — plus the
+  `mapping.txt` recipe for resolving an obfuscated trace, and its two traps: R8 names are not stable
+  across builds, and a synthetic outline is named after the class it was first outlined from rather
+  than the class that calls it.
 
 ### Changed
 
