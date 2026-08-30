@@ -61,3 +61,9 @@ androidApp/keystore.properties
 *.p12
 *.pepk
 play-service-account*.json
+
+# The 1.6.1 LinkedIn draft and its Word conversion stay local. The two earlier posts are
+# tracked because they were committed before this rule; nothing untracks them, and editing
+# one will still show up in git status.
+docs/LINKEDIN_POST_1_6_1_ES.md
+docs/LINKEDIN_POST_1_6_1_ES.docx
