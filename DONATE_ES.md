@@ -51,13 +51,28 @@ Nacional, instantáneo y **sin comisión para ninguna de las dos partes** — pa
 dentro del sistema bancario peruano es la mejor opción, sin discusión, y se salta por completo el
 cambio de moneda:
 
-| Método | Cómo | Notas |
-|---|---|---|
-| **Yape** | Escanea [`docs/donate/yape-qr.png`](docs/donate/yape-qr.png) desde la app de Yape | Billetera del BCP; funciona desde el Yape de cualquier banco |
-| **Plin** | Entra al app de tu entidad financiera → **Pago con QR** → escanea [`docs/donate/plin-qr.png`](docs/donate/plin-qr.png) | Funciona desde el app de cualquier banco peruano, para quien no usa Yape |
+<table>
+<tr>
+<th width="50%">Yape</th>
+<th width="50%">Plin</th>
+</tr>
+<tr>
+<td align="center"><img src="docs/donate/yape-qr.png" alt="Código QR de Yape para donar a Corta Spam" width="320"></td>
+<td align="center"><img src="docs/donate/plin-qr.png" alt="Código QR de Plin para donar a Corta Spam" width="320"></td>
+</tr>
+<tr>
+<td>Escanéalo desde el lector de QR de la app de <b>Yape</b>. Es una billetera del BCP y funciona desde el Yape de cualquier banco.</td>
+<td>Entra al app de tu entidad financiera → <b>Pago con QR</b>. Funciona desde el app de cualquier banco peruano, para quien no usa Yape.</td>
+</tr>
+</table>
+
+Los archivos a tamaño completo: [`docs/donate/yape-qr.png`](docs/donate/yape-qr.png) ·
+[`docs/donate/plin-qr.png`](docs/donate/plin-qr.png).
 
 Escanea el QR en vez de escribir un número de celular — el QR lleva la cuenta sin publicar un
-número personal a todo el que lea este archivo.
+número personal a todo el que lea este archivo. Las dos imágenes se decodificaron antes de
+subirlas y ninguna lleva un número dentro; la comprobación está en
+[`docs/donate/README.md`](docs/donate/README.md).
 
 ---
 

@@ -50,13 +50,28 @@ to the last two either way, and on a small tip it is not small.
 Domestic, instant, and **no fee at all, on either side** — for anyone already inside the Peruvian
 banking system this is strictly the best option, and it skips currency conversion entirely:
 
-| Method | How | Notes |
-|---|---|---|
-| **Yape** | Scan [`docs/donate/yape-qr.png`](docs/donate/yape-qr.png) in the Yape app | BCP wallet; works from any bank's Yape |
-| **Plin** | Open your bank's app → **Pago con QR** → scan [`docs/donate/plin-qr.png`](docs/donate/plin-qr.png) | Works from any Peruvian bank app, for people who do not use Yape |
+<table>
+<tr>
+<th width="50%">Yape</th>
+<th width="50%">Plin</th>
+</tr>
+<tr>
+<td align="center"><img src="docs/donate/yape-qr.png" alt="Yape QR code for Corta Spam donations" width="320"></td>
+<td align="center"><img src="docs/donate/plin-qr.png" alt="Plin QR code for Corta Spam donations" width="320"></td>
+</tr>
+<tr>
+<td>Scan it from the <b>Yape</b> app's QR scanner. BCP wallet, and it works from any bank's Yape.</td>
+<td>Open your bank's app → <b>Pago con QR</b>. Works from any Peruvian bank app, for people who do not use Yape.</td>
+</tr>
+</table>
+
+Full-size files: [`docs/donate/yape-qr.png`](docs/donate/yape-qr.png) ·
+[`docs/donate/plin-qr.png`](docs/donate/plin-qr.png).
 
 Scan the QR rather than typing a phone number — a QR carries the account without publishing a
-personal phone number to everyone who reads this file.
+personal phone number to everyone who reads this file. Both images were decoded before being
+committed and neither encodes one; the check is written up in
+[`docs/donate/README.md`](docs/donate/README.md).
 
 ---
 

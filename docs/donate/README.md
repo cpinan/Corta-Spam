@@ -1,6 +1,8 @@
 # Donation QR codes
 
-Two images, linked from [`DONATE.md`](../../DONATE.md) and [`DONATE_ES.md`](../../DONATE_ES.md):
+Two images, shown inline in [`DONATE.md`](../../DONATE.md) and
+[`DONATE_ES.md`](../../DONATE_ES.md) — the pair renders side by side in an HTML table there, at
+320 px each, with the full-size files still linked underneath:
 
 | File | Source | Shows |
 |---|---|---|
