@@ -59,7 +59,7 @@
     <string name="call_status_dialing">Calling…</string>
     <string name="call_status_active">In call</string>
     <string name="call_unknown_number">Unknown number</string>
-    <string name="call_repeated_caller_hint">This number has called %d times</string>
+    <string name="call_repeated_caller_hint">This number has called %1$d times</string>
     <string name="action_decline">Decline</string>
     <string name="action_answer">Answer</string>
     <string name="action_hang_up">Hang up</string>
@@ -91,7 +91,7 @@
     <string name="stats_title">Blocked Calls — Last 7 Days</string>
     <string name="stats_empty">No blocked calls in the last 7 days.</string>
     <string name="stats_loading">Loading…</string>
-    <string name="stats_blocked_count">%d blocked</string>
+    <string name="stats_blocked_count">%1$d blocked</string>
     <string name="stats_blocked_label">blocked</string>
     <!-- Block list hub -->
     <string name="block_list_hub_title">Block Lists</string>

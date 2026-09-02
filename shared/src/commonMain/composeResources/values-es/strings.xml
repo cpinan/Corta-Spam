@@ -64,7 +64,7 @@
     <string name="call_status_dialing">Llamando…</string>
     <string name="call_status_active">En llamada</string>
     <string name="call_unknown_number">Número desconocido</string>
-    <string name="call_repeated_caller_hint">Este número te ha llamado %d veces</string>
+    <string name="call_repeated_caller_hint">Este número te ha llamado %1$d veces</string>
     <string name="action_decline">Rechazar</string>
     <string name="action_answer">Contestar</string>
     <string name="action_hang_up">Colgar</string>
@@ -99,7 +99,7 @@
     <string name="stats_title">Llamadas bloqueadas — Últimos 7 días</string>
     <string name="stats_empty">Sin llamadas bloqueadas en los últimos 7 días.</string>
     <string name="stats_loading">Cargando…</string>
-    <string name="stats_blocked_count">%d bloqueadas</string>
+    <string name="stats_blocked_count">%1$d bloqueadas</string>
     <string name="stats_blocked_label">bloqueadas</string>
 
     <!-- Listas de bloqueo -->

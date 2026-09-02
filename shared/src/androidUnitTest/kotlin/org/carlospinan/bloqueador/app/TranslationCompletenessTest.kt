@@ -69,6 +69,43 @@ class TranslationCompletenessTest {
         assertComplete(File(repoRoot(), "androidApp/src/main/res"))
     }
 
+    /**
+     * Every Compose Multiplatform string that takes an argument spells it positionally.
+     *
+     * Compose Multiplatform does not format these strings; it substitutes them, with one regex —
+     * `%(\d+)\$[ds]`, verified in the shipped `classes.dex` of 1.6.1. A bare `%d` or `%s` matches
+     * nothing, so it is not an argument at all: it is printed to the user, literally, as `%d`.
+     * That shipped for five releases in `call_repeated_caller_hint`, in all four locales — the
+     * one live caller of the whole mechanism.
+     *
+     * Nothing else catches it. The key is present, the specifier parity check above accepts both
+     * spellings by design (it is comparing a translation against its source, and both sides had
+     * the same wrong one), the build succeeds, and the string only appears on a screen you need a
+     * repeat spam caller to reach.
+     *
+     * Android resources are deliberately not checked here: `Context.getString` is a real
+     * formatter and `%d` works correctly there.
+     */
+    @Test
+    fun composeMultiplatformFormatArgumentsArePositional() {
+        val root = File(repoRoot(), "shared/src/commonMain/composeResources")
+        val offenders = mutableListOf<String>()
+
+        for (locale in listOf("values") + locales) {
+            val file = File(root, "$locale/strings.xml")
+            for ((key, body) in bodiesOf(file, "string") + bodiesOf(file, "plurals")) {
+                // A doubled %% is a literal percent sign, so blank those out before looking for
+                // a specifier -- "50%%" must not read as an implicit one.
+                val implicit = Regex("""%[sdf]""").findAll(body.replace("%%", "")).map { it.value }.toList()
+                if (implicit.isNotEmpty()) {
+                    offenders += "$locale/$key uses ${implicit.joinToString()} — write %1\$d / %1\$s instead"
+                }
+            }
+        }
+
+        assertEquals(emptyList(), offenders.sorted(), "implicit format specifiers reach the user verbatim")
+    }
+
     @Test
     fun theSharedModulesAndroidResourcesAreCompleteInEveryLocale() {
         assertComplete(File(repoRoot(), "shared/src/androidMain/res"))
