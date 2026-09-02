@@ -16,7 +16,37 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ## [Unreleased]
 
+### Fixed
+
+- **Do Not Disturb is honoured when ringing** (`a4c583b`). Declaring `IN_CALL_SERVICE_RINGING` takes
+  zen filtering away from Telecom along with the ringtone; nothing in the app read
+  `getCurrentInterruptionFilter()`. `RingerPolicy` now gates on the interruption filter and the
+  priority-caller policy, deferring to the address book only for "priority callers only".
+- **Do Not Disturb's own exceptions can ring again** (`a4c583b`). `AudioManager.getRingerMode()`
+  reports `RINGER_MODE_SILENT` under zen even when the user's `Settings.Global.MODE_RINGER` does
+  not, so starred contacts and repeat callers were silenced by the very fix meant to let them
+  through. `RingerPolicy.effectiveRingerMode` stops applying zen twice.
+- **The incoming-call notification channel no longer carries its own sound or DND bypass**
+  (`a4c583b`). Channel sound/vibration/bypass are frozen at creation, so the channel id moved to
+  `incoming_calls_v2` and the original is deleted on start-up.
+- **The auto-responder closes the uplink once the greeting has played** (`0d237c3`). `setMuted()`
+  gates only what Telecom sends to the far end, so the caller stops hearing the room while
+  `MediaRecorder` keeps capturing. Also: a blocked call arriving during a live one is rejected
+  rather than hijacking that call's audio route, and the route and mute are restored afterwards.
+- **`%d` is no longer printed to the user verbatim** (`cf21606`). Compose Multiplatform substitutes
+  with `%(\d+)\$[ds]` and never matches a bare `%d`; `call_repeated_caller_hint` and
+  `stats_blocked_count` are positional in all four locales.
+
 ### Added
+
+- `ring_test.sh dnd` (`a4c583b`) — the Do Not Disturb truth table on an emulator: stranger silenced,
+  priority caller still rings, total silence beats both. Reads the device's own
+  `priorityCallSenders` rather than assuming it.
+- `ContactMatchingStressTest` (`34953c3`) — ten contacts against 100 near-miss strangers, asserted
+  through `RulePrecedenceResolver.evaluate` with `defaultAction = BLOCK`. All 100 blocked; the one
+  remaining hole (a nationally-saved contact matched by the same national number under a foreign
+  dialling code) is now an executable test rather than a comment.
+- Course chapter 36 and a README entry covering all four reports.
 
 - Donation options, in the repository only — [`DONATE.md`](DONATE.md) / [`DONATE_ES.md`](DONATE_ES.md)
   list GitHub Sponsors, Ko-fi, PayPal and Yape/Plin, plus the free ways to help that are worth more
