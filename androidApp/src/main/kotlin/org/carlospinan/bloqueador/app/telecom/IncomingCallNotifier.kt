@@ -31,7 +31,10 @@ import org.carlospinan.bloqueador.app.ShowCallLogIntent
  * to launch UI over the lock screen instead.
  */
 object IncomingCallNotifier {
-    private const val CHANNEL_ID = "incoming_calls"
+    private const val CHANNEL_ID = "incoming_calls_v2"
+
+    /** Superseded by [CHANNEL_ID]; deleted on start-up. See [createChannel]. */
+    private const val LEGACY_CHANNEL_ID = "incoming_calls"
     private const val NOTIFICATION_ID = 1001
     private const val ONGOING_CHANNEL_ID = "ongoing_call"
     private const val ONGOING_NOTIFICATION_ID = 1002
@@ -44,6 +47,15 @@ object IncomingCallNotifier {
 
     fun createChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
+
+        // A channel's sound, vibration and DND-bypass settings are frozen at creation: passing new
+        // ones to createNotificationChannel for an id that already exists is silently ignored, and
+        // only the user can change them afterwards. The first version of this channel asked to
+        // bypass Do Not Disturb and left its sound and vibration at the channel defaults, so on
+        // every existing install it rings and buzzes on its own -- on top of CallRinger's ringtone,
+        // and through the zen filter RingerPolicy now honours. Fixing that needs a new id.
+        manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
+
         val channel =
             NotificationChannel(
                 CHANNEL_ID,
@@ -51,7 +63,16 @@ object IncomingCallNotifier {
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = context.getString(R.string.notification_channel_incoming_calls_desc)
-                setBypassDnd(true)
+                // No setBypassDnd. It was here because a ringing call felt like the obvious thing
+                // to let through Do Not Disturb -- but the ringing itself is CallRinger's job and
+                // now asks zen mode's permission properly, and a channel that bypasses the filter
+                // would put the heads-up and the full-screen intent back through it regardless.
+                //
+                // Silent for the same reason: this app plays its own ringtone. Leaving the channel
+                // on its defaults meant every incoming call also fired the default notification
+                // sound and vibration underneath the real one.
+                setSound(null, null)
+                enableVibration(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
         manager.createNotificationChannel(channel)

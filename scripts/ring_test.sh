@@ -21,6 +21,7 @@
 #
 # Usage:
 #   ./scripts/ring_test.sh auto                  # emulator only: place calls and assert, end to end
+#   ./scripts/ring_test.sh dnd                   # emulator only: the Do Not Disturb truth table
 #   ./scripts/ring_test.sh watch                 # real device: a human calls, this samples and asserts
 #   ./scripts/ring_test.sh --device <serial> ...
 #
@@ -37,7 +38,7 @@ MODE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --device) DEVICE="$2"; shift 2 ;;
-    auto|watch) MODE="$1"; shift ;;
+    auto|watch|dnd) MODE="$1"; shift ;;
     --help|-h) sed -n '2,31p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -179,6 +180,17 @@ assert_ringing() {   # $1 = human label
   fi
 }
 
+# Whether the ringing notification was posted, independent of whether anything made a sound.
+# Do Not Disturb silences a call; it must not hide one. Answer and Decline live on this
+# notification, so a filtered call that posts nothing leaves the user no way to take it.
+assert_notified() {  # $1 = human label
+  if $ADB shell dumpsys notification --noredact 2>/dev/null | grep -q "$PKG.*incoming_calls_v2\|incoming_calls_v2.*$PKG"; then
+    pass "ringing notification posted ($1)"
+  else
+    fail "no ringing notification posted ($1) — a silenced call must still be answerable"
+  fi
+}
+
 assert_silent() {    # $1 = human label
   echo "==> $1: expecting silence"
 
@@ -284,6 +296,116 @@ finally:
     echo "a call still has to be checked with: ./scripts/ring_test.sh watch --device <phone>"
   else
     echo -e "${RED}Ringing FAILED. Users of this build would miss calls silently.${NC}"
+    exit 1
+  fi
+  ;;
+
+dnd)
+  # The Do Not Disturb truth table, on a device.
+  #
+  # Declaring IN_CALL_SERVICE_RINGING took zen filtering away from Telecom and gave it to this
+  # app, which for nine releases never did it: AudioManager.ringerMode does not move when Do Not
+  # Disturb turns on, so CallRinger rang for every call the user had asked not to hear. Unit tests
+  # cover RingerPolicy's decisions; only a device shows that NotificationManager reports what the
+  # policy expects and that the ringer actually stays quiet.
+  #
+  # Both directions are asserted. A fix that simply stopped ringing under Do Not Disturb would
+  # pass "stranger is silent" and be a far worse bug than the one it replaced.
+  case "$DEVICE" in
+    emulator-*) ;;
+    *) echo -e "${RED}dnd needs an emulator${NC} (adb emu gsm call). On hardware, call from a" >&2
+       echo "second phone with Do Not Disturb on and watch." >&2
+       exit 2 ;;
+  esac
+
+  # Which callers this device's Do Not Disturb actually lets through, read from the device rather
+  # than assumed. The AOSP default here is PRIORITY_SENDERS_STARRED, not contacts -- and picking
+  # an ordinary contact for the "must still ring" half then fails against an app that is behaving
+  # perfectly, which is exactly what happened the first time this test ran.
+  SENDERS=$($ADB shell dumpsys notification 2>/dev/null \
+    | sed -n 's/.*priorityCallSenders=\(PRIORITY_SENDERS_[A-Z]*\).*/\1/p' | head -1 | tr -d '\r')
+  SENDERS=${SENDERS:-PRIORITY_SENDERS_ANY}
+  echo "==> device Do Not Disturb lets calls through from: $SENDERS"
+
+  CONTACT=$($ADB shell "content query --uri content://com.android.contacts/data/phones --projection data1" 2>/dev/null \
+    | sed -n 's/.*data1=\(.*\)$/\1/p' | tr -d '\r' | head -1)
+  if [ -z "$CONTACT" ]; then
+    echo -e "${RED}No contacts on this device.${NC} The half of this test that proves the fix did" >&2
+    echo "not simply deafen the phone needs one. Run ./scripts/seed_screenshots.sh first." >&2
+    exit 2
+  fi
+
+  # Starred-only is the default policy, so the contact this test rings with has to be starred or
+  # the app is right to stay silent and the test is wrong. Starred through raw_contacts, which is
+  # what the aggregated Phone.STARRED column the app reads is derived from.
+  if [ "$SENDERS" = "PRIORITY_SENDERS_STARRED" ]; then
+    RID=$($ADB shell "content query --uri content://com.android.contacts/data/phones --projection raw_contact_id:data1 --where \"data1='$CONTACT'\"" 2>/dev/null \
+      | sed -n 's/.*raw_contact_id=\([0-9]*\).*/\1/p' | head -1 | tr -d '\r')
+    if [ -n "$RID" ]; then
+      $ADB shell "content update --uri content://com.android.contacts/raw_contacts --bind starred:i:1 --where \"_id=$RID\"" >/dev/null 2>&1 || true
+      echo "==> starred $CONTACT (raw_contact $RID) so it qualifies under this policy"
+      # The gateway caches the address book for five minutes; a star it has not seen is a star
+      # the ringer will not act on.
+      $ADB shell am force-stop "$PKG" >/dev/null 2>&1 || true
+      sleep 2
+    fi
+  fi
+
+  SUFFIX=$(date +%s | tail -c 7)
+  STRANGER="+3480${SUFFIX}"
+  case "$STRANGER" in *0000) STRANGER="${STRANGER%0}1" ;; esac
+
+  restore_dnd() { $ADB shell cmd notification set_dnd off >/dev/null 2>&1 || true; }
+  trap restore_dnd EXIT
+
+  place() {   # $1 = number, $2 = seconds to wait
+    $ADB emu gsm cancel "$1" >/dev/null 2>&1 || true
+    $ADB logcat -c
+    $ADB shell service call notification 1 >/dev/null 2>&1 || true
+    sleep 1
+    $ADB emu gsm call "$1" >/dev/null
+    sleep "${2:-6}"
+  }
+
+  echo
+  echo "=== 1/3  priority only, stranger $STRANGER — must stay silent ==="
+  $ADB shell cmd notification set_dnd priority >/dev/null
+  sleep 2
+  place "$STRANGER" 7
+  assert_silent "stranger under Do Not Disturb"
+  assert_notified "stranger under Do Not Disturb"
+  $ADB emu gsm cancel "$STRANGER" >/dev/null 2>&1 || true
+  sleep 3
+
+  echo
+  echo "=== 2/3  priority only, contact $CONTACT — must still ring ==="
+  place "$CONTACT" 7
+  assert_ringing "contact under Do Not Disturb"
+  $ADB emu gsm cancel "$CONTACT" >/dev/null 2>&1 || true
+  sleep 3
+
+  echo
+  echo "=== 3/3  total silence, contact $CONTACT — must stay silent ==="
+  $ADB shell cmd notification set_dnd none >/dev/null
+  sleep 2
+  place "$CONTACT" 7
+  assert_silent "contact under total silence"
+  $ADB emu gsm cancel "$CONTACT" >/dev/null 2>&1 || true
+  sleep 2
+
+  restore_dnd
+  trap - EXIT
+
+  echo
+  echo "==> last call log rows"
+  last_log_rows 4
+
+  echo
+  if [ "$FAILED" = 0 ]; then
+    echo -e "${GREEN}Do Not Disturb honoured.${NC} Silenced the stranger, still rang the contact,"
+    echo "and total silence beat both."
+  else
+    echo -e "${RED}Do Not Disturb FAILED.${NC}"
     exit 1
   fi
   ;;

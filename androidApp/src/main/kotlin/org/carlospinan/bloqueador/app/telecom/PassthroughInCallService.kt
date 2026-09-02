@@ -267,13 +267,7 @@ class PassthroughInCallService :
         }
 
         if (call.state == Call.STATE_RINGING) {
-            // Ring first, decide second. Evaluation touches the database and the contacts
-            // provider, and a caller must never be dropped into silence because that was slow --
-            // a blocked call is silenced a few hundred milliseconds later by ringer.stop().
-            ringer.start()
-            if (settingsRepository.notificationsEnabled.value) {
-                IncomingCallNotifier.notifyIncomingCall(this, number)
-            }
+            announce(call, number)
         }
 
         state.evaluation =
@@ -346,6 +340,108 @@ class PassthroughInCallService :
                     Log.e(TAG, "Call evaluation failed, failing open", e)
                 }
             }
+    }
+
+    /**
+     * Announces an incoming call: the notification always, the ringtone and vibration only when
+     * Do Not Disturb has no objection to this caller.
+     *
+     * **Ring first, decide second, except here.** Everywhere else in this service that is the
+     * rule: rule evaluation touches the database and the contacts provider, and a caller must
+     * never be dropped into silence because that was slow, so the phone rings and a blocked call
+     * is silenced a few hundred milliseconds later. Do Not Disturb inverts it. The user has said
+     * in as many words that they want silence, so the failure to avoid is *noise*, and ringing
+     * for half a second before going quiet is exactly the bug being fixed rather than a
+     * softer version of it.
+     *
+     * So the cheap half of the decision runs inline ([RingerPolicy.gate], two system-service
+     * reads), and only a "priority callers only" filter — the one case that needs to know who is
+     * calling — defers to the address book. That branch stays silent while it waits.
+     */
+    private fun announce(
+        call: Call,
+        number: String,
+    ) {
+        // Posted whatever Do Not Disturb says. Zen mode silences a call; it does not hide one,
+        // and the platform dialer does not either — this notification is where Answer and Decline
+        // live, and suppressing it would leave a filtered call with no way to take it but the
+        // full-screen UI. It makes no sound of its own: see IncomingCallNotifier.createChannel,
+        // which no longer asks to bypass the filter and no longer carries a sound or a vibration.
+        if (settingsRepository.notificationsEnabled.value) {
+            IncomingCallNotifier.notifyIncomingCall(this, number)
+        }
+
+        val dnd = ringer.doNotDisturb()
+        when (RingerPolicy.gate(dnd)) {
+            RingerPolicy.Gate.RING -> ring(call, dnd)
+            RingerPolicy.Gate.SILENCE ->
+                Log.i(TAG, "Do Not Disturb is filtering this call; not ringing")
+
+            RingerPolicy.Gate.ASK_CALLER ->
+                serviceScope.launch {
+                    if (RingerPolicy.allowsCaller(dnd, callerFacts(number))) {
+                        ring(call, dnd)
+                    } else {
+                        Log.i(TAG, "Do Not Disturb allows only priority callers; not ringing")
+                    }
+                }
+        }
+    }
+
+    /**
+     * Guarded twice, because the deferred path above can land after the call stopped ringing:
+     * once on Telecom's own state, and once on the block decision, which silences the ringer the
+     * moment it lands and must not be undone by an address-book read that finished afterwards.
+     */
+    private fun ring(
+        call: Call,
+        dnd: RingerPolicy.DoNotDisturb,
+    ) {
+        if (call.state != Call.STATE_RINGING) return
+        if (callStates[call]?.blockedByRules == true) return
+        ringer.start(dnd)
+    }
+
+    /**
+     * The three things Do Not Disturb's priority rules can ask about a caller.
+     *
+     * `starred` rides along on the contact rows the address book already returns, so asking about
+     * favourites costs nothing beyond the scan the allowlist was going to do anyway — and the
+     * gateway caches for five minutes, so on all but the first call it costs nothing at all.
+     *
+     * Repeat-caller is Android's own definition and not this app's `repeatedCallerBypassCount`
+     * setting: has this number called before in the last [RingerPolicy.REPEAT_CALLER_WINDOW_MILLIS].
+     * The current call has not been recorded yet — `recordCallAttempt` runs inside evaluation,
+     * which is still in flight here — so any attempt this finds is a genuinely earlier one.
+     */
+    private suspend fun callerFacts(number: String): RingerPolicy.Caller {
+        if (number.isBlank()) {
+            // A withheld number is nobody's contact and cannot be tied to an earlier attempt.
+            return RingerPolicy.Caller(isContact = false, isStarred = false, isRepeatCaller = false)
+        }
+        val match =
+            runCatching {
+                if (!contactsGateway.hasPermission()) {
+                    null
+                } else {
+                    contactsGateway.contacts().firstOrNull { PhoneNumberParser.sameNumber(it.number, number) }
+                }
+            }.getOrElse {
+                Log.w(TAG, "Could not read the address book for the Do Not Disturb check", it)
+                null
+            }
+        val repeatCaller =
+            runCatching {
+                ruleRepository.countRecentAttempts(
+                    number,
+                    currentTimestamp() - RingerPolicy.REPEAT_CALLER_WINDOW_MILLIS,
+                ) > 0
+            }.getOrDefault(false)
+        return RingerPolicy.Caller(
+            isContact = match != null,
+            isStarred = match?.starred == true,
+            isRepeatCaller = repeatCaller,
+        )
     }
 
     /**
