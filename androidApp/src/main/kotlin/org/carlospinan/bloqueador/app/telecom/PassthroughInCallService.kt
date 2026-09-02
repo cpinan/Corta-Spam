@@ -112,6 +112,12 @@ class PassthroughInCallService :
         var greetingStarted = false
 
         /**
+         * Whether this call was answered solely to play the greeting, which is what makes the
+         * loudspeaker and the live microphone this service's doing to undo. See [onCallRemoved].
+         */
+        var answeredForGreeting = false
+
+        /**
          * Row id from [CallLogRepository.logCall], so a recording finished after the call ends
          * can still find the entry it belongs to. Null until the evaluation coroutine logs.
          */
@@ -162,6 +168,17 @@ class PassthroughInCallService :
                                 // call up for another minute.
                                 callStates[call]?.watchdog?.cancel()
                                 if (config.recordingEnabled) {
+                                    // Close the uplink before recording. The greeting needed the
+                                    // microphone open because that is the only way its sound
+                                    // reaches the caller; the recording does not need it at all.
+                                    // setMuted only gates what Telecom sends to the far end --
+                                    // MediaRecorder's own MIC capture is untouched, and with the
+                                    // loudspeaker still on it keeps picking the caller up through
+                                    // it. So the recording still works and the caller stops
+                                    // hearing the room. That minute of open two-way line, on a
+                                    // call the user never chose to take, is the report this
+                                    // exists for.
+                                    setMuted(true)
                                     startRecordingAfterGreeting(call)
                                 } else {
                                     call.disconnect()
@@ -300,7 +317,17 @@ class PassthroughInCallService :
                             )
                         }
                         val autoConfig = autoResponderRepository.config.first()
-                        if (autoConfig.enabled && autoConfig.validate() is AutoResponderConfig.ValidationResult.Ok) {
+                        if (autoConfig.enabled &&
+                            autoConfig.validate() is AutoResponderConfig.ValidationResult.Ok &&
+                            // Answering forces the loudspeaker and opens the microphone, and
+                            // both of those are properties of the audio session rather than of
+                            // one call: greeting a blocked caller while the user is mid-
+                            // conversation would move *their* call onto the speaker and put the
+                            // greeting down its uplink. A blocked call arriving during a real
+                            // one is simply rejected.
+                            !hasOtherLiveCall(call)
+                        ) {
+                            state.answeredForGreeting = true
                             autoResponderAudio = AutoResponderAudio(this@PassthroughInCallService).also { it.prepare() }
                             call.registerCallback(autoResponderCallback)
                             call.answer(VideoProfile.STATE_AUDIO_ONLY)
@@ -442,6 +469,41 @@ class PassthroughInCallService :
             isStarred = match?.starred == true,
             isRepeatCaller = repeatCaller,
         )
+    }
+
+    /**
+     * Whether any call other than [exclude] is one the user is actually on.
+     *
+     * Ringing does not count: a second call still ringing has no audio session to disturb, and
+     * treating it as live would stop the auto-responder working for the ordinary case of two
+     * spam calls arriving together.
+     */
+    private fun hasOtherLiveCall(exclude: Call): Boolean =
+        callStates.keys.any { other ->
+            other !== exclude &&
+                other.state in
+                setOf(
+                    Call.STATE_ACTIVE,
+                    Call.STATE_HOLDING,
+                    Call.STATE_DIALING,
+                    Call.STATE_CONNECTING,
+                )
+        }
+
+    /**
+     * Hands the audio session back the way it was found, after a call the app answered by itself.
+     *
+     * The loudspeaker and the mute state are set on the *service*, not on the call, so nothing
+     * about a call ending undoes them: a blocked call greeted on the loudspeaker left the route
+     * there, and the mute this now applies before recording would have outlived the call that
+     * needed it and silenced the user on the next one.
+     */
+    private fun restoreAudioAfterGreeting() {
+        runCatching {
+            setMuted(false)
+            @Suppress("DEPRECATION")
+            setAudioRoute(CallAudioState.ROUTE_WIRED_OR_EARPIECE)
+        }.onFailure { Log.w(TAG, "Could not restore the audio route after the auto-responder", it) }
     }
 
     /**
@@ -637,6 +699,9 @@ class PassthroughInCallService :
         state?.watchdog?.cancel()
         state?.recordingTimeout?.cancel()
         finishRecording(state)
+        // After finishRecording, which still needs the microphone, and only once nothing else is
+        // on the line to have its own route yanked out from under it.
+        if (state?.answeredForGreeting == true && callStates.isEmpty()) restoreAudioAfterGreeting()
         call.unregisterCallback(autoResponderCallback)
         call.unregisterCallback(stateCallback)
 
