@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 762 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 769 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -40,6 +40,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Dark mode** — the whole app follows the system setting, on the palette the UI was designed with. It matters most on the screen the app draws without being asked: the full-screen incoming-call screen, which arrives at whatever hour someone rings
 - **Emergency callback exemption** — for 30 minutes after you call the emergency services, every incoming call is let through whatever your rules say. On by default, and checked before every rule including a manual block. Uses the platform's own emergency-callback signal plus the numbers this app saw you dial; it needs no extra permission, and the 30 minutes is stated rather than implied
 - **In-call controls** — mute, speaker and a call timer, plus a DTMF pad. The role replaces the phone app, so anything missing here is missing from the phone. The DTMF pad is there because taking the default-dialer role means this is the only call screen the user has: without it "press 1 for accounts" is unreachable and every automated menu ends at the first prompt. The digits already sent stay on screen, since nothing on the line echoes them back
+- **Hang up & block in one tap** — a secondary action on the call screen ("Decline & block" while ringing, "Hang up & block" once connected) ends the call and adds its number to the block list together, instead of hanging up and then hunting the number down elsewhere to block it. Not offered for a withheld number, since there is nothing to add to the list
 - **Version in Settings** — the last row of Settings names the installed build, `1.4.0 (6)`, read from the package itself rather than from a constant that could disagree with it. Both numbers, because a version name does not say which upload you are on
 - **Credits** — the maintainer, the AI pair used to write the code, and the open-source libraries the app ships with, each with its SPDX licence and project home. People and licences are kept in separate sections: one is a courtesy, the other is an obligation
 - **Caller identity on the call screen** — a ringing or dialling call shows the contact's name, or failing that the label you gave that number in your own block/allowlist, with the number kept underneath
@@ -103,7 +104,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 649 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 656 tests, commonTest + androidUnitTest (Robolectric)
 ./gradlew :androidApp:testDebugUnitTest      # 113 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
@@ -162,6 +163,42 @@ A complete 36-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 194 quiz questions included.
 
 ## Recent Fixes
+**2026-09-15:** four more user reports in one pass — the auto-responder "seems not working", no
+way to hang up and block a caller in one step, a blocked call's full-screen UI flashing on screen
+and vanishing a moment later, and no way back to a call after minimizing it.
+
+- **The auto-responder's trigger condition had never actually been exercised.** The gate — enabled,
+  configuration valid, no other call already live — was correct, but it lived inline inside
+  `PassthroughInCallService.onCallAdded`'s evaluation coroutine, which needs a real Telecom stack
+  to reach at all. Pulled out to `AutoResponderTriggerPolicy` (shared/commonMain), the same split
+  already done for `RingerPolicy`, `NotificationPolicy` and `BlockedCallPolicy`, so the gate now has
+  a direct unit test. The default stays **off** — recording caller audio without consent by default
+  carries real legal risk in some jurisdictions, so that is a product decision, not a bug.
+- **A blocked call still got the full-screen incoming-call UI, for a moment.** `onCallAdded` called
+  `startActivity(InCallActivity)` unconditionally, before the block decision existed — evaluation
+  needs several suspend database and contacts reads and only resolves afterwards, so a call already
+  destined to be blocked flashed onto the screen and was torn down once evaluation caught up. Fixed
+  by racing the decision against a 700 ms bound (`BlockedCallPolicy.FULL_SCREEN_GATE_TIMEOUT_MILLIS`)
+  via a `CompletableDeferred<Boolean>` completed the moment evaluation resolves: a call already
+  known to be blocked within that window never reaches the screen, and one still undecided past it
+  shows anyway — the same fail-open posture this service already takes elsewhere for a slow
+  decision. Outgoing calls skip the gate entirely and still show instantly, and a Do Not Disturb
+  silenced call still shows the screen too — DND silences a call, it does not hide one.
+- **Turning notifications off silently took away the only way back to a call you had minimized.**
+  `InCallActivity` is `excludeFromRecents`, so the "return to call" notification is the only path
+  back once it is backgrounded — except it was gated behind the general Notifications switch, which
+  `HomeScreen`'s own return-to-call card had already deliberately *not* done. Brought the
+  notification in line with it; every other notification (ringing, blocked/missed/repeated-caller
+  results) still respects the setting, since those are genuinely optional.
+- **Ending a call and blocking its number took two separate trips.** The call screen now offers
+  "Decline & block" (ringing) or "Hang up & block" (active/dialing/other) alongside the primary
+  action, hidden for a blank number. It ends the call immediately and writes the rule through the
+  same `CallActionReceiver.ACTION_BLOCK_NUMBER` path the notification's own Block button already
+  uses, rather than a second copy of the write.
+- **762 → 769 tests** (`:shared` 649 → 656, `:androidApp` 113 unchanged). New:
+  `AutoResponderTriggerPolicyTest` (4 cases covering the extracted gate) and three `CallScreenUiTest`
+  cases for the new block action, including that a blank number offers no block button at all.
+
 **2026-09-02:** four user reports in one pass — ringing through Do Not Disturb, a literal `%d` on screen, the caller hearing the room, and blocking that "let a stranger through". Three were real and are fixed; the fourth turned out to be a question about settings with one genuine hole underneath it.
 
 - **The app rang through Do Not Disturb, and the reason was structural.** The manifest declares `IN_CALL_SERVICE_RINGING`, which tells Telecom this app rings for itself — so Telecom stops ringing *and* stops applying zen filtering on the app's behalf. The app took the whole job and did half of it: `CallRinger` decided everything from `AudioManager.ringerMode`, and nothing in the codebase read `getCurrentInterruptionFilter()` at all. The decision now lives in `RingerPolicy` as a pure function split in two, so the ringing path stays cheap: the interruption filter and the policy answer on their own, and only "priority callers only" — the one case that needs to know *who* is calling — pays for an address-book read. That branch starts silent rather than ringing first, which is the one place in this service where ring-first-decide-second is wrong: the user has asked for silence, so the failure to avoid is noise.

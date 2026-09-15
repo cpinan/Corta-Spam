@@ -18,6 +18,16 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ### Fixed
 
+- **A blocked call no longer flashes the full-screen incoming-call UI before disappearing**
+  (`dde6e4c`). `onCallAdded` waits up to 700 ms (`BlockedCallPolicy.FULL_SCREEN_GATE_TIMEOUT_MILLIS`)
+  for the block decision before showing `InCallActivity`; a call already known to be blocked never
+  reaches the screen, an undecided one past the bound shows anyway.
+- **The "return to call" notification survives Notifications being switched off** (`5263fd0`).
+  `IncomingCallNotifier.notifyOngoingCall` was gated behind the general notifications setting, the
+  only path back to a call once minimized (`InCallActivity` is `excludeFromRecents`).
+- **The auto-responder's trigger gate is now unit tested** (`f9d7606`). Extracted from
+  `PassthroughInCallService` to `AutoResponderTriggerPolicy` (shared/commonMain); default stays
+  `enabled = false`.
 - **Do Not Disturb is honoured when ringing** (`a4c583b`). Declaring `IN_CALL_SERVICE_RINGING` takes
   zen filtering away from Telecom along with the ringtone; nothing in the app read
   `getCurrentInterruptionFilter()`. `RingerPolicy` now gates on the interruption filter and the
@@ -39,6 +49,11 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
 
 ### Added
 
+- **"Hang up & block" / "Decline & block" on the call screen** (`8f37fef`). Ends the call and adds
+  its number to the block list in one tap, through the existing `CallActionReceiver
+  .ACTION_BLOCK_NUMBER` write path. Hidden for a blank number.
+- `AutoResponderTriggerPolicyTest` (`f9d7606`) — the extracted auto-responder trigger gate, all four
+  branches (disabled, enabled-but-invalid, another call live, clear to greet).
 - `ring_test.sh dnd` (`a4c583b`) — the Do Not Disturb truth table on an emulator: stranger silenced,
   priority caller still rings, total silence beats both. Reads the device's own
   `priorityCallSenders` rather than assuming it.
@@ -47,6 +62,7 @@ docs (README, in-app strings, store listing) keep their Spanish parity, develope
   remaining hole (a nationally-saved contact matched by the same national number under a foreign
   dialling code) is now an executable test rather than a comment.
 - Course chapter 36 and a README entry covering all four reports.
+- Course chapter 37 and a README entry covering this batch's four reports.
 
 - Donation options, in the repository only — [`DONATE.md`](DONATE.md) / [`DONATE_ES.md`](DONATE_ES.md)
   list GitHub Sponsors, Ko-fi, PayPal and Yape/Plin, plus the free ways to help that are worth more
