@@ -1,12 +1,16 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-09-02 · branch `main` · 0 uncommitted files (5 untracked `.claude/skills/` dirs, not ours)_
+_Last updated: 2026-09-15 · branch `main` · 0 uncommitted files (5 untracked `.claude/skills/` dirs, not ours)_
 
 ## Next action
 
-Run the 2026-09-02 fixes on **physical hardware** — `./scripts/ring_test.sh watch --device <serial>`
-with Do Not Disturb on, called from a second phone. Everything this session was verified on an API 36
-emulator only, and the original report came from a Redmi Note 13 Pro on HyperOS.
+Run **both** rounds of unverified fixes on physical hardware — none of this has touched real
+silicon yet, only an emulator/unit tests:
+- 2026-09-02: `./scripts/ring_test.sh watch --device <serial>` with Do Not Disturb on, called from
+  a second phone (Redmi Note 13 Pro / HyperOS is where that report came from).
+- 2026-09-15: `./scripts/call_test.sh` / `./scripts/ring_test.sh` again for the full-screen gate
+  and the auto-responder trigger, plus manually toggling the "Notifications" setting off and
+  confirming the ongoing-call notification still appears (see In flight / State below).
 
 ## State
 
@@ -16,21 +20,37 @@ emulator only, and the original report came from a Redmi Note 13 Pro on HyperOS.
   Do Not Disturb is honoured when ringing; the auto-responder mutes the uplink once the greeting
   ends; Compose format args are positional so `%d` no longer reaches the user; the contact matcher
   is stressed with 100 near-miss numbers.
-- **762 tests** (`:shared` 649, `:androidApp` 113), 36 course chapters, 194 quiz questions.
-- **Unreleased since 1.6.1**: the keypad caret fix (`e274f7e`) plus all four fixes above. Release
-  notes for 1.6.2 in four locales are still unwritten.
+- **Four more reports handled** (`f9d7606`, `dde6e4c`, `5263fd0`, `8f37fef`, docs `49aa899`):
+  1. Auto-responder trigger gate extracted to `AutoResponderTriggerPolicy` (shared/commonMain) so
+     it's unit-testable outside Telecom; default stays **off** (deliberate — recording consent),
+     wiring itself was already correct, just untested. New: `AutoResponderTriggerPolicyTest`.
+  2. Full-screen call UI gate — see In flight.
+  3. `IncomingCallNotifier.notifyOngoingCall` ("return to call") was gated behind the general
+     notifications toggle; removed that gate so turning notifications off can't remove the only
+     way back to a live call (matches `HomeScreen`'s own `ReturnToCallCard`, which was already
+     built this way).
+  4. New "Hang up & block" / "Decline & block" action on `CallScreen` (RINGING and
+     ACTIVE/DIALING/OTHER phases, hidden for a blank number) — ends the call via `InCallState` and
+     writes the block rule through the existing `CallActionReceiver.ACTION_BLOCK_NUMBER` path.
+- **769 tests** (`:shared` 656, `:androidApp` 113), 36 course chapters, 194 quiz questions.
+- **Unreleased since 1.6.1**: the keypad caret fix (`e274f7e`), the four 2026-09-02 fixes, and the
+  four 2026-09-15 changes above. Release notes for 1.6.2 in four locales are still unwritten.
 - iOS still has no call blocking — pending the CallDirectory extension. `verify.sh` compiles
   `commonTest` for Native but **runs no iOS test**; `:shared:iosSimulatorArm64Test` is CI-only.
 
 ## In flight
 
-- `androidApp/.../telecom/PassthroughInCallService.kt:250` — `onCallAdded` calls `startActivity(InCallActivity)`
-  **unconditionally**, before the rule decision exists. So an unknown/blocked caller still gets the
-  full-screen call UI thrown up, and `InCallActivity` is `showWhenLocked` + `turnScreenOn`, meaning a
-  spam call lights the screen at 3am even when Do Not Disturb silenced it. Deciding *not* to launch it
-  needs care: the launch currently doubles as the reliable path to the in-call UI, and Telecom's
-  full-screen intent is the fallback. Also check whether `announce()`'s new silent path should suppress
-  it too.
+- **Fixed 2026-09-15** (`dde6e4c`): `PassthroughInCallService.onCallAdded` no longer calls
+  `startActivity(InCallActivity)` unconditionally for an incoming call. It now waits up to
+  `BlockedCallPolicy.FULL_SCREEN_GATE_TIMEOUT_MILLIS` (700 ms) for the block decision
+  (`CallState.blockedSignal`, a `CompletableDeferred<Boolean>` completed once `evaluate()`
+  resolves); a call already known to be blocked never reaches the screen at all, and a call still
+  undecided past the window shows anyway (fail-open, same posture as the rest of this service).
+  Outgoing calls are unaffected — `showInCallActivity()` still fires immediately for them, no gate.
+  `announce()`'s DND-silence path deliberately still does **not** suppress the full-screen UI — a
+  DND-silenced call is not a rejection, only a quiet one, and Android's own dialer shows it too.
+  Unit-tested only (`AutoResponderTriggerPolicyTest` covers the related auto-responder gate); **not
+  yet run on physical hardware** — see Next action.
 - `androidApp/.../telecom/NotificationPolicy.kt:18` — `notifyUnknownCallers` gates only the *result*
   notification (blocked/missed/repeated). The ringing notification does not go through it at all, so
   "don't notify me about unknown callers" does not describe what the setting does. Decide whether the
@@ -49,9 +69,9 @@ emulator only, and the original report came from a Redmi Note 13 Pro on HyperOS.
 bash tools/verify.sh
 ```
 
-Green as of 2026-09-02 (762 tests, iOS compile included). Device halves:
-`./scripts/ring_test.sh auto|dnd` and `./scripts/blocked_call_test.sh auto` — all green on an
-API 36 AVD this session.
+Green as of 2026-09-15 (769 tests, iOS compile included). Device halves (`ring_test.sh`,
+`blocked_call_test.sh`) were last run green on an API 36 AVD on 2026-09-02 — **not re-run this
+session**, see Next action.
 
 ## Open questions
 
