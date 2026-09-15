@@ -214,7 +214,12 @@ class PassthroughInCallService :
                 if (state == Call.STATE_ACTIVE) {
                     // A call answered only to play the auto-responder greeting isn't a call the
                     // user is on; offering them a "return to call" notification for it is noise.
-                    if (callStates[call]?.blockedByRules != true && settingsRepository.notificationsEnabled.value) {
+                    //
+                    // Deliberately NOT also gated on notificationsEnabled: HomeScreen's own
+                    // return-to-call card makes the same call for the same reason — this is the
+                    // only way back to a live call once it is backgrounded (InCallActivity is
+                    // excludeFromRecents), and switching notifications off must not take that away.
+                    if (callStates[call]?.blockedByRules != true) {
                         IncomingCallNotifier.notifyOngoingCall(this@PassthroughInCallService, call.handleNumber())
                     }
                 } else {
