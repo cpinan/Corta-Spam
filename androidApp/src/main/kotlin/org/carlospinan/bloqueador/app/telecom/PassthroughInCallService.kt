@@ -17,8 +17,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.R
-import org.carlospinan.bloqueador.app.autoresponder.AutoResponderConfig
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
+import org.carlospinan.bloqueador.app.autoresponder.AutoResponderTriggerPolicy
 import org.carlospinan.bloqueador.app.contacts.ContactsGateway
 import org.carlospinan.bloqueador.app.contacts.contactDisplayName
 import org.carlospinan.bloqueador.app.contacts.isKnownContact
@@ -317,16 +317,7 @@ class PassthroughInCallService :
                             )
                         }
                         val autoConfig = autoResponderRepository.config.first()
-                        if (autoConfig.enabled &&
-                            autoConfig.validate() is AutoResponderConfig.ValidationResult.Ok &&
-                            // Answering forces the loudspeaker and opens the microphone, and
-                            // both of those are properties of the audio session rather than of
-                            // one call: greeting a blocked caller while the user is mid-
-                            // conversation would move *their* call onto the speaker and put the
-                            // greeting down its uplink. A blocked call arriving during a real
-                            // one is simply rejected.
-                            !hasOtherLiveCall(call)
-                        ) {
+                        if (AutoResponderTriggerPolicy.shouldGreet(autoConfig, hasOtherLiveCall(call))) {
                             state.answeredForGreeting = true
                             autoResponderAudio = AutoResponderAudio(this@PassthroughInCallService).also { it.prepare() }
                             call.registerCallback(autoResponderCallback)
