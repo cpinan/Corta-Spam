@@ -2,6 +2,7 @@ package org.carlospinan.bloqueador.app.telecom
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -99,6 +100,7 @@ class InCallActivity : ComponentActivity() {
                     speakerOn = current.speakerOn,
                     onToggleSpeaker = InCallState::toggleSpeaker,
                     onDismiss = ::finish,
+                    onBlockAndEnd = { blockAndEndCall(current) },
                 )
             } else {
                 LaunchedEffect(Unit) {
@@ -158,6 +160,24 @@ class InCallActivity : ComponentActivity() {
         // does, which is when they can see it.
         lock.release(PowerManager.RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY)
         Log.d(TAG, "Proximity lock released")
+    }
+
+    /**
+     * Ends the call and adds its number to the block list.
+     *
+     * The write goes through [CallActionReceiver]'s existing `ACTION_BLOCK_NUMBER` handling
+     * rather than a repository call here, so it gets the same `goAsync()`-protected write the
+     * notification's Block button already relies on, instead of a second copy of it.
+     */
+    private fun blockAndEndCall(current: InCallState.UiState) {
+        if (current.number.isNotBlank()) {
+            sendBroadcast(
+                Intent(this, CallActionReceiver::class.java)
+                    .setAction(CallActionReceiver.ACTION_BLOCK_NUMBER)
+                    .putExtra(CallActionReceiver.EXTRA_NUMBER, current.number),
+            )
+        }
+        if (current.phase == CallUiPhase.RINGING) InCallState.decline() else InCallState.hangUp()
     }
 
     private fun showOverLockScreen() {

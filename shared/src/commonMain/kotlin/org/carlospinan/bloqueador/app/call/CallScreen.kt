@@ -33,7 +33,9 @@ import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.action_answer
 import cortaspam.shared.generated.resources.action_close
 import cortaspam.shared.generated.resources.action_decline
+import cortaspam.shared.generated.resources.action_decline_and_block
 import cortaspam.shared.generated.resources.action_hang_up
+import cortaspam.shared.generated.resources.action_hang_up_and_block
 import cortaspam.shared.generated.resources.action_resume
 import cortaspam.shared.generated.resources.call_action_mute
 import cortaspam.shared.generated.resources.call_action_speaker
@@ -127,6 +129,12 @@ fun CallScreen(
      * otherwise be a dead end — Back deliberately backgrounds the task rather than leaving.
      */
     onDismiss: () -> Unit = {},
+    /**
+     * Ends the call and adds this number to the block list in one tap. Offered alongside the
+     * primary decline/hang-up action rather than replacing it: ending the call must never wait on
+     * the rule write. Not offered for a blank number — there is nothing to block.
+     */
+    onBlockAndEnd: () -> Unit = {},
 ) {
     var keypadRequested by rememberSaveable { mutableStateOf(false) }
     // Tones only mean anything on a connected call: Telecom drops playDtmfTone on a call that is
@@ -272,12 +280,19 @@ fun CallScreen(
 
                     when (phase) {
                         CallUiPhase.RINGING ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                            ) {
-                                HangUpButton(onClick = onDecline, label = stringResource(Res.string.action_decline))
-                                Button(onClick = onAnswer) { Text(stringResource(Res.string.action_answer)) }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                ) {
+                                    HangUpButton(onClick = onDecline, label = stringResource(Res.string.action_decline))
+                                    Button(onClick = onAnswer) { Text(stringResource(Res.string.action_answer)) }
+                                }
+                                if (number.isNotBlank()) {
+                                    TextButton(onClick = onBlockAndEnd) {
+                                        Text(stringResource(Res.string.action_decline_and_block))
+                                    }
+                                }
                             }
 
                         CallUiPhase.HOLDING ->
@@ -292,7 +307,14 @@ fun CallScreen(
                         // OTHER is in here on purpose. Whatever Telecom is reporting, the user
                         // must be able to end the call; a screen with no button was the bug.
                         CallUiPhase.ACTIVE, CallUiPhase.DIALING, CallUiPhase.OTHER ->
-                            HangUpButton(onClick = onHangUp, label = stringResource(Res.string.action_hang_up))
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                HangUpButton(onClick = onHangUp, label = stringResource(Res.string.action_hang_up))
+                                if (number.isNotBlank()) {
+                                    TextButton(onClick = onBlockAndEnd) {
+                                        Text(stringResource(Res.string.action_hang_up_and_block))
+                                    }
+                                }
+                            }
 
                         // The call is already ending, so a hang-up button here would be a control
                         // for something the platform is doing anyway — but the screen still needs

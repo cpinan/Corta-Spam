@@ -350,4 +350,58 @@ class CallScreenUiTest {
         composeTestRule.onNodeWithText("5").assertDoesNotExist()
         composeTestRule.onNodeWithText("Hang up").assertExists()
     }
+
+    @Test
+    fun `a ringing call can be declined and blocked in one tap`() {
+        var blocked = false
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.RINGING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onBlockAndEnd = { blocked = true },
+            )
+        }
+
+        composeTestRule.onNodeWithText("Decline & block").performClick()
+
+        assertTrue(blocked)
+    }
+
+    @Test
+    fun `an active call can be hung up and blocked in one tap`() {
+        var blocked = false
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.ACTIVE,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onBlockAndEnd = { blocked = true },
+            )
+        }
+
+        composeTestRule.onNodeWithText("Hang up & block").performClick()
+
+        assertTrue(blocked)
+    }
+
+    /** A blank number cannot be added to the block list, so the action must not be offered. */
+    @Test
+    fun `an unknown caller offers no block action`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "",
+                phase = CallUiPhase.ACTIVE,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Hang up & block").assertDoesNotExist()
+    }
 }

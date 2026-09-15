@@ -63,6 +63,8 @@
     <string name="action_decline">Decline</string>
     <string name="action_answer">Answer</string>
     <string name="action_hang_up">Hang up</string>
+    <string name="action_decline_and_block">Decline &amp; block</string>
+    <string name="action_hang_up_and_block">Hang up &amp; block</string>
     <string name="call_keypad_show">Keypad</string>
     <string name="call_keypad_hide">Hide keypad</string>
     <string name="call_other_call_active">You are already on another call</string>

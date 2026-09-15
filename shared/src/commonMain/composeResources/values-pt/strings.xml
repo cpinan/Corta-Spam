@@ -68,6 +68,8 @@
     <string name="action_decline">Recusar</string>
     <string name="action_answer">Atender</string>
     <string name="action_hang_up">Desligar</string>
+    <string name="action_decline_and_block">Recusar e bloquear</string>
+    <string name="action_hang_up_and_block">Desligar e bloquear</string>
     <string name="call_keypad_show">Teclado</string>
     <string name="call_keypad_hide">Ocultar teclado</string>
     <string name="call_other_call_active">Você já está em outra chamada</string>
