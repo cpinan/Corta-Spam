@@ -66,4 +66,15 @@ internal object BlockedCallPolicy {
      * characters) takes to read aloud, so it never truncates a working greeting.
      */
     const val GREETING_MAX_MILLIS = 60_000L
+
+    /**
+     * How long the full-screen call UI waits for the block decision before showing anyway.
+     *
+     * The decision needs several suspend reads (contacts, rule tables) and must not delay a real
+     * call's screen appearing — the audible ring is independent of this and starts immediately.
+     * Within this window, a call already known to be blocked never reaches the screen at all,
+     * instead of flashing onto it and being torn down a moment later; past it, the screen shows
+     * regardless, the same fail-open the rest of this service uses for a slow decision.
+     */
+    const val FULL_SCREEN_GATE_TIMEOUT_MILLIS = 700L
 }

@@ -8,6 +8,7 @@ import android.telecom.InCallService
 import android.telecom.VideoProfile
 import android.util.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -16,6 +17,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderTriggerPolicy
@@ -125,6 +127,13 @@ class PassthroughInCallService :
 
         /** Disconnects the call once the recording hits its cap; cancelled if the caller hangs up first. */
         var recordingTimeout: Job? = null
+
+        /**
+         * Completed with the block decision as soon as evaluation has one, so the full-screen UI
+         * can wait a bounded moment for it instead of showing unconditionally. See
+         * [BlockedCallPolicy.FULL_SCREEN_GATE_TIMEOUT_MILLIS].
+         */
+        val blockedSignal = CompletableDeferred<Boolean>()
 
         /**
          * This call's recorder, owned per call rather than by the service.
@@ -247,18 +256,16 @@ class PassthroughInCallService :
 
         InCallState.attach(call)
         resolveCallerName(number)
-        startActivity(
-            Intent(this@PassthroughInCallService, InCallActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-
         call.registerCallback(stateCallback)
 
-        // An InCallService is handed outgoing calls too. They still get the in-call UI above --
+        // An InCallService is handed outgoing calls too. They still get the in-call UI below --
         // this app owns it -- but they must never reach the rule engine: it would run the user's
         // own blocklist against a number they just dialled, and a quiet-hours rule would end
         // every outgoing call made inside the window. See CallDirectionPolicy.
         if (!CallDirectionPolicy.isIncoming(call)) {
+            // Shown immediately, unlike the incoming path below: there is no block decision to
+            // wait for, and the user is already looking at the dialler that placed this call.
+            showInCallActivity()
             // Logged, though: with only incoming calls written, the app that had replaced the
             // phone app showed a history missing every call its owner had placed. No decision is
             // recorded because none was made -- see CallLogRepository.logOutgoingCall.
@@ -287,6 +294,18 @@ class PassthroughInCallService :
             announce(call, number)
         }
 
+        // Waits a bounded moment for the block decision so a call already known to be blocked
+        // never reaches the screen at all, instead of flashing onto it and being torn down a
+        // moment later once evaluation catches up. See BlockedCallPolicy.FULL_SCREEN_GATE_TIMEOUT_MILLIS
+        // for why the wait is bounded rather than unconditional.
+        serviceScope.launch {
+            val blocked =
+                withTimeoutOrNull(BlockedCallPolicy.FULL_SCREEN_GATE_TIMEOUT_MILLIS) {
+                    state.blockedSignal.await()
+                } ?: false
+            if (!blocked && callStates.containsKey(call)) showInCallActivity()
+        }
+
         state.evaluation =
             serviceScope.launch {
                 try {
@@ -295,6 +314,7 @@ class PassthroughInCallService :
                             number = number,
                             inEmergencyCallbackMode = call.isInEmergencyCallbackMode(),
                         )
+                    state.blockedSignal.complete(decision.isBlocked)
                     state.logEntryId =
                         callLogRepository.logCall(
                             number = number,
@@ -355,9 +375,18 @@ class PassthroughInCallService :
                 } catch (e: Exception) {
                     // Fail open: an unblocked spam call is a nuisance, a silently dropped real
                     // one is a missed emergency. The call is already ringing and stays ringing.
+                    state.blockedSignal.complete(false)
                     Log.e(TAG, "Call evaluation failed, failing open", e)
                 }
             }
+    }
+
+    /** Launches the full-screen call UI. See [onCallAdded] for when this is (and isn't) immediate. */
+    private fun showInCallActivity() {
+        startActivity(
+            Intent(this@PassthroughInCallService, InCallActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
 
     /**
