@@ -30,6 +30,7 @@ import org.carlospinan.bloqueador.app.rules.PhoneNumberParser
 import org.carlospinan.bloqueador.app.rules.RuleDecision
 import org.carlospinan.bloqueador.app.rules.RuleRepository
 import org.carlospinan.bloqueador.app.rules.domain.EvaluateIncomingCallUseCase
+import org.carlospinan.bloqueador.app.rules.tolerateWriteFailure
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -320,14 +321,21 @@ class PassthroughInCallService :
                             inEmergencyCallbackMode = call.isInEmergencyCallbackMode(),
                         )
                     state.blockedSignal.complete(decision.isBlocked)
+                    // Set from the decision alone, before the log write below: whether this call
+                    // is blocked must never depend on whether the database accepted its history
+                    // row, or a log failure leaves the full-screen gate believing it was blocked
+                    // while nothing else here -- the ringer, the notification, the auto-responder
+                    // -- agrees. See tolerateWriteFailure.
+                    if (decision.isBlocked) state.blockedByRules = true
                     state.logEntryId =
-                        callLogRepository.logCall(
-                            number = number,
-                            timestamp = currentTimestamp(),
-                            decision = decision,
-                        )
+                        tolerateWriteFailure(onFailure = { e -> Log.e(TAG, "Could not log this call", e) }) {
+                            callLogRepository.logCall(
+                                number = number,
+                                timestamp = currentTimestamp(),
+                                decision = decision,
+                            )
+                        }
                     if (decision.isBlocked) {
-                        state.blockedByRules = true
                         ringer.stop()
                         IncomingCallNotifier.cancel(this@PassthroughInCallService)
                         if (shouldNotifyResult(number)) {
