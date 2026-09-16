@@ -117,6 +117,16 @@ fun KeypadScreen(
      */
     onAddContact: (String) -> Unit = {},
     modifier: Modifier = Modifier,
+    /**
+     * Called once [dialRequest] has actually been applied, so the caller can null its own field.
+     * Without this, revisiting this screen after leaving it -- this composable is discarded and
+     * recreated by navigation, not merely recomposed, since nothing here uses
+     * `saveState`/`restoreState` -- sees the same request with a fresh "not yet applied" guard
+     * and retypes a number the user had already edited or deleted. `rememberSaveable` alone does
+     * not protect against this: `NavHost` itself discards a popped destination's saved state
+     * unless the pop used `saveState = true`.
+     */
+    onDialRequestHandled: () -> Unit = {},
 ) {
     // A [TextFieldValue] rather than a String, because everything that types into this field --
     // the pad, the '+' key, delete -- has to act where the caret is. A String carries no caret, so
@@ -129,16 +139,18 @@ fun KeypadScreen(
         }
     val typed = entry.text
 
-    // Applied at most once per request. Keying the effect on the request alone is not enough:
-    // navigating away and back builds a fresh effect, which would retype a number the user had
-    // already deleted. Keying on the id it last applied is what makes "again" different from
-    // "still the same request".
+    // Applied at most once per request. Keying the effect on the request alone is not enough: a
+    // second tap on the same tel: link has to retype the same number, which is why DialRequest
+    // carries an id and this keys on that instead of on the request object. `rememberSaveable`
+    // does not, by itself, survive navigating away and back to this screen -- see
+    // onDialRequestHandled, which is what actually makes that safe.
     var appliedRequestId by rememberSaveable { mutableStateOf(NO_REQUEST_APPLIED) }
     LaunchedEffect(dialRequest) {
         val request = dialRequest ?: return@LaunchedEffect
         if (request.id == appliedRequestId) return@LaunchedEffect
         entry = wholeNumber(request.number)
         appliedRequestId = request.id
+        onDialRequestHandled()
     }
 
     val matches = remember(contacts, typed) { ContactSearch.match(contacts, typed) }

@@ -118,6 +118,7 @@ fun AppNavHost(
     onRequestMicPermission: (() -> Unit)? = null,
     onPlayRecording: ((String) -> Unit)? = null,
     dialRequest: DialRequest? = null,
+    onDialRequestHandled: (() -> Unit)? = null,
     callLogRequest: CallLogRequest? = null,
     onCallLogRequestHandled: (() -> Unit)? = null,
     callInProgress: Boolean = false,
@@ -212,6 +213,7 @@ fun AppNavHost(
                     contactsPermissionGranted = keypadState.contactsPermissionGranted,
                     onRequestContactsPermission = onRequestContactsPermission ?: {},
                     onAddContact = onAddContact ?: {},
+                    onDialRequestHandled = onDialRequestHandled ?: {},
                 )
             }
 

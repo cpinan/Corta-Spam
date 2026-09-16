@@ -362,6 +362,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onPlayRecording = { path -> recordingPlayer.play(path) },
                                 dialRequest = dialRequest,
+                                onDialRequestHandled = { dialRequest = null },
                                 callLogRequest = callLogRequest,
                                 onCallLogRequestHandled = { callLogRequest = null },
                             )

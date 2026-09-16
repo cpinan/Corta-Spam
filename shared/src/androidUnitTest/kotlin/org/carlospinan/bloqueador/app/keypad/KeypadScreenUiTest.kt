@@ -2,6 +2,8 @@ package org.carlospinan.bloqueador.app.keypad
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.SaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -132,6 +134,47 @@ class KeypadScreenUiTest {
 
         composeTestRule.onNodeWithText("Call").performClick()
         assertEquals("+34600123456", called)
+    }
+
+    /**
+     * The comment on `appliedRequestId` claims `rememberSaveable` is what makes "navigating away
+     * and back" safe. It is not, in this app's real navigation: `NavHost` discards a popped
+     * destination's saved state unless the pop uses `saveState = true`, which nothing in this
+     * codebase does. Reproduced with the same `SaveableStateHolder` mechanism `NavHost` itself
+     * uses internally -- a bare toggle-off/toggle-on would not discard `rememberSaveable` state
+     * the way a real destination pop does, and would pass whether or not this bug exists.
+     */
+    @Test
+    fun `a dial request does not retype a number the user already edited, once the screen is discarded and recreated`() {
+        lateinit var holder: SaveableStateHolder
+        var showScreen by mutableStateOf(true)
+        var request by mutableStateOf<DialRequest?>(DialRequest(number = "+34600123456", id = 1))
+
+        composeTestRule.setContent {
+            holder = rememberSaveableStateHolder()
+            if (showScreen) {
+                holder.SaveableStateProvider("keypad") {
+                    KeypadScreen(dialRequest = request, onDialRequestHandled = { request = null })
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("+34600123456").assertExists()
+        composeTestRule.onNodeWithContentDescription("Delete last digit").performClick()
+        composeTestRule.onNodeWithText("+3460012345").assertExists()
+
+        // Leave the screen the way this app's own NavHost does when it pops a destination without
+        // saveState = true: discard its saved state, then dispose it.
+        showScreen = false
+        composeTestRule.waitForIdle()
+        holder.removeState("keypad")
+        showScreen = true
+        composeTestRule.waitForIdle()
+
+        // Whatever the field itself shows after a real discard-and-recreate (rememberSaveable's
+        // stateSaver-backed entry is wiped along with everything else in this composable), the
+        // one thing that must never happen is the original dial request retyping itself in.
+        composeTestRule.onNodeWithText("+34600123456").assertDoesNotExist()
     }
 
     /**
