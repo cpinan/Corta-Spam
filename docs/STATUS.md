@@ -1,16 +1,20 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-09-15 · branch `main` · 0 uncommitted files (5 untracked `.claude/skills/` dirs, not ours)_
+_Last updated: 2026-09-16 · branch `main` · 0 uncommitted files (5 untracked `.claude/skills/` dirs, not ours)_
 
 ## Next action
 
-Run **both** rounds of unverified fixes on physical hardware — none of this has touched real
+Run **all three** rounds of unverified fixes on physical hardware — none of this has touched real
 silicon yet, only an emulator/unit tests:
 - 2026-09-02: `./scripts/ring_test.sh watch --device <serial>` with Do Not Disturb on, called from
   a second phone (Redmi Note 13 Pro / HyperOS is where that report came from).
 - 2026-09-15: `./scripts/call_test.sh` / `./scripts/ring_test.sh` again for the full-screen gate
   and the auto-responder trigger, plus manually toggling the "Notifications" setting off and
   confirming the ongoing-call notification still appears (see In flight / State below).
+- 2026-09-16: exercise "Hang up & block" during real call waiting (a second call arriving while
+  the button is on screen) to confirm `blockAndEndAction` actually leaves the promoted call alone;
+  tap a call-log entry, cancel the dialog, switch tabs and back; tap an `ACTION_DIAL` `tel:` link,
+  edit the number, switch tabs and back.
 
 ## State
 
@@ -32,9 +36,34 @@ silicon yet, only an emulator/unit tests:
   4. New "Hang up & block" / "Decline & block" action on `CallScreen` (RINGING and
      ACTIVE/DIALING/OTHER phases, hidden for a blank number) — ends the call via `InCallState` and
      writes the block rule through the existing `CallActionReceiver.ACTION_BLOCK_NUMBER` path.
-- **769 tests** (`:shared` 656, `:androidApp` 113), 36 course chapters, 194 quiz questions.
-- **Unreleased since 1.6.1**: the keypad caret fix (`e274f7e`), the four 2026-09-02 fixes, and the
-  four 2026-09-15 changes above. Release notes for 1.6.2 in four locales are still unwritten.
+- **A partial code review of the 2026-09-15 batch found 4 more bugs, all fixed 2026-09-16**
+  (`9354a93`, `be89c5b`, `37479c6`, `4a6b33c`):
+  1. Call log: a dismissed caller-actions dialog reopened on returning to the screen —
+     `MainActivity.callLogRequest` was never cleared once applied; `CallLogScreen`'s own "already
+     applied" guard is `remember`, local to one composition, and this screen is discarded and
+     recreated by navigation (no `saveState`/`restoreState` anywhere in this nav graph).
+  2. `PassthroughInCallService`: a `callLogRepository.logCall` exception could leave a call the
+     gate had already hidden the full-screen UI for never actually marked `blockedByRules` —
+     ringer, notification and auto-responder all skipped, call rang until the caller gave up.
+     New `tolerateWriteFailure` (shared/commonMain) isolates the log write from the decision.
+  3. "Hang up & block" could end a *different* call than the one shown, if call waiting promoted a
+     second call onto the screen between the render and the tap. New `blockAndEndAction`
+     re-derives the termination action from live state at tap time, by number.
+  4. Keypad had the identical bug as (1) for `ACTION_DIAL` — `dialRequest` also never cleared.
+     Proved with a test that reproduces `NavHost`'s real saved-state discard (`SaveableStateHolder`
+     + `removeState`), since a bare recomposition does not catch this class of bug.
+  The review itself was cut short — several of its sub-agents hit an account-wide API session
+  limit mid-run (conventions/CLAUDE.md check, reuse-angle, line-by-line diff scan, removed-behavior
+  audit, cross-file tracer all failed outright) — so treat it as a partial pass, not exhaustive.
+  Lower-severity findings **not yet acted on**: the full-screen gate's racer coroutine still isn't
+  stored on `CallState`/cancelled in `onCallRemoved` like its siblings; `FULL_SCREEN_GATE_TIMEOUT_
+  MILLIS` (700 ms) is an unmeasured guess; `NotificationPolicy` doesn't document the return-to-call
+  exception it now has to know about; the block-button layout and the decline-vs-hangup choice are
+  each duplicated in two places (`CallScreen.kt` and `InCallActivity.kt`).
+- **779 tests** (`:shared` 666, `:androidApp` 113), 36 course chapters, 194 quiz questions.
+- **Unreleased since 1.6.1**: the keypad caret fix (`e274f7e`), the four 2026-09-02 fixes, the four
+  2026-09-15 changes, and the four 2026-09-16 fixes above. Release notes for 1.6.2 in four locales
+  are still unwritten.
 - iOS still has no call blocking — pending the CallDirectory extension. `verify.sh` compiles
   `commonTest` for Native but **runs no iOS test**; `:shared:iosSimulatorArm64Test` is CI-only.
 
@@ -69,12 +98,22 @@ silicon yet, only an emulator/unit tests:
 bash tools/verify.sh
 ```
 
-Green as of 2026-09-15 (769 tests, iOS compile included). Device halves (`ring_test.sh`,
-`blocked_call_test.sh`) were last run green on an API 36 AVD on 2026-09-02 — **not re-run this
-session**, see Next action.
+Green as of 2026-09-16 (779 tests, iOS compile included). Device halves (`ring_test.sh`,
+`blocked_call_test.sh`) were last run green on an API 36 AVD on 2026-09-02 — **not re-run since**,
+see Next action.
 
 ## Open questions
 
+- **iOS parity was scoped 2026-09-16, not started.** All four 2026-09-15 changes are Android-only
+  or unreachable on iOS — `CallScreen` (shared) is only ever instantiated by Android's
+  `InCallActivity`, and CallKit gives a third-party app no in-call phase or custom UI for a regular
+  cellular call at all, so the full-screen gate and "hang up & block" have no iOS equivalent to
+  build. `AutoResponderScreen` is already live in iOS's nav graph with zero effect (pre-existing,
+  not from this session). Real parity ceiling: a `CXCallDirectoryProvider` extension target +
+  App Group entitlement (neither exists yet — `iosApp/project.yml` has one target) feeding the
+  existing `RuleRepository`, for block/identify only. Auto-responder and custom call UI are not
+  portable to regular iOS calls under Apple's model — only reachable by rebuilding as a VoIP app
+  (`CXProvider`/PushKit), a different product with its own recording-consent App Store questions.
 - **Nothing from this session has run on real hardware.** The emulator cannot settle OEM ringing, and
   HyperOS is where the Do Not Disturb report came from.
 - **The contact matcher's one hole is documented, not fixed** — a contact saved without a country code
