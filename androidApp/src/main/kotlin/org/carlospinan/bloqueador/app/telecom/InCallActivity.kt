@@ -15,8 +15,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import org.carlospinan.bloqueador.app.call.BlockAndEndAction
 import org.carlospinan.bloqueador.app.call.CallScreen
 import org.carlospinan.bloqueador.app.call.CallUiPhase
+import org.carlospinan.bloqueador.app.call.blockAndEndAction
 
 /**
  * Minimal in-call UI, launched by [PassthroughInCallService] because we
@@ -168,6 +170,10 @@ class InCallActivity : ComponentActivity() {
      * The write goes through [CallActionReceiver]'s existing `ACTION_BLOCK_NUMBER` handling
      * rather than a repository call here, so it gets the same `goAsync()`-protected write the
      * notification's Block button already relies on, instead of a second copy of it.
+     *
+     * The termination half re-reads [InCallState.state] live rather than trusting [current]: this
+     * tap and the render it came from are not atomic, and call waiting can promote a second call
+     * onto the screen in between. See [blockAndEndAction].
      */
     private fun blockAndEndCall(current: InCallState.UiState) {
         if (current.number.isNotBlank()) {
@@ -177,7 +183,12 @@ class InCallActivity : ComponentActivity() {
                     .putExtra(CallActionReceiver.EXTRA_NUMBER, current.number),
             )
         }
-        if (current.phase == CallUiPhase.RINGING) InCallState.decline() else InCallState.hangUp()
+        val live = InCallState.state.value
+        when (blockAndEndAction(current.number, live?.number, live?.phase)) {
+            BlockAndEndAction.DECLINE -> InCallState.decline()
+            BlockAndEndAction.HANG_UP -> InCallState.hangUp()
+            BlockAndEndAction.NONE -> Unit
+        }
     }
 
     private fun showOverLockScreen() {
