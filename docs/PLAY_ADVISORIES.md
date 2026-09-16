@@ -141,6 +141,31 @@ before an upload.
 
 ---
 
+## Upload-time warnings (distinct from the Recommended actions panel above)
+
+These fire on the release page at upload, not from static analysis of the target SDK — checked
+per bundle, not restated automatically like the four above.
+
+### "Bundle contains native code, no debug symbols uploaded" — first seen on 10 (1.6.2)
+
+The bundle's only native code is `androidx.graphics.path`'s prebuilt `.so` (arm64-v8a,
+armeabi-v7a, x86, x86_64), pulled in transitively by Compose UI for path clipping — nothing this
+project builds. Confirmed there is nothing to upload: setting
+`android.buildTypes.release.ndk.debugSymbolLevel = "FULL"` and rebuilding ran
+`extractReleaseNativeDebugMetadata`, which produced an **empty** output directory — the AAR ships
+the `.so` already stripped, with no embedded debug info for AGP to recover. Reverted the config
+change (it was a no-op for this warning and would only matter if the project ever adds its own
+native code).
+
+**Verdict: not fixable from this repo.** Real symbols exist only if Google publishes them for that
+AAR version, which isn't something to chase before each upload. Low risk in practice — it is a
+small rendering library, not app logic, so a native crash inside it is both rare and not something
+a fix here could prevent regardless of symbolication.
+
+**What would change this verdict:** a future androidx release of `graphics-path` that ships
+unstripped, or this project adding its own JNI/NDK code — check `extractReleaseNativeDebugMetadata`'s
+output again before assuming it is still empty.
+
 ## Re-triage checklist for the next release
 
 1. Read the Recommended actions panel for the new release name.
