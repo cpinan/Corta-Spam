@@ -4,17 +4,14 @@ _Last updated: 2026-09-16 · branch `main` · 0 uncommitted files (5 untracked `
 
 ## Next action
 
-Run the three rounds of on-device verification listed below, then upload `10-1.6.2-release.aab` to
-Play production — nothing else is blocking the upload.
+**10 (1.6.2) is uploaded and in Play review** — see `docs/RELEASE.md` for the release-tracking
+detail. Nothing to do until the Console resolves it; watch for the outcome.
 
 ## State
 
-- **9 (1.6.1) is live in production.** Codes 6–9 are spent.
-- **10 (1.6.2) is built and ready, not yet uploaded.** `androidApp/build/outputs/bundle/release/
-  10-1.6.2-release.aab`, versionCode 10 confirmed free on the Console before the bump (`220e3cb`).
-  Manifest audited against 1.6.1's baseline (7 permissions, unchanged), same signing key
-  (`4CA33D30…46E0`), installed and launched clean on a physical device (razr 50 ultra,
-  `ZY22JZJDNH`).
+- **10 (1.6.2) uploaded to production 2026-09-16, versionCode 10 now spent.** All three on-device
+  verification rounds (DND-while-ringing, call-waiting/hang-up-block, full-screen gate) ran and
+  passed first. 9 (1.6.1) is the last confirmed-live build.
 - **Release notes written in all four locales** — `docs/store/RELEASE_NOTES_1.6.2.md`, all under
   Play's 500-char cap.
 - **The four recurring Play Console "Recommended actions" advisories were re-checked against 10**
@@ -43,24 +40,13 @@ Green as of 2026-09-16 (779 tests, iOS compile included).
 
 ## Open questions
 
-- **None of 1.6.2's fixes have run through their actual scenario on physical hardware.** Emulator
-  and unit tests only. Three rounds still owed before upload:
-  1. `./scripts/ring_test.sh watch --device <serial>` with Do Not Disturb on, called from a second
-     phone (Redmi Note 13 Pro / HyperOS, where the original DND report came from).
-  2. `./scripts/call_test.sh` / `ring_test.sh` for the full-screen gate and auto-responder trigger,
-     plus manually toggling "Notifications" off and confirming the return-to-call notification
-     still appears.
-  3. "Hang up & block" during real call waiting (a second call arriving while the button is on
-     screen), to confirm `blockAndEndAction` leaves the promoted call alone; also exercise the
-     call-log/keypad dialog-reopening fixes by tapping an entry, cancelling, switching tabs and
-     back.
+- **10 (1.6.2) is in Play review, submitted 2026-09-16.** Outcome not yet known — see
+  `docs/RELEASE.md`.
 - Release 11 still needs: re-triage the four Play advisories against *that* build's `mapping.txt`
   (obfuscated names differ per build, per `docs/PLAY_ADVISORIES.md`'s own checklist).
 - `docs/STORE_LISTING.md:395` — pt-BR and hi-IN listings still show Spanish screenshots; those
   languages still aren't added to the store listing itself, so their release notes reach no one
   yet.
-- `docs/RELEASE.md` (the release-tracking state file `play-release-run` expects) does not exist —
-  create it once 10 actually uploads, not before.
 - Reporter follow-up still unsent: ask for their *Acción por defecto*, their repeat-caller bypass
   value, and whether Corta Spam still holds the dialer role. Report 4 is unexplained without those.
 - Should the older tracked LinkedIn posts be untracked and the ignore widened to

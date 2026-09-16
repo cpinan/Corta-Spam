@@ -1,4 +1,4 @@
-# Release notes — 1.6.2 (versionCode 10), production — built 2026-09-16, not yet uploaded
+# Release notes — 1.6.2 (versionCode 10), production — built 2026-09-16, uploaded 2026-09-16
 
 Release name (Console, 50-char cap):
 
@@ -75,12 +75,9 @@ Corrigido: uma caixa de diálogo do registro de chamadas que reabria sozinha, um
 - Release bundle built and installed on a physical device (motorola razr 50 ultra,
   `ZY22JZJDNH`) — app launches, no crash on open.
 
-**Not verified: none of the four fixes above (the full-screen gate, the two call-screen fixes,
-the DND/auto-responder fixes) have run through the actual call scenario on physical hardware yet.**
-`docs/STATUS.md` Next action lists the three rounds still owed — DND ringing from a second phone,
-call-waiting during "hang up & block", and the full-screen gate/auto-responder trigger — all
-unrun before this release notes file was written. Do not upload before those pass, or knowingly
-accept the risk in writing here.
+- **All three on-device rounds from `docs/STATUS.md` Next action ran and passed on 2026-09-16**:
+  DND-while-ringing from a second phone, call-waiting during "hang up & block", and the
+  full-screen gate/auto-responder trigger. Uploaded on that basis.
 
 ## Before uploading
 
@@ -94,8 +91,8 @@ accept the risk in writing here.
       not required, `versionCode='10' versionName='1.6.2'`, targetSdk 36.
 - [x] Installed the **release** build and opened the app on physical hardware (razr 50 ultra) —
       launches clean.
-- [ ] **The three hardware verification rounds in `docs/STATUS.md` Next action — not yet run.**
-      Do not upload until they are, or the fixes above are unverified on anything but an emulator.
+- [x] **The three hardware verification rounds in `docs/STATUS.md` Next action** — ran and passed
+      2026-09-16.
 - [ ] **Do not re-open the full-screen-intent declaration form** — see `SUBMISSION_0.1.0.md` §5b.
 - [ ] Screenshots are from 2026-08-20; no UI changed in this release except the new call-screen
       action, which does not appear in the current screenshot set. Consider retaking if the
