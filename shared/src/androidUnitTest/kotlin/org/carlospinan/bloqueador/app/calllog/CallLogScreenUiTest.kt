@@ -1,5 +1,8 @@
 package org.carlospinan.bloqueador.app.calllog
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -16,6 +19,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -148,6 +152,63 @@ class CallLogScreenUiTest {
         }
 
         composeTestRule.onNodeWithText("Cancel").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Block this number").assertDoesNotExist()
+    }
+
+    /**
+     * A request that has been applied must tell its caller so, or nothing upstream can ever stop
+     * re-supplying it.
+     */
+    @Test
+    fun `an applied request notifies the caller`() {
+        var handled = false
+        composeTestRule.setContent {
+            CallLogScreen(
+                entries = listOf(blockedEntry),
+                onBack = {},
+                callLogRequest = CallLogRequest(number = "+34611223344", id = 1L),
+                onCallLogRequestHandled = { handled = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        assertTrue(handled)
+    }
+
+    /**
+     * The bug the notification-tap feature actually shipped with: dismissing the dialog only
+     * clears this composable's own local state. Leaving the screen and coming back to it — a
+     * fresh composition, since nothing here uses `saveState`/`restoreState` — reopened the dialog
+     * for a request the user had already dealt with, because nothing told the request's owner it
+     * had been applied. Simulated here by disposing and recreating [CallLogScreen] itself, the
+     * same lifecycle a tab switch or back-navigation gives it, rather than merely recomposing it.
+     */
+    @Test
+    fun `a dismissed request does not reopen once the screen is recreated`() {
+        var showScreen by mutableStateOf(true)
+        var request by mutableStateOf<CallLogRequest?>(CallLogRequest(number = "+34611223344", id = 1L))
+        composeTestRule.setContent {
+            if (showScreen) {
+                CallLogScreen(
+                    entries = listOf(blockedEntry),
+                    onBack = {},
+                    callLogRequest = request,
+                    onCallLogRequestHandled = { request = null },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Block this number").assertExists()
+        composeTestRule.onNodeWithText("Cancel").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Block this number").assertDoesNotExist()
+
+        showScreen = false
+        composeTestRule.waitForIdle()
+        showScreen = true
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Block this number").assertDoesNotExist()

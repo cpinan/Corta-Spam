@@ -119,6 +119,7 @@ fun AppNavHost(
     onPlayRecording: ((String) -> Unit)? = null,
     dialRequest: DialRequest? = null,
     callLogRequest: CallLogRequest? = null,
+    onCallLogRequestHandled: (() -> Unit)? = null,
     callInProgress: Boolean = false,
     onReturnToCall: (() -> Unit)? = null,
 ) {
@@ -288,6 +289,7 @@ fun AppNavHost(
                     onPlayRecording = onPlayRecording ?: {},
                     onDeleteRecording = { entryId -> callLogViewModel.onIntent(CallLogIntent.DeleteRecording(entryId)) },
                     callLogRequest = callLogRequest,
+                    onCallLogRequestHandled = onCallLogRequestHandled ?: {},
                 )
             }
 

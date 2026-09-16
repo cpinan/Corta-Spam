@@ -121,6 +121,14 @@ fun CallLogScreen(
     onDeleteRecording: (Long) -> Unit = {},
     callLogRequest: CallLogRequest? = null,
     /**
+     * Called once [callLogRequest] has actually been applied (the dialog opened or the detail
+     * pane selected), so the caller can null its own field. Without this, revisiting this screen
+     * after leaving it — this composable is disposed and recreated by navigation, not merely
+     * recomposed, since nothing here uses `saveState`/`restoreState` — sees the same request with
+     * a fresh "not yet applied" guard and reopens a dialog the user already dismissed.
+     */
+    onCallLogRequestHandled: () -> Unit = {},
+    /**
      * Changes the date window. Handled by the ViewModel rather than here because it re-queries,
      * unlike the direction filter and the search box, which only narrow what is already loaded.
      */
@@ -173,6 +181,7 @@ fun CallLogScreen(
             selectedNumber = request.number
         }
         appliedRequestId = request.id
+        onCallLogRequestHandled()
     }
 
     val title =

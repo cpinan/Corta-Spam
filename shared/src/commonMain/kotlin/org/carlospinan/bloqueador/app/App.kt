@@ -30,6 +30,7 @@ fun App(
     onPlayRecording: ((String) -> Unit)? = null,
     dialRequest: DialRequest? = null,
     callLogRequest: CallLogRequest? = null,
+    onCallLogRequestHandled: (() -> Unit)? = null,
     callInProgress: Boolean = false,
     onReturnToCall: (() -> Unit)? = null,
 ) {
@@ -60,5 +61,6 @@ fun App(
         onReturnToCall = onReturnToCall,
         dialRequest = dialRequest,
         callLogRequest = callLogRequest,
+        onCallLogRequestHandled = onCallLogRequestHandled,
     )
 }
