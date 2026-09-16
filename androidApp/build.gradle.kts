@@ -87,9 +87,9 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // machine. The comments above are the scar tissue. Read the Console again before the next bump; do
 // not read this line.
 //
-// See docs/store/RELEASE_NOTES_1.6.1.md.
-val appVersionName = "1.6.1"
-val appVersionCode = 9
+// See docs/store/RELEASE_NOTES_1.6.2.md.
+val appVersionName = "1.6.2"
+val appVersionCode = 10
 
 // Names the outputs <versionCode>-<versionName>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.
