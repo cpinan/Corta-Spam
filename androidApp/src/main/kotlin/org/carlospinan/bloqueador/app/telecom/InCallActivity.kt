@@ -1,13 +1,16 @@
 package org.carlospinan.bloqueador.app.telecom
 
 import android.app.KeyguardManager
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.provider.ContactsContract
 import android.util.Log
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -15,6 +18,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.call.BlockAndEndAction
 import org.carlospinan.bloqueador.app.call.CallScreen
 import org.carlospinan.bloqueador.app.call.CallUiPhase
@@ -103,6 +107,7 @@ class InCallActivity : ComponentActivity() {
                     onToggleSpeaker = InCallState::toggleSpeaker,
                     onDismiss = ::finish,
                     onBlockAndEnd = { blockAndEndCall(current) },
+                    onAddContact = { addContact(current.number) },
                 )
             } else {
                 LaunchedEffect(Unit) {
@@ -188,6 +193,25 @@ class InCallActivity : ComponentActivity() {
             BlockAndEndAction.DECLINE -> InCallState.decline()
             BlockAndEndAction.HANG_UP -> InCallState.hangUp()
             BlockAndEndAction.NONE -> Unit
+        }
+    }
+
+    /**
+     * Opens the contacts app to save [number]. See [CallScreen]'s `onAddContact` KDoc for when
+     * this is offered; the intent itself mirrors `MainActivity.addContact`.
+     */
+    private fun addContact(number: String) {
+        if (number.isBlank()) return
+        val intent =
+            Intent(ContactsContract.Intents.Insert.ACTION).apply {
+                type = ContactsContract.RawContacts.CONTENT_TYPE
+                putExtra(ContactsContract.Intents.Insert.PHONE, number.trim())
+            }
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "No contacts app to save a number with", e)
+            Toast.makeText(this, R.string.keypad_add_contact_unavailable, Toast.LENGTH_LONG).show()
         }
     }
 

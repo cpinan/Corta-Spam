@@ -10,7 +10,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 769 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 781 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — una línea por cambio, del más reciente al más antiguo (en inglés); el porqué está en [Cambios recientes](#cambios-recientes) más abajo
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
@@ -41,6 +41,7 @@ M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos pan
 - **Excepción por llamada de emergencia** — durante 30 minutos después de llamar a emergencias, todas las llamadas entrantes pasan, digan lo que digan tus reglas. Activada por defecto, y comprobada antes que cualquier regla, incluido un bloqueo manual. Usa la señal de rellamada de emergencia de la propia plataforma más los números que esta app te ha visto marcar; no necesita ningún permiso extra, y los 30 minutos se declaran en vez de insinuarse
 - **Controles durante la llamada** — silenciar, altavoz y cronómetro, más un teclado DTMF. El rol sustituye a la app de teléfono, así que lo que falte aquí le falta al teléfono. El teclado DTMF está porque asumir el rol de marcador predeterminado hace que esta sea la única pantalla de llamada que tiene el usuario: sin él, "pulse 1 para cuentas" es inalcanzable y cualquier menú automático se acaba en el primer aviso. Los dígitos ya enviados quedan en pantalla, porque nada en la línea los devuelve
 - **Colgar y bloquear en un solo toque** — una acción secundaria en la pantalla de llamada ("Rechazar y bloquear" mientras suena, "Colgar y bloquear" una vez conectada) termina la llamada y añade el número a la lista de bloqueo a la vez, en vez de colgar y luego buscar el número por otro lado para bloquearlo. No se ofrece para un número oculto, porque no hay nada que añadir a la lista
+- **Añadir a contactos desde una llamada en curso** — una llamada a o desde un número que la agenda no sabe nombrar ofrece "Crear contacto nuevo" en la propia pantalla de llamada, para guardar un número que acabas de marcar o contestar por primera vez sin tener que buscarlo después en el registro de llamadas. No se ofrece una vez que ya se conoce un nombre
 - **Versión en Ajustes** — la última fila de Ajustes indica la compilación instalada, `1.4.0 (6)`, leída del propio paquete y no de una constante que podría contradecirlo. Los dos números, porque un nombre de versión no dice en qué subida estás
 - **Créditos** — el mantenedor, la IA con la que se escribió el código, y las bibliotecas de código abierto que la app incluye, cada una con su licencia SPDX y su página del proyecto. Personas y licencias van en secciones separadas: lo uno es cortesía, lo otro es obligación
 - **Identidad de quien llama en la pantalla de llamada** — una llamada entrante o saliente muestra el nombre del contacto o, si no lo hay, la etiqueta que le pusiste a ese número en tus listas, con el número debajo
@@ -165,6 +166,19 @@ Un curso completo de 36 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 194 preguntas de evaluación.
 
 ## Cambios recientes
+**2026-09-18:** un informe de una persona usuaria — no había forma de guardar un número recién
+marcado o contestado sin salir de la pantalla de llamada a buscarlo en el registro.
+
+- **Añadir un número nuevo a contactos sin salir de la pantalla de llamada.** `CallScreen` ofrece
+  ahora "Crear contacto nuevo" (fases activa/marcando/otro) siempre que quien llama no tenga un
+  `displayName` resuelto — la agenda ya tuvo su oportunidad de nombrarlo. Reutiliza el mismo
+  intent `ContactsContract.Intents.Insert` y la cadena `keypad_add_contact` que ya usaba el propio
+  flujo de "Crear contacto nuevo" del teclado, solo que lanzado desde `InCallActivity` en vez de
+  `MainActivity`.
+- **779 → 781 pruebas** (`:shared` 666 → 668, `:androidApp` 113 sin cambios). Nuevas: dos casos de
+  `CallScreenUiTest` — el botón aparece para un número sin nombre y se oculta en cuanto se conoce
+  uno.
+
 **2026-09-15:** cuatro informes más de personas usuarias en una sola tanda — el autorespondedor "parece no funcionar", terminar y bloquear a quien llama exigía dos pasos, la interfaz de pantalla completa de una llamada bloqueada aparecía un instante y desaparecía, y no había forma de volver a una llamada tras minimizarla.
 
 - **La condición que dispara el autorespondedor nunca se había puesto a prueba de verdad.** La condición — activado, configuración válida, ninguna otra llamada ya en curso — era correcta, pero vivía dentro de la corrutina de evaluación de `PassthroughInCallService.onCallAdded`, que necesita una pila Telecom real para siquiera alcanzarse. Se extrajo a `AutoResponderTriggerPolicy` (shared/commonMain), la misma separación ya hecha para `RingerPolicy`, `NotificationPolicy` y `BlockedCallPolicy`, así que la condición ahora tiene una prueba unitaria directa. El valor por defecto sigue **desactivado** — grabar el audio de quien llama sin su consentimiento por defecto conlleva riesgo legal real en algunas jurisdicciones, así que eso es una decisión de producto, no un error.

@@ -389,6 +389,46 @@ class CallScreenUiTest {
         assertTrue(blocked)
     }
 
+    /**
+     * The moment a number someone just dialled for the first time is most likely to be worth
+     * keeping — and the contacts provider has already had its chance to resolve a name.
+     */
+    @Test
+    fun `an active call to a new number offers to add it as a contact`() {
+        var added = false
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.ACTIVE,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onAddContact = { added = true },
+            )
+        }
+
+        composeTestRule.onNodeWithText("Create new contact").performClick()
+
+        assertTrue(added)
+    }
+
+    /** A number the address book already resolved has nothing to add. */
+    @Test
+    fun `a call to a known contact offers no add-contact action`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.ACTIVE,
+                displayName = "Mom",
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Create new contact").assertDoesNotExist()
+    }
+
     /** A blank number cannot be added to the block list, so the action must not be offered. */
     @Test
     fun `an unknown caller offers no block action`() {

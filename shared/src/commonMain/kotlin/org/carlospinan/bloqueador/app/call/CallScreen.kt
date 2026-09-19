@@ -51,6 +51,7 @@ import cortaspam.shared.generated.resources.call_status_other
 import cortaspam.shared.generated.resources.call_status_ringing
 import cortaspam.shared.generated.resources.call_unknown_number
 import cortaspam.shared.generated.resources.ic_brand_app
+import cortaspam.shared.generated.resources.keypad_add_contact
 import org.carlospinan.bloqueador.app.keypad.DialPad
 import org.carlospinan.bloqueador.app.theme.CortaSpamTheme
 import org.jetbrains.compose.resources.painterResource
@@ -135,6 +136,13 @@ fun CallScreen(
      * the rule write. Not offered for a blank number — there is nothing to block.
      */
     onBlockAndEnd: () -> Unit = {},
+    /**
+     * Opens the contacts app to save this number. Offered only while a call to it is live and
+     * [displayName] is null: a number the contacts provider already resolved has nothing to add,
+     * and this is the moment a number someone just dialled for the first time is most likely to
+     * be worth keeping.
+     */
+    onAddContact: () -> Unit = {},
 ) {
     var keypadRequested by rememberSaveable { mutableStateOf(false) }
     // Tones only mean anything on a connected call: Telecom drops playDtmfTone on a call that is
@@ -312,6 +320,11 @@ fun CallScreen(
                                 if (number.isNotBlank()) {
                                     TextButton(onClick = onBlockAndEnd) {
                                         Text(stringResource(Res.string.action_hang_up_and_block))
+                                    }
+                                }
+                                if (number.isNotBlank() && displayName == null) {
+                                    TextButton(onClick = onAddContact) {
+                                        Text(stringResource(Res.string.keypad_add_contact))
                                     }
                                 }
                             }

@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 769 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 781 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -41,6 +41,7 @@ M0–M13 complete, including M12's adaptive layout (both tablet list-detail pane
 - **Emergency callback exemption** — for 30 minutes after you call the emergency services, every incoming call is let through whatever your rules say. On by default, and checked before every rule including a manual block. Uses the platform's own emergency-callback signal plus the numbers this app saw you dial; it needs no extra permission, and the 30 minutes is stated rather than implied
 - **In-call controls** — mute, speaker and a call timer, plus a DTMF pad. The role replaces the phone app, so anything missing here is missing from the phone. The DTMF pad is there because taking the default-dialer role means this is the only call screen the user has: without it "press 1 for accounts" is unreachable and every automated menu ends at the first prompt. The digits already sent stay on screen, since nothing on the line echoes them back
 - **Hang up & block in one tap** — a secondary action on the call screen ("Decline & block" while ringing, "Hang up & block" once connected) ends the call and adds its number to the block list together, instead of hanging up and then hunting the number down elsewhere to block it. Not offered for a withheld number, since there is nothing to add to the list
+- **Add to contacts from a live call** — a call to or from a number the address book cannot name offers "Create new contact" right on the call screen, so a number you just dialled or answered for the first time can be saved without hunting through the call log afterwards. Not offered once a name is already known
 - **Version in Settings** — the last row of Settings names the installed build, `1.4.0 (6)`, read from the package itself rather than from a constant that could disagree with it. Both numbers, because a version name does not say which upload you are on
 - **Credits** — the maintainer, the AI pair used to write the code, and the open-source libraries the app ships with, each with its SPDX licence and project home. People and licences are kept in separate sections: one is a courtesy, the other is an obligation
 - **Caller identity on the call screen** — a ringing or dialling call shows the contact's name, or failing that the label you gave that number in your own block/allowlist, with the number kept underneath
@@ -163,6 +164,18 @@ A complete 36-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 194 quiz questions included.
 
 ## Recent Fixes
+**2026-09-18:** a user report — no way to save a number you had just called or answered without
+leaving the call screen to hunt for it in the call log.
+
+- **Add a new number to contacts without leaving the call screen.** `CallScreen` now offers
+  "Create new contact" (active/dialing/other phases) whenever the caller has no resolved
+  `displayName` — the address book already had its chance to name them. Reuses the same
+  `ContactsContract.Intents.Insert` intent and `keypad_add_contact` string the keypad's own
+  "Create new contact" flow already used, just launched from `InCallActivity` instead of
+  `MainActivity`.
+- **779 → 781 tests** (`:shared` 666 → 668, `:androidApp` 113 unchanged). New: two `CallScreenUiTest`
+  cases — the button appears for an unnamed number and stays hidden once a name is known.
+
 **2026-09-15:** four more user reports in one pass — the auto-responder "seems not working", no
 way to hang up and block a caller in one step, a blocked call's full-screen UI flashing on screen
 and vanishing a moment later, and no way back to a call after minimizing it.
