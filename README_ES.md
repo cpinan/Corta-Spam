@@ -10,7 +10,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 781 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 784 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — una línea por cambio, del más reciente al más antiguo (en inglés); el porqué está en [Cambios recientes](#cambios-recientes) más abajo
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
@@ -166,6 +166,23 @@ Un curso completo de 36 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 194 preguntas de evaluación.
 
 ## Cambios recientes
+**2026-10-07:** dos peticiones — una app cuyo trabajo es frenar el spam debería empezar frenándolo, y
+una persona nueva no tenía ninguna pista de que Ajustes es donde se afina.
+
+- **La acción predeterminada ahora es Bloquear en una instalación nueva.** `SqlSettingsRepository`
+  lee un `default_action` sin definir como BLOCK si aún no se vio la pantalla de bienvenida, y como
+  ALLOW si ya se vio — quien instaló antes y nunca eligió una acción conserva su comportamiento, en
+  vez de que una actualización empiece a rechazar llamadas. `setWelcomeShown` guarda el valor de
+  instalación nueva; si no, el siguiente arranque vería la bienvenida marcada y confundiría a una
+  persona nueva con una antigua.
+- **Guía de Ajustes la primera vez.** Un diálogo explica el interruptor general, la acción
+  predeterminada, contactos, llamadas repetidas y notificaciones, una sola vez, con "Abrir Ajustes" /
+  "Entendido". Se guarda como `settings_tutorial_shown`; textos en los cuatro idiomas. Quien ya usaba
+  la app lo ve una vez tras actualizar.
+- **781 → 784 pruebas** (`:shared` 668 → 671, `:androidApp` 113 sin cambios). Nuevas: quien ya
+  usaba la app conserva Permitir, el Bloquear de instalación nueva sobrevive a un reinicio, y la
+  marca del tutorial persiste. Dos pruebas existentes pasaron al nuevo valor.
+
 **2026-09-18:** un informe de una persona usuaria — no había forma de guardar un número recién
 marcado o contestado sin salir de la pantalla de llamada a buscarlo en el registro.
 

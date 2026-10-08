@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 781 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 784 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -164,6 +164,22 @@ A complete 36-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 194 quiz questions included.
 
 ## Recent Fixes
+**2026-10-07:** two requests — an app whose job is stopping spam should start out stopping it, and a
+new user had no hint that Settings is where that is tuned.
+
+- **Default action is now Block on a fresh install.** `SqlSettingsRepository` reads an unset
+  `default_action` as BLOCK when the welcome screen has not been seen, and as ALLOW when it has —
+  someone who installed earlier and never chose a default keeps the behaviour they had, rather than
+  having calls start being rejected by an update. `setWelcomeShown` writes the fresh-install value
+  down; otherwise the next launch would see the welcome flag set and mistake a new user for an old one.
+- **First-run Settings walkthrough.** A dialog explaining the master switch, default action,
+  contacts, repeated callers and notifications appears once, with "Open Settings" / "Got it".
+  Persisted as `settings_tutorial_shown`; strings in all four locales. Existing users see it once
+  after updating.
+- **781 → 784 tests** (`:shared` 668 → 671, `:androidApp` 113 unchanged). New: existing-user
+  keeps Allow, fresh-install Block survives a restart, tutorial flag persists. Two existing tests
+  changed to the new default.
+
 **2026-09-18:** a user report — no way to save a number you had just called or answered without
 leaving the call screen to hunt for it in the call log.
 
