@@ -156,7 +156,7 @@ settings = {
     "spam_provider_enabled": "true",
     "notifications_enabled": "true",
     "notify_unknown_callers": "true",
-    "default_action": "ALLOW",
+    "default_action": "BLOCK",
     "auto_responder_enabled": "false",
     "auto_recording_enabled": "false",
     "repeated_caller_bypass_count": "3",
@@ -165,6 +165,7 @@ settings = {
     "last_emergency_call_at": "0",
     "welcome_shown": "true",
     "permissions_prompt_shown": "true",
+    "settings_tutorial_shown": "true",
 }
 for k, v in settings.items():
     c.execute("INSERT OR REPLACE INTO AppSettings(key,value) VALUES (?,?)", (k, v))
