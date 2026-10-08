@@ -24,7 +24,7 @@ class SqlSettingsRepository(
     private val _showRecentCallersOnKeypad = MutableStateFlow(true)
     override val showRecentCallersOnKeypad: Flow<Boolean> = _showRecentCallersOnKeypad.asStateFlow()
 
-    private val _defaultAction = MutableStateFlow(DefaultAction.ALLOW)
+    private val _defaultAction = MutableStateFlow(DefaultAction.BLOCK)
     override val defaultAction: Flow<DefaultAction> = _defaultAction.asStateFlow()
 
     private val _notificationsEnabled = MutableStateFlow(true)
@@ -50,9 +50,15 @@ class SqlSettingsRepository(
         _blockingEnabled.value = store.readBool("blocking_enabled", true)
         _autoAllowContacts.value = store.readBool("auto_allow_contacts", true)
         _showRecentCallersOnKeypad.value = store.readBool("show_recent_callers_on_keypad", true)
+        // A fresh install blocks what no rule claims: an app whose job is stopping spam must not
+        // start out letting it through. Someone who installed before this changed has already
+        // seen the welcome screen yet has no stored choice, and for them "allow" is what the app
+        // has always done -- flipping it silently on update would start rejecting calls they
+        // never agreed to reject. setWelcomeShown pins the fresh-install value so it survives.
+        val unset = if (store.readBool("welcome_shown", false)) DefaultAction.ALLOW else DefaultAction.BLOCK
         _defaultAction.value =
-            store.readString("default_action", DefaultAction.ALLOW.key).let { key ->
-                DefaultAction.entries.find { it.key == key } ?: DefaultAction.ALLOW
+            store.readString("default_action", unset.key).let { key ->
+                DefaultAction.entries.find { it.key == key } ?: unset
             }
         _notificationsEnabled.value = store.readBool("notifications_enabled", true)
         _notifyUnknownCallers.value = store.readBool("notify_unknown_callers", true)
@@ -131,6 +137,7 @@ class SqlSettingsRepository(
     }
 
     override suspend fun setWelcomeShown() {
+        if (!store.has("default_action")) store.write("default_action", _defaultAction.value.key)
         store.writeBool("welcome_shown", true)
         _welcomeShown = true
     }

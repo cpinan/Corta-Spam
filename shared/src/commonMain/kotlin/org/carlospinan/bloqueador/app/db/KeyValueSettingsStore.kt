@@ -16,6 +16,8 @@ class KeyValueSettingsStore(
         return raw.toBooleanStrictOrNull() ?: default
     }
 
+    fun has(key: String): Boolean = db.appDatabaseQueries.selectSetting(key).executeAsOneOrNull() != null
+
     fun readString(
         key: String,
         default: String,

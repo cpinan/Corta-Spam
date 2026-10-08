@@ -13,7 +13,7 @@ data class SettingsUiState(
     val blockingEnabled: Boolean = true,
     val autoAllowContacts: Boolean = true,
     val showRecentCallersOnKeypad: Boolean = true,
-    val defaultAction: DefaultAction = DefaultAction.ALLOW,
+    val defaultAction: DefaultAction = DefaultAction.BLOCK,
     val spamEnabled: Boolean = false,
     val notificationsEnabled: Boolean = true,
     val notifyUnknownCallers: Boolean = true,

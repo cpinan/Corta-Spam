@@ -26,7 +26,7 @@ class SqlSettingsRepositoryTest {
 
             assertTrue(repo.blockingEnabled.first())
             assertTrue(repo.autoAllowContacts.first())
-            assertEquals(DefaultAction.ALLOW, repo.defaultAction.first())
+            assertEquals(DefaultAction.BLOCK, repo.defaultAction.first())
             assertTrue(repo.notificationsEnabled.value)
             assertEquals(0, repo.repeatedCallerBypassCount.first())
             assertFalse(repo.welcomeShown)
@@ -89,9 +89,32 @@ class SqlSettingsRepositoryTest {
         runTest {
             val db = createTestDatabase()
             // Simulates a value written by a newer build, or a corrupted row.
-            KeyValueSettingsStore(db, Dispatchers.Unconfined).write("default_action", "TRANSFER_TO_VOICEMAIL")
+            val store = KeyValueSettingsStore(db, Dispatchers.Unconfined)
+            store.write("default_action", "TRANSFER_TO_VOICEMAIL")
+            store.writeBool("welcome_shown", true)
 
             assertEquals(DefaultAction.ALLOW, SqlSettingsRepository(db, Dispatchers.Unconfined).defaultAction.first())
+        }
+
+    @Test
+    fun installerFromBeforeTheBlockDefaultKeepsAllow() =
+        runTest {
+            val db = createTestDatabase()
+            // An existing user: welcome screen seen, never touched the default action.
+            KeyValueSettingsStore(db, Dispatchers.Unconfined).writeBool("welcome_shown", true)
+
+            assertEquals(DefaultAction.ALLOW, SqlSettingsRepository(db, Dispatchers.Unconfined).defaultAction.first())
+        }
+
+    @Test
+    fun freshInstallKeepsBlockAfterWelcomeAndRestart() =
+        runTest {
+            val db = createTestDatabase()
+            SqlSettingsRepository(db, Dispatchers.Unconfined).setWelcomeShown()
+
+            // Same database, new process: the welcome flag is now set, so only the pinned value
+            // stops this from reading as an existing user and flipping to ALLOW.
+            assertEquals(DefaultAction.BLOCK, SqlSettingsRepository(db, Dispatchers.Unconfined).defaultAction.first())
         }
 
     @Test
