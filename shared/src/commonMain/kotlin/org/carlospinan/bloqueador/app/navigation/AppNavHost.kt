@@ -1,11 +1,5 @@
 package org.carlospinan.bloqueador.app.navigation
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -14,7 +8,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -28,10 +21,6 @@ import cortaspam.shared.generated.resources.Res
 import cortaspam.shared.generated.resources.privacy_policy_body
 import cortaspam.shared.generated.resources.settings_privacy_title
 import cortaspam.shared.generated.resources.settings_terms_title
-import cortaspam.shared.generated.resources.settings_tutorial_body
-import cortaspam.shared.generated.resources.settings_tutorial_dismiss
-import cortaspam.shared.generated.resources.settings_tutorial_open
-import cortaspam.shared.generated.resources.settings_tutorial_title
 import cortaspam.shared.generated.resources.terms_conditions_body
 import kotlinx.coroutines.launch
 import org.carlospinan.bloqueador.app.adaptive.AdaptiveRoutes
@@ -74,6 +63,7 @@ import org.carlospinan.bloqueador.app.settings.InfoScreen
 import org.carlospinan.bloqueador.app.settings.SettingsIntent
 import org.carlospinan.bloqueador.app.settings.SettingsRepository
 import org.carlospinan.bloqueador.app.settings.SettingsScreen
+import org.carlospinan.bloqueador.app.settings.SettingsTutorialDialog
 import org.carlospinan.bloqueador.app.settings.SettingsViewModel
 import org.carlospinan.bloqueador.app.stats.StatsScreen
 import org.carlospinan.bloqueador.app.stats.StatsViewModel
@@ -171,28 +161,15 @@ fun AppNavHost(
     val tutorialScope = rememberCoroutineScope()
     var showSettingsTutorial by remember { mutableStateOf(!settingsRepository.settingsTutorialShown) }
     if (showSettingsTutorial) {
-        val finish = {
-            showSettingsTutorial = false
-            tutorialScope.launch { settingsRepository.setSettingsTutorialShown() }
-            Unit
-        }
-        AlertDialog(
-            onDismissRequest = { finish() },
-            title = { Text(stringResource(Res.string.settings_tutorial_title)) },
-            text = {
-                Text(
-                    stringResource(Res.string.settings_tutorial_body),
-                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                )
+        SettingsTutorialDialog(
+            onOpenSettings = {
+                showSettingsTutorial = false
+                tutorialScope.launch { settingsRepository.setSettingsTutorialShown() }
+                navController.navigate(Routes.SETTINGS) { launchSingleTop = true }
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    finish()
-                    navController.navigate(Routes.SETTINGS) { launchSingleTop = true }
-                }) { Text(stringResource(Res.string.settings_tutorial_open)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { finish() }) { Text(stringResource(Res.string.settings_tutorial_dismiss)) }
+            onDismiss = {
+                showSettingsTutorial = false
+                tutorialScope.launch { settingsRepository.setSettingsTutorialShown() }
             },
         )
     }
