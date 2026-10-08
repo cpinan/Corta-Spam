@@ -373,4 +373,16 @@
     <string name="settings_recent_on_keypad">कीपैड पर हाल की कॉल</string>
     <string name="settings_recent_on_keypad_desc">नंबर वाले खाने के ऊपर दिखाएँ कि हाल में किसने कॉल किया। आपके पसंदीदा संपर्क वैसे भी दिखेंगे।</string>
     <string name="keypad_strip_empty_starred">आपके पसंदीदा संपर्क यहाँ दिखेंगे।</string>
+    <string name="settings_tutorial_title">स्वागत है — सेटिंग्स ऐसे काम करती हैं</string>
+    <string name="settings_tutorial_body">Corta Spam डिफ़ॉल्ट रूप से अनजान नंबर ब्लॉक करता है। इसे ठीक करने के लिए सेटिंग्स खोलें:
+
+• ब्लॉकिंग: मुख्य चालू/बंद स्विच।
+• डिफ़ॉल्ट कार्रवाई: जिन नंबरों पर कोई नियम लागू नहीं होता उनका क्या हो। डिफ़ॉल्ट ब्लॉक है; चाहें तो अनुमति दें या पूछें चुनें।
+• संपर्क: यह चालू होने पर आपकी एड्रेस बुक की कॉल हमेशा आती हैं।
+• बार-बार कॉल: कोई नंबर 24 घंटे में कई बार कॉल करे तो उसे आने दें।
+• सूचनाएँ: कॉल के बाद किस बारे में सूचना मिले, चुनें।
+
+आप होम से कभी भी सेटिंग्स दोबारा खोल सकते हैं।</string>
+    <string name="settings_tutorial_open">सेटिंग्स खोलें</string>
+    <string name="settings_tutorial_dismiss">समझ गया</string>
 </resources>

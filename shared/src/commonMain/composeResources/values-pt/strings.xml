@@ -373,4 +373,16 @@
     <string name="settings_recent_on_keypad">Chamadas recentes no teclado</string>
     <string name="settings_recent_on_keypad_desc">Mostra quem ligou recentemente acima do campo do número. Seus contatos favoritos aparecem de qualquer forma.</string>
     <string name="keypad_strip_empty_starred">Aqui aparecerão seus contatos favoritos.</string>
+    <string name="settings_tutorial_title">Boas-vindas: veja como funcionam os Ajustes</string>
+    <string name="settings_tutorial_body">O Corta Spam bloqueia números desconhecidos por padrão. Abra os Ajustes para configurar:
+
+• Bloqueio: o interruptor geral.
+• Ação padrão: o que fazer com números que não correspondem a nenhuma regra. O padrão é Bloquear; mude para Permitir ou Perguntar se preferir.
+• Contatos: com esta opção ativa, chamadas da sua agenda sempre passam.
+• Chamada repetida: deixa um número passar se ligar várias vezes em 24 horas.
+• Notificações: escolha o que avisamos depois de uma chamada.
+
+Você pode reabrir os Ajustes a qualquer momento pela tela Início.</string>
+    <string name="settings_tutorial_open">Abrir Ajustes</string>
+    <string name="settings_tutorial_dismiss">Entendi</string>
 </resources>

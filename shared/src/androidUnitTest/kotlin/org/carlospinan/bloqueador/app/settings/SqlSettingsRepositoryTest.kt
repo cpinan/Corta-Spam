@@ -118,6 +118,17 @@ class SqlSettingsRepositoryTest {
         }
 
     @Test
+    fun settingsTutorialShownPersists() =
+        runTest {
+            val db = createTestDatabase()
+            val repo = SqlSettingsRepository(db, Dispatchers.Unconfined)
+            assertFalse(repo.settingsTutorialShown)
+            repo.setSettingsTutorialShown()
+
+            assertTrue(SqlSettingsRepository(db, Dispatchers.Unconfined).settingsTutorialShown)
+        }
+
+    @Test
     fun everyDefaultActionKeyRoundTrips() =
         runTest {
             DefaultAction.entries.forEach { action ->

@@ -370,4 +370,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     <string name="settings_recent_on_keypad">Recent callers on the keypad</string>
     <string name="settings_recent_on_keypad_desc">Show who rang recently above the number field. Your starred contacts are shown either way.</string>
     <string name="keypad_strip_empty_starred">Your starred contacts appear here.</string>
+    <string name="settings_tutorial_title">Welcome — how Settings works</string>
+    <string name="settings_tutorial_body">Corta Spam blocks unknown numbers by default. Open Settings to tune it:
+
+• Blocking: the master on/off switch.
+• Default action: what happens to numbers that match no rule. Block is the default; switch to Allow or Ask if you prefer.
+• Contacts: calls from your address book are always let through when this is on.
+• Repeated caller: let a number through if it rings several times in 24 hours.
+• Notifications: choose what you hear about after a call.
+
+You can reopen Settings any time from Home.</string>
+    <string name="settings_tutorial_open">Open Settings</string>
+    <string name="settings_tutorial_dismiss">Got it</string>
 </resources>

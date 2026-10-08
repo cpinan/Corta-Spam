@@ -142,6 +142,15 @@ class SqlSettingsRepository(
         _welcomeShown = true
     }
 
+    private var _settingsTutorialShown: Boolean = store.readBool("settings_tutorial_shown", false)
+    override val settingsTutorialShown: Boolean
+        get() = _settingsTutorialShown
+
+    override suspend fun setSettingsTutorialShown() {
+        store.writeBool("settings_tutorial_shown", true)
+        _settingsTutorialShown = true
+    }
+
     override suspend fun setPermissionsPromptShown() {
         store.writeBool("permissions_prompt_shown", true)
         _permissionsPromptShown = true

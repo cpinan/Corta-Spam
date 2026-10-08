@@ -114,4 +114,12 @@ interface SettingsRepository {
     val permissionsPromptShown: Boolean
 
     suspend fun setPermissionsPromptShown()
+
+    /**
+     * True once the how-to-use-Settings walkthrough has been shown (or dismissed). Plain
+     * `Boolean` for the same reason as [welcomeShown]: read once when the app shell appears.
+     */
+    val settingsTutorialShown: Boolean
+
+    suspend fun setSettingsTutorialShown()
 }

@@ -31,7 +31,12 @@ internal class FakeSettingsRepository(
         MutableStateFlow(EmergencyCallPolicy.NEVER),
     override val welcomeShown: Boolean = false,
     override val permissionsPromptShown: Boolean = false,
+    override var settingsTutorialShown: Boolean = false,
 ) : SettingsRepository {
+    override suspend fun setSettingsTutorialShown() {
+        settingsTutorialShown = true
+    }
+
     override suspend fun setBlockingEnabled(enabled: Boolean) {
         blockingEnabled.value = enabled
     }
