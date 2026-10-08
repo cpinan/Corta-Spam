@@ -88,8 +88,8 @@ val hasUploadKey = keystoreProperties.getProperty("storeFile") != null
 // not read this line.
 //
 // See docs/store/RELEASE_NOTES_1.6.2.md.
-val appVersionName = "1.6.2"
-val appVersionCode = 10
+val appVersionName = "1.7.0"
+val appVersionCode = 11
 
 // Names the outputs <versionCode>-<versionName>-<buildType>.{aab,apk} instead of
 // androidApp-release.*, so a bundle sitting in Downloads still says which release it is.

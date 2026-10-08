@@ -10,7 +10,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 784 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 787 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — una línea por cambio, del más reciente al más antiguo (en inglés); el porqué está en [Cambios recientes](#cambios-recientes) más abajo
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura

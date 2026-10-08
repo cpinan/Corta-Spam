@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 784 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 787 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
