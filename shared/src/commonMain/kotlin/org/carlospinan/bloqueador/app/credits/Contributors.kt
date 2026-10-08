@@ -65,6 +65,9 @@ val CONTRIBUTORS: List<Contributor> =
             name = "Augusto Piñán",
             contribution = "Early feedback, bug reporting and testing",
         ),
+        // Name only: no contribution line was given, and the screen renders a bare name fine.
+        // Inventing "testing" to match the rows above would put words in someone's credit.
+        Contributor(name = "Christopher (Kris) Gead"),
     )
 
 /**
