@@ -1,13 +1,12 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-10-08 · branch `main` · 1 untracked file (`docs/store/PASTE_1.7.0.md`, copy-paste helper) + 5 untracked `.claude/skills/` dirs, not ours_
+_Last updated: 2026-10-09 · branch `main` · 6 modified + 4 new source files uncommitted (backup export, add-contact account), plus `docs/store/PASTE_1.7.0.md` and 5 `.claude/skills/` dirs, not ours_
 
 ## Next action
 
-**11 (1.7.0) was submitted to Play for review on 2026-10-08** — nothing to do until the Console
-resolves it. When it does, re-triage the four Play advisories against its `mapping.txt`
-(`docs/PLAY_ADVISORIES.md`). Separately, the ringing-call UI/notification report below still needs a
-physical device.
+Run `bash tools/verify.sh`, then commit the uncommitted backup-export and add-contact work as separate
+one-purpose commits with README + README_ES + a course chapter each (see In flight). 11 (1.7.0) is in
+Play review since 2026-10-08; when it resolves, re-triage the four advisories (`docs/PLAY_ADVISORIES.md`).
 
 ## State
 
@@ -26,12 +25,31 @@ physical device.
 
 ## In flight
 
+- **Uncommitted, built, unit-tested, installed on the razr (debug) — `verify.sh` NOT run, README/course NOT updated:**
+  - Backup export now saves a `cortaspam-backup-<yyyyMMdd-HHmmss>.json` via `CreateDocument`; import picker
+    accepts `*/*` (old `.txt` exports). Was: share-as-`text/plain` -> `.txt`, import filter JSON-only, so the
+    app could not read its own export. `androidApp/.../MainActivity.kt` (`exportFileLauncher`,
+    `importFileLauncher`), `BackupFileName.kt`, `BackupFileNameTest.kt`; removed
+    `share_backup_chooser_title` from 4 `values*/strings.xml`.
+  - Add-contact intent preselects the Google account holding most contacts
+    (`AddContactIntent.kt`, `PickSyncAccountTest.kt`; used by `MainActivity.addContact` and
+    `InCallActivity.addContact`). Not yet seen working in the editor UI on the razr.
+- **Original report unresolved: "number is in my agenda but shows no name" on the motorola razr.** Pixel
+  (58281FDCQ005US) just has `READ_CONTACTS` denied (`granted=false`). On the razr (ZY22JZJDNH, was 1.6.2)
+  permission was granted but none of the bare call-log numbers (`961710293`, `017066208`, `913934060`,
+  `906029213`, `016219313`, `901420967`, `+447424819612`) exist in its contacts provider; `961710293` is an
+  explicit allowlist entry. Razr now runs the **debug** build (release uninstalled 2026-10-09, rules were
+  exported to Downloads `cortaspam.txt`/`.json`); import of that file not confirmed. Next: ask which
+  number is "in the agenda" as saved, then compare against `PhoneNumberParser.comparisonKeys`. Possible
+  gap: contact saved `+00971…` vs call `+971…` (`toE164OrNull` strips `00`, but `Uber Dubai Waseem` is
+  `+00971…` — unverified).
+- **Denied-twice contacts permission:** the button at `MainActivity.kt` (`onRequestContactsPermission`)
+  re-launches a system dialog that Android no longer shows; should open app settings. Offered, not built.
 - **Open user report, unconfirmed root cause: ringing call lost the full-screen UI and the
-  notification has no hang-up/block actions.** Two candidates: (1) `USE_FULL_SCREEN_INTENT` special
-  access revoked in system Settings; (2) `IncomingCallNotifier.post()`
-  (`androidApp/.../telecom/IncomingCallNotifier.kt:431`) swallowing a `RuntimeException` from
-  `notify()`. Next step with a phone attached: `adb logcat -s IncomingCallNotifier` during a real
-  incoming call; project memory `incoming_call_ui_regression` has the detail.
+  notification has no hang-up/block actions.** Two candidates: (1) `USE_FULL_SCREEN_INTENT` revoked;
+  (2) `IncomingCallNotifier.post()` (`androidApp/.../telecom/IncomingCallNotifier.kt:431`) swallowing a
+  `RuntimeException`. Next: `adb logcat -s IncomingCallNotifier` during a real call; memory
+  `incoming_call_ui_regression`.
 
 ## Verify
 
@@ -53,6 +71,10 @@ Green as of 2026-10-08 (787 tests, iOS compile included).
 - Should older tracked LinkedIn posts be untracked? Asked 2026-08-29, unanswered.
 
 ## Do not redo
+
+- **Do not try to back up the release app's data over adb.** `allowBackup=false`, not debuggable: no `run-as`,
+  no `adb backup`. Only the in-app Backup screen exports it, and uninstall wipes the rest.
+- **Android `Account` is a stub in JVM unit tests** (fields null) — keep `pickSyncAccount` returning a Pair.
 
 - **Do not try `ndk.debugSymbolLevel=FULL` again for the native-debug-symbols warning.** Confirmed
   it produces an empty `extractReleaseNativeDebugMetadata` output — `androidx.graphics.path`'s
