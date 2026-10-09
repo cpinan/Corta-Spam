@@ -1,41 +1,37 @@
 # STATUS — Corta Spam
 
-_Last updated: 2026-09-18 · branch `main` · 0 uncommitted files (5 untracked `.claude/skills/` dirs, not ours)_
+_Last updated: 2026-10-08 · branch `main` · 1 untracked file (`docs/store/PASTE_1.7.0.md`, copy-paste helper) + 5 untracked `.claude/skills/` dirs, not ours_
 
 ## Next action
 
-**10 (1.6.2) is still in Play review** (submitted 2026-09-16) — nothing to do until the Console
-resolves it. Separately: diagnose the ringing-call UI/notification report below once the device is
-back — that is the next piece of actual work.
+**11 (1.7.0) was submitted to Play for review on 2026-10-08** — nothing to do until the Console
+resolves it. When it does, re-triage the four Play advisories against its `mapping.txt`
+(`docs/PLAY_ADVISORIES.md`). Separately, the ringing-call UI/notification report below still needs a
+physical device.
 
 ## State
 
-- **10 (1.6.2) uploaded to production 2026-09-16, versionCode 10 spent.** Still in review as of
-  2026-09-18. 9 (1.6.1) is the last confirmed-live build.
-- **Shipped this session: "add to contacts" from a live call.** `CallScreen` offers "Create new
-  contact" (active/dialing/other) whenever the caller has no resolved `displayName`, wired through
-  `InCallActivity.addContact` reusing the keypad's own `ContactsContract.Intents.Insert` intent.
-  Commit `046ec82`. README/README_ES/course chapter 38 all updated. No device verification yet —
-  build/tests/lint only, per the standing no-install-without-asking rule.
-- **781 tests** (`:shared` 668, `:androidApp` 113), 38 course chapters.
+- **11 (1.7.0) submitted to production 2026-10-08, versionCode 11 spent.** Bundle
+  `androidApp/build/outputs/bundle/release/11-1.7.0-release.aab`, same upload key as 10. The status
+  of 10 (1.6.2, submitted 2026-09-16) is not known to this repo.
+- **New in 1.7.0:** a fresh install blocks unmatched numbers by default (existing installs that never
+  chose keep ALLOW; `setWelcomeShown` pins the fresh-install value); a once-only first-run Settings
+  walkthrough (`SettingsTutorialDialog`, all four locales); add-to-contacts from the call screen;
+  Christopher (Kris) Gead in Credits, name only.
+- **787 tests** (`:shared` 674, `:androidApp` 113), 39 course chapters. Release (R8) build checked on
+  the API 36 emulator from a fresh install: tutorial shows once, no crash. Not run on a physical device.
+- Listing screenshots retaken 2026-10-08 (en-US + es-419) in `docs/store/play/`. Whether they were
+  swapped in the Console this session was not confirmed — check Store presence → Main store listing.
 - iOS still has no call blocking — pending the CallDirectory extension (unchanged).
 
 ## In flight
 
 - **Open user report, unconfirmed root cause: ringing call lost the full-screen UI and the
-  notification has no hang-up/block actions.** No device attached this session to reproduce.
-  Two candidate causes, not yet distinguished — see project memory
-  `incoming_call_ui_regression` for full detail:
-  1. `USE_FULL_SCREEN_INTENT` special access revoked in system Settings for this app (Android
-     14/15 can auto-reset it if unused).
-  2. `IncomingCallNotifier.post()` (`androidApp/.../telecom/IncomingCallNotifier.kt:431`)
-     deliberately swallows `RuntimeException` from `notify()` — if the ringing `CallStyle`
-     notification is being rejected by the platform, this catch would explain both missing
-     symptoms at once (same class of bug already hit once for the ongoing-call notification).
-  **Next step, once phone is plugged in:** `adb logcat -s IncomingCallNotifier` during a real
-  incoming call. A logged "Notification 1001 was rejected by the platform and has been dropped"
-  confirms cause #2 with a stack trace; nothing logged points at cause #1 (check the Settings
-  toggle first).
+  notification has no hang-up/block actions.** Two candidates: (1) `USE_FULL_SCREEN_INTENT` special
+  access revoked in system Settings; (2) `IncomingCallNotifier.post()`
+  (`androidApp/.../telecom/IncomingCallNotifier.kt:431`) swallowing a `RuntimeException` from
+  `notify()`. Next step with a phone attached: `adb logcat -s IncomingCallNotifier` during a real
+  incoming call; project memory `incoming_call_ui_regression` has the detail.
 
 ## Verify
 
@@ -43,19 +39,18 @@ back — that is the next piece of actual work.
 bash tools/verify.sh
 ```
 
-Green as of 2026-09-18 (781 tests, iOS compile included).
+Green as of 2026-10-08 (787 tests, iOS compile included).
 
 ## Open questions
 
-- **10 (1.6.2) is in Play review, submitted 2026-09-16.** Outcome not yet known — see
-  `docs/RELEASE.md`.
-- Release 11 still needs: re-triage the four Play advisories against *that* build's `mapping.txt`.
-- `docs/STORE_LISTING.md:395` — pt-BR and hi-IN listings still show Spanish screenshots; those
-  languages still aren't added to the store listing itself.
-- Reporter follow-up still unsent: ask for their *Acción por defecto*, their repeat-caller bypass
-  value, and whether Corta Spam still holds the dialer role. Report 4 is unexplained without those.
-- Should the older tracked LinkedIn posts be untracked and the ignore widened to
-  `docs/LINKEDIN_POST_*`? Asked 2026-08-29, still unanswered.
+- Outcome of 10 (1.6.2) and 11 (1.7.0) reviews — `docs/RELEASE.md` says stage built-not-uploaded and
+  needs updating to production-review.
+- Were the new screenshots uploaded to the listing? pt-BR and hi-IN still reuse the Spanish set and are
+  not added to the store listing at all (`docs/STORE_LISTING.md:395`).
+- Kris Gead's credit has no contribution line — ask the maintainer what to write.
+- Reporter follow-up still unsent: their *Acción por defecto*, repeat-caller bypass value, and whether
+  Corta Spam still holds the dialer role (more relevant now that the default changed).
+- Should older tracked LinkedIn posts be untracked? Asked 2026-08-29, unanswered.
 
 ## Do not redo
 

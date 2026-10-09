@@ -1,18 +1,17 @@
 # RELEASE — Corta Spam
 
-`org.carlospinan.cortaspam` · versionCode `11` · versionName `1.7.0` · track: production (not yet uploaded)
+`org.carlospinan.cortaspam` · versionCode `11` · versionName `1.7.0` · track: production
 _Checked 2026-10-08 against the built artefact, not the source manifest. 10 (1.6.2) was uploaded
 2026-09-16 and its review outcome is not known to this repo._
 
 ## Next action
 
-Upload `androidApp/build/outputs/bundle/release/11-1.7.0-release.aab` to production, paste the
-release name and notes from `docs/store/RELEASE_NOTES_1.7.0.md`, and replace the listing
-screenshots with `docs/store/play/` (en-US) and `docs/store/play/es_*` (es-419, the default).
+Watch the Console review outcome for 11 (submitted 2026-10-08), confirm the new screenshots from
+`docs/store/play/` were swapped into the listing, then re-triage the Play advisories.
 
 ## Stage
 
-built-not-uploaded
+production-review
 
 ## Done
 
@@ -27,11 +26,13 @@ built-not-uploaded
 
 ## Blocked / waiting
 
+- 11 (1.7.0) in review since 2026-10-08.
 - 10 (1.6.2) review outcome — unknown since 2026-09-18.
 
 ## Left
 
-- [ ] Upload, paste notes, swap screenshots — `play-release-run` / `play-store-assets`.
+- [x] Uploaded and submitted for review 2026-10-08 (versionCode 11 spent).
+- [ ] Confirm the new screenshots were swapped in the listing — `play-store-assets`.
 - [ ] pt-BR and hi-IN still not added to the store listing itself (`docs/STORE_LISTING.md:395`).
 - [ ] Re-triage the four Play advisories against this build's `mapping.txt` once visible.
 - [ ] Not run on a physical device; no call-handling code changed since 1.6.2.
