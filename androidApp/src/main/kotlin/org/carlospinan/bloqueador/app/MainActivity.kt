@@ -41,6 +41,7 @@ import org.carlospinan.bloqueador.app.telecom.InCallState
 import org.carlospinan.bloqueador.app.telecom.RecordingPlayer
 import org.carlospinan.bloqueador.app.welcome.WelcomeScreen
 import org.koin.android.ext.android.inject
+import java.io.IOException
 
 class MainActivity : ComponentActivity() {
     private val viewModel: DialerOnboardingViewModel by inject()
@@ -118,6 +119,42 @@ class MainActivity : ComponentActivity() {
         }
 
     private var importResultCallback: ((String) -> Unit)? = null
+
+    private var pendingExportJson: String? = null
+
+    /**
+     * Saves the backup where the user picks, under a timestamped `.json` name. This replaced a
+     * share-as-text chooser whose result was an extensionless-looking `cortaspam.txt` that the
+     * import picker could not select.
+     */
+    private val exportFileLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.CreateDocument("application/json"),
+        ) { uri ->
+            val json = pendingExportJson
+            pendingExportJson = null
+            if (uri != null && json != null) {
+                // The provider behind the picked location can fail or revoke the grant at any
+                // point (a cloud drive going offline, a full disk); uncaught, that is a crash in
+                // a result callback, and a save that worked said nothing either.
+                val saved =
+                    try {
+                        contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } != null
+                    } catch (e: IOException) {
+                        Log.w(TAG, "Could not write the backup", e)
+                        false
+                    } catch (e: SecurityException) {
+                        Log.w(TAG, "Not allowed to write the backup", e)
+                        false
+                    }
+                Toast
+                    .makeText(
+                        this,
+                        if (saved) R.string.backup_export_saved else R.string.backup_export_failed,
+                        Toast.LENGTH_LONG,
+                    ).show()
+            }
+        }
 
     private val importFileLauncher =
         registerForActivityResult(
@@ -298,18 +335,14 @@ class MainActivity : ComponentActivity() {
                                     contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
                                 },
                                 onShareFile = { json ->
-                                    val shareIntent =
-                                        Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(Intent.EXTRA_TEXT, json)
-                                        }
-                                    startActivity(
-                                        Intent.createChooser(shareIntent, getString(R.string.share_backup_chooser_title)),
-                                    )
+                                    pendingExportJson = json
+                                    exportFileLauncher.launch(backupFileName(System.currentTimeMillis()))
                                 },
                                 onPickImportFile = { onResult ->
                                     importResultCallback = onResult
-                                    importFileLauncher.launch("application/json")
+                                    // Any type, not application/json: earlier exports were saved as .txt
+                                    // and a JSON-only filter hides them from the picker.
+                                    importFileLauncher.launch("*/*")
                                 },
                                 onCallBack = { number ->
                                     if (ContextCompat.checkSelfPermission(

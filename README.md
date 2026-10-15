@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 787 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 790 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -105,8 +105,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 656 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 113 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 674 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 116 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -164,6 +164,10 @@ A complete 36-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 194 quiz questions included.
 
 ## Recent Fixes
+**2026-10-14:** export a backup the app can import again.
+
+- **Backup export saves a real file.** `ActivityResultContracts.CreateDocument` with a name like `cortaspam-backup-20261009-134512.json` replaces the share-as-text chooser, whose `cortaspam.txt` the JSON-only import picker could not list. Import now accepts any type so old exports still restore. The write catches `IOException` / `SecurityException` and reports success or failure with a toast.
+
 **2026-10-07:** two requests — an app whose job is stopping spam should start out stopping it, and a
 new user had no hint that Settings is where that is tuned.
 

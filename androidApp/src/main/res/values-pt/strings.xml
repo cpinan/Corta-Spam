@@ -26,7 +26,6 @@
     <string name="reason_quiet_hours">Horas de silêncio</string>
     <string name="reason_emergency_callback">Retorno de chamada de emergência</string>
     <string name="reason_no_matching_rule">Nenhuma regra corresponde (padrão: bloquear)</string>
-    <string name="share_backup_chooser_title">Compartilhar backup</string>
     <plurals name="reason_allowed_after_repeated">
         <item quantity="one">Ligou %1$d vez — permitida</item>
         <item quantity="other">Ligou %1$d vezes — permitida</item>
@@ -37,4 +36,6 @@
     </plurals>
     <string name="autoresponder_audio_unreadable">Este arquivo de áudio não pode ser usado: o app não recebeu permissão permanente para lê-lo. Escolha um arquivo do armazenamento do dispositivo.</string>
     <string name="keypad_add_contact_unavailable">Nenhum app deste telefone pode salvar contatos.</string>
+    <string name="backup_export_saved">Backup salvo.</string>
+    <string name="backup_export_failed">Não foi possível salvar o backup. Tente outro local.</string>
 </resources>
