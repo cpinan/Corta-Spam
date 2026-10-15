@@ -31,6 +31,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -104,6 +106,14 @@ fun AgendaScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var selected by remember { mutableStateOf<Contact?>(null) }
     val windowSizeClass = rememberWindowSizeClass()
+    val haptics = LocalHapticFeedback.current
+    // A tick on every pick, from the list and the favourites strip alike: opening the actions
+    // sheet is the only response a tap gets, and on a screen of near-identical rows a confirmation
+    // under the finger says which one registered.
+    val pick: (Contact) -> Unit = { contact ->
+        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        selected = contact
+    }
 
     val visible =
         remember(contacts, filter, query, blockedNumbers, allowlistedNumbers) {
@@ -175,7 +185,7 @@ fun AgendaScreen(
                             item(key = FAVOURITES_KEY) {
                                 FavouritesRow(
                                     contacts = favourites,
-                                    onPick = { selected = it },
+                                    onPick = pick,
                                     modifier = Modifier.padding(bottom = 12.dp),
                                 )
                             }
@@ -204,7 +214,7 @@ fun AgendaScreen(
                                     ContactListRow(
                                         contact = contact,
                                         ruleState = ruleStates[contact.number] ?: NumberRuleState.None,
-                                        onTap = { selected = contact },
+                                        onTap = { pick(contact) },
                                     )
                                 }
                         }

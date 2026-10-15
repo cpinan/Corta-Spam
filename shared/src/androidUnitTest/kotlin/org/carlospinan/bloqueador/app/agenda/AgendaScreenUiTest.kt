@@ -1,5 +1,9 @@
 package org.carlospinan.bloqueador.app.agenda
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -214,5 +218,47 @@ class AgendaScreenUiTest {
         composeTestRule.setContent { AgendaScreen(contacts = emptyList()) }
 
         composeTestRule.onNodeWithText("There are no contacts on this phone yet.").assertExists()
+    }
+
+    private class RecordingHaptics : HapticFeedback {
+        val performed = mutableListOf<HapticFeedbackType>()
+
+        override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
+            performed += hapticFeedbackType
+        }
+    }
+
+    /**
+     * Opening the actions sheet was the only response a tap on a row got. The tick is asserted
+     * against a recording fake because Robolectric has no vibrator to observe.
+     */
+    @Test
+    fun `tapping a contact row gives haptic feedback`() {
+        val haptics = RecordingHaptics()
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalHapticFeedback provides haptics) {
+                AgendaScreen(contacts = listOf(bea))
+            }
+        }
+
+        composeTestRule.onNodeWithText("Bea Ruiz").performClick()
+
+        assertEquals(1, haptics.performed.size)
+    }
+
+    /** The favourites strip is a second way in to the same sheet, and used to be silent. */
+    @Test
+    fun `tapping a favourite gives haptic feedback`() {
+        val haptics = RecordingHaptics()
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalHapticFeedback provides haptics) {
+                AgendaScreen(contacts = listOf(ana))
+            }
+        }
+
+        // Ana is in both the strip and the list; the strip's copy is the first node.
+        composeTestRule.onAllNodesWithText("Ana Torres")[0].performClick()
+
+        assertEquals(1, haptics.performed.size)
     }
 }
