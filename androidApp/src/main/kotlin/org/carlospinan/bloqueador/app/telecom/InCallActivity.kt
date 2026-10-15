@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
-import android.provider.ContactsContract
 import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
@@ -19,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.carlospinan.bloqueador.app.R
+import org.carlospinan.bloqueador.app.addContactIntent
 import org.carlospinan.bloqueador.app.call.BlockAndEndAction
 import org.carlospinan.bloqueador.app.call.CallScreen
 import org.carlospinan.bloqueador.app.call.CallUiPhase
@@ -202,11 +202,7 @@ class InCallActivity : ComponentActivity() {
      */
     private fun addContact(number: String) {
         if (number.isBlank()) return
-        val intent =
-            Intent(ContactsContract.Intents.Insert.ACTION).apply {
-                type = ContactsContract.RawContacts.CONTENT_TYPE
-                putExtra(ContactsContract.Intents.Insert.PHONE, number.trim())
-            }
+        val intent = addContactIntent(number)
         try {
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {

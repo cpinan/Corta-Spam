@@ -12,7 +12,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.provider.Settings
 import android.telecom.TelecomManager
 import android.util.Log
@@ -436,11 +435,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun addContact(number: String) {
         if (number.isBlank()) return
-        val intent =
-            Intent(ContactsContract.Intents.Insert.ACTION).apply {
-                type = ContactsContract.RawContacts.CONTENT_TYPE
-                putExtra(ContactsContract.Intents.Insert.PHONE, number.trim())
-            }
+        val intent = addContactIntent(number)
         try {
             startActivity(intent)
         } catch (e: ActivityNotFoundException) {
