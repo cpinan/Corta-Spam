@@ -36,6 +36,14 @@
     </plurals>
     <string name="autoresponder_audio_unreadable">This audio file cannot be used: the app was not given lasting permission to read it. Pick a file from your device storage.</string>
     <string name="keypad_add_contact_unavailable">No app on this phone can save a contact.</string>
+    <string name="stall_line_1">Hello? Sorry, I can\'t hear you very well. Can you say that again?</string>
+    <string name="stall_line_2">One moment, please. Let me find a pen.</string>
+    <string name="stall_line_3">Sorry, which company did you say you were calling from?</string>
+    <string name="stall_line_4">Hold on, someone is at the door. Don\'t go anywhere.</string>
+    <string name="stall_line_5">Could you speak up a little? The line is terrible.</string>
+    <string name="stall_line_6">Interesting. And how much would that cost?</string>
+    <string name="stall_line_7">Sorry, my kettle is boiling. Where were we?</string>
+    <string name="stall_line_8">Can you spell that for me, slowly?</string>
     <string name="backup_export_saved">Backup saved.</string>
     <string name="backup_export_failed">Could not save the backup. Try another location.</string>
 </resources>

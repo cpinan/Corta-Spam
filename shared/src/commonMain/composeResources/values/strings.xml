@@ -382,4 +382,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 You can reopen Settings any time from Home.</string>
     <string name="settings_tutorial_open">Open Settings</string>
     <string name="settings_tutorial_dismiss">Got it</string>
+    <string name="action_waste_time">Waste their time</string>
 </resources>

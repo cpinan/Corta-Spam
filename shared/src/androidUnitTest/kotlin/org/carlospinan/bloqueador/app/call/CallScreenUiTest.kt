@@ -444,4 +444,52 @@ class CallScreenUiTest {
 
         composeTestRule.onNodeWithText("Hang up & block").assertDoesNotExist()
     }
+
+    @Test
+    fun `waste their time is offered on a ringing call and runs the stall handler`() {
+        var stalled = false
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.RINGING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onStall = { stalled = true },
+            )
+        }
+
+        composeTestRule.onNodeWithText("Waste their time").performClick()
+        assertTrue(stalled)
+    }
+
+    @Test
+    fun `waste their time is hidden without a handler or while another call is live`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.RINGING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+            )
+        }
+        composeTestRule.onNodeWithText("Waste their time").assertDoesNotExist()
+    }
+
+    @Test
+    fun `waste their time is hidden while another call is live`() {
+        composeTestRule.setContent {
+            CallScreen(
+                number = "+34611998877",
+                phase = CallUiPhase.RINGING,
+                onAnswer = {},
+                onDecline = {},
+                onHangUp = {},
+                onStall = {},
+                otherCallCount = 1,
+            )
+        }
+        composeTestRule.onNodeWithText("Waste their time").assertDoesNotExist()
+    }
 }

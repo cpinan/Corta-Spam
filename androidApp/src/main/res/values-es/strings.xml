@@ -36,6 +36,14 @@
     </plurals>
     <string name="autoresponder_audio_unreadable">Este archivo de audio no se puede usar: la app no recibió permiso permanente para leerlo. Elige un archivo del almacenamiento del dispositivo.</string>
     <string name="keypad_add_contact_unavailable">Ninguna app de este teléfono puede guardar contactos.</string>
+    <string name="stall_line_1">¿Hola? Perdón, no lo escucho bien. ¿Puede repetirlo?</string>
+    <string name="stall_line_2">Un momento, por favor. Voy a buscar un lápiz.</string>
+    <string name="stall_line_3">Disculpe, ¿de qué empresa dijo que llamaba?</string>
+    <string name="stall_line_4">Espere, alguien está tocando la puerta. No cuelgue.</string>
+    <string name="stall_line_5">¿Podría hablar más fuerte? La línea se escucha muy mal.</string>
+    <string name="stall_line_6">Qué interesante. ¿Y cuánto costaría eso?</string>
+    <string name="stall_line_7">Perdón, se está hirviendo el agua. ¿En qué estábamos?</string>
+    <string name="stall_line_8">¿Me lo puede deletrear, despacio?</string>
     <string name="backup_export_saved">Copia de seguridad guardada.</string>
     <string name="backup_export_failed">No se pudo guardar la copia de seguridad. Prueba otra ubicación.</string>
 </resources>

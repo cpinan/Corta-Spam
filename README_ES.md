@@ -10,7 +10,7 @@ Filtra llamadas entrantes antes de que suene el teléfono. Comprueba cada númer
 
 ## Estado
 
-M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 795 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
+M0–M13 completos, incluido el diseño adaptativo de M12 (ya están los dos paneles list-detail de tablet). i18n en 4 idiomas. Código abierto bajo licencia MIT. 804 pruebas automatizadas pasan. APK de Android compila. La app de iOS compila y arranca, pero el bloqueo de llamadas allí sigue pendiente de la extensión CallDirectory.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — una línea por cambio, del más reciente al más antiguo (en inglés); el porqué está en [Cambios recientes](#cambios-recientes) más abajo
 - [`docs/SPEC.md`](docs/SPEC.md) — especificación del producto, matriz de capacidades, arquitectura
@@ -105,8 +105,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Pruebas
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 676 pruebas, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 119 pruebas, clases exclusivas de Android (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 679 pruebas, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 125 pruebas, clases exclusivas de Android (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest en Kotlin/Native (pospuesto)
 ./scripts/verify.sh                          # todo lo anterior + ktlint, lint, migraciones, compilación iOS
 ```
@@ -166,6 +166,10 @@ Un curso completo de 36 módulos en HTML recorre cada capa de la app — Gradle,
 Abre [`course/corta_spam_course.html`](course/corta_spam_course.html) en cualquier navegador. Incluye modo oscuro, seguimiento de progreso, fragmentos de código del proyecto real, diagramas SVG y 194 preguntas de evaluación.
 
 ## Cambios recientes
+**2026-10-14:** quitarle tiempo al spam
+
+- **Botón «Hacerle perder el tiempo» en la pantalla de llamada entrante.** Un toque contesta, activa el altavoz y reproduce frases aleatorias (cuatro idiomas) con síntesis de voz hasta que el interlocutor cuelga, pasan cinco minutos o fallan dos frases seguidas. Oculto con otra llamada activa y en una llamada de emergencia. Solo Android; no se puede inyectar audio en una llamada, así que el interlocutor lo oye por el micrófono del teléfono. `scripts/stall_test.sh` es la prueba de extremo a extremo en emulador.
+
 **2026-10-14:** un toque que se siente
 
 - **Respuesta háptica en la agenda.** Tocar un contacto, desde la lista o la tira de favoritos, da un toque suave.

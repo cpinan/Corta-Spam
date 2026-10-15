@@ -17,6 +17,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import org.carlospinan.bloqueador.app.R
 import org.carlospinan.bloqueador.app.autoresponder.AutoResponderRepository
@@ -120,6 +121,9 @@ class PassthroughInCallService :
          */
         var answeredForGreeting = false
 
+        /** The stall loop for a call the user chose to waste time on. See [startStall]. */
+        var stallJob: Job? = null
+
         /**
          * Row id from [CallLogRepository.logCall], so a recording finished after the call ends
          * can still find the entry it belongs to. Null until the evaluation coroutine logs.
@@ -200,6 +204,74 @@ class PassthroughInCallService :
             }
         }
 
+    /** Starts the stall loop once a call answered by [startStall] is actually connected. */
+    private val stallCallback =
+        object : Call.Callback() {
+            override fun onStateChanged(
+                call: Call,
+                state: Int,
+            ) {
+                if (state != Call.STATE_ACTIVE) return
+                val callState = callStates[call] ?: return
+                if (callState.stallJob != null) return
+                // Same reason as the greeting: the lines reach the caller through the handset's
+                // own microphone, so they have to come out of the loudspeaker.
+                setAudioRoute(CallAudioState.ROUTE_SPEAKER)
+                callState.stallJob = serviceScope.launch { runStall(call) }
+            }
+        }
+
+    /**
+     * Answers a ringing call on the user's say-so and keeps the caller busy. The button is hidden
+     * while another call is live, and this checks again: the loudspeaker is a property of the
+     * audio session, so stalling would move the user's real call onto it.
+     */
+    private fun startStall(call: Call) {
+        val state = callStates[call] ?: return
+        if (call.state != Call.STATE_RINGING || state.answeredForGreeting || hasOtherLiveCall(call)) return
+        // A tap inside the first moments can beat the rules to a decision. If they then block the
+        // call, answering it here would race the rejection the evaluation is about to issue.
+        if (state.blockedByRules || call.isInEmergencyCallbackMode()) return
+        state.answeredForGreeting = true // makes onCallRemoved hand the audio route back
+        autoResponderAudio?.release()
+        autoResponderAudio = AutoResponderAudio(this).also { it.prepare() }
+        call.registerCallback(stallCallback)
+        call.answer(VideoProfile.STATE_AUDIO_ONLY)
+    }
+
+    /** Speaks a random line, waits, repeats; hangs up at [StallPolicy.MAX_MILLIS] or when speech fails twice running. */
+    private suspend fun runStall(call: Call) {
+        val audio = autoResponderAudio ?: return
+        withTimeoutOrNull(StallPolicy.MAX_MILLIS) {
+            var previous: Int? = null
+            var silentLines = 0
+            while (true) {
+                val line = StallPolicy.nextLine(previous, kotlin.random.Random.Default)
+                previous = line
+                val started =
+                    withTimeoutOrNull(STALL_LINE_TIMEOUT_MILLIS) {
+                        suspendCancellableCoroutine { cont ->
+                            val began =
+                                java.util.concurrent.atomic
+                                    .AtomicBoolean(false)
+                            audio.play(
+                                script = getString(StallLines.IDS[line - 1]),
+                                audioUri = null,
+                                onStarted = { began.set(true) },
+                                onComplete = { runCatching { cont.resume(began.get()) { _, _, _ -> } } },
+                            )
+                        }
+                    } ?: false
+                // An engine that never makes a sound would otherwise hold the call open, silent,
+                // for the whole cap -- the failure the greeting watchdog exists for.
+                silentLines = if (started) 0 else silentLines + 1
+                if (silentLines >= 2) break
+                delay(StallPolicy.gapMillis(kotlin.random.Random.Default))
+            }
+        }
+        call.disconnect()
+    }
+
     // Drives the ringtone and the notifications off the real call state, whichever UI (in-app,
     // notification action, or the system) caused the change.
     private val stateCallback =
@@ -234,6 +306,7 @@ class PassthroughInCallService :
         // Mute and the audio route hang off the service, not off a Call, so InCallState needs a
         // handle on it to offer them at all.
         InCallState.attachService(this)
+        InCallState.stallHandler = ::startStall
     }
 
     /**
@@ -730,12 +803,14 @@ class PassthroughInCallService :
         val state = callStates.remove(call)
         state?.evaluation?.cancel()
         state?.watchdog?.cancel()
+        state?.stallJob?.cancel()
         state?.recordingTimeout?.cancel()
         finishRecording(state)
         // After finishRecording, which still needs the microphone, and only once nothing else is
         // on the line to have its own route yanked out from under it.
         if (state?.answeredForGreeting == true && callStates.isEmpty()) restoreAudioAfterGreeting()
         call.unregisterCallback(autoResponderCallback)
+        call.unregisterCallback(stallCallback)
         call.unregisterCallback(stateCallback)
 
         // Only silence the ringer if nothing else is still ringing; with call waiting, one call
@@ -782,6 +857,7 @@ class PassthroughInCallService :
         // screen the user could not leave, whose hang-up button reached a dead adapter and did
         // nothing — and left a dead call in the stack for the next call to promote back on to the
         // screen when it ended.
+        InCallState.stallHandler = null
         InCallState.clear()
         ringer.stop()
         autoResponderAudio?.release()
@@ -812,5 +888,8 @@ class PassthroughInCallService :
 
     private companion object {
         const val TAG = "PassthroughInCallService"
+
+        /** A stall line is a few seconds of speech; one still unfinished by now lost its callback. */
+        const val STALL_LINE_TIMEOUT_MILLIS = 30_000L
     }
 }

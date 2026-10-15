@@ -385,4 +385,5 @@
 आप होम से कभी भी सेटिंग्स दोबारा खोल सकते हैं।</string>
     <string name="settings_tutorial_open">सेटिंग्स खोलें</string>
     <string name="settings_tutorial_dismiss">समझ गया</string>
+    <string name="action_waste_time">इनका समय बर्बाद करें</string>
 </resources>

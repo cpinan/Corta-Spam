@@ -10,7 +10,7 @@ Screens incoming calls before your phone rings. Checks every number against your
 
 ## Status
 
-M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 795 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
+M0–M13 complete, including M12's adaptive layout (both tablet list-detail panes now in). 4-language i18n. Open source under MIT License. 804 automated tests pass. Android APK builds. iOS shell builds and runs, but call blocking there is still pending the CallDirectory extension.
 
 - [`CHANGELOG.md`](CHANGELOG.md) — one line per change, newest first; the reasoning is in [Recent Fixes](#recent-fixes) below
 - [`docs/SPEC.md`](docs/SPEC.md) — product spec, platform capability matrix, architecture, tech stack
@@ -105,8 +105,8 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
 ## Tests
 
 ```sh
-./gradlew :shared:testDebugUnitTest          # 676 tests, commonTest + androidUnitTest (Robolectric)
-./gradlew :androidApp:testDebugUnitTest      # 119 tests, Android-only classes (Robolectric)
+./gradlew :shared:testDebugUnitTest          # 679 tests, commonTest + androidUnitTest (Robolectric)
+./gradlew :androidApp:testDebugUnitTest      # 125 tests, Android-only classes (Robolectric)
 ./gradlew :shared:iosSimulatorArm64Test      # commonTest on Kotlin/Native (deferred)
 ./scripts/verify.sh                          # everything above + ktlint, lint, migrations, iOS compile
 ```
@@ -164,6 +164,10 @@ A complete 36-module HTML course walks through every layer of the app — Gradle
 Open [`course/corta_spam_course.html`](course/corta_spam_course.html) in any browser. Dark mode, progress tracking, code snippets from real project files, SVG diagrams, and 194 quiz questions included.
 
 ## Recent Fixes
+**2026-10-14:** waste a spammer's time.
+
+- **"Waste their time" button on the ringing screen.** One tap answers the call, switches to the loudspeaker and plays random canned lines (four languages) via text-to-speech until the caller gives up, a five-minute cap, or two silent lines. Hidden while another call is live and during an emergency callback. Android only; there is no audio injection into calls, so the caller hears it through the handset's microphone. `scripts/stall_test.sh` is the emulator end-to-end check.
+
 **2026-10-14:** confirm a tap in the agenda.
 
 - **Haptic feedback in the agenda.** Tapping a contact, from the list or the favourites strip, gives a light tick.

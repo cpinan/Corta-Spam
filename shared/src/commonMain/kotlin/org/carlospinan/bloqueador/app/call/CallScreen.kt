@@ -37,6 +37,7 @@ import cortaspam.shared.generated.resources.action_decline_and_block
 import cortaspam.shared.generated.resources.action_hang_up
 import cortaspam.shared.generated.resources.action_hang_up_and_block
 import cortaspam.shared.generated.resources.action_resume
+import cortaspam.shared.generated.resources.action_waste_time
 import cortaspam.shared.generated.resources.call_action_mute
 import cortaspam.shared.generated.resources.call_action_speaker
 import cortaspam.shared.generated.resources.call_keypad_hide
@@ -100,6 +101,12 @@ fun CallScreen(
     onAnswer: () -> Unit,
     onDecline: () -> Unit,
     onHangUp: () -> Unit,
+    /**
+     * Answers and keeps the caller busy with canned lines instead of the user taking the call.
+     * Null hides the button: iOS has no way to speak into a call, and with a second call in
+     * progress the loudspeaker it needs would be taken from the user's real one.
+     */
+    onStall: (() -> Unit)? = null,
     /** Takes a held call off hold. Only reachable from [CallUiPhase.HOLDING]. */
     onResume: () -> Unit = {},
     repeatedCallAttempts: Int? = null,
@@ -299,6 +306,11 @@ fun CallScreen(
                                 if (number.isNotBlank()) {
                                     TextButton(onClick = onBlockAndEnd) {
                                         Text(stringResource(Res.string.action_decline_and_block))
+                                    }
+                                }
+                                if (onStall != null && otherCallCount == 0) {
+                                    TextButton(onClick = onStall) {
+                                        Text(stringResource(Res.string.action_waste_time))
                                     }
                                 }
                             }

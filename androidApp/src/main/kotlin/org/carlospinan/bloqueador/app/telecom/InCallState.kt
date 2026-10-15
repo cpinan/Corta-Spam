@@ -352,6 +352,19 @@ object InCallState {
 
     fun decline() = primary?.reject(false, null)
 
+    /**
+     * Set by [PassthroughInCallService] while it is bound. The stall loop needs the service's
+     * audio objects and call bookkeeping, which this singleton deliberately does not hold.
+     */
+    @Volatile
+    var stallHandler: ((Call) -> Unit)? = null
+
+    /** Answers the ringing call and keeps it busy with canned lines. See [StallPolicy]. */
+    fun stall() {
+        val call = primary ?: return
+        stallHandler?.invoke(call)
+    }
+
     fun hangUp() = primary?.disconnect()
 
     /** Takes a held call off hold. A no-op unless something actually put it there. */

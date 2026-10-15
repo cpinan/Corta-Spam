@@ -93,6 +93,7 @@ class InCallActivity : ComponentActivity() {
                     phase = current.phase,
                     onAnswer = InCallState::answer,
                     onDecline = InCallState::decline,
+                    onStall = InCallState::stall,
                     onHangUp = InCallState::hangUp,
                     onResume = InCallState::resume,
                     repeatedCallAttempts = current.repeatedCallAttempts,
